@@ -89,3 +89,17 @@ public function testMigrationIsIdempotent(): void
 - PHPUnit 13; 300+ core classes are `final`, so mocking them needs `DG\BypassFinals` enabled in a plugin bootstrap; no test doubles of `Request`/`InputBag`/`Router` [code: 8x-changes §7 "Porting a plugin" @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html#final-classes].
 - Tests asserting on `getSubscribedEvents()` must expect class keys [code: 8x-changes §3.1 @8.x].
 - For deeper testing conventions see mautic-testing.
+
+## 8. Regression tests worth adding
+Rows from the regression catalogue in [pr-history.md](pr-history.md) with no matching test found by a grep of the 7.x PluginBundle, IntegrationsBundle, MarketplaceBundle and CoreBundle `Tests` directories.
+
+| Behaviour to pin | PR | Suggested home |
+|---|---|---|
+| Updating a plugin without an `Entity` directory succeeds and `PluginUpdateEvent::getMetadata()` is `null` | [PR #15951] | `ReloadHelperTest` |
+| A plugin whose stored version is empty and whose config now has one is updated and its migrations run | [PR #13423] | `ReloadHelperTest` |
+| The migration engine does not commit after DDL implicitly committed the transaction | [PR #14440] | new `Migration\Engine` functional test |
+| `mautic:plugins:reload` installs an entity plugin without "No active transaction" | [PR #13249] | `PluginControllerTest` or a reload command test |
+| `makeRequest()` `curl_options` keep their `CURLOPT_*` keys and override defaults | [PR #5022] | `AbstractIntegration` unit test |
+| `INTEGRATION_CONFIG_BEFORE_SAVE` listeners see the submitted values | [PR #9886] | IntegrationsBundle config controller test |
+| `INTEGRATION_CONFIG_ON_GENERATE_AUTH_URL` can rewrite the OAuth2 authorisation URL | [PR #13434] | IntegrationsBundle auth unit test |
+| Config form templates resolve for a bundle not prefixed `Mautic` | [PR #8564] | IntegrationsBundle config controller test |

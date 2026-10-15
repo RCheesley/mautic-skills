@@ -40,11 +40,13 @@ Install, update, schema
 - Migration classes must be named `MauticPlugin\<Bundle>\Migrations\<FileBasename>` and extend `Mautic\IntegrationsBundle\Migration\AbstractMigration` [code: app/bundles/IntegrationsBundle/Migration/Engine.php:68-80 @7.x].
 - Nothing deletes a `plugins` row or drops plugin tables; removed plugins are only flagged missing and there is no uninstall hook [code: app/bundles/PluginBundle/Helper/ReloadHelper.php:26-39 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugins/installation.html].
 - `PluginInstallEvent` / `PluginUpdateEvent::checkContext()` compare against the plugin's display `name`, not the bundle name [code: app/bundles/PluginBundle/Event/PluginInstallEvent.php:41-44 @7.x] [code: app/bundles/PluginBundle/Event/PluginUpdateEvent.php:48-51 @7.x].
+- `PluginUpdateEvent::getMetadata()` returns `null` for a plugin without entities; before 7.0.2 updating such a plugin threw a TypeError, so update subscribers must handle `null` [PR #15951] (v7.0.2) [code: app/bundles/PluginBundle/Event/PluginUpdateEvent.php:38 @7.x].
 
 Events and 8.x
 - On 7.x most core events dispatch under string constants on `*Events` classes; subscribe with those constants [devdocs: https://devdocs.mautic.org/en/7.2/plugins/event_listeners.html#available-events].
 - On 8.x almost every core event dispatches by event class; a subscriber keyed on a removed constant fatals, and one keyed on a kept constant or raw string silently receives nothing [code: 8x-changes §3.1-3.2 @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/event_listeners.html#mautic-8-class-name-event-dispatch].
 - Names a plugin defines itself (campaign `batchEventName`, condition/decision `eventName`, form action/validator `eventName`) stay string-dispatched on 8.x [code: 8x-changes §3.1 @8.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:1192 @8.x].
+- Admin-UI JavaScript can hook AJAX page loads through the jQuery events `mautic:onPageLoad:before` and `mautic:onPageLoad:after` (args `container, response, inModal`) from 7.1.0, instead of overriding core JS [PR #15789] (v7.1.0) [code: app/bundles/CoreBundle/Assets/js/1a.content.js:321,729 @7.x].
 
 ## Where it lives
 | Concern | Path(s) @7.x |
@@ -253,6 +255,11 @@ Full detail: [references/test-patterns.md](references/test-patterns.md).
 - Install/update events exist since 4.2.0 [devdocs: https://devdocs.mautic.org/en/7.2/plugins/installation.html].
 - 7.x still processes `config.php` `services`, although the docs said they "won't work in Mautic 6" [code: app/bundles/CoreBundle/DependencyInjection/Compiler/ServicePass.php:31-64 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugins/autowiring.html].
 - 7.2: `uri`-only menu items render; `BuilderEvent::addTokensFromHelper()` deprecated; Preference Center slot labels editable from `PageDisplayEvent` [devdocs: https://devdocs.mautic.org/en/7.2/plugins/config.html#menu-item-definitions] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/emails.html#deprecated-methods] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/landing_pages.html#customizing-preference-center].
+- 5.x lifecycle fixes: Integrations, Plugin and Marketplace bundle views became Twig [PR #11862] [PR #11960] (~v5.0); reload runs DDL outside a transaction and a plugin that gains a first version is updated [PR #13249] [PR #13423] (~v5.1.0); the migration engine tolerates MySQL's implicit DDL commit [PR #14440] (v5.2.2).
+- 6.0 removed `PluginBundleBase::onPluginInstall`/`onPluginUpdate` and `MauticFactory::getDatabase()`; use the install/update events and inject the connection [code: UPGRADE-6.0.md:27-34 @7.x] [PR #14418] (~v6.0.0).
+- 6.0 gave `LeadEvent::getLead()` a native `Lead` return type and made the class `final` [PR #13842] (v6.0.0).
+- 7.0.0 added the publish-veto event `PLUGIN_IS_PUBLISHED_STATE_CHANGING` and the IntegrationsBundle `TestPass` for mocking HTTP in plugin tests [PR #13696] [PR #15084] (v7.0.0); 7.1.0 added the `mautic:onPageLoad:*` JS events [PR #15789] (v7.1.0).
+- 7.2.0 made childless core classes `final`, including IntegrationsBundle DAOs and bundled integrations [PR #16888] [PR #16902] (v7.2.0); 7.2 child controllers take dependencies through `#[Required] autowire*()` setters [PR #16880] (~v7.2).
 - 8.x: class-keyed events, 225 constants removed, `CoreEvents`/`ConfigEvents`/`DashboardEvents`/`ApiEvents`/`UserEvents`/`IntegrationEvents`/`StatEvents` deleted, `FormController` removed, 300+ `final` classes, typed constants [code: 8x-changes §3.3, §4 @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html].
 Full detail: [references/version-notes.md](references/version-notes.md).
 
@@ -268,6 +275,9 @@ Full detail: [references/version-notes.md](references/version-notes.md).
 - The docs say migrations run only for bundles extending `AbstractPluginBundle`; in 7.x code the core `PluginSubscriber` runs the engine on every plugin update regardless of base class [code: app/bundles/PluginBundle/EventListener/PluginSubscriber.php:34-37 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugins/database.html#plugin-schema-migrations].
 - The email-transport docs (tag `mautic.email_transport`, Swiftmailer example, `/mailer/{transport}/callback`) are outdated: 7.x builds transports through Symfony Mailer's transport factory and handles callbacks on `/mailer/callback` via `EmailEvents::ON_TRANSPORT_WEBHOOK` [code: app/bundles/EmailBundle/Mailer/Transport/TransportFactory.php:13-58 @7.x] [code: app/bundles/EmailBundle/Config/config.php:99-102 @7.x] [code: app/bundles/EmailBundle/Controller/PublicController.php:539-540 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/emails.html#email-transports].
 - `mautic.sync_integration` and `mautic.authentication_integration` tags are not autoconfigured; tag them explicitly (see mautic-integrations) [code: app/bundles/IntegrationsBundle/DependencyInjection/IntegrationsExtension.php:26-33 @7.x].
+- 7.2.0 made childless classes `final` in a minor release (for example `ObjectChangeDAO`, `FieldDAO`, `OneSignalIntegration`), with `protected` members turned `private`; a plugin that extends one fatals on 7.2, so compose instead [PR #16888] [PR #16902] (v7.2.0) [code: app/bundles/NotificationBundle/Integration/OneSignalIntegration.php:11 @7.x].
+- A plugin ported from 4.x or 5.x that relies on static `onPluginInstall`/`onPluginUpdate` hooks gets no schema work on 6.0+, and `$factory->getDatabase()` fatals; subscribe to `PluginEvents::ON_PLUGIN_INSTALL`/`ON_PLUGIN_UPDATE` and inject the connection [code: UPGRADE-6.0.md:27-34 @7.x] [PR #14418] (~v6.0.0).
+- `AbstractIntegration` says "To be removed in Mautic 6.0" but still ships in 7.x; build new integrations on the IntegrationsBundle [PR #11050] (~v4.3) [code: app/bundles/PluginBundle/Integration/AbstractIntegration.php:54 @7.x].
 - Several devdocs examples contain bugs (`extends EventSubscriberInterface`, reversed `dispatch()` arguments, `addCondition()` for decisions, `.html.php` templates); trust code [devdocs: https://devdocs.mautic.org/en/7.2/plugins/config.html#config-event-subscriber] [devdocs: https://devdocs.mautic.org/en/7.2/plugins/event_listeners.html#custom-events].
 
 ## Related skills
@@ -288,4 +298,4 @@ Full detail: [references/version-notes.md](references/version-notes.md).
 - references/docs-digest.md — what devdocs.mautic.org says (7.2 and 8.0), procedures, terminology, doc errors.
 - references/test-patterns.md — base classes, representative tests, skeletons for plugin tests and CI.
 - references/version-notes.md — 4.x/5.x/6.x history, 7.x minors and the 8.x porting checklist.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md — merged-PR history: lifecycle and framework decisions, regression catalogue, feature timeline, removals, norms, open questions.
