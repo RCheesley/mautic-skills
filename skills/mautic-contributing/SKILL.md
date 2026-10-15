@@ -43,7 +43,7 @@ Pull request content
 - `### 📋 Steps to test this PR:` must be annotated, step-by-step manual instructions for testers who may not be
   developers, with no steps the CI already performs. [code: .github/PULL_REQUEST_TEMPLATE.md:53-60 @7.x]
 - List each deprecation and BC break with its alternative. [code: .github/PULL_REQUEST_TEMPLATE.md:62-64 @7.x]
-- Each PR needs two human testers who Approve or Request changes.
+- Each PR needs two human testers who Approve or Request changes (KB wording; see Pitfalls for how review works in practice).
   [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html]
 
 Checks
@@ -127,7 +127,7 @@ ddev composer run e2e-test                           # for UI changes
 8. Fill every template section and label the PR for release notes. [code: .github/release.yml @7.x]
 
 ### Maintainer norms
-Populated from current inputs only; the PR-history pass will extend this.
+Full PR-derived norms, with history and exceptions: references/pr-history.md.
 - Two testers must approve after following your test steps. [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html]
 - Applying `ready-to-commit` triggers a full coverage run. [code: .github/workflows/coverage-check.yml:7-88 @7.x]
 - CodeRabbit flags mock-only assertions, order- or time-dependent tests, and reviews migrations specifically.
@@ -158,6 +158,13 @@ A good contribution test fails before the change and passes after it, through th
   `vendor/bin/`, event dispatch by class enforced by PHPStan, entity mapping moving to attributes.
   [PR #16993] [PR #17392] [PR #17361] [PR #17004] [PR #17280] [PR #17164] [PR #17625] [PR #17382]
 - 8.x is unreleased: `app/release_metadata.json@8.x` still says 7.2.0. [code: app/release_metadata.json @8.x]
+- 4.4/5.x era: fix 5.x first, then a duplicate backport PR; classic merge-up branching restored in January 2024.
+  [PR #11644] [PR #11676] [PR #11775] [PR #13110]
+- 5.0: security reports moved from huntr.dev to GitHub private reporting; supported versions moved to mautic.org.
+  [PR #12876] [PR #12877]
+- 5.x chose php-cs-fixer over ECS; ECS rules reappeared in 7.2. [PR #13037] [PR #16344] [PR #16723]
+- 7.2: Promptless docs PRs and `code-review-passed`/`user-testing-passed`/`ready-to-commit` labels; builder `dist`
+  no longer committed in PRs. [PR #16337] [PR #16435] [PR #16480]
 Details: references/version-notes.md.
 
 ## Pitfalls
@@ -185,6 +192,17 @@ Details: references/version-notes.md.
 - The UI still says "Published" where the style guide says "Active"; quote on-screen labels exactly in test steps.
   [docs: https://github.com/mautic/user-documentation/blob/7.2/.github/styles/Mautic/FeatureList.yml]
 - Open question: whether e2e tests are required for every UI PR. [unverified]
+- "Two testers" is the KB wording; in practice a PR needs one code review plus one user test from another
+  organisation, the author cannot approve, and more than a one- or two-line fix needs two approvals. Test- or CI-only
+  PRs merge with one approval on green CI. [PR #13754] [PR #12128] [PR #16877] [PR #11045] [PR #14499]
+- A bug fix without a regression test that fails before the fix stalls in review; reviewers ask for functional tests
+  through the real route or command. [PR #15822] [PR #17627] [PR #11644] [PR #14503]
+- A new option's default keeps the old behaviour; behaviour changes in a minor are opt-in, and default changes never
+  go into a patch. [PR #3549] [PR #6422] [PR #8959] [PR #14678] [PR #14790]
+- Do not treat the 7.2.0 `final` sweep as precedent for BC changes in a minor: it is a recorded exception. Extend core
+  through events, interfaces and decoration, not inheritance. [PR #16754] [PR #16898] [PR #13842] [PR #14016]
+- Merge-up covers only `a.b` → `a.x`. A fix for an older major, or a CI or DDEV fix for every maintained line, needs
+  its own PR titled with the branch (`[6.0]`). [PR #15560] [PR #15561] [PR #10597] [PR #11969]
 
 ## Related skills
 - mautic-testing — writing PHPUnit and Codeception tests, base classes, fixtures, assertions.
@@ -199,4 +217,4 @@ Details: references/version-notes.md.
 - references/docs-digest.md — Community Handbook, KB and docs-repo guidance with URLs and procedures.
 - references/terminology.md — full FeatureList, Google WordList and accepted-vocabulary tables; open when writing docs, UI strings or PR text.
 - references/version-notes.md — history behind the rules, 7.x minors and the 8.x tooling delta.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md — maintainer norms from merged PRs: branch and release policy, BC and deprecation, review and merge rules, testing, schema, docs, translations, and the norms that changed over time; open when a rule's reason or exception matters.

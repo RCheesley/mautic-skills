@@ -145,4 +145,4 @@ Start with the first check; the full cause list for each symptom is in reference
 - references/symptoms.md — the full guide: one section per symptom with causes in order, confirm steps (logs, SQL, commands), fixes and the detail skill. Open it once the index above points to a symptom.
 - references/docs-digest.md — official troubleshooting pages and KB articles with URLs, and whether each is outdated for 7.x. Open it before following a docs or KB procedure.
 - No behaviour.md, code-map.md, test-patterns.md or version-notes.md: this skill routes to the area skills, which hold those.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- Past regressions for each area are in that skill's `references/pr-history.md` (Regression catalogue section); check them when a symptom appeared after an upgrade.

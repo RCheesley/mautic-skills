@@ -183,4 +183,4 @@ Common multi-skill tasks:
 ## Reference files
 - `references/glossary.md` — full glossary: definition, code name, table, citation and owning skill for every term; open when a term is unfamiliar.
 - `references/task-routing.md` — 40+ common tasks mapped to skill combinations and the first file to open; open when the task spans areas.
-- `references/pr-history.md` — not yet generated; PR-derived history is added in a later pass.
+- Pull request history lives in each area skill's `references/pr-history.md`; project-wide norms are in `mautic-contributing/references/pr-history.md`.

@@ -46,3 +46,34 @@ Avoid in new 7.x contributions: `*Events::CONST` subscriber keys or second `disp
 `Core\Controller\FormController`; `services`/`menus`/`models` arrays in `config.php`; string service ids; `Request::get()`;
 `$this->_em` in repositories; Symfony constraint option arrays; Clearbit. Add native types to every override now.
 [code: UPGRADE-8.0.md @8.x] (full list and dual-version subscriber pattern: mautic-upgrades-and-versions)
+
+## 5. Process changes by version (from merged PRs)
+Full history and conflicts: pr-history.md sections 12 and 13.
+
+### Before 5.x
+- 1.x–2.x: all work went to `staging`; releases were `Release x.y.z` PRs to `master`, back-merged afterwards. [PR #6531] [PR #7744]
+- April 2020: no further 2.x minors; features and fixes rebased onto 3.x. [PR #7312] [PR #7933] [PR #8467]
+- From about August 2020 cla-bot enforces the CLA. [PR #7211] [PR #8769]
+- Late 2021: the PR template's a.b / a.x / c.x branch rule. [PR #10589] [PR #10722] [PR #10802]
+
+### 5.x
+- 4.4/5.x era: fix 5.x first, then a duplicate backport PR; no back-merges. [PR #11644] [PR #11676] [PR #11775] [PR #11857]
+- January 2024: classic branching with merge-up restored. [PR #13110]
+- 5.0 / 4.4.11: supported versions moved to mautic.org; security reports to GitHub private reporting. [PR #12876] [PR #12877]
+- 5.x: php-cs-fixer chosen over ECS; heavy Rector sets kept out of CI. [PR #13037] [PR #13035]
+- 5.2: developer docs moved to devdocs.mautic.org. [PR #14207]
+- 5.2.9: GitHub Codespaces with DDEV for testing PRs. [PR #15515] [PR #15561]
+- New migrations land in minors from 5.2; fixes to existing migrations may land in patches. [PR #9542] [PR #14824]
+
+### 6.x
+- 6.0 entered beta closed to features, which went to 7.x. [PR #14657] [PR #14668] [PR #14745]
+- 6.0.7: Codespaces image backport as a separate `[6.0]` PR. [PR #15560]
+
+### 7.0, 7.1, 7.2
+- 7.0: updates are CLI-only; `AGENTS.md` added for coding agents. [PR #14689] [PR #15697]
+- 7.1: PHP 8.5 support accepted after the 7.1.0 RC by release-team agreement; the 7.1 patch line ended after 7.1.3. [PR #15721] [PR #16877]
+- 7.2: review labels and Promptless docs PRs; composer-hook commands must not fail the build. [PR #16337] [PR #16226]
+- 7.2.0: builder `dist` files no longer committed; builder fixes go straight into mautic/mautic. [PR #16435] [PR #16436]
+- 7.2.0: hundreds of classes made `final` in a minor without an UPGRADE note (recorded exception). [PR #16754] [PR #16898]
+- 7.2.0: `UserModel` public signatures changed without deprecation. [PR #16980]
+- 7.3 (unreleased): `.agents/skills/mautic-dev` added to core. [PR #17459]
