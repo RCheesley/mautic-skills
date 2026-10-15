@@ -108,6 +108,11 @@ All paths under `app/bundles/` unless absolute. Full detail: references/code-map
 - 7.x deprecated `mautic:disable-tracking`, positional `$shortenUrl/$utmTags` in `generateRedirectUrl`, and service `mautic.form.type.dwc_entry_filters` (7.2). [code: app/bundles/PageBundle/Model/RedirectModel.php:60-68 @7.x] [code: app/bundles/DynamicContentBundle/Config/services.php:29-30 @7.x]
 - 8.x: `BuildJsEvent`, `TrackingEvent`, `PageBuilderEvent`, `PageDisplayEvent`, `PageHitEvent`, `UntrackableUrlsEvent`, `RedirectGenerationEvent`, `VideoHitEvent`, `TokenReplacementEvent`, `ContactFiltersEvaluateEvent` are dispatched by class; `CoreEvents` is deleted; `PAGE_ON_HIT` and friends still exist but never fire under their string. `PAGE_ON_TOGGLE_PUBLISH` stays string-keyed. [devdocs: https://devdocs.mautic.org/en/8.0/mauticjs_api/tracking_script.html] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/landing_pages.html]
 - 8.x removes `mautic:disable-tracking` (links get tracked), the v1 theme `content` fallback for landing pages, and moves `tracking.pixel.send`/`dwc.push_content` to batch campaign actions. [PR #17078] [PR #17691]
+- 5.0 removed `index_dev.php` (use `APP_ENV`/`APP_DEBUG` in `.env.local`). [PR #12206]
+- 5.1 moved `TrackingHelper` and campaign-DWC state from the PHP session to the cache; turning on Anonymize IP now also anonymises existing IP rows, irreversibly. [PR #13459] [PR #13464] [PR #10116]
+- 5.2 renders the custom 404 page at the requested URL with status 404 instead of redirecting. [PR #14286]
+- 6.0 added the email bot-ratio settings (`bot_helper_*`), refuses a redirect type without a URL, and removed gated video (removing PR not identified). [PR #14593] [PR #14551] [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:113,189 @7.x]
+- 7.0 removed "Identify visitor by tracking URL" (`track_by_tracking_url`) and added page drafts and the public-preview toggle; 7.1 added `data-mautic-disable-tracking`. [PR #14974] [PR #13937] [PR #14766] [PR #15713]
 - Full detail: references/version-notes.md.
 
 ## Pitfalls
@@ -126,6 +131,11 @@ All paths under `app/bundles/` unless absolute. Full detail: references/code-map
 - `PublicController::hitVideoAction` is not referenced by any route or JS in `app/` or `plugins/`, so `video_hits` is never written by core in 7.2.1. [code: app/bundles/PageBundle/Controller/PublicController.php:547-561 @7.x]
 - Landing-page draft docs mention "Subject" and "selected Segment", which do not exist on pages; only HTML/template are drafted. [docs: https://docs.mautic.org/en/7.2/components/landing_pages.html#creating-a-draft-landing-page] [code: app/bundles/PageBundle/EventListener/PageSubscriber.php:136-176 @7.x]
 - Devdocs still describe a `mautic_session_id` cookie with a 30-minute session; 7.2.1 only reads it for migration and never writes it. [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/contacts.html#contact-tracking] [code: app/bundles/LeadBundle/Tracker/Service/ContactTrackingService/ContactTrackingService.php:29-75 @7.x]
+- An unpublished page with a redirect type still redirects; this is deliberate. A legacy page with a type but no URL returns 404. [PR #10152] [PR #14551]
+- The custom 404 page (`404_page`) is used only if it is published and has custom HTML; it is rendered at the missing URL with status 404. [PR #14286] [code: app/bundles/CoreBundle/Controller/CommonController.php:569-586 @7.x]
+- New DWC items default to campaign-based on purpose: switching to filter-based was reverted as a BC break that failed the API-library tests. [PR #14678] [PR #14790] [code: app/bundles/DynamicContentBundle/Entity/DynamicContent.php:130 @7.x]
+- Gated video (`data-gate-time`, `data-form-id`) no longer exists in 7.x, so nothing reads those attributes. The froogaloop asset is a leftover. [PR #12051] [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:113,189 @7.x]
+- Since 7.0, identification from links uses only `ct` through `ON_CLICKTHROUGH_IDENTIFICATION` (email and SMS stats); a custom `ct` with just a `lead` key may not identify anyone [unverified]. [PR #14974]
 
 ## Related skills
 - mautic-contacts: identity rules, merging, publicly-updatable fields, `lead_utmtags` entity and UTM REST endpoints.
@@ -146,4 +156,4 @@ All paths under `app/bundles/` unless absolute. Full detail: references/code-map
 - references/docs-digest.md — what docs.mautic.org and devdocs say, with URLs, procedures and doc/code discrepancies.
 - references/test-patterns.md — base classes, fixtures, representative tests and skeletons for hits, redirects and DWC.
 - references/version-notes.md — 5.x/6.x history, 7.x minors and the 8.x delta for this area.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md — why and when from merged PRs: decisions, regression catalogue, feature timeline, removals, norms and conflicts with behaviour.md.

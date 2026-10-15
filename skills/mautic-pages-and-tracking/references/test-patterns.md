@@ -76,3 +76,13 @@ Copy a case from `TrackableModelTest.php`: build the model with mocked `Redirect
 - Side tables: `lead_utmtags`, `channel_url_trackables` counters, `dynamic_content_stats`.
 - Response: status, JSON keys (`success`, `id`, `sid`, `device_id`, `events`), and cookies (`mautic_device_id`, `mtc_id`, `mautic_referer_id`, `Blocked-Tracking`).
 - Negative paths: logged-in user, `DNT: 1`, bot UA, invalid `ct` (must not 500).
+
+## Regression tests worth adding
+No test in `PageBundle/Tests`, `DynamicContentBundle/Tests`, `CoreBundle/Tests` or `EmailBundle/Tests` matched a one-line grep for these regression-catalogue rows in pr-history.md. Check by eye before writing one.
+- `&amp;` inside a link's query string is still converted to a trackable. [PR #13858]
+- An `href` with a leading newline or spaces is converted to a trackable. [PR #15698]
+- A short URL never overwrites part of a longer URL that differs only in case. [PR #11948]
+- A page alias keeps its underscores. [PR #13122]
+- Body-open scripts are inserted when `<body>` has complex attributes (brackets in classes, inline `onclick`). [PR #12385]
+- `/r/{id}` with no `ct` redirects without notices and records no contact attribution. [PR #10418]
+- `mailto:` links in email HTML become trackables. [PR #11481]
