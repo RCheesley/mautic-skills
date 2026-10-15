@@ -109,6 +109,12 @@ Installer
 - 8.x removes the `mautic.config.model.sysinfo` service alias and gives `SysinfoModel::getLogTail(int)` a typed parameter. [PR #17625]
 - 8.x requires PHP 8.4 [PR #16993] and Symfony 8.1 [PR #17392].
 - 8.x expects `cache_adapter` to hold a class name, not a `mautic.cache.adapter.*` service id. [code: UPGRADE-8.0.md:177 @8.x]
+- 5.0 removed the installer email step and all `mautic:install --mailer_*` options; the installed check switched from `mailer_from_name` to `site_url`. [PR #12216]
+- 5.0 dropped `%kernel.root_dir%`; paths in local.php must use `%kernel.project_dir%`. [PR #11145]
+- 5.0 replaced the queue settings with Messenger DSNs (`messenger_dsn_email`, `messenger_dsn_hit`, `messenger_dsn_failed`, `messenger_retry_strategy_*`), all defaulting to no queue. [PR #12509] [code: app/bundles/MessengerBundle/Config/config.php:7-13 @7.x]
+- 5.0.3 stores DSNs URL-encoded with `%` doubled and reads them through the `urlencoded-dsn` env processor. [PR #13255]
+- `db_host_ro` (read replica) arrived in 5.0 but was ignored until 5.0.2. [PR #11792] [PR #13211]
+- 7.0 removed the API rate limiter and its `api_rate_limiter_*` parameters; no 6.x-specific configuration change was found in 158 PRs. [code: UPGRADE-7.0.md:52 @7.x] [PR #8305]
 - Full detail is in `references/version-notes.md`.
 
 ## Pitfalls
@@ -124,6 +130,11 @@ Installer
 - Docs and code disagree on CORS "Restrict Domains". The docs say the default is No; the code default is `true`, so CORS is restricted out of the box. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings] [code: app/bundles/CoreBundle/Config/config.php:702 @7.x]
 - The docs warn not to pre-set `db_driver` and `mailer_from_name` because they mark Mautic as installed. In code only `db_driver` and `site_url` count, and `db_driver` is always forced. A pre-set `site_url` is what makes Mautic look installed. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#installing-with-command-line] [code: app/AppKernel.php:272-283 @7.x]
 - The docs list `--mailer_*` options for `mautic:install`, but the 7.2.1 command defines only `--db_*`, `--admin_*` and `--force`. [docs: https://docs.mautic.org/en/7.2/configuration/command_line_interface.html#mautic-commands] [code: app/bundles/InstallBundle/Command/InstallCommand.php:58-147 @7.x]
+- Hand-edited DSNs in local.php must URL-encode special characters and double `%`, because DSNs are decoded by the `urlencoded-dsn` env processor. [PR #13255] [code: app/config/config.php:99-112 @7.x]
+- After 7.2.1 the `coreconfig` field `last_shown_tab` and `Mautic.observeConfigTabs()` no longer exist; legacy `?tab=` links only work because they redirect to `/s/config/edit/<tab>`. [PR #17776] [code: app/bundles/ConfigBundle/Config/config.php:8-15 @7.x]
+- Install fixtures must not run DDL: put indexes in entity metadata and columns in a `postGenerateSchema` listener, or PHP 8 fails with "There is no active transaction". [PR #10787] [PR #11059]
+- Schema listeners must use the prefixed table name and must not assume core tables exist; no automated test covers a table prefix. [PR #11128] [PR #11206]
+- The minimum database version is inclusive: MySQL 8.4.0 passes both the installer and the pre-update check, which duplicate the same comparison. [PR #15797] [code: app/bundles/InstallBundle/Helper/SchemaHelper.php:198 @7.x] [code: app/bundles/CoreBundle/Helper/Update/PreUpdateChecks/CheckDatabaseDriverAndVersion.php:47 @7.x]
 - Open question: the docs say Mautic wraps trusted-host regexes in `/` delimiters. The code analysis confirms only domain-or-regexp validation. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:190-250 @7.x] [unverified]
 
 ## Related skills
@@ -145,4 +156,4 @@ Installer
 - `references/docs-digest.md`: what docs.mautic.org and devdocs say about settings, install and environments, with URLs.
 - `references/test-patterns.md`: base classes, fixtures, local.php backup pattern and test skeletons.
 - `references/version-notes.md`: 5.x/6.x history, 7.x specifics and the 8.x delta.
-- `references/pr-history.md`: not yet generated; PR-derived history is added in a later pass.
+- `references/pr-history.md`: why and when configuration and installer behaviour changed, from merged PRs: decisions, regression catalogue, feature timeline, removals and norms.

@@ -72,3 +72,13 @@ The local.php path is obtained the same way as in `ConfigSubscriberTest::getConf
 - `%` round-trips as `%%` in local.php and as `%` in the form. [code: app/bundles/ConfigBundle/Form/Type/EscapeTransformer.php:63-92 @7.x]
 - Empty secret fields keep the stored value. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:127-137 @7.x]
 - For loader changes, assert precedence with a unit test on `ParameterLoader`, including a pre-set `$_ENV` key. [code: app/bundles/CoreBundle/Tests/Unit/Loader/ParameterLoaderTest.php:156-170 @7.x]
+
+## Regression tests worth adding
+These regression-catalogue rows in `pr-history.md` had no matching test in the 7.x `Tests` directories (one grep per row).
+- `--db_backup_tables=false` and `0` are stored as boolean `false` and skip the backup. [PR #10757]
+- Install throws when `doctrine:migrations:sync-metadata-storage` or `doctrine:migrations:version` exits non-zero. [PR #17127] [code: app/bundles/InstallBundle/Install/InstallService.php:535 @7.x]
+- A server at exactly the minimum version (MySQL 8.4.0) passes `SchemaHelper` and `CheckDatabaseDriverAndVersion`; the existing test checks only a lower minimum. [PR #15797] [code: app/bundles/CoreBundle/Tests/Unit/Helper/Update/PreUpdateChecks/CheckDatabaseDriverAndVersionTest.php:13-35 @7.x]
+- The `urlencoded-dsn` processor turns `%%` back into `%` and decodes URL-encoded DSN parts. [PR #13255] [code: app/bundles/EmailBundle/DependencyInjection/EnvProcessor/MailerDsnEnvVarProcessor.php:28 @7.x]
+- With `db_host_ro` set, the connection uses the primary/read-replica wrapper with that host. [PR #11792] [PR #13211] [code: app/config/config.php:172-177 @7.x]
+- An empty `messenger_dsn_failed` resolves to `null://`. [PR #12509] [code: app/bundles/MessengerBundle/DependencyInjection/EnvProcessor/MessengerNullableEnvVarProcessor.php:11-14 @7.x]
+- `CheckStep` adds the `mautic.install.zend_assertions` recommendation when `zend.assertions` is not `-1`. [PR #11019] [code: app/bundles/InstallBundle/Configurator/Step/CheckStep.php:219-220 @7.x]

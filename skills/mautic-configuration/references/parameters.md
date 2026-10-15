@@ -287,7 +287,7 @@ Declared in `app/bundles/MessengerBundle/Config/config.php:7-13` = **[M]**. Beha
 
 | Parameter | Default | Type | UI | Meaning | Bundle | Citation |
 |---|---|---|---|---|---|---|
-| `messenger_dsn_email` | `'sync://'` | string | messengerconfig "Queue DSN" (email) | `email` transport; `sync://` means no queue. | Messenger | [M] [code: app/config/config.php:105-110 @7.x] |
+| `messenger_dsn_email` | `'sync://'` | string | messengerconfig "Queue DSN" (email) | `email` transport; `sync://` means no queue. History: with `messenger_dsn_hit` and `messenger_dsn_failed` it replaced `messenger_dsn`/`messenger_type` in 5.0 [PR #12509]. | Messenger | [M] [code: app/config/config.php:105-110 @7.x] |
 | `messenger_dsn_hit` | `'sync://'` | string | messengerconfig (hit) | `hit` transport. | Messenger | [M] [code: app/config/config.php:111-116 @7.x] |
 | `messenger_dsn_failed` | `null` | null | messengerconfig "Queue for failures" | Failure transport; empty becomes `null://` (discard). | Messenger | [M] [code: app/bundles/MessengerBundle/DependencyInjection/EnvProcessor/MessengerNullableEnvVarProcessor.php:13 @7.x] |
 | `messenger_retry_strategy_max_retries` | `3` | int | messengerconfig "Max retries" | 0 disables retries. | Messenger | [M] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#retry-strategy] |

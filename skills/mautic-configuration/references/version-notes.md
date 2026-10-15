@@ -9,14 +9,34 @@
 - 5.x removed the legacy shortener; shorteners are now Plugins selected under System Settings > Shortener Service. [docs: https://docs.mautic.org/en/7.2/configuration/shortener.html]
 - 5.1 started requiring a complex admin password at install, and the default DDEV password became `Maut1cR0cks!`. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#installing-with-command-line] [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#install-mautic-using-ddev]
 - The legacy RabbitMQ/Beanstalkd queue keys (`queue_protocol` etc.) are still documented, but Messenger DSN parameters replace them in 7.x. [docs: https://docs.mautic.org/en/7.2/queue/queue.html] [code: app/bundles/MessengerBundle/Config/config.php:7-13 @7.x]
-- No 6.x-specific configuration change appears in the inputs for this skill. [unverified]
+- 3.0 moved configuration to env-var-backed parameters, so a UI save no longer rebuilds the container; the queue settings left the UI. [PR #8265]
+- 3.0 renamed the `api_rate_limiter_cache` key `type` to `adapter`, which needed a manual local.php edit. [PR #8305]
+- 4.0 stopped storing `db_server_version`; Doctrine detects the MySQL or MariaDB version and a migration removes the key. [PR #9739]
+- 5.0 moved user config to `<project_root>/config/`; on a 4→5 upgrade the file moves after the migrations that edit it. [PR #11561] [PR #12796]
+- 5.0 removed `%kernel.root_dir%`; local.php paths must use `%kernel.project_dir%`. [PR #11145]
+- 5.0 removed the installer email step and the `--mailer_*` CLI options, and the installed check uses `db_driver` and `site_url` instead of `mailer_from_name`. [PR #12216]
+- 5.0 introduced Messenger settings. Early 5.0 development used `messenger_dsn` and `messenger_type`; the release uses `messenger_dsn_email`, `messenger_dsn_hit`, `messenger_dsn_failed` and `messenger_retry_strategy_*`, defaulting to `sync://`. [PR #11598] [PR #12509]
+- 5.0 added the read replica `db_host_ro`; it was ignored until 5.0.2. [PR #11792] [PR #13211]
+- 5.0 set admin session cookies to `SameSite=Lax`. [PR #11511]
+- 5.0.3 stores DSNs URL-encoded with `%` doubled and reads them through `urlencoded-dsn`. [PR #13255]
+- 5.1.0 enables the GrapesJS builder again on a fresh install. [PR #13672]
+- 5.2.2 made toggle-dependent config fields follow the live toggle state. [PR #14416]
+- 6.x: no configuration or installer behaviour change was found in the 158 PRs reviewed; 6.0 only added a GitHub Codespaces dev container. [PR #14610]
 
 ## 7.x (authoritative: 7.x snapshot, release 7.2.1 plus unreleased merged PRs)
 - 7.0 removed the web-push notification settings from the UI; the `notification_*` parameters remain. [code: UPGRADE-7.0.md:30 @7.x] [code: app/bundles/NotificationBundle/Config/config.php:113-124 @7.x]
 - Platform requirements are PHP 8.2.0–8.5.99 (enforced per request by `VersionCheckMiddleware`) and MySQL ≥ 8.4.0 or MariaDB ≥ 10.11.0 (enforced at install). [code: app/release_metadata.json:4-7 @7.x] [code: app/middlewares/VersionCheckMiddleware.php:46-59 @7.x] [code: app/bundles/InstallBundle/Helper/SchemaHelper.php:177-201 @7.x]
 - `ConfigBundle/Config/services.php` still carries service aliases marked "@deprecated Remove all aliases in Mautic 6": `mautic.config.model.sysinfo`, `mautic.config.mapper`, `mautic.config.config_change_logger`, `mautic.config.form.escape_transformer` and `mautic.config.form.restriction_helper`. [code: app/bundles/ConfigBundle/Config/services.php:26-31 @7.x]
 - The 7.x branch after 7.2.1 (unreleased; [PR #16870]) has the setting `validate_unsubscribe_emails` (default true), which the 8.0 docs describe as "Require email validation for unsubscribe". [code: app/bundles/EmailBundle/Config/config.php:137-224 @7.x] [docs: https://docs.mautic.org/en/8.0/configuration/settings.html#unsubscribe-settings]
-- A per-minor (7.0/7.1/7.2) breakdown of config changes is not available from the inputs; it is expected from the PR-history pass. [unverified]
+- 7.0 removed the API rate limiter (`noxlogic/ratelimit-bundle`), so the `api_rate_limiter_*` parameters no longer exist. [code: UPGRADE-7.0.md:52 @7.x]
+- 7.0 configures the mailer with the long `transports` form (`main` is Mautic's DSN), so plugins can add transports. [PR #15422]
+- 7.0.1 made the minimum DB version check inclusive, so MySQL 8.4.0 installs and updates. [PR #15797]
+- 7.1: no configuration or installer change was found in the 158 PRs reviewed. [unverified]
+- 7.2.0 makes install fail if migration metadata sync or version marking fails, and the CLI installer prints plain text. [PR #17127] [PR #17100]
+- 7.2.1 lets the CLI installer run on a Composer project that has never served a web request. [PR #17394]
+- Unreleased 7.x (after 7.2.1): each Configuration section is its own page and `last_shown_tab` is removed. [PR #17776] [code: app/bundles/ConfigBundle/Config/config.php:8-15 @7.x]
+
+Full history with reasons is in `pr-history.md`.
 
 ## 8.x delta (development branch; not released)
 - `ConfigEvents` is deleted. Subscribe to `ConfigBuilderEvent::class` (now `final`), `ConfigPreSaveEvent::class` and `ConfigPostSaveEvent::class`. The old names were `mautic.config_on_generate`, `mautic.config_pre_save` and `mautic.config_post_save`. [PR #17625] [PR #17654]
