@@ -113,6 +113,10 @@ Sources: [code: app/bundles/FormBundle/Config/config.php:8-150 @7.x] [code: app/
 - 8.x: `FORM_ON_SUBMIT`, `FORM_ON_BUILD`, `ON_OBJECT_COLLECT` and `ON_FIELD_COLLECT` are dispatched by class name; their constants still exist but receive nothing. [PR #17223]
 - 8.x: `SubmissionEvent` is final, and `setPostSubmitCallbackResponse()` requires a `RedirectResponse`. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
 - 8.x: a Symfony 8 regression returned 500 on email, url and captcha submissions; it is fixed. [PR #17392]
+- 5.0: form templates are Twig, so theme field overrides must be `.html.twig`. Mapping moved to `mapped_object`/`mapped_field`. URL pre-fill works on external JS embeds. [PR #11898] [PR #11905] [PR #11077]
+- 5.1: new forms default to "Display message"; the API default stays `return`. Forms gained a language setting. [PR #12813] [PR #13410] [PR #12814]
+- 5.2.3–5.2.7: a mapped choice field uses its own options unless `syncList` is on. [PR #14560] [PR #14048]
+- 6.0: submission values are stored without HTML entity encoding (BC break). Read-only fields were added. [PR #14604] [PR #14422]
 - Full detail: references/version-notes.md.
 
 ## Pitfalls
@@ -129,6 +133,11 @@ Sources: [code: app/bundles/FormBundle/Config/config.php:8-150 @7.x] [code: app/
 - Docs vs code (phone): the docs say Phone validates international format. The code validates only when the field's `international` option is on, which is off by default. [docs: https://docs.mautic.org/en/7.2/components/forms.html#fields] [code: app/bundles/FormBundle/Form/Type/FormFieldTelType.php:25-30 @7.x]
 - Open question (API serializer): the API docs list `submissionLimit`, `submissionLimitMessage` and `submissionCount` in GET responses. The v1 serializer does not expose them, nor `progressiveProfilingLimit` or the field behaviour properties (`showWhenValueExists`, `showAfterXSubmissions`, `alwaysDisplay`). Verify against a live response or API v2. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/forms.html] [code: app/bundles/FormBundle/Entity/Form.php:351-384 @7.x] [code: app/bundles/FormBundle/Entity/Field.php:300-331 @7.x]
 - Open question (isAutoFill): the API docs say `isAutoFill=false` means "the value is not saved". The code shows no such link. [unverified] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/forms.html#form-field-properties]
+- "Existing contact wins" (B73) is unreleased: in 7.2.1 and earlier, a known contact submitting without a cookie lost the merge, and its ID was deleted. [PR #16426]
+- Auto-fill is off on new installs from 7.2.0 (`form_field_autofill=false`). Upgrades that already use it get it switched on by a migration. [PR #16954]
+- "Send form results" needs a To address from 7.2.0. Actions saved with only CC/BCC (allowed since 4.4.2) must get a To when next edited. [PR #17137] [PR #11405]
+- Repost failures: in 7.2.1 and earlier, a 4xx from the target shows on the form. On the 7.x head, only a `violations` response blocks the visitor; other errors send the failure email. [PR #13482] [PR #17461]
+- Mapped select/radio/checkbox fields have regressed several times to showing the contact field's options. They should use their own list unless `syncList` is on. Turning `syncList` off does not restore custom labels. [PR #8646] [PR #14117] [PR #14560] [PR #14048]
 - The devdocs plugin example has bugs (`onFormValidateCustomFIeld` typo, inverted validation branch, `.html.php` templates). Use core subscribers such as `FormValidationSubscriber` as the reference instead. [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/forms.html#example-code] [code: app/bundles/FormBundle/EventListener/FormValidationSubscriber.php:35-82 @7.x]
 
 ## Related skills
@@ -150,4 +159,4 @@ Sources: [code: app/bundles/FormBundle/Config/config.php:8-150 @7.x] [code: app/
 - references/docs-digest.md: what docs.mautic.org and devdocs say (user procedures, JS hooks, plugin extension, REST endpoints), with URLs.
 - references/test-patterns.md: base classes, helpers, cleanup rules, representative tests and a functional-test skeleton.
 - references/version-notes.md: pre-7 history, 7.0–7.2 changes and the 8.x delta.
-- references/pr-history.md: not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md: why and when forms behaviour changed, from merged PRs: decisions, a regression catalogue, a feature timeline, removals, maintainer norms and open questions.

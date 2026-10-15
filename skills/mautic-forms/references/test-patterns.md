@@ -117,3 +117,15 @@ The skeleton follows the pattern in [code: app/bundles/FormBundle/Tests/Controll
 - The contact outcome: created, merged or new because of a conflict, and which field values changed or stayed. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1027-1110 @7.x]
 - On validation failure, that nothing was persisted and `submission_count` did not change. [code: app/bundles/FormBundle/Model/SubmissionModel.php:322-324 @7.x]
 - For builder changes, that the results table schema changed as expected (column added or dropped). [code: app/bundles/FormBundle/Tests/Model/FieldModelFunctionalTest.php @7.x]
+
+## Regression tests worth adding
+Rows from the regression catalogue in `references/pr-history.md` with no matching test found by a grep of the 7.x FormBundle tests.
+
+| Behaviour to assert | PR |
+|---|---|
+| An unchecked single checkbox mapped to a boolean field leaves the contact value unchanged | [PR #6282] |
+| A required number or boolean field accepts `0` | [PR #5189] |
+| A form option `$100m` renders literally in a `{form=ID}` landing page | [PR #5754] |
+| A campaign-source form does not add the contact to an unpublished campaign | [PR #11130] |
+| The "form field value" condition compares numbers numerically (`3 gt 15` is false) | [PR #7705] |
+| An unmapped email field stays unmapped after it is edited and saved | [PR #13744] |
