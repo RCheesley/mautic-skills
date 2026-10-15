@@ -129,7 +129,12 @@ Full detail and skeletons: references/test-patterns.md.
 - 5.0: `email.mjml.twig` deprecated in favour of MJML inside `email.html.twig`; themes coffee, Mauve, nature removed [code: plugins/GrapesJsBuilderBundle/Controller/GrapesJsController.php:157-161 @7.x] [code: UPGRADE-5.0.md:101 @7.x].
 - 5.1: `window.MauticGrapesJsPlugins` registration [devdocs: https://devdocs.mautic.org/en/7.2/themes/grapesjs.html#grapesjs-builder-plugins]. 5.2: media endpoint replaces `/s/grapesjsbuilder/assets` [code: plugins/GrapesJsBuilderBundle/Config/config.php:21-24 @7.x].
 - 6.0: legacy builder and `MauticFactory::getTheme/getInstalledThemes` removed [code: UPGRADE-6.0.md:4-15,60-61 @7.x].
-- 7.0: MJML theme tokens (`mj-class`) [devdocs: https://devdocs.mautic.org/en/7.2/themes/grapesjs.html#mjml-theme-tokens]. 7.2: `tags` key, Typography block category, builder assets built at install instead of committed [docs: https://docs.mautic.org/en/7.2/builders/email_landing_page.html#typography] [devdocs: https://devdocs.mautic.org/en/7.2/themes/grapesjs.html#building-the-builder-assets]. 7.2.1: optional `html/email-validation.html.twig` [code: app/bundles/EmailBundle/Controller/PublicController.php:168 @7.x].
+- 7.2: MJML theme tokens (`mj-class`); devdocs say 7.0 but the code first ships in tag 7.2.0 [PR #16042] [devdocs: https://devdocs.mautic.org/en/7.2/themes/grapesjs.html#mjml-theme-tokens]. Also 7.2: `tags` key, Typography block category, builder assets built at install instead of committed [docs: https://docs.mautic.org/en/7.2/builders/email_landing_page.html#typography] [devdocs: https://devdocs.mautic.org/en/7.2/themes/grapesjs.html#building-the-builder-assets]. 7.2.1: optional `html/email-validation.html.twig` [code: app/bundles/EmailBundle/Controller/PublicController.php:168 @7.x].
+- 5.0: CKEditor 5 replaces CKEditor 4 in GrapesJS; Code Mode content opens in the builder after a warning instead of being blocked [PR #12641] [PR #11339].
+- 5.1: local autosave with restore prompt; Apply saves a new email or page without leaving the builder [PR #13610] [PR #13665].
+- 5.2: Blank becomes MJML, 13 `_`-prefixed starter themes, `grapesjsbuilder.customMjml` in the email API; 5.2.2 moves `themes/@defaults` into `@MauticCore/Theme/*` [PR #14255] [PR #14155] [PR #13775] [PR #14425].
+- 6.0: primary brand colour and company name in Theme settings; new Landing Page and form themes; Goldstar, Neopolitan, Oxygen, Skyline stop being form themes [PR #14649] [PR #14519] [PR #14547] [PR #14588].
+- 7.1.3: CKEditor keeps valid inline CSS and strips only MS Word styles; table editing restored in the same patch [PR #16058] [PR #16476].
 - 8.x: Landing Pages with empty `customHtml` no longer fall back to theme `page.html.twig` and the `public` template variable is gone [PR #17078]; `/grapesjsbuilder/assets` removed [PR #17070]; `EmojiHelper` removed [PR #17026]; `TwigPass` removed [PR #17117]; Bootstrap stack undecided on the 8.x snapshot. See references/version-notes.md.
 
 ## Pitfalls
@@ -145,6 +150,11 @@ Full detail and skeletons: references/test-patterns.md.
 - `ThemeHelper::rename()` updates `config.json` using the pre-rename path and likely throws [code: app/bundles/CoreBundle/Helper/ThemeHelper.php:200-202 @7.x].
 - Open question (docs vs code): thumbnails are 575x600 in devdocs and 400x600 in user docs; code does not check size [devdocs: https://devdocs.mautic.org/en/7.2/themes/getting_started.html#thumbnails] [docs: https://docs.mautic.org/en/7.2/builders/creating_themes.html#steps-to-save-the-theme-package].
 - Open question: devdocs place `email-validation.html.twig` in 8.0 docs only, but it is on the 7.x branch after 7.2.1 (unreleased; [PR #16870]) and not yet on the 8.x branch [code: app/bundles/EmailBundle/Controller/PublicController.php:168 @7.x] [devdocs: https://devdocs.mautic.org/en/8.0/themes/getting_started.html#html-email-validation-html-twig].
+- A theme that extends `@MauticCore/Theme/base.html.twig` or calls `getRoundedCorners` breaks on older cores unless its `composer.json` raises `mautic/core-lib` (≥5.2.2, ^7.0) [PR #14621] [PR #14657].
+- Use `#` for placeholder hrefs in theme markup; a bare `https://` href is rejected on save [PR #16778] [PR #16892].
+- Head tags marked `data-source="mautic"` are stripped when GrapesJS content is saved; do not use that attribute on theme head assets you want to keep [PR #10360].
+- A theme's form `_style.html.twig` override must follow core form-style changes, or layout fixes such as 50%-width columns do not reach it [PR #16281].
+- Builder localStorage backups are not scoped by user; on a shared browser another user can be offered a draft [PR #13610].
 
 More: references/behaviour.md §9.
 
@@ -163,4 +173,4 @@ More: references/behaviour.md §9.
 - references/docs-digest.md — what the user docs and devdocs say, procedures, design/UI conventions, terminology.
 - references/test-patterns.md — base classes, representative tests, fixtures, test skeletons.
 - references/version-notes.md — 5.x/6.x history, 7.x minors, the 8.x delta.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md — why and when: decisions, regression catalogue, feature timeline and removals from merged PRs.

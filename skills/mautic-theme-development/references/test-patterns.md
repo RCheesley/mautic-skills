@@ -17,7 +17,7 @@ For running PHPUnit, base classes and DB fixtures in general see the `mautic-tes
 | GrapesJS HTTP endpoints, API serialisation | `MauticMysqlTestCase`; test must create the `Plugin` row and a published `Integration` row | `AssertCustomMjmlTest`, `FileManagerControllerFunctionalTest` | [code: plugins/GrapesJsBuilderBundle/Tests/Functional/Controller/AssertCustomMjmlTest.php:129-142 @7.x] |
 | Builder JavaScript | none — no JS unit tests; only eslint/prettier scripts | — | [code: plugins/GrapesJsBuilderBundle/package.json @7.x] |
 
-No Codeception coverage for themes or the builder was found [code: tests/ @7.x] [unverified: exhaustive search].
+Codeception covers the GrapesJS builder in `tests/acceptance/GrapesJsBuilderPageCest.php` (present from tag 7.2.0); no Codeception coverage for theme upload or theme management was found [code: tests/acceptance/GrapesJsBuilderPageCest.php @7.x].
 
 ## 2. Tests to read first
 - `ThemeHelperTest::testThemeIsInstalled`, `::testThemeInstallRejectsZipSlipEntries` (data provider builds zips with `../` and absolute entries), `::testCustomThemesAreReturnedForFeatureIfCustomBuilderIsEnabled`, `::testThemeFallbackToDefaultIfTemplateIsMissing` [code: app/bundles/CoreBundle/Tests/Unit/Helper/ThemeHelperTest.php:152,202,281,537 @7.x].
@@ -103,3 +103,14 @@ Pattern from [code: app/bundles/PageBundle/Tests/Functional/Controller/ThemeHelp
 ## 5. Manual checks (no automated coverage)
 - After `composer gjs-build`, `plugins/GrapesJsBuilderBundle/Assets/library/js/dist/manifest.json` exists and an Email edit page loads the hashed bundle [code: plugins/GrapesJsBuilderBundle/EventSubscriber/AssetsSubscriber.php:36-91 @7.x].
 - In the browser: select a theme, edit, Apply, reload; confirm MJML mode reopens with editor state and no local-backup prompt [code: plugins/GrapesJsBuilderBundle/Assets/library/js/storage.service.js:138-241 @7.x].
+
+## 6. Regression tests worth adding
+Rows from references/pr-history.md §3 with no matching test found by grep in the 7.x test directories.
+- Unit: `getInstalledThemes('email')` with a `config.json` whose `builder` is a string throws `BadConfigurationException` [PR #9893] [code: app/bundles/CoreBundle/Helper/ThemeHelper.php:781-783 @7.x].
+- Functional: saving GrapesJS HTML with a `data-source="mautic"` head tag stores `customHtml` without it [PR #10360].
+- Functional: unsubscribe page and form preview render for a theme whose `base.html.twig` extends `@MauticCore/Theme/base.html.twig` [PR #14425].
+- Functional: `GET /s/grapesjsbuilder/assets` still answers until the 8.x removal, and `/media` pages newest first [PR #14191] [PR #17070].
+- Acceptance: Landing Page "Edit code" then save keeps element styling [PR #15971].
+- Acceptance: open, save, close and reopen shows no restore-backup prompt [PR #16383].
+- Acceptance: a theme with `<mj-preview>` loads in the email builder and the sent HTML keeps the preview text [PR #16106].
+- Acceptance: `<mj-style>` with `.wrapper > table` survives save and reopen (7.2 branch, after the merge-up) [PR #17474].
