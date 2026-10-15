@@ -107,7 +107,7 @@ Full tables (columns, every event constant, every route, every registered event 
 - A Contact who joins a Segment enters its campaigns only on the next `mautic:campaigns:update` run; since 5.0 `mautic:segments:update` no longer touches campaign membership [PR #10550].
 - Duplicate-key errors on `campaign_rotation` have regressed at least five times (jumps, two campaigns sharing one decision). Rotations must be read per campaign, and jump logs built before the rotation is incremented [PR #9639] [PR #10206] [PR #14939] [code: app/bundles/CampaignBundle/Executioner/EventExecutioner.php:189-202 @7.x].
 - A due scheduled log whose `version` is above 1 is never picked up again by the scheduled phase, so it looks stuck rather than failing; failed logs get their version reset only from 7.3 [PR #17146] [PR #17245].
-- New Send email events default to Marketing, but an event saved without `email_type` is sent as Transactional, which ignores DNC [PR #14145] [code: app/bundles/EmailBundle/EventListener/CampaignSubscriber.php:274 @7.x].
+- New Send email events default to Marketing, but an event saved without `email_type` is sent as Transactional, which means repeatable. Since 7.2 neither type bypasses DNC: only the email's **Send to unsubscribed contacts** (`sendToDnc`) does. From 5.0 to 7.1 transactional sends did ignore DNC [PR #14145] [PR #11786] [PR #15995] [code: app/bundles/EmailBundle/EventListener/CampaignSubscriber.php:274-285 @7.x].
 - Open question: `campaign_by_range` is in the config form but no consumer was found in CampaignBundle [code: app/bundles/CampaignBundle/Form/Type/ConfigType.php:65-75 @7.x] [unverified].
 
 ## Related skills

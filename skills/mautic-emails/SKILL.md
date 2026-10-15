@@ -82,7 +82,7 @@ Full detail: references/code-map.md.
 - Store per-email feature flags in the `settings` JSON column (`settings_<key>`) instead of new columns [code: app/bundles/EmailBundle/Entity/Email.php:1495-1525 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/emails.html#email-settings].
 - Any change to `getEmailPendingQuery` must keep the pending count, the UI send loop and `mautic:broadcasts:send` in agreement (they share the query) [code: app/bundles/EmailBundle/Model/EmailModel.php:1024-1034 @7.x].
 - For 8.x compatibility subscribe by event class (`EmailSendEvent::class`, `EmailOnBuildEvent::class`, ...) and use `data-mautic-disable-tracking` (see Version notes).
-- PR-derived maintainer norms are not yet available (see references/pr-history.md).
+- PR-derived maintainer norms are in references/pr-history.md (Maintainer norms section).
 
 ## How to test it
 - Functional tests extend `Mautic\CoreBundle\Test\MauticMysqlTestCase`; its default config uses `mailer_dsn = null://null`, `messenger_dsn_email = in-memory://default`, `messenger_dsn_hit = sync://` [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:52-61 @7.x].
@@ -95,6 +95,12 @@ Full detail: references/test-patterns.md.
 ## Version notes
 - 5.0 replaced Swiftmailer and its spool with Symfony Mailer + Messenger; `mautic:emails:send` is gone and all transports share `/mailer/callback` [docs: https://docs.mautic.org/en/7.2/channels/emails.html#webhook-bounce-management] [code: app/bundles/EmailBundle/Config/config.php:99-100 @7.x].
 - 5.1 added preview of A/B and translation variants [docs: https://docs.mautic.org/en/7.2/channels/emails.html#translations].
+- 5.0 to 7.1: transactional campaign and API sends ignored DNC and carried no `List-Unsubscribe` [PR #11786] [PR #11787] [code: app/bundles/EmailBundle/Helper/MailHelper.php:1327 @7.1.0]; 7.2 moved both rules to the email's `sendToDnc` [PR #15995] [code: app/bundles/EmailBundle/Helper/MailHelper.php:1318-1333 @7.x].
+- 5.0 added RFC 8058 one-click unsubscribe [PR #13103]; 5.1 put the HTTPS URL before `mailto:` [PR #13407].
+- 5.0 changed `mautic:broadcasts:send`: `--limit` caps the run total, `--batch` sets batch size, and `--max-threads`/`--thread-id` were added [PR #11127] [PR #11549].
+- 5.2 made Marketing the campaign default type and added drafts and the Preheader field [PR #14145] [PR #14028] [PR #13792].
+- 6.0 added bot-ratio open filtering (`bot_helper_*`) and the last-moment duplicate check for Segment sends [PR #14593] [PR #14531].
+- 7.1 added S/MIME signing and changed the default `mailer_dsn` to port 1025 [PR #15563] [PR #15627].
 - 7.0 removed `symfony/amqp-messenger` from core dependencies and deleted the Messenger `TestHandler`, so `amqp://` DSNs are rejected until `symfony/amqp-messenger` is installed [code: UPGRADE-7.0.md:15 @7.x] [code: UPGRADE-7.0.md:53 @7.x] [code: app/bundles/MessengerBundle/Validator/DsnValidator.php:31-45 @7.x].
 - 7.x deprecates the `mautic:disable-tracking` link attribute in favour of `data-mautic-disable-tracking="true"` [code: app/bundles/PageBundle/Model/TrackableModel.php:740-747 @7.x].
 - The 7.x branch (after 7.2.1, unreleased; [PR #16870]) has the unsubscribe email-validation page (`validate_unsubscribe_emails`); 8.x code does not have it yet (arrives with the forward merge) [code: app/bundles/EmailBundle/Config/config.php:137-224 @7.x].
@@ -118,6 +124,11 @@ Full detail: references/version-notes.md.
 - 7.2 user docs spell the legacy attribute `mautic:disable:tracking`; the code checks `mautic:disable-tracking` [docs: https://docs.mautic.org/en/7.2/channels/emails.html#tracking-links-in-emails] [code: app/bundles/PageBundle/Model/TrackableModel.php:741 @7.x].
 - The devdocs transport example is Swiftmailer-era (`mautic.email_transport` tag, `/mailer/{transport}/callback`); the 7.x route is `/mailer/callback` with a Symfony transport factory [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/emails.html#email-transports] [code: app/bundles/EmailBundle/Config/config.php:99-100 @7.x].
 - The `sendWinnerDelay` limit differs: 1-24 h in the "generate A/B test" modal and 1-480 h in the variant form [code: app/bundles/EmailBundle/Form/Type/GenerateABTestType.php:87 @7.x] [code: app/bundles/EmailBundle/Form/Type/VariantType.php:87 @7.x].
+- Transactional DNC bypass changed twice: 5.0 to 7.1 campaign "transactional" sends and the API direct send ignored DNC [PR #11786]; since 7.2 only the email's `sendToDnc` does [PR #15995] [code: app/bundles/EmailBundle/EventListener/CampaignSubscriber.php:274-286 @7.x]. An event config without `email_type` is still treated as transactional (repeatable) [code: app/bundles/EmailBundle/EventListener/CampaignSubscriber.php:274 @7.x].
+- `EMAIL_ON_SEND` listeners that rewrite content must keep each Contact's tokens and tracking hashes separate; this regressed several times and every recipient got one Contact's links [PR #1310] [PR #13965] [PR #14051] [PR #15190].
+- Parallel Segment sends can still duplicate: a stat check runs just before each send, but there is no atomic insert [PR #14531].
+- VERP needs Return-Path without a `Sender` header; 7.1.x sets `Sender` and loses IMAP bounces, fixed in 7.2 [PR #15674] [PR #16152].
+- Use `mautic:broadcasts:send`; `mautic:broadcast:send` in a 7.x test resolves only through Symfony's abbreviation matching, not an alias [code: app/bundles/ChannelBundle/Command/SendChannelBroadcastCommand.php:23 @7.x] [code: app/bundles/EmailBundle/Tests/Controller/EmailControllerFunctionalTest.php:1256 @7.x].
 
 ## Related skills
 - mautic-contacts - DNC model and reasons, frequency rules, contact merge, preferred locale.
@@ -139,4 +150,4 @@ Full detail: references/version-notes.md.
 - references/docs-digest.md - what docs.mautic.org, devdocs and the KB say, with URLs, procedures and doc/code discrepancies.
 - references/test-patterns.md - base classes, fixtures, representative tests and skeletons for this area.
 - references/version-notes.md - 4.x to 5.x mailer change, 7.x minors, and the 8.x delta for EmailBundle.
-- references/pr-history.md - not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md - why and when email behaviour changed: decisions by topic, removed features, regression catalogue, feature timeline, maintainer norms and open questions from about 760 merged PRs.

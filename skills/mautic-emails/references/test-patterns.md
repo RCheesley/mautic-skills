@@ -128,3 +128,17 @@ setup from `PublicControllerFunctionalTest.php:205`. [code: app/bundles/EmailBun
 ## Testing async paths
 - Keep `messenger_dsn_email = in-memory://default` and assert the message is in the in-memory transport rather than the mailer. [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:52-61 @7.x]
 - `EmailHitNotificationHandler` has a unit test that mocks `EmailModel` and `CoreParametersHelper`: `app/bundles/MessengerBundle/Tests/MessageHandler/EmailHitNotificationHandlerTest.php`.
+
+## Regression tests worth adding
+Rows from the regression catalogue in pr-history.md for which one grep of the 7.x `Tests/` directories found no test.
+
+| Contract | Where to assert | PR |
+|---|---|---|
+| A malformed address gets DNC Bounced "Incorrectly formatted email address"; a transport error does not | `lead_donotcontact` rows after a send with a failing transport | [PR #5526] [PR #5807] |
+| Email DNC exclusion works under ANSI `sql_mode` | Pending count and broadcast with `SET SESSION sql_mode='ANSI'` | [PR #12919] |
+| Bulk delete of emails deletes no Contacts with the same IDs | `/s/emails/batchDelete` then Contact count | [PR #14335] |
+| Whitespace around an `href` is trimmed and the link is tracked | Trackable created for `<a href=" https://...">` | [PR #15698] |
+| Cloning a Segment Email clears publish up/down, so the clone is not broadcast | Cloned entity dates, then `mautic:broadcasts:send` | [PR #12784] |
+| Opens through Gmail's image proxy still count | `is_read` after a pixel hit with a GoogleImageProxy user agent | [PR #15870] |
+
+Use `mautic:broadcasts:send` in new tests. The existing `mautic:broadcast:send` call works only through Symfony's abbreviation matching; the command has no alias [code: app/bundles/ChannelBundle/Command/SendChannelBroadcastCommand.php:23 @7.x].
