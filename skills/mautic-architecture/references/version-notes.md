@@ -9,11 +9,26 @@
 - The deprecated permission-class directory scan is marked "To be removed in 4.0" and still works in 7.2.1. [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:445-462 @7.x]
 - `Controller\FormController` has been deprecated since 2.3 and is still the class behind `mautic_core_form_action` in 7.2.1. [code: app/bundles/CoreBundle/Controller/FormController.php @7.x]
 
+## 5.x
+- 5.0 applied autowiring and autoconfiguration to every bundle and plugin directory; legacy string IDs stayed as aliases. [PR #11587]
+- 5.0 removed PHP templates, `PhpEngine`, `TemplatingHelper` and `TemplatingPass`; controllers take dependencies through the constructor and `initialize()` is gone. [PR #12046] [PR #12122] [PR #12412]
+- 5.0 moved front-end libraries to npm, copied into `media/` at asset generation; `node_modules` is never loaded at runtime. [PR #12234] [PR #12417]
+- 5.0 upgraded to Symfony 5.4 and DBAL 3.6; CSRF tokens are compared with `isTokenValid()`. [PR #12213] [PR #12396] [PR #12198]
+- 5.0.2 made `pdo_mysql` the only database driver, enforced at cache build. [PR #13210]
+- 5.1 runs generated-column migrations after regular migrations, adds opt-in optimistic locking, `EntityValidateEvent` and `themes/system/` template overrides. [PR #13455] [PR #13659] [PR #13812] [PR #13590]
+- 5.2 added `VirtualPermissions` and `SkipModifiedInterface`; 5.2.2 restored `VIEW_INJECT_CUSTOM_TEMPLATE` on AJAX renders. [PR #14016] [PR #13994] [PR #14434]
+
 ## 6.x
 - The autowiring docs said `config.php` service definitions would stop working in Mautic 6; in 7.2.1 `ServicePass` still processes them, so they kept working through 6.x and 7.x. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/autowiring.html] [code: app/bundles/CoreBundle/DependencyInjection/Compiler/ServicePass.php:33-75 @7.x]
-- No other 6.x-specific architecture differences are recorded in the inputs; check references/pr-history.md once generated.
+- 6.0 removed every `MauticFactory` method one at a time; the class file survived 6.0 with only `getModel()` and was deleted in 7.0. [PR #14399] [PR #14400] [PR #14564] [code: UPGRADE-7.0.md:16 @7.x]
+- 6.0 removed `CoreParametersHelper::getParameter()`, added `pre_batch_save`/`post_batch_save` to `saveEntities()`, and built global search from per-bundle subscribers. [PR #13837] [PR #14503] [PR #14432]
+- 6.0 removed Font Awesome, Froala and the legacy builder, and moved SAML to `javer/sp-bundle`. [PR #14265] [PR #14501] [PR #14450] [PR #14390]
 
 ## 7.x minors
+- 7.0: updates are CLI-only; `iterator_mode` was removed from `getEntities()`; PHP 8.1 was dropped. [PR #14689] [PR #14896]
+- 7.1: remember-me lifetime 90 days; `isRequestTrackable()` became the single tracking gate. [PR #15739] [PR #15844]
+- 7.2.0: services moved to `Config/services.php`, tagged-service passes replaced by `#[AutowireIterator]`, a container smoke test added, and many classes made `final` in a minor. [PR #16843] [PR #16776] [PR #16747] [PR #16754]
+- 7.2.1: the string IDs dropped in 7.2.0 came back as deprecated aliases. [PR #17251]
 - 7.0: `UuidTrait::isValidUuid()` deprecated in favour of `UuidHelper::isValidUuid()`. [code: app/bundles/CoreBundle/Entity/UuidTrait.php:33-43 @7.x]
 - 7.2: string service aliases `mautic.helper.encryption`, `mautic.core.service.flashbag`, `mautic.database.version.provider`, `mautic.doctrine.loader.mautic_fixtures_loader`, `mautic.generated.columns.provider`, `mautic.helper.twig.menu`, `mautic.route_loader` deprecated. [code: app/bundles/CoreBundle/Config/services.php:189-190 @7.x] [code: app/bundles/CoreBundle/Config/services.php:342-354 @7.x]
 - 7.2: menu items that define only a `uri` render. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/config.html#menu-item-definitions]

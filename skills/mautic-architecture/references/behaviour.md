@@ -35,7 +35,7 @@ A4. Composer installer paths: `type:mautic-plugin` → `plugins/{$name}`, `type:
 
 A5. Root files such as `index.php`, `bin/console`, `.htaccess` and `importmap.php` are scaffolded from `app/assets/scaffold/files/`; CI diffs every mapped pair, so changing a root scaffolded file requires the same change in the scaffold copy. [code: app/composer.json:112-133 @7.x] [code: .github/workflows/tests.yml:265-277 @7.x]
 
-A6. Middlewares in `app/middlewares` run before Symfony boots (for example IP restriction for `index_dev.php`). [devdocs: https://devdocs.mautic.org/en/7.2/plugins/mautic_vs_symfony.html#middlewares]
+A6. Middlewares in `app/middlewares` run before Symfony boots (for example `Dev/IpRestrictMiddleware`, which limits the dev environment to `dev_hosts` IPs or DDEV). [devdocs: https://devdocs.mautic.org/en/7.2/plugins/mautic_vs_symfony.html#middlewares] [code: app/middlewares/Dev/IpRestrictMiddleware.php:33-51 @7.x] Devdocs still describe this as restricting `index_dev.php`, which was removed in 5.0 [PR #12206].
 
 ## B. Bundles, configuration and dependency injection
 

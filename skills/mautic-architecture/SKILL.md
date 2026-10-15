@@ -103,6 +103,11 @@ Bundle-by-bundle ownership: references/bundle-map.md. Full map: references/code-
 ## Version notes
 - Mautic 5 added autowiring/autoconfigure, moved `local.php` to `config/local.php`, and required Twig views. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/autowiring.html] [devdocs: https://devdocs.mautic.org/en/7.2/plugins/update_m4_to_m5.html]
 - 7.0 deprecated `UuidTrait::isValidUuid()`; 7.2 deprecated several string service aliases (`mautic.helper.encryption`, `mautic.core.service.flashbag`, `mautic.route_loader`, ...) and made `uri`-only menu items render. [code: app/bundles/CoreBundle/Entity/UuidTrait.php:33-43 @7.x] [code: app/bundles/CoreBundle/Config/services.php:189-190 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugins/config.html#menu-item-definitions]
+- 5.0: Twig only (`PhpEngine` and `TemplatingHelper` removed), controllers constructor-injected (`initialize()` removed), npm libraries copied into `media/` and never loaded from `node_modules`; 5.0.2 made `pdo_mysql` the only driver. [PR #12046] [PR #12122] [PR #12412] [PR #12417] [PR #13210]
+- 5.1: generated-column migrations run after regular migrations, and opt-in optimistic locking arrived in `AbstractStandardFormController`. [PR #13455] [PR #13659]
+- 6.0: every `MauticFactory` method and `CoreParametersHelper::getParameter()` were removed; the empty `MauticFactory` class itself went in 7.0. [PR #14400] [PR #13837] [code: UPGRADE-7.0.md:16 @7.x]
+- 7.0: updates are CLI-only (`/s/update` removed) and PHP 8.1 support was dropped. [PR #14689]
+- 7.2.0: LESS and Grunt replaced by SCSS with AssetMapper, many classes made `final`, and string `container->get()` banned by a PHPStan rule. [PR #16143] [PR #16754] [PR #16737]
 - 8.x: PHP 8.4, Symfony 8.1, Doctrine ORM 3.7 / DBAL 4.4, PHPUnit 13; dispatch by event class; `CoreEvents` removed; `ServicePass`, `ModelPass`, `PermissionsPass`, `TwigPass` and the `config.php` `services` group removed; `FormController` removed; core routes become `#[Route]` attributes while plugins keep `config.php` routes. [PR #16993] [PR #17392] [PR #17361] [PR #17004] [PR #17157] [PR #17116] [PR #17133] [PR #17121] [PR #17117] [PR #17470] [PR #17481] [PR #17169]
 - Full detail: references/version-notes.md.
 
@@ -121,6 +126,11 @@ Bundle-by-bundle ownership: references/bundle-map.md. Full map: references/code-
 - The 7.2 custom-event docs pass `($eventName, $event)` to `dispatch()`; Symfony's order is `dispatch($event, $eventName)`. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/event_listeners.html#custom-events]
 - `track_private_ip_ranges = false` (default) records 10.x/192.168.x visitors as `127.0.0.1`. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:213-222 @7.x]
 - A crashed prod asset generation leaves `media/generation_in_progress.txt` behind and every request spin-waits on it. [code: app/bundles/CoreBundle/Helper/AssetGenerationHelper.php:121-123 @7.x]
+- Moving or renaming a service must keep its old string ID as a deprecated alias; 7.2.0 dropped IDs such as `mautic.helper.encryption` and broke plugins until 7.2.1 restored them. [PR #16843] [PR #17251] [code: app/bundles/CoreBundle/Config/services.php:189-190 @7.x]
+- Do not tag an autoconfigured subscriber as `kernel.event_listener` too; it then runs twice per event, as `ExceptionListener` did. [PR #16879]
+- Controller action parameter names must match the route attribute names, because `executeAction` forwards through the ArgumentResolver; a mismatch is a 500. [PR #12837] [PR #12847]
+- Since 7.2.0 most core models, helpers, form types and exceptions are `final`; a plugin must decorate or compose rather than subclass them. [PR #16754] [PR #16883] [PR #16894] [PR #16898]
+- Values derived from `local.php` never override `.env`, `.env.local` or system environment values that are already set. [PR #17072]
 
 ## Related skills
 - mautic-overview: product concepts and glossary before diving into code.
@@ -144,4 +154,4 @@ Bundle-by-bundle ownership: references/bundle-map.md. Full map: references/code-
 - references/docs-digest.md — what devdocs say about MVC, Mautic vs Symfony, services, events, translations and UI design, with URLs and discrepancies.
 - references/test-patterns.md — base classes, helpers, representative tests and skeletons for framework-level tests.
 - references/version-notes.md — 5.x/6.x history, 7.x minors and the 8.x delta for the framework layer.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md — why and when the framework layer changed: decisions, regressions, removals and platform requirements from merged PRs.

@@ -115,3 +115,11 @@ final class MySearchTest extends \Mautic\CoreBundle\Test\MauticMysqlTestCase
 - `CorePermissions` memoises per string; build a fresh client/container when switching users within a test. [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:210-213 @7.x]
 - `mautic:update:apply` calls `exit()`, so it cannot be run in-process. [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:99 @7.x]
 - In 8.x many core classes are `final`; mocking them needs `DG\BypassFinals`, and `Request`/`InputBag`/`Router` must not be mocked. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html#final-classes] [PR #17392]
+
+## Regression tests worth adding
+No test for these regression-catalogue rows was found by grepping `app/bundles/*/Tests` on 7.x.
+- Each 7.2-deprecated string alias (for example `mautic.helper.encryption`) still resolves to its FQCN service. [PR #17251] [code: app/bundles/CoreBundle/Config/services.php:189-190 @7.x]
+- An AJAX render through `eventAwareRenderView()` dispatches `VIEW_INJECT_CUSTOM_TEMPLATE` and uses the replaced template. [PR #14434] [code: app/bundles/CoreBundle/Controller/CommonController.php:197-205 @7.x]
+- Saving a `SkipModifiedInterface` entity that opts out leaves `modifiedBy` unchanged. [PR #13994] [code: app/bundles/CoreBundle/Model/FormModel.php:269-271 @7.x]
+- `getPublishedByDateOrmExpression()` returns an ORM `Andx` and `getPublishedByDateDbalExpression()` a DBAL `CompositeExpression` with the same semantics. [PR #16970]
+- `accessDenied()` throws for a non-batch request and returns an error array for a batch request. [PR #16299]
