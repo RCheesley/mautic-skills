@@ -79,3 +79,18 @@ Follow `DashboardControllerFunctionalTest`:
 ## Running
 - `bin/phpunit app/bundles/ReportBundle/Tests/Builder/MauticReportBuilderTest.php`
 - `bin/phpunit --filter testDelayedTransport app/bundles/ReportBundle/Tests/Controller/ReportControllerFunctionalTest.php` (needs the MySQL test DB; see mautic-testing).
+
+## Regression tests worth adding
+Rows from the regression catalogue in `references/pr-history.md` with no matching test found by a grep of the 7.x ReportBundle, DashboardBundle and PageBundle tests.
+
+| Behaviour to assert | PR |
+|---|---|
+| A global `cached_data_timeout` of 0 leaves the widget uncached on the second render | [PR #14467] |
+| The tag detail page loads when a Report has an `empty` or `notEmpty` tag filter | [PR #15134] |
+| A boolean custom Contact field shows "No" for 0 in the Report table (`normalized_bool`) | [PR #14782] |
+| With `csv_always_enclose` on, every CSV cell, including empty ones, is quoted | [PR #7049] |
+| The "Most hit email redirects" widget counts hits on the last day of the range and ignores empty filters | [PR #8460] [PR #11086] |
+| A boolean filter saves its Yes/No value | [PR #14909] |
+| A value stored as `R&R` shows decoded in the table and in CSV | [PR #4088] |
+| A Report widget whose Report was deleted renders a "deleted / no data" message | [PR #5196] |
+

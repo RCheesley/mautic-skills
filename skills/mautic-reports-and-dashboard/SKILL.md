@@ -84,6 +84,11 @@ Out of scope: Contact fields and the Contact export (mautic-contacts), Email sta
 - Relative date filters [PR #17256] and the `is:scheduled` search [PR #17449] are on the 7.x branch after 7.2.1, not yet released, and documented only in the 8.0 user docs [code: app/bundles/ReportBundle/Helper/RelativeDateHelper.php:11-37 @7.x] [code: app/bundles/ReportBundle/Entity/ReportRepository.php:46-68 @7.x] [docs: https://docs.mautic.org/en/8.0/reports/reports.html#relative-date-filters].
 - 7.2 deprecates the service alias `mautic.report.helper.report`; inject `ReportHelper` instead [code: app/bundles/ReportBundle/Config/services.php:50-51 @7.x].
 - Since 5.1 the Reports list shows a paper-aeroplane icon on scheduled Reports [docs: https://docs.mautic.org/en/7.2/reports/reports.html#schedule].
+- 5.0 moved Report and Dashboard views to Twig, added tag filters and moved the tag filter from `ReportGeneratorEvent` into `MauticReportBuilder`, stopped rounding AVG, and added a Totals row to exports [PR #11980] [PR #12403] [PR #11273] [PR #12104].
+- 5.1 wraps `like`/`notLike` values in `%` when they have none, adds API create/edit/delete for Reports, and deletes sent export files (linked zips after 7 days) [PR #13080] [PR #13378] [PR #13405].
+- Before 5.2.4 a `cached_data_timeout` of 0 meant the widget cache never expired; from 5.2.4 it disables the cache [PR #14467] [code: app/bundles/DashboardBundle/Model/DashboardModel.php:212-221 @7.x].
+- From 6.0 the Page Hits source excludes rows with a NULL `date_hit` from date-ranged Reports [PR #14486] [code: app/bundles/PageBundle/EventListener/ReportSubscriber.php:375 @7.x].
+- 7.0.0 keeps an exact API `dateTo` time; 7.0.1 allows string operators on date filters; 7.2.0 adds `--cleanup-only` and rebuilds GROUP BY for `ONLY_FULL_GROUP_BY`; 7.2.1 casts tag filter values to integers (security fix) [PR #15532] [PR #15393] [PR #16077] [PR #17099] [PR #17129].
 - 8.x dispatches the 8 report events by class. The `ReportEvents` constants are kept, so listeners keyed on them load but never fire; Report CRUD pre/post save/delete events still dispatch by name [PR #17200].
 - 8.x deletes `DashboardEvents` (use `WidgetTypeListEvent`, `WidgetFormEvent`, `GenerateWidgetDetailEvent`, `PreLoadWidgetDetailEvent`) and `StatEvents` (use `AggregateStatRequestEvent`) [PR #17216] [PR #17654].
 - 8.x makes `WidgetDetailEvent` abstract and removes the legacy filesystem widget cache: `setCacheDir()` and `setCacheTimeout()` are gone and a cache provider is required [PR #17033] [PR #17034].
@@ -105,6 +110,12 @@ Out of scope: Contact fields and the Contact export (mautic-contacts), Email sta
 - `REPORT_PERMANENT_FILE_CREATED` and `JobExtendTimeEvent` have no core listeners; they are plugin hooks only [code: app/bundles/ReportBundle/ReportEvents.php:113-120 @7.x].
 - `Calculator::getSum()` returns an empty `StatDAO` (the sum is computed and then discarded) [code: app/bundles/StatsBundle/Aggregate/Calculator.php:162-172 @7.x].
 
+- A grouped Report drops from SELECT only a column that is an aggregator target and not grouped; every other selected or ordered column is added to GROUP BY. Reviewers rejected dropping user-selected columns to make the SQL valid [PR #17099] [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:301-307,344-399 @7.x].
+- Filter values must never be interpolated raw into SQL. The tag filter casts its ids to integers since the 7.2.1 security fix [PR #17129] [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:766-790 @7.x].
+- Page Hits deliberately excludes NULL-dated rows (`applyDateFiltersWithoutNullValues()`) for performance, unlike most contexts. It is not a bug [PR #14486] [code: app/bundles/PageBundle/EventListener/ReportSubscriber.php:375 @7.x].
+- A failing widget must show only the generic error; the exception text is logged, never displayed, because it may contain secrets [PR #15989] [code: app/bundles/DashboardBundle/Model/DashboardModel.php:210-253 @7.x].
+- Reports saved before relative date filters existed hold fixed dates; they do not become relative after an upgrade [PR #17256].
+
 ## Related skills
 - mautic-contacts — Contact fields used as report columns, Contact export, companies.
 - mautic-emails — meaning of email stats columns (read, click-through, bounce) and StatsBundle consumers.
@@ -124,4 +135,4 @@ Out of scope: Contact fields and the Contact export (mautic-contacts), Email sta
 - references/docs-digest.md — what docs.mautic.org and devdocs say about Reports, Dashboard and the Reports/Stats API, with procedures and terminology.
 - references/test-patterns.md — base classes, shared helpers, representative tests, skeletons for a context, a widget and the scheduler.
 - references/version-notes.md — 5.x/6.x history, 7.x minors, the 8.x delta for reports, dashboard and stats.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md — why and when behaviour changed: decisions from merged PRs, a regression catalogue, a feature timeline from 1.x to unreleased 7.x, removals, maintainer norms and open questions.
