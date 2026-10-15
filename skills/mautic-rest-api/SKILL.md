@@ -152,6 +152,12 @@ For 8.x compatibility, subscribe by event class where 8.x provides one (see Vers
 - Before 7: an API rate limiter existed (`api_rate_limiter_cache`). Before 5: `app/config/local.php`.
   Legacy lifetimes were stored in seconds. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/getting_started.html#api-rate-limiter-cache]
   [code: app/bundles/ConfigBundle/Form/Type/ConfigType.php:27-37 @7.x]
+- 5.x: the OAuth server fork moved to Twig and the credentials UI to Twig (5.0) [PR #12091] [PR #11853]; 5.0.3 fixed empty
+  API objects on Composer installs [PR #13272]; 5.1 added `ApiSerializationContextEvent` [PR #12734]; 5.2.7 applies
+  every item when a batch edits one entity twice [PR #14928].
+- 6.0: `where[...][val]` is no longer HTML-entity encoded, so values with `'` match [PR #14550].
+- 7.0 removed the rate limiter and moved OAuth to `klapaudius/oauth-server-bundle` [PR #14876] [PR #15436]. 7.1 added 409
+  locking [PR #15299]. 7.1.2 added v2 ownership scoping and 7.1.3 user-bound bearer tokens on v2 [PR #16175] [PR #16245].
 - 7.x: API Platform v2 at `/api/v2`. 7.2 deprecates the `mautic.api.oauth.event_listener` alias. The 7.x branch after 7.2.1 adds
   `POST /api/companies/batch/addcontacts` and legacy `/api/projects` (unreleased; [PR #16512] [PR #15569]). [code: app/bundles/ApiBundle/Config/services.php:29-31 @7.x]
   [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:122-124 @7.x]
@@ -168,6 +174,12 @@ For 8.x compatibility, subscribe by event class where 8.x provides one (see Vers
 - Full detail: `references/version-notes.md`.
 
 ## Pitfalls
+- v2 ownership scoping (the collection extension and the owner-aware voter) shipped in the 7.1.2 security release. Upgrade
+  to 7.1.2 or later before exposing v2, and test own/other boundaries on both APIs [PR #16175] [PR #16181].
+- Changing a response's JSON type (`{}` to `[]`, string to int) is a BC break, even when it fixes a 500. Keep shapes
+  stable for `mautic/api-library` and external clients [PR #10724] [PR #7815] [PR #10065].
+- The API has broken twice on Composer installs without a lock file (JMS serializer, OAuth bundle). Test API changes on a
+  recommended-project install as well as a git checkout [PR #13272] [PR #15436].
 - `publishedOnly` and `searchFilter` in the docs are PHP-library argument names. Over HTTP use `published` and `search`;
   `publishedOnly` is silently ignored. [code: app/bundles/ApiBundle/Controller/FetchCommonApiController.php:167 @7.x]
   [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/assets.html#list-assets]
@@ -231,4 +243,5 @@ For 8.x compatibility, subscribe by event class where 8.x provides one (see Vers
 - `references/docs-digest.md`: what devdocs and user docs say (authentication procedures, conventions, 8.0 changes, gaps).
 - `references/test-patterns.md`: base classes, auth in tests, representative tests and v1/v2 skeletons.
 - `references/version-notes.md`: history, 7.x minors and the 8.x delta for the API framework.
-- `references/pr-history.md` — not yet generated; PR-derived history is added in a later pass.
+- `references/pr-history.md`: why and when API behaviour changed: decisions, a regression catalogue, a feature timeline and
+  removals from the merged API PRs.

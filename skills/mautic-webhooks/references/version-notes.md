@@ -14,9 +14,20 @@ The inputs do not map these migrations to release numbers; dates come from the m
 
 [code: app/migrations/Version20221014061125.php:22 @7.x] [code: app/migrations/Version20221014081742.php:24 @7.x] [code: app/migrations/Version20240228132306.php:24-39 @7.x] [code: app/migrations/Version20240607092418.php:25 @7.x] [code: app/migrations/Version20241004132307.php:26-32 @7.x] [code: app/bundles/WebhookBundle/Entity/Webhook.php:165-167 @7.x]
 
+## 5.x and 6.x (from pull requests)
+
+- Release mapping for two of the migrations above: `Version20221014081742` (compressed payload) shipped in 5.0, and `Version20240228132306` (drop `payload`, add `retries`) shipped in 7.0. [PR #11589] [PR #15283]
+- 5.0: queue payloads stored compressed; the Webhook UI moved to Twig; `mautic:webhooks:process` exits non-zero on errors (also 4.4.8); `webhook_log_max` cast to int. [PR #11589] [PR #11382] [PR #12203] [PR #11963] [PR #11640]
+- 5.1: queue fetched in id order instead of `date_added`; "Send email details" (`webhook_email_details`); range mode `--min-id`/`--max-id`; failed request payloads written to the file log; queue iteration with `toIterable()`. [PR #11424] [PR #13447] [PR #13448] [PR #13815] [PR #13112]
+- 6.x: none found in the 158 harvested API and webhooks PRs. [PR #13815]
+
 ## 7.x minors
 
 - `formType` on Form objects in payloads is deprecated as of 7.1 ("all Forms function identically"). [devdocs: https://devdocs.mautic.org/en/7.2/webhooks/events/email_on_send.html#unsubscribe-form-properties]
+- 7.0.0: failed rows are retried after `webhook_retry_delay`; unhealthy Webhooks are skipped for `webhook_health_check_time`; failure notifications; kills skip Webhooks edited in the last 2 days; `disable_auto_unpublish`. [PR #15283] [PR #15495]
+- 7.0.1: the test payload matches real deliveries, and a failed test shows the real error. [PR #15799] [PR #15863]
+- 7.1.0: requests send `User-Agent: Webhook` instead of Guzzle's default. [PR #15728]
+- 7.2.0: `mautic:webhooks:process` exits 0 when no Webhooks are published; Campaign webhook data with equal values under different keys keeps both. [PR #15135] [PR #16899]
 - 7.x adds the API Platform resource `/api/v2/webhooks` alongside v1 `/api/hooks`. [code: app/bundles/WebhookBundle/Entity/Webhook.php:28-121 @7.x]
 - 7.2 still exposes `LeadEvents::COMPANY_SOFT_DELETE` (`mautic.company_soft_delete`) for Plugins; it is not a webhook type. [code: app/bundles/LeadBundle/LeadEvents.php:627-633 @7.x]
 

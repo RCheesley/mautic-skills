@@ -138,3 +138,16 @@ This mirrors the structure of `PutOperationTest`. [code: app/bundles/ApiBundle/T
 append a file path to run one test, for example `composer test -- app/bundles/ApiBundle/Tests/Functional/Oauth2Test.php`.
 `bin/phpunit` exists only after `composer install`. Database setup and the test environment are described in
 mautic-testing. [code: composer.json:169 @7.x]
+
+## 6. Regression tests worth adding
+
+Rows from the regression catalogue in `pr-history.md` with no matching test found by grep in the 7.x `Tests` directories.
+
+| Behaviour to assert | PR |
+|---|---|
+| `DELETE /api/contacts/batch/delete?ids=1` (single id, no comma) deletes the Contact | [PR #10700] |
+| `GET /api/fields/company` with a `where` clause returns only Company fields | [PR #5018] |
+| Bad Basic credentials return 401 with `errors[0].type = access_denied` and the invalid-credentials message, never 200 | [PR #3203] [PR #6731] |
+| A UI form still renders a CSRF token for a logged-in User (no `ROLE_API` outside `/api`) | [PR #1545] |
+| A batch edit that names the same Contact twice applies both items in order | [PR #14928] |
+

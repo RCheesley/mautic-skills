@@ -16,6 +16,18 @@ Authoritative behaviour is 7.x (commit 419a08a9b35: release 7.2.1 plus unrelease
   [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/getting_started.html#api-rate-limiter-cache]
   [code: app/config/security.php:105-108 @7.x]
 
+## Mautic 5.x and 6.x
+
+- 5.0: the OAuth server fork moved to a Twig branch reset on upstream master (bc-break, an event listener was renamed),
+  and the API Credentials UI moved to Twig. [PR #12091] [PR #11853]
+- 5.0.3: API output works with `jms/serializer-bundle` ^5.4 on Composer installs without a lock file. [PR #13272]
+- 5.1: `ApiSerializationContextEvent` lets plugins change serializer groups and exclusion strategies; `ClientController`
+  extends `AbstractStandardFormController`. [PR #12734] [PR #13296]
+- 5.2: the API Credentials list paginates and sorts by name. 5.2.7: a batch edit can change one entity more than once.
+  [PR #14167] [PR #14928]
+- 6.0: `where[...][val]` values are no longer HTML-entity encoded. [PR #14550]
+- No other 5.x or 6.x API-framework differences were found in the 158 harvested API and webhooks PRs. [PR #14550]
+
 ## Mautic 7.x
 
 - 7.0: API Platform v2 at `/api/v2` (new in Mautic 7 per the code analysis), with the Mautic permission voter, ownership
@@ -23,6 +35,13 @@ Authoritative behaviour is 7.x (commit 419a08a9b35: release 7.2.1 plus unrelease
   [code: app/config/routing.php:10-12 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/api_v2.html]
 - 7.0: Point Insights and their `/api/points/insights` endpoints were introduced.
   [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/point_insights.html]
+- 7.0: the rate limiter and `noxlogic/ratelimit-bundle` were removed (bc-break, UPGRADE-7.0.md); no replacement exists
+  on the 7.x head. The OAuth server bundle is `klapaudius/oauth-server-bundle` 5.1.3. [PR #14876] [PR #15436]
+- 7.1.0: opt-in 409 API locking (`ApiLockAwareInterface`, Emails only). [PR #15299]
+- 7.1.2: security release adding v2 ownership scoping (`OwnershipScopedCollectionExtension`, owner-aware voter, metadata
+  meta-test). 7.1.3: User-bound OAuth bearer tokens work on `/api/v2`. [PR #16175] [PR #16245]
+- 7.2.0: `PreAuthorizationEventListener` subscribes itself; the voter takes the nullable `$vote` argument; the v2
+  permission-context event was added. [PR #16879] [PR #16566] [PR #16837]
 - 7.1: the Form `formType` field was deprecated. [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/forms.html#form-properties]
 - 7.2: the `mautic.api.oauth.event_listener` service alias is deprecated; use `PreAuthorizationEventListener::class`.
   [code: app/bundles/ApiBundle/Config/services.php:29-31 @7.x]

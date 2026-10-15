@@ -92,3 +92,15 @@ Algorithm source: [code: app/bundles/WebhookBundle/Http/Client.php:25-30 @7.x]
 - `retries` incremented and the row kept on non-2xx. [code: app/bundles/WebhookBundle/Model/WebhookModel.php:309-331 @7.x]
 - For a new event type: the key appears in `GET /api/hooks/triggers` and the payload keys/serializer groups match the documented table. [code: app/bundles/WebhookBundle/Controller/Api/WebhookApiController.php:90-99 @7.x]
 - Append one mock response per request you expect (the core helper appends one callable per expected call) and count calls inside the callable. [code: app/bundles/WebhookBundle/Tests/Functional/WebhookFunctionalTest.php:274-290 @7.x]
+
+## Regression tests worth adding
+
+Rows from the regression catalogue in `pr-history.md` with no matching test found by grep in the 7.x `Tests` directories.
+
+| Behaviour to assert | PR |
+|---|---|
+| A 410 response unpublishes the Webhook at once, also with `disable_auto_unpublish = true` | [PR #4200] [PR #15495] |
+| A response body with invalid UTF-8 bytes is logged without an SQL error | [PR #9967] |
+| A Campaign webhook value containing `+` is sent as `%2B` in a form-encoded body | [PR #7616] |
+| The `lead_post_delete` payload carries the deleted Contact's top-level `id` | [PR #3633] |
+

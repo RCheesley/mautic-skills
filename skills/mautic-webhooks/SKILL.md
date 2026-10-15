@@ -117,11 +117,17 @@ The docs' own samples compare with `===`, and the PHP sample calls `json_decode`
 - 7.x adds `/api/v2/webhooks` (API Platform) next to v1 `/api/hooks`. [code: app/bundles/WebhookBundle/Entity/Webhook.php:28-121 @7.x]
 - 8.x dispatches by event class. `WEBHOOK_PRE/POST_SAVE`, `PRE/POST_DELETE` and `WEBHOOK_KILL` are removed in favour of `Webhook{Pre,Post}{Save,Delete}Event` and `WebhookKillEvent`. `WebhookEvent` is abstract. The Campaign action moves to `ON_CAMPAIGN_BATCH_ACTION`. [PR #17085] [PR #17202] [PR #17654]
 - 8.x keeps the webhook type strings (`mautic.lead_post_save_new`, …), so receivers need no change. [PR #17218]
+- 5.0 stores queue payloads compressed and makes `mautic:webhooks:process` exit non-zero on errors. 5.1 orders the queue by id, adds the "Send email details" toggle, range mode (`--min-id`/`--max-id`) and failed-payload file logging. No 6.x webhook changes were found. [PR #11589] [PR #12203] [PR #11424] [PR #13447] [PR #13448] [PR #13815]
+- 7.0 adds retries, the unhealthy window, failure notifications and `disable_auto_unpublish`, and drops the uncompressed `payload` column. 7.0.1 makes the test payload identical to real deliveries; 7.1 sends `User-Agent: Webhook`; 7.2 exits 0 when no Webhooks are published. [PR #15283] [PR #15495] [PR #15799] [PR #15728] [PR #15135]
 - In 8.0, `company_soft_delete` is explicitly "not a Webhook event type". [devdocs: https://devdocs.mautic.org/en/8.0/webhooks/events/company_soft_delete.html]
 
 Details: references/version-notes.md.
 
 ## Pitfalls
+- A 410 response unpublishes the Webhook even when `disable_auto_unpublish` is true or the Webhook was just edited; only the "no 2xx in 100 logs" kill honours those exceptions. [PR #4200] [PR #15495] [code: app/bundles/WebhookBundle/Model/WebhookModel.php:336-350 @7.x]
+- The Campaign "Send a webhook" action sends form-encoded data unless a `content-type: application/json` header is configured. This is deliberate: JSON by default was rejected as a BC break. [PR #8959] [PR #10580]
+- Before 7.0.1 the "Send test payload" body carried an extra timestamp and did not match real deliveries. Validate receivers against real deliveries on older versions. [PR #15799]
+- `mautic:webhooks:process` returns `FAILURE` only when an exception escapes. Immediate mode and "no published webhooks" exit 0, so monitor the logs, not the exit code, for delivery failures. [PR #12203] [PR #15135] [code: app/bundles/WebhookBundle/Command/ProcessWebhookQueuesCommand.php:59-147 @7.x]
 - "Webhook-Signature never matches" usually means the receiver hashed re-serialised JSON instead of the raw body, or hex-encoded the digest. Mautic uses the raw HMAC bytes, base64-encoded. [code: app/bundles/WebhookBundle/Http/Client.php:25-26 @7.x]
 - Queued mode with no cron entry for `mautic:webhooks:process` means nothing is ever sent. Immediate mode with the cron entry means the command does nothing. [code: app/bundles/WebhookBundle/Command/ProcessWebhookQueuesCommand.php:59-63 @7.x]
 - Immediate mode adds receiver latency to Form submits, Contact saves and Segment rebuilds. A Segment rebuild produces one `lead_list_change` row per Contact per Webhook. [code: app/bundles/WebhookBundle/Model/WebhookModel.php:249-256 @7.x] [code: app/bundles/LeadBundle/EventListener/WebhookSubscriber.php:266-300 @7.x]
@@ -156,4 +162,4 @@ Details: references/version-notes.md.
 - references/docs-digest.md: what devdocs say, with URLs, procedures, the per-event page index and terminology.
 - references/test-patterns.md: base classes, Guzzle mocking, fixtures, a signature regression skeleton and assertions to make.
 - references/version-notes.md: schema history migrations, 7.x notes and the 8.x event-class delta, with a porting snippet.
-- references/pr-history.md: not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md: why and when webhook behaviour changed: decisions, a regression catalogue, a feature timeline and removals from the merged webhook PRs.
