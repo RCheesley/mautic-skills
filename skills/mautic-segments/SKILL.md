@@ -93,6 +93,12 @@ Full detail: references/test-patterns.md.
 - 8.x removes `OperatorOptions::IN`/`NOT_IN` and `OperatorListTrait::getFilterExpressionFunctions()`. `LeadListEvent` is `abstract`. `Segment\Query\QueryBuilder::setParameter()` rejects `:`-prefixed keys [code: UPGRADE-8.0.md @8.x].
 - 8.x removes the `file_lock` lock mode. `--lock_mode=file_lock` now errors [code: UPGRADE-8.0.md @8.x].
 - `company_all` is not yet on the 8.x branch. It arrives with the next 7.x → 8.x forward merge. Do not treat it as removed.
+- 5.0: `-i` with a failing or missing Segment exits non-zero, `last_built_time` and the slow-build warning arrive, and leading or OR-ed membership filters keep their glue [PR #11439] [PR #11917] [PR #12214] [PR #12530].
+- 5.1: OR-ed `=` filters merge into `IN`, `--exclude` is added, `first day of`/`last day of` are relative, and multiselect exclude includes NULL [PR #11007] [PR #13383] [PR #10822] [PR #12906].
+- 5.2.3: an empty `default_timezone` falls back to UTC instead of failing the rebuild [PR #14549].
+- 6.0: the "Building" states and `needsRebuild()`, `mautic:segments:stat`, and day-boundary rules for `today`/`tomorrow` with `>`/`<=` [PR #14431] [PR #14706] [PR #14575] [PR #14552].
+- 7.0: any/all operators replace "including"/"excluding", membership filters read stored rows of rebuilt-first dependencies, and counts move to the cache provider [PR #15344] [PR #15031] [PR #15554].
+- 7.1: background Segment deletion (7.1.0), "all of" only on multiselect (7.1.1), and "Read any email (date)" uses the latest read (7.1.3) [PR #15755] [PR #16012] [PR #16224].
 
 Full detail: references/version-notes.md.
 
@@ -106,6 +112,10 @@ Full detail: references/version-notes.md.
 - `lead:list:count-cache-update` recounts only published Segments [code: app/bundles/LeadBundle/Command/SegmentCountCacheCommand.php:34-49 @7.x].
 - Docs say "contains/doesn't contain are not supported for date fields", yet code offers `like` and `contains` for date types [code: app/bundles/LeadBundle/Entity/OperatorListTrait.php:12-126 @7.x] [docs: https://docs.mautic.org/en/7.2/segments/manage_segments.html#operators].
 - The REST docs name the bulk-add body key `contactIds`, but code reads `ids`. Use `ids[]` [code: app/bundles/LeadBundle/Controller/Api/ListApiController.php:186 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/segments.html#add-contacts-to-segment].
+- Since 7.0 a stored `in`/`!in` on a multiselect means "any of". A Segment that relied on the older "all of" behaviour needs `in_all` [PR #15344] [PR #15473].
+- The "Email Read" filter is stored as `lead_email_received`. The label changed in 2.1.1 and the key was kept for BC [PR #2118].
+- "Read any email (date)" compares each Contact's latest read date, so an old read does not count when a newer one exists [PR #16224] [code: app/bundles/LeadBundle/Services/ContactSegmentFilterDictionary.php @7.x].
+- Behaviour filters are not offered in Dynamic Content, because its matcher evaluates only contact and company fields [PR #9260].
 - Open question: the REST docs say `isGlobal` defaults to "restricted" when not set, but the entity default is `true`. The value after a POST without `isGlobal` was not verified [code: app/bundles/LeadBundle/Entity/LeadList.php:105 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/segments.html#get-segment].
 - Open question: the docs' "Public Segment = Yes" requirement for the Campaign "Modify Contact's Segments" action names no existing field. The likely gate is `isGlobal` ("Visible to other Users") via `getUserLists()` [unverified] [docs: https://docs.mautic.org/en/7.2/segments/manage_segments.html#using-a-campaign-action].
 - Open question: named date ranges (`today`, `this week`) on `datetime` fields in a non-UTC install use local-time formatting, while relative intervals use UTC. Correctness is not covered by tests [code: app/bundles/LeadBundle/Segment/Decorator/Date/DateOptionAbstract.php:106 @7.x].
@@ -127,4 +137,4 @@ Full detail: references/version-notes.md.
 - references/docs-digest.md — what docs.mautic.org and devdocs say, UI label ↔ operator mapping, procedures.
 - references/test-patterns.md — base classes, fixtures, test skeletons for filters, rebuild and API.
 - references/version-notes.md — 5.x/6.x history, 7.x minors, the 8.x delta for Segments.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md — why and when Segment behaviour changed: decisions, regression catalogue, feature timeline and removals from merged PRs.

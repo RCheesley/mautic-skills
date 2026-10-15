@@ -72,3 +72,16 @@ The `$this->connection` / `MAUTIC_TABLE_PREFIX` usage is a sketch [unverified]. 
 - For bulk add, post `ids[]` and assert `details[id].success`.
 
 [code: app/bundles/LeadBundle/Tests/Controller/Api/ListApiControllerFunctionalTest.php @7.x] [code: app/bundles/LeadBundle/Controller/Api/ListApiController.php:186-215 @7.x]
+
+## Regression tests worth adding
+Rows from the regression catalogue in pr-history.md with no matching test found by one grep of `app/bundles/*/Tests` @7.x:
+
+| Behaviour to assert | PR |
+|---|---|
+| `mautic:segments:update -q` prints nothing on success | [PR #10533] |
+| A rebuild that adds a Contact writes an "added to segment" timeline entry | [PR #12249] |
+| A Segment whose public name contains `<` saves through the UI form | [PR #12025] |
+| A Segment named `R&D` is shown as `R&D`, not `R&#38;D` | [PR #14062] |
+| A "Clicked any link from any email (date)" filter with an empty date saves without a 500 | [PR #9852] |
+| A user with "view own" Segment permission sees their own non-global Segments | [PR #8957] |
+| Functional: "tags empty" matches Contacts with no tag rows (only a unit test found) | [PR #11253] |
