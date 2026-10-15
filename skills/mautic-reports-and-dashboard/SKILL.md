@@ -1,0 +1,127 @@
+---
+name: mautic-reports-and-dashboard
+description: "Mautic Reports, the Dashboard and the StatsBundle: report data sources (contacts, email stats, page hits, form submissions, campaign events, audit log), columns, filters and operators, relative date filters, group by, aggregators and totals, graphs, CSV/Excel/HTML export, scheduled reports and the mautic:reports:scheduler command, report permissions, the /api/reports API, dashboard widgets (types, sizing, date range, widget cache), default dashboards and dashboard import/export, ChartQuery and timezone bucketing. Use whenever a task mentions reports, report builder, report data source, report filters, report export, scheduled report or 'report not emailed', dashboard, widgets, charts, mautic:reports:scheduler, ReportModel, ReportBuilderEvent, REPORT_ON_BUILD, WidgetDetailEvent, DashboardModel, ChartQuery, adding a custom report source or dashboard widget from a plugin, or touches app/bundles/ReportBundle/, app/bundles/DashboardBundle/ or app/bundles/StatsBundle/."
+---
+# Mautic Reports and Dashboard
+
+## Scope
+A Report is a saved query definition: a data source (internally a *context*, stored in `reports.source`), selected columns, filters, order, group-by, calculated columns (aggregators) and graphs; other bundles contribute contexts and build the SQL through events [code: app/bundles/ReportBundle/Entity/Report.php:167-217 @7.x] [code: app/bundles/ReportBundle/Model/ReportModel.php:187-224 @7.x]. The Dashboard is a per-User grid of widgets rendered by bundle subscribers, filtered by a session date range and cached [code: app/bundles/DashboardBundle/Model/DashboardModel.php:84-99,210-253 @7.x]. StatsBundle is a small aggregation framework used only by EmailBundle stats helpers [code: app/bundles/StatsBundle/Aggregate/Collector.php:21-32 @7.x].
+Out of scope: Contact fields and the Contact export (mautic-contacts), Email stats semantics (mautic-emails), cron scheduling in general and Messenger transports (mautic-cron-and-queues), the role/permission system (mautic-users-and-permissions), generic REST API auth and envelopes (mautic-rest-api).
+
+## Expected behaviour (essentials)
+- The data-source select lists every context returned by `REPORT_ON_BUILD`, grouped by parent; the docs present them as "<Parent> <Child>" (for example "Contacts Contact Point Log") [code: app/bundles/ReportBundle/Form/Type/ReportType.php:34-126 @7.x] [docs: https://docs.mautic.org/en/7.2/reports/reports.html#data-sources].
+- The audit-log context (`audit.log`) is built and listed only for administrators or CLI; non-admins never see audit-log Reports in the list [code: app/bundles/CoreBundle/EventListener/ReportSubscriber.php:162,179-183 @7.x] [code: app/bundles/ReportBundle/Controller/ReportController.php:68-74 @7.x].
+- Report visibility depends only on ownership and `report:reports:viewother`: without `viewother` the list is forced to `createdBy = me`. The "Visible for all logged-in users" toggle (column `system`) is stored but has no effect in code [code: app/bundles/ReportBundle/Controller/ReportController.php:68-70 @7.x] [code: app/bundles/ReportBundle/Form/Type/ReportType.php:67-78 @7.x].
+- Report data ignores entity-level permissions: a User who may view a Report sees every Contact, Email or hit row its query returns [code: app/bundles/LeadBundle/EventListener/ReportSubscriber.php:171 @7.x] (grep of all `Report*Subscriber.php` for permission checks finds only the audit-log guard).
+- Export buttons and the export action need admin or `report:export:enable` in addition to view access [code: app/bundles/ReportBundle/Controller/ReportController.php:695,789-791 @7.x] [docs: https://docs.mautic.org/en/7.2/users_roles/managing_roles.html#explaining-the-permission-options].
+- Filters are ANDed in order; a filter whose glue is `or` closes the current AND group and starts a new one, and the groups are ORed [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:605-610,747-760 @7.x].
+- A filter with an empty value is skipped unless its operator is `empty`, `notEmpty` or `neq` [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:600-603,880-883 @7.x].
+- `neq` matches NULL too (`col IS NULL OR col <> v`); `empty` matches NULL or `''` for non-date columns [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:660-686 @7.x].
+- `like`/`notLike` wrap the value in `%…%` unless it already contains `%`; `contains`, `startsWith` and `endsWith` build the matching LIKE pattern [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:712-737 @7.x].
+- Relative date values (`today`, `last month`, `-7 days`, `3 days ago`, `first day of next month`, `birthday +1 day`) work on `date`/`datetime` columns with non-string operators on the 7.x branch (after 7.2.1, unreleased; [PR #17256]). `eq` matches the whole period, `neq` excludes it, and `gt`/`lte` use the period end while `gte`/`lt` use the period start [code: app/bundles/ReportBundle/Helper/RelativeDateHelper.php:11-93 @7.x] [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:624-657 @7.x] [docs: https://docs.mautic.org/en/8.0/reports/reports.html#relative-date-filters].
+- Relative dates resolve in the instance `default_timezone`, not the User's timezone [code: app/bundles/CoreBundle/Helper/DateTimeHelper.php:47-59,386-391 @7.x] [docs: https://docs.mautic.org/en/8.0/reports/reports.html#relative-date-filters].
+- Datetime filter values are stored in UTC and converted to local time for display; relative expressions are stored exactly as typed [code: app/bundles/ReportBundle/Form/DataTransformer/ReportFilterDataTransformer.php:28-97 @7.x].
+- Dynamic filters (`dynamic = 1`) can be overridden on the Report view without editing; an empty override falls back to the filter's `defaultValue` [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:165-199 @7.x] [code: app/bundles/ReportBundle/Controller/ReportController.php:597-651 @7.x].
+- The view date range defaults to the last 30 days. `dateTo` is pushed to 23:59:59 and both dates are converted to UTC. Most contexts use `applyDateFilters()`, which lets rows with a NULL date through (`col IS NULL OR col BETWEEN …`) [code: app/bundles/ReportBundle/Model/ReportModel.php:453-473 @7.x] [code: app/bundles/ReportBundle/Event/ReportGeneratorEvent.php:241-261,396-420 @7.x].
+- Calculated columns (aggregators) apply only when the Report has a group-by. Every non-aggregated SELECT/ORDER BY column is added to GROUP BY automatically, so the query is valid under `ONLY_FULL_GROUP_BY` [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:289-291,346-399,416-433 @7.x] [docs: https://docs.mautic.org/en/7.2/reports/reports.html#data].
+- A column-header click (session order) overrides the saved order; ORDER BY columns are validated against the allowed column list and invalid ones are dropped [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:210-244 @7.x] [code: app/bundles/ReportBundle/Model/ReportModel.php:530-533,571-575,675-748 @7.x].
+- CSV export is streamed in batches of `report_export_batch_size` (1000). The totals row is written after the last batch, and SUM/COUNT/AVG/MIN/MAX are accumulated across batches. XLSX and HTML exports load the whole result in memory [code: app/bundles/ReportBundle/Controller/ReportController.php:793-849 @7.x] [code: app/bundles/ReportBundle/Crate/ReportDataResult.php:198-245 @7.x].
+- Saving a Report deletes its `reports_schedulers` row and inserts the next occurrence: NOW = immediately; DAILY/WEEKLY/MONTHLY from tomorrow 00:00; MONTHLY = first (`1`) or last (`-1`) chosen weekday [code: app/bundles/ReportBundle/Scheduler/Model/SchedulerPlanner.php:21-49 @7.x] [code: app/bundles/ReportBundle/Scheduler/Builder/SchedulerBuilder.php:39-63 @7.x].
+- A scheduled Report must have a `toAddress` (comma-separated list allowed). WEEKLY needs a valid day; MONTHLY needs a day and a frequency [code: app/bundles/ReportBundle/Scheduler/Validator/ScheduleIsValidValidator.php:25-87 @7.x].
+- Nothing is emailed until `mautic:reports:scheduler` runs. It processes schedulers with `schedule_date <= now`, writes a CSV in batches, emails it, and re-plans [code: app/bundles/ReportBundle/Scheduler/Command/ExportSchedulerCommand.php:38-78 @7.x] [code: app/bundles/ReportBundle/Model/ReportExporter.php:29-90 @7.x] [docs: https://docs.mautic.org/en/7.2/reports/reports.html#cron-job-to-schedule-reports].
+- Unpublished Reports are skipped by the scheduler but still re-planned. A NOW Report is switched to unscheduled, without events or an audit-log entry [code: app/bundles/ReportBundle/Model/ReportExporter.php:49-52,67-68,90 @7.x] [code: app/bundles/ReportBundle/Model/ScheduleModel.php:44-49 @7.x].
+- Scheduled export windows are relative to the schedule date at 00:00: NOW = 10 years, DAILY = 1 day, WEEKLY = 7 days, MONTHLY = 1 month, ending one second before midnight [code: app/bundles/ReportBundle/Model/ReportExporter.php:44-65 @7.x].
+- The emailed CSV is attached if it is at most `report_export_max_filesize_in_bytes` (5 MB). Otherwise it is zipped; if the zip is still too large it is kept at `csv_reports/report_<id>.zip` and the email carries a download link. Permanent zips are deleted after 7 days [code: app/bundles/ReportBundle/Scheduler/Model/FileHandler.php:30-107 @7.x] [code: app/bundles/ReportBundle/Model/ReportCleanup.php:9,16-59 @7.x].
+- `GET /api/reports/{id}` returns compiled rows, not just the definition. Without `page`/`limit` it returns all rows. API dates keep their exact time (default 00:00:00/23:59:59, UTC unless an offset is given) [code: app/bundles/ReportBundle/Controller/Api/ReportApiController.php:64-135 @7.x].
+- Dashboard widgets belong strictly to their creator; loading another User's widget throws `AccessDeniedException` [code: app/bundles/DashboardBundle/Dashboard/Widget.php:38-41 @7.x].
+- A User with no widgets gets `app/assets/dashboards/default.json` applied automatically. Applying any dashboard file deletes the current widgets [code: app/bundles/DashboardBundle/Controller/DashboardController.php:47-50,379-422 @7.x] [docs: https://docs.mautic.org/en/7.2/dashboard/dashboard.html#dashboard-import].
+- The dashboard date range is session-wide: `dateFrom` = session value or `now + default_daterange_filter` (`-1 month`) at 00:00, `dateTo` = session value or today, forced to 23:59:59. Changing it clears the widget cache [code: app/bundles/DashboardBundle/Model/DashboardModel.php:313-328 @7.x] [code: app/bundles/DashboardBundle/Dashboard/Widget.php:55-74 @7.x].
+- Widget data is cached for `cached_data_timeout` minutes (default 10); a timeout of 0 disables caching. A subscriber exception shows "load failed" instead of breaking the page [code: app/bundles/DashboardBundle/Model/DashboardModel.php:210-253 @7.x] [docs: https://docs.mautic.org/en/7.2/dashboard/dashboard.html#widget-cache].
+- The add-widget type list shows a bundle's widget types only when the User holds all of the bundle's listed permissions (normally `viewown` and `viewother`). Rendering an existing widget needs any one of them [code: app/bundles/DashboardBundle/Event/WidgetTypeListEvent.php:60-68 @7.x] [code: app/bundles/DashboardBundle/Event/WidgetDetailEvent.php:328-333 @7.x].
+- Chart time unit follows the range: hours for ≤1 day, days for ≤31, weeks for ≤100, months for ≤1000, years beyond. Buckets are computed with `CONVERT_TZ` to the instance-local offset and gaps are filled with 0 [code: app/bundles/CoreBundle/Helper/Chart/DateRangeUnitTrait.php:10-40 @7.x] [code: app/bundles/CoreBundle/Helper/Chart/ChartQuery.php:300-380,575-589 @7.x] [docs: https://docs.mautic.org/en/7.2/dashboard/dashboard.html#date-range-filter].
+
+## Where it lives
+| Concern | Path(s) |
+|---|---|
+| Report entity / table | `app/bundles/ReportBundle/Entity/Report.php` (`reports`), `Entity/Scheduler.php` (`reports_schedulers`) |
+| Run / build query | `ReportBundle/Model/ReportModel.php` (`getReportData`), `Builder/MauticReportBuilder.php` |
+| Contexts (per bundle) | `app/bundles/*/EventListener/ReportSubscriber*.php`, `plugins/MauticFocusBundle/EventListener/ReportSubscriber.php` (full table in code-map.md) |
+| Report events | `ReportBundle/ReportEvents.php`, `ReportBundle/Event/*` |
+| Relative dates | `ReportBundle/Helper/RelativeDateHelper.php`, `Form/DataTransformer/ReportFilterDataTransformer.php` |
+| Export | `ReportBundle/Model/{CsvExporter,ExcelExporter,ExportResponse}.php`, `Crate/ReportDataResult.php` |
+| Scheduling | `ReportBundle/Scheduler/**`, `Model/{ReportExporter,ScheduleModel,ReportCleanup}.php`, command `Scheduler/Command/ExportSchedulerCommand.php` (`mautic:reports:scheduler`) |
+| Attachment cleanup | `app/bundles/MessengerBundle/MessageHandler/RemoveReportAttachmentHandler.php` |
+| Report routes / API | `ReportBundle/Config/config.php`, `Controller/{ReportController,ScheduleController,AjaxController}.php`, `Controller/Api/ReportApiController.php` (`/api/reports`) |
+| Report permissions | `ReportBundle/Security/Permissions/ReportPermissions.php` (`report:reports:*`, `report:export:enable`) |
+| Report parameters | `report_temp_dir`, `report_export_batch_size`, `report_export_max_filesize_in_bytes`, `csv_always_enclose` (`ReportBundle/Config/config.php:79-84`) |
+| Dashboard | `app/bundles/DashboardBundle/{Entity/Widget.php (widgets), Model/DashboardModel.php, Dashboard/Widget.php, Controller/*, EventListener/DashboardSubscriber.php}` |
+| Widget types (per bundle) | `app/bundles/*/EventListener/DashboardSubscriber*.php` (full table in code-map.md) |
+| Dashboard files | `app/assets/dashboards/*.json` (`dashboard_import_dir`), `media/dashboards/<userId>/` (`dashboard_import_user_dir`) |
+| Charts | `app/bundles/CoreBundle/Helper/Chart/{ChartQuery,DateRangeUnitTrait,LineChart}.php` |
+| Stats | `app/bundles/StatsBundle/Aggregate/{Collector,Calculator}.php`, `Aggregate/Collection/**` |
+| Tests | `app/bundles/ReportBundle/Tests/`, `app/bundles/DashboardBundle/Tests/`, `app/bundles/StatsBundle/Tests/` |
+
+## How to change or extend it
+- Add a report context from a bundle or plugin with three listeners: `REPORT_ON_BUILD` (`checkContext()`, `addTable()`, `addGraph()`), `REPORT_ON_GENERATE` (FROM, joins and `applyDateFilters()` on `getQueryBuilder()`), and `REPORT_ON_GRAPH_GENERATE` (`getRequestedGraphs()`, `ChartQuery`, `setGraph()`). Copy `app/bundles/PageBundle/EventListener/ReportSubscriber.php` [code: app/bundles/PageBundle/EventListener/ReportSubscriber.php:118,260 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/reports.html].
+- Every column needs `label` and `type`. Use `formula` for SQL expressions, and put display symbols in `prefix`/`suffix` (not `CONCAT` in the formula) so numeric sorting survives [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/reports.html#column-definition] [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:309-342 @7.x].
+- Use the join helpers (`addLeadLeftJoin`, `addCategoryLeftJoin`, `addIpAddressLeftJoin`, `addCompanyLeftJoin`, `addCampaignByChannelJoin`, `addChannelLeftJoins`). They add a join only when a selected column or filter uses that prefix [code: app/bundles/ReportBundle/Event/ReportGeneratorEvent.php:113-234 @7.x].
+- Use `applyDateFiltersWithoutNullValues()` when NULL dates must not pass the range [code: app/bundles/ReportBundle/Event/ReportGeneratorEvent.php:241-261 @7.x].
+- Graph types accepted are `line`, `pie`, `table` and `bar`, but only `line`, `pie` and `table` have templates, so do not register `bar` [code: app/bundles/ReportBundle/Event/ReportBuilderEvent.php:22-27,273-283 @7.x].
+- Add a widget by extending `Mautic\DashboardBundle\EventListener\DashboardSubscriber`: set `$bundle`, `$types`, `$permissions`; in `onWidgetDetailGenerate()` check the type, `checkPermissions()`, `isCached()`, then `setTemplateData()`, `setTemplate()`, `stopPropagation()`. Add the translations `mautic.<bundle>.dashboard.widgets` and `mautic.widget.<type>` [code: app/bundles/DashboardBundle/EventListener/DashboardSubscriber.php:49-102 @7.x] [code: app/bundles/ReportBundle/EventListener/DashboardSubscriber.php:54-83 @7.x].
+- A channel appears in channel columns by declaring `ReportModel::CHANNEL_FEATURE => ['table' => …]` in `ChannelEvents::ADD_CHANNEL` [code: app/bundles/EmailBundle/EventListener/ChannelSubscriber.php:47-49 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/channels.html#listening-for-channel-features].
+- For 7.x + 8.x compatibility, subscribe by event class (`ReportBuilderEvent::class`, …) and also by the 7.x constant, guarded with `defined()`. On 8.x the `ReportEvents` constants still exist but are no longer dispatched, and `DashboardEvents`/`StatEvents` are gone [code: app/bundles/ReportBundle/ReportEvents.php @8.x] (see references/version-notes.md).
+- A new `Report` column needs together: the entity mapping plus a migration, `loadApiMetadata` groups, the API Platform `report:read/write` groups, the form type, and translations [code: app/bundles/ReportBundle/Entity/Report.php:28-45,232-261 @7.x].
+- Scheduler changes must keep `SchedulerPlanner` re-planning on `REPORT_POST_SAVE` and the at-most-one-row-per-report invariant (no DB unique key enforces it) [code: app/bundles/ReportBundle/Scheduler/EventListener/ReportSchedulerSubscriber.php:17-27 @7.x].
+
+## How to test it
+- Functional tests extend `Mautic\CoreBundle\Test\MauticMysqlTestCase`; unit tests extend `PHPUnit\Framework\TestCase` [code: app/bundles/ReportBundle/Tests/Controller/ReportControllerFunctionalTest.php @7.x].
+- A new context: extend `app/bundles/ReportBundle/Tests/Functional/AbstractReportSubscriberTestCase.php`, then `createReport()` + `verifyReport()` (HTML table) + `verifyApiReport()` (API) [code: app/bundles/ReportBundle/Tests/Functional/AbstractReportSubscriberTestCase.php @7.x].
+- Copy from: `ReportBundle/Tests/Builder/MauticReportBuilderTest.php` (filters, OR groups, relative dates, GROUP BY), `Tests/Controller/ReportControllerFunctionalTest.php` (export totals, schedule matrix, `testDelayedTransport`), `Tests/Functional/Api/ReportApiDateHandlingTest.php`, `Tests/Model/ReportExporterTest.php`, `DashboardBundle/Tests/Controller/DashboardControllerFunctionalTest.php`, `DashboardBundle/Tests/Event/WidgetDetailEventTest.php` [code: app/bundles/ReportBundle/Tests/ @7.x] [code: app/bundles/DashboardBundle/Tests/ @7.x].
+- A good regression test asserts the exact rows (or SQL fragment) for a boundary: NULL dates, an OR group, a relative period edge, a timezone offset, or a multi-batch totals row.
+- Run: `bin/phpunit app/bundles/ReportBundle/Tests/Builder`, or `--filter` with one class. Full detail is in references/test-patterns.md.
+
+## Version notes
+- Relative date filters [PR #17256] and the `is:scheduled` search [PR #17449] are on the 7.x branch after 7.2.1, not yet released, and documented only in the 8.0 user docs [code: app/bundles/ReportBundle/Helper/RelativeDateHelper.php:11-37 @7.x] [code: app/bundles/ReportBundle/Entity/ReportRepository.php:46-68 @7.x] [docs: https://docs.mautic.org/en/8.0/reports/reports.html#relative-date-filters].
+- 7.2 deprecates the service alias `mautic.report.helper.report`; inject `ReportHelper` instead [code: app/bundles/ReportBundle/Config/services.php:50-51 @7.x].
+- Since 5.1 the Reports list shows a paper-aeroplane icon on scheduled Reports [docs: https://docs.mautic.org/en/7.2/reports/reports.html#schedule].
+- 8.x dispatches the 8 report events by class. The `ReportEvents` constants are kept, so listeners keyed on them load but never fire; Report CRUD pre/post save/delete events still dispatch by name [PR #17200].
+- 8.x deletes `DashboardEvents` (use `WidgetTypeListEvent`, `WidgetFormEvent`, `GenerateWidgetDetailEvent`, `PreLoadWidgetDetailEvent`) and `StatEvents` (use `AggregateStatRequestEvent`) [PR #17216] [PR #17654].
+- 8.x makes `WidgetDetailEvent` abstract and removes the legacy filesystem widget cache: `setCacheDir()` and `setCacheTimeout()` are gone and a cache provider is required [PR #17033] [PR #17034].
+- 8.x makes `ReportDataEvent`, `ReportGeneratorEvent` and `ReportGraphEvent` `final` and types the `Report::get*()` getters as `array`/`?array` (see references/version-notes.md).
+
+## Pitfalls
+- Saved order: each saved Order row calls `orderBy()`, not `addOrderBy()`. The docs say "the last one in the Order list is applied first". The code suggests only the last row survives (DBAL replaces earlier orderings) [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:234-243 @7.x] [docs: https://docs.mautic.org/en/7.2/reports/reports.html#data]. Open question: no vendor tree was available to confirm the DBAL semantics.
+- The docs say exports exclude the totals row, but CSV and XLSX write it on the last page [code: app/bundles/ReportBundle/Model/CsvExporter.php:39-46 @7.x] [docs: https://docs.mautic.org/en/7.2/reports/reports.html#data].
+- The docs and the API docs say "Visible for all logged-in users" (`system`) controls visibility. In code it does nothing; only `viewother`/owner matter [code: app/bundles/ReportBundle/Controller/ReportController.php:68-70 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/reports.html#list-reports].
+- The edit action checks only `viewown/viewother` on the entity, not `editown/editother` [code: app/bundles/ReportBundle/Controller/ReportController.php:310-316 @7.x]. Open question: is this intended?
+- NULL-date rows appear in date-filtered Reports in most contexts (see `applyDateFilters`) [code: app/bundles/ReportBundle/Event/ReportGeneratorEvent.php:396-420 @7.x].
+- `mautic:reports:scheduler` has no lock, and the CSV is opened in append mode. Overlapping runs can duplicate rows [code: app/bundles/ReportBundle/Model/ExportHandler.php:33 @7.x].
+- XLSX throws "No report data to be exported" on an empty result; XLSX and HTML exports are unbatched [code: app/bundles/ReportBundle/Model/ExcelExporter.php:38-40 @7.x].
+- The download link for a missing permanent zip silently schedules the Report as NOW to the current User and returns 404 [code: app/bundles/ReportBundle/Controller/ReportController.php:860-896 @7.x].
+- The widget cache key has no user id, and clearing the cache (any User changing the date range) invalidates the `dashboard_widget` tag for all Users [code: app/bundles/DashboardBundle/Event/WidgetDetailEvent.php:262-280 @7.x] [code: app/bundles/DashboardBundle/Model/DashboardModel.php:258-266 @7.x].
+- The docs say "see own only" Users can still create widgets that show their own data. In code, a Bundle with `viewown` only hides its widget types from the add form [code: app/bundles/DashboardBundle/Event/WidgetTypeListEvent.php:60-68 @7.x] [docs: https://docs.mautic.org/en/7.2/dashboard/dashboard.html#dashboard-permissions]. Open question.
+- The docs say 3 predefined dashboards and a 30-day default range; code ships 6 global files and uses `-1 month` [code: app/bundles/CoreBundle/Config/config.php:709 @7.x] [docs: https://docs.mautic.org/en/7.2/dashboard/dashboard.html#dashboard-import].
+- The `bar` graph type is accepted but has no template, so it fails to render [code: app/bundles/ReportBundle/Resources/views/Report/details_data_graphs.html.twig:10 @7.x].
+- `REPORT_PERMANENT_FILE_CREATED` and `JobExtendTimeEvent` have no core listeners; they are plugin hooks only [code: app/bundles/ReportBundle/ReportEvents.php:113-120 @7.x].
+- `Calculator::getSum()` returns an empty `StatDAO` (the sum is computed and then discarded) [code: app/bundles/StatsBundle/Aggregate/Calculator.php:162-172 @7.x].
+
+## Related skills
+- mautic-contacts — Contact fields used as report columns, Contact export, companies.
+- mautic-emails — meaning of email stats columns (read, click-through, bounce) and StatsBundle consumers.
+- mautic-campaigns — campaign event log semantics behind `campaign_lead_event_log`.
+- mautic-forms — form results tables behind `form.results.*` contexts.
+- mautic-pages-and-tracking — page hits, video hits, devices, UTM data behind those contexts.
+- mautic-users-and-permissions — roles, `report:*` permissions, the Export permission.
+- mautic-cron-and-queues — running `mautic:reports:scheduler` and Messenger email transport.
+- mautic-plugin-development — plugin structure, service registration, event subscriber basics.
+- mautic-rest-api — API auth, envelopes, `/api/stats` and generic list parameters.
+- mautic-testing — test environment, `MauticMysqlTestCase`, running PHPUnit.
+- mautic-upgrades-and-versions — cross-bundle 8.x event-dispatch migration.
+
+## Reference files
+- references/behaviour.md — full numbered behaviour spec (definitions, query building, filters, dates, export, scheduling, dashboard, stats). Open it for any "is this a bug?" question.
+- references/code-map.md — entities, services, events, the full tables of report contexts and widget types with listener files, routes, commands, parameters, permissions, tests.
+- references/docs-digest.md — what docs.mautic.org and devdocs say about Reports, Dashboard and the Reports/Stats API, with procedures and terminology.
+- references/test-patterns.md — base classes, shared helpers, representative tests, skeletons for a context, a widget and the scheduler.
+- references/version-notes.md — 5.x/6.x history, 7.x minors, the 8.x delta for reports, dashboard and stats.
+- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
