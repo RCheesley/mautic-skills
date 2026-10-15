@@ -80,3 +80,14 @@ final class SmsSendRegressionTest extends MauticMysqlTestCase
 The result array keys follow `SmsModel::sendSms()` [code: app/bundles/SmsBundle/Model/SmsModel.php:231-246 @7.x]. Confirm the service id and the `createAnSms` signature in the trait before running.
 
 Run: `bin/phpunit app/bundles/SmsBundle/Tests/...` or `--filter`. For DB setup, see mautic-testing.
+
+## Regression tests worth adding
+Rows from the regression catalogue in references/pr-history.md with no matching test found in the 7.x `Tests` directories.
+
+| Contract | PR | Where to add |
+|---|---|---|
+| `/notification/appcallback` with an empty `push_id` stores no push id | [PR #14480] | `app/bundles/NotificationBundle/Tests/Functional/` |
+| The focus builder reports a site whose CSP `frame-ancestors` blocks framing | [PR #15837] | `plugins/MauticFocusBundle/Tests/` |
+| The segment SMS pending count works with a DB table prefix | [PR #11159] | `app/bundles/SmsBundle/Tests/Functional/` |
+| One campaign "Send text message" run sends once per Contact and resolves every log | [PR #14874] | `app/bundles/SmsBundle/Tests/Functional/` |
+| A malformed phone number does not stop the other Contacts in the batch | [PR #2162] | `app/bundles/SmsBundle/Tests/Functional/` |

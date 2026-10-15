@@ -110,6 +110,12 @@ Full detail: references/test-patterns.md.
 - 8.x: channel, SMS, notification, focus and social events are dispatched by class; 10 `SmsEvents` constants are removed; `SmsEvent` becomes abstract with `SmsPre/PostSave/DeleteEvent` [PR #17216] [PR #17622] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/sms.html#sms-event-constants].
 - 8.x: `/sms/receive` and `mautic_receive_notification` are removed, so point Twilio at `/sms/twilio/callback`; `NotificationHelper::unsubscribe()` is removed [code: UPGRADE-8.0.md:232,277,331 @8.x] [PR #17231].
 - 8.x: Focus and Social campaign actions move to `ON_CAMPAIGN_BATCH_ACTION`; legacy `eventName`/`callback` campaign actions no longer run [PR #17097] [PR #17223] [PR #17544].
+- 5.0: Twilio sends through a Messaging Service SID instead of a "From" number, the SMS click-tracking toggle became the global `sms_disable_trackable_urls`, and LinkedIn left core [PR #12539] [PR #11683] [PR #12147].
+- 5.1: focus items close only with ×, and "Stop engaging after closing" uses cookie `mautic_focus_{id}_closed`; 5.0 and earlier have neither [PR #12705] [PR #12742].
+- 6.0 added the "Focus Stats" report source; 5.x has none [PR #14340].
+- 7.0: SMS and mobile notifications gained translations, and the focus rendering cache was removed [PR #15481] [PR #15520] [PR #15502].
+- Before 7.0, `mautic:messages:send` sent at most 50 queued messages per run; 7.0 drains the queue and adds `--limit`/`--batch` [PR #15333].
+- 7.2 added MMS and the bulk/MMS transport interfaces [PR #15999].
 - The user docs for SMS, marketing messages, push, focus and social monitoring are unchanged between 7.2 and 8.0 [docs: https://docs.mautic.org/en/7.2/channels/sms.html].
 Full detail: references/version-notes.md.
 
@@ -127,6 +133,11 @@ Full detail: references/version-notes.md.
 - `MessageModel::getChannels()` caches in a static property, so long-running workers miss integrations published later [code: app/bundles/ChannelBundle/Model/MessageModel.php:30,108 @7.x].
 - `/notification/appcallback` is unauthenticated and creates Contacts by email [code: app/bundles/NotificationBundle/Controller/AppCallbackController.php:33-55 @7.x].
 - The tweet action reads the hard-coded `twitter` field, while monitoring uses `twitter_handle_field` [code: plugins/MauticSocialBundle/Helper/CampaignEventHelper.php:45 @7.x].
+- Do not detach the Lead entity in SMS or message-queue send loops. It has caused unresolved campaign logs and duplicate sends more than once [PR #14247] [PR #14874].
+- Unpublished SMS and notifications must never be sent by campaign actions or the queue. This has regressed and been fixed repeatedly [PR #4761] [PR #6328] [PR #10577].
+- Each focus link must produce exactly one tracked redirect, with contact tokens resolved first. Double-wrapping created two click-count rows [PR #15502].
+- A push "not subscribed" failure is deliberately kept off the timeline, like an email to a Contact with no address. Use the "Has active notification" condition to branch [PR #2152] [PR #6329].
+- Campaign event constants must have unique names across bundles. A clash once routed email sends to the notification listener [PR #2152].
 - Open question: the docs say the SMS send API is `GET /smses/ID/contact/CID/send`, and the code analysis calls it POST. The route declares no method, so both work [code: app/bundles/SmsBundle/Config/config.php:42-45 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/text_messages.html#send-sms-to-contact].
 
 ## Related skills
@@ -148,4 +159,4 @@ Full detail: references/version-notes.md.
 - references/docs-digest.md — what docs.mautic.org and devdocs say, with URLs, procedures and terminology.
 - references/test-patterns.md — base classes, helper traits, representative tests and test skeletons.
 - references/version-notes.md — 5.x/6.x/7.x notes and the 8.x delta for these bundles.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md — why and when channel behaviour changed: decisions, regression catalogue, feature timeline and removals from merged PRs.
