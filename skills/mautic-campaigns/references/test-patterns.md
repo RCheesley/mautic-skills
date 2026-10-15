@@ -99,3 +99,12 @@ $this->assertCount(0, $pendingEvent->getPending()); // or assert on getSuccessfu
 - For failures: retry date = now + interval and `version` back to 1 [code: app/bundles/CampaignBundle/Executioner/Scheduler/EventScheduler.php:117-137 @7.x].
 
 Running the suite and fixtures in general: see mautic-testing.
+
+## Regression tests worth adding
+Rows from the regression catalogue in `references/pr-history.md` with no matching test found by a grep of the 7.x Tests directories.
+
+| Behaviour to assert | PR |
+|---|---|
+| A due scheduled log already at `version` 2 is not fetched again, and the trigger finishes | [PR #17146] |
+| A real-time decision does not fire when the campaign is published but outside its publish-up/down dates | [PR #14303] |
+| Parallel kickoff ranges from the contacts-by-segment query do not overlap | [PR #14860] |

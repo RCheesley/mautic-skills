@@ -84,6 +84,10 @@ Full tables (columns, every event constant, every route, every registered event 
 - 8.x removes 21 `CampaignEvents` constants (only `ON_EVENT_DECISION_EVALUATION`, `ON_EVENT_CONDITION_EVALUATION`, `ON_EVENT_JUMP_TO_EVENT`, `ON_CAMPAIGN_ACTION_CHANGE_MEMBERSHIP` remain); subscribe by event class (`CampaignBuilderEvent::class`, `CampaignSingleLeadChangeEvent::class`, `CampaignPostSaveEvent::class`, …) [PR #17161] [PR #17225] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/campaigns.html#campaign-membership-change-events].
 - 8.x deletes `LegacyEventDispatcher`: `eventName`/`callback` actions and every `*Events::ON_CAMPAIGN_TRIGGER_ACTION` constant are gone; core actions use `ON_CAMPAIGN_BATCH_ACTION` [PR #17097].
 - 8.x makes `CampaignLeadChangeEvent` abstract and removes `ConditionEvent`/`DecisionEvent::getResult()/setResult()` [PR #17151]; adds `wasConditionSatisfied()` / `wasDecisionApplicable()` to the documented API [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/campaigns.html#evaluating-a-campaign-condition].
+- 5.0: `mautic:segments:update` stopped syncing campaign membership; only `mautic:campaigns:update` does it [PR #10550]. Weekday restrictions apply to every delay unit, including none [PR #11332].
+- 5.1: failure auto-unpublish (10 % in 5.x), optimistic locking on campaign edits, newest-first trigger order and `--exclude` arrived [PR #13402] [PR #13659] [PR #12922] [PR #13383].
+- 5.2: optimized scheduling, the 30-minute minimum for restarting "this" campaign, and Marketing as the default Send email type [PR #13569] [PR #13963] [PR #14145]. Scheduled logs outside the publish-up/down range stay scheduled instead of failing [PR #13995].
+- 6.0: a Contact/event pair counts toward auto-unpublish only after 100 failures, and the threshold became 35 %; the 100-member minimum came in 7.0 [PR #14470] [PR #14906].
 - Full list: `references/version-notes.md`.
 
 ## Pitfalls
@@ -100,6 +104,10 @@ Full tables (columns, every event constant, every route, every registered event 
 - Docs name the republish options "Restart on reactivation / Count delay only while active / Count delay regardless of activation state"; the UI labels are "Restart on republish / Count delay only while published / Count delay regardless of publish state" [code: app/bundles/CampaignBundle/Translations/en_US/messages.ini:194-199 @7.x] [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#configuring-reactivation-behaviour].
 - Dev docs show campaign export as `POST /api/campaigns/export/{id}`; the route is GET. Dev docs give import status "200 or 201"; the controller returns 201 [code: app/bundles/CampaignBundle/Config/config.php:131-140 @7.x] [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:487 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/campaigns.html#exporting-via-api].
 - `EventLogModel::updateContactEvent()` maps the `channelId` API field to `setChannel()`, which looks like a bug [code: app/bundles/CampaignBundle/Model/EventLogModel.php:193-195 @7.x].
+- A Contact who joins a Segment enters its campaigns only on the next `mautic:campaigns:update` run; since 5.0 `mautic:segments:update` no longer touches campaign membership [PR #10550].
+- Duplicate-key errors on `campaign_rotation` have regressed at least five times (jumps, two campaigns sharing one decision). Rotations must be read per campaign, and jump logs built before the rotation is incremented [PR #9639] [PR #10206] [PR #14939] [code: app/bundles/CampaignBundle/Executioner/EventExecutioner.php:189-202 @7.x].
+- A due scheduled log whose `version` is above 1 is never picked up again by the scheduled phase, so it looks stuck rather than failing; failed logs get their version reset only from 7.3 [PR #17146] [PR #17245].
+- New Send email events default to Marketing, but an event saved without `email_type` is sent as Transactional, which ignores DNC [PR #14145] [code: app/bundles/EmailBundle/EventListener/CampaignSubscriber.php:274 @7.x].
 - Open question: `campaign_by_range` is in the config form but no consumer was found in CampaignBundle [code: app/bundles/CampaignBundle/Form/Type/ConfigType.php:65-75 @7.x] [unverified].
 
 ## Related skills
@@ -121,4 +129,4 @@ Full tables (columns, every event constant, every route, every registered event 
 - `references/docs-digest.md` — what the user and developer docs say, with URLs, procedures and terminology.
 - `references/test-patterns.md` — base classes, helpers, representative tests and test skeletons.
 - `references/version-notes.md` — 5.x/6.x history, 7.x minors and the 8.x delta for campaigns.
-- `references/pr-history.md` — not yet generated; PR-derived history is added in a later pass.
+- `references/pr-history.md` — why and when campaign behaviour changed: decisions, regression catalogue, feature timeline and removals from merged PRs.

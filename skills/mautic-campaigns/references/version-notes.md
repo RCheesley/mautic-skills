@@ -4,10 +4,31 @@
 - Rotations were introduced around 2.14: a new membership starts at rotation 2 when rotation-1 logs already exist, for backward compatibility with older data [code: app/bundles/CampaignBundle/Membership/Action/Adder.php:22-41 @7.x]. A 2.14 self-heal rewrites decisions whose `channel_id` is literally `'1'` [code: app/bundles/CampaignBundle/Executioner/RealTimeExecutioner.php:187-197 @7.x].
 - Batch actions (`batchEventName` + `PendingEvent`) have worked since Mautic 3; the per-contact `eventName`/`callback` path is legacy [code: app/bundles/CampaignBundle/Executioner/Dispatcher/LegacyEventDispatcher.php:152,181 @7.x].
 - 5.1 added copy/paste (clone) of events within and between campaigns [docs: https://docs.mautic.org/en/7.2/campaigns/campaign_builder.html#cloning-campaign-events].
-- No 5.x/6.x-specific behaviour differences for campaign execution were found in the inputs beyond the items above; treat other differences as unverified.
+- Pre-5.0 history (2.x–4.x decisions such as restart, own/other permissions, the 2.14 executioner refactor) is in `references/pr-history.md` [PR #6132] [PR #6963] [PR #5942].
+
+## 5.x
+- 5.0: `mautic:segments:update` no longer adds or removes campaign members; only `mautic:campaigns:update` does. The `LeadSubscriber` Segment handlers exist at tag 4.4.13 and are gone at 5.0.0 [PR #10550].
+- 5.0: weekday restrictions apply to every delay unit, including no delay [PR #11332]; `--thread-id` threads get separate lock keys [PR #11747]; restartable rebuilds no longer loop after a manual removal [PR #11318].
+- 5.0: Redis lock store for moderated commands (`-x redis`) [PR #10347]; campaign views are Twig [PR #11778].
+- 5.1: event logs are deleted by explicit queries, optionally in the background (`delete_campaign_event_log_in_background`) [PR #10219].
+- 5.1: failure auto-unpublish arrived: every failure bumped `failed_count` and a campaign unpublished at `failed_count / members >= 0.1` [PR #13402].
+- 5.1: campaign edits use optimistic locking [PR #13659]; the trigger runs newest campaigns first [PR #12922]; `--exclude` on trigger, rebuild and segments update [PR #13383]; "Schedule at" with a delay behaves like "between the hours of" [PR #13263].
+- 5.2: optimized scheduling [PR #13569]; "Change campaigns" restarting "this" campaign needs a delay of at least 30 minutes [PR #13963]; new Send email events default to Marketing [PR #14145].
+- 5.2: scheduled logs outside the publish-up/down range stay scheduled instead of failing [PR #13995]; real-time decisions respect publish dates [PR #14303]; red-path actions run as soon as the decision's wait expires [PR #14289].
+
+## 6.x
+- 6.0: a Contact/event pair counts toward auto-unpublish only after 100 failures, once per pair, and is decremented after a later success; the threshold became 35 % (tag 6.0.0 has no member minimum) [PR #14470].
+- 6.0: weekday numbering is 0–6 with Sunday = 0 [PR #14612]; Email Metrics tab with `campaign_email_stats_enabled` [PR #14414]; timeline shows the parent decision or condition and its path [PR #14601].
+- 6.0: `MauticFactory` removed [PR #14682]; Symfony 6.4 [PR #13962]. 6.0.4: writes use `executeStatement` so they never reach the read replica [PR #15199].
 
 ## 7.x
 - Campaign import/export (UI, CLI `mautic:entity:export/import`, API) exists only from 7.0 [docs: https://docs.mautic.org/en/7.2/campaigns/exporting_campaigns.html].
+- 7.0: auto-unpublish requires at least 100 members and sends one notification and one email [PR #14906]; event logs carry an optimistic-lock `version` so concurrent triggers run each once [PR #15348].
+- 7.0: orphan events block saving [PR #15321]; builder state lives in the page, not the session [PR #15476]; `campaign_events.channel_id` is VARCHAR(64) [PR #15132]; the trigger exits cleanly on SIGTERM [PR #14745].
+- 7.1: deleting an event soft-deletes it with an optional redirect [PR #15528]; per-campaign republish behaviour [PR #15634]; `GET /api/campaigns?withContactCounts` [PR #15878].
+- 7.1.3: restart-off campaigns never auto re-add exited Contacts, and restart-on campaigns re-add Contacts who re-join the Segment [PR #16183] [PR #16184]; future-dated scheduled logs no longer loop [PR #16066].
+- 7.2.0: `mautic:campaigns:resume-stuck` (with `--dry-run`) re-evaluates half-run conditions; decisions and conditions advance the log version [PR #15310] [PR #17104]. Many campaign classes became `final` [PR #16735] [PR #16753] [PR #16755] [PR #16896].
+- 7.2.1: the scheduled phase fetches only logs at the initial version [PR #17146]; send hour resets in the Contact's timezone when a weekday rule moves the day [PR #17283].
 - 7.1: Form "type" (`standalone`/`campaign`) became unused; every Form can be a campaign source [PR #17082].
 - 7.2: the `mautic.campaign.event_collector` service alias is deprecated [code: app/bundles/CampaignBundle/Config/services.php:69-70 @7.x].
 - 7.2.x: `mautic:campaigns:resume-stuck` considers only members added after `campaigns_resume_stuck_records_after` (default `2025-10-01 00:00:00`) [code: app/bundles/CampaignBundle/Config/config.php:174 @7.x].
