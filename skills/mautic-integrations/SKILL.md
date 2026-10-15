@@ -46,6 +46,7 @@ objects and fields sync, and in which direction.
 - After a push, tracked changes of successfully synced objects are deleted. Objects flagged `retrySyncLater()` keep theirs. [code: app/bundles/IntegrationsBundle/Sync/SyncProcess/SyncProcess.php:278-297 @7.x]
 - The modern engine has no "update blank values" switch. `updateBlanks` exists only inside individual legacy CRM plugins. [code: app/bundles/IntegrationsBundle/Form/Type/IntegrationSyncSettingsType.php:47-60 @7.x] [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:391-410 @7.x]
 - Neither `mautic:integrations:sync` nor the legacy commands take a lock, so concurrent runs are possible. [code: app/bundles/IntegrationsBundle/Command/SyncCommand.php:31-126 @7.x]
+- Salesforce DNC flows Mautic → SF only, unless "Use latest updated Do Not Contact record" is on. With it on, a newly pulled opted-out SF record gets DNC, and SF opt-out history is replayed oldest first, so a box ticked then unticked leaves no DNC. [PR #4920] [PR #13411] [PR #13444] [code: plugins/MauticCrmBundle/Integration/SalesforceIntegration.php:457-467,2541-2627 @7.x]
 - Marketplace pages return 404 when `marketplace_enabled` is false. Installing or removing a `mautic-plugin` or `mautic-theme` runs Composer in-process and is refused with 403 unless `composer_updates` is true. A `mautic-resource` (campaign ZIP) installs without Composer. [code: app/bundles/MarketplaceBundle/Controller/AjaxController.php:52-225 @7.x] [code: app/bundles/CoreBundle/Helper/ComposerHelper.php:142-169 @7.x]
 - Only packages installed with Composer type `mautic-plugin` can be removed through the Marketplace. [code: app/bundles/MarketplaceBundle/Command/RemoveCommand.php:64-69 @7.x]
 - To be listed, a plugin must be allowlisted by the core team. The Marketplace does not check Mautic version compatibility. [docs: https://devdocs.mautic.org/en/7.2/marketplace/allowlist_what_and_why.html] [docs: https://docs.mautic.org/en/7.2/marketplace/marketplace.html]
@@ -93,6 +94,12 @@ Full detail: references/test-patterns.md.
 - 8.x removes `IntegrationEvents` (23 constants → event classes such as `InternalContactFieldChangesEvent` and `MauticToIntegrationSyncCompletedEvent`) and the `mautic.integrations.helper*` service ids. [PR #17160] [PR #17654] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_integrations/integrations_sync.html#sync-events]
 - 8.x removes Clearbit entirely, `AbstractSsoFormIntegration`, `DefaultConfigFormTrait` and the dead HubSpot `mautic_integration_companies` route. It also makes four CRM integrations `final`. [PR #17785] [PR #17231]
 - 8.x: `plugin.leadpush` moves to `ON_CAMPAIGN_BATCH_ACTION`. Responses arrive in the new `PluginIntegrationResponseEvent`, and `AbstractIntegration` takes `CacheProviderInterface` and gains array return types. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
+- 5.0 removes the Pipedrive and Citrix/GoTo integrations; 4.4.9 shows deprecation notices for both. Rackspace/OpenStack storage went in 3.0. [PR #12081] [PR #12333] [PR #12364] [PR #12367] [PR #8310]
+- 5.0 to 7.2.1: `getLeadData()` detaches the wrong entities, so `mautic:integration:pushleadactivity` pushes nothing; fixed in 7.2.2. [PR #12361] [PR #17815]
+- HubSpot uses a Private App token since 4.4.5/5.0; the `hapikey` path remains only as a fallback. [PR #11470] [PR #11857]
+- 5.1 sync engine: one-way "to integration" fields are never cleared by a pull, same-batch duplicates reuse one Contact, sync changes are attributed to the integration, and `mautic:integrations:cleanup` exists. [PR #11251] [PR #13435] [PR #13426] [PR #13340]
+- 6.0: an empty value for a required Mautic field skips the object or field instead of aborting the sync. [PR #14666]
+- 7.2 moves Clearbit, Gmail and Tag Manager from `AbstractIntegration` to `BasicIntegration`, and makes childless IntegrationsBundle DAOs `final`. [PR #16586] [PR #16847] [PR #16795] [PR #16888]
 - Marketplace: read-only since 4.0, and install/remove has required the Composer setting since 4.2. [docs: https://docs.mautic.org/en/7.2/marketplace/marketplace.html#using-the-mautic-marketplace]
 Full detail: references/version-notes.md.
 
@@ -110,6 +117,10 @@ Full detail: references/version-notes.md.
 - Open question: the partial report keeps the earliest `modified_at` as the object change date, although a comment says "latest". [code: app/bundles/IntegrationsBundle/Sync/SyncDataExchange/Internal/ReportBuilder/PartialObjectReportBuilder.php:122-125 @7.x]
 - `IntegrationsBundle/README.md` says pulling specific ids and company ids are "not implemented yet". That is stale: the code supports both. [code: app/bundles/IntegrationsBundle/README.md:19-21 @7.x]
 - Marketplace log and CLI messages still say "Packagist", although the registry is `marketplace.mautic.org`. [code: app/bundles/MarketplaceBundle/Api/Connection.php:77 @7.x] [code: app/bundles/MarketplaceBundle/Service/Config.php:32-38 @7.x]
+- `mautic:integration:pushleadactivity` exits successfully even when nothing was pushed, because `pushLeadActivity()` only logs exceptions. The 7.x snapshot and 7.2.1 still have the inverted detach check (fixed in 7.2.2), so check the logs for "EntityManager is closed". [PR #17815] [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:245-254 @7.x]
+- The Gmail tracking pitfall above dates from 7.2.0, when Gmail moved from `AbstractIntegration` to `BasicIntegration`; 7.1.3 still extends `AbstractIntegration`, which has the method. [PR #16847] [code: plugins/MauticGmailBundle/Integration/GmailIntegration.php:10 @7.x]
+- HubSpot without a stored `accessKey` still sends `?hapikey=`, which HubSpot sunset in 2022. Inferred: a legacy key no longer authenticates. [PR #11470] [code: plugins/MauticCrmBundle/Api/HubspotApi.php:18-24 @7.x]
+- A legacy CRM fetch with no "Is Unique Identifier" field or no Mautic-priority fields imports nothing, and says so only at debug log level. [PR #12619] [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:372,400 @7.x]
 
 ## Related skills
 - mautic-plugin-development: plugin anatomy, discovery, `config.php`, `mautic:plugins:reload`, plugin migrations in general.
@@ -129,4 +140,4 @@ Full detail: references/version-notes.md.
 - references/docs-digest.md: what docs.mautic.org and devdocs say, with URLs, procedures and terminology.
 - references/test-patterns.md: base classes, representative tests, skeletons for sync, legacy and Marketplace tests.
 - references/version-notes.md: 5.x/6.x history, 7.x minors and the 8.x delta for this area.
-- references/pr-history.md: not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md: why and when behaviour changed, from merged PRs: decisions by sub-topic and bundled plugin, removed plugins, regression catalogue, feature timeline, norms and open questions.

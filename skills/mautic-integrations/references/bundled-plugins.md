@@ -36,6 +36,8 @@ No CRM uses the IntegrationsBundle sync engine, so `mautic:integrations:sync` do
 
 There is no Pipedrive integration class. Only `pipedrive.png` and `cobalt.png` images remain, but the docs still have a title-only Pipedrive page. [code: plugins/MauticCrmBundle/Assets/img/pipedrive.png @7.x] [docs: https://docs.mautic.org/en/7.2/plugins/pipedrive.html]
 
+History: Pipedrive and Citrix/GoTo were deprecated in 4.4.9 and removed in 5.0; Rackspace/OpenStack storage was removed in 3.0; Clearbit is removed in 8.x only. Details: references/pr-history.md section 3. [PR #12081] [PR #12333] [PR #8310] [PR #17785]
+
 ## 1 Salesforce
 - Purpose: two-way Contact/Lead/Account sync, CRM campaign membership, activity export. Framework: legacy. [code: plugins/MauticCrmBundle/Integration/SalesforceIntegration.php:119-122 @7.x]
 - Features: `push_lead`, `get_leads`, `push_leads`. Settings: `sandbox`, `updateOwner`, `updateBlanks`, `updateDncByDate`, `objects` (Lead/Contact/company/Activity), `activityEvents`, `namespace`. [code: plugins/MauticCrmBundle/Integration/SalesforceIntegration.php:514-632 @7.x]
@@ -54,6 +56,7 @@ There is no Pipedrive integration class. Only `pipedrive.png` and `cobalt.png` i
   - `pushCompany` records `internalEntity='lead'` for Accounts. [code: plugins/MauticCrmBundle/Integration/SalesforceIntegration.php:827-830 @7.x]
   - `pushLeadActivity` formats dates as `'Y-m-d H:m:s'`, with the month in the minutes slot. [code: plugins/MauticCrmBundle/Integration/SalesforceIntegration.php:1023-1024 @7.x]
   - The class is `final` in 8.x. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
+- History: DNC sync by date added in 2.12 and changed in 5.1 (new opted-out records, ticked-then-unticked); stale-field self-healing in 5.2. [PR #4920] [PR #13411] [PR #13444] [PR #13406]
 
 ## 2 HubSpot
 - Purpose: push Contacts, and pull Contacts/Companies. Framework: legacy. Features: `push_lead`, `get_leads`. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:46-49 @7.x]
@@ -66,6 +69,7 @@ There is no Pipedrive integration class. Only `pipedrive.png` and `cobalt.png` i
   - "Recently modified" endpoints see only about 30 days, even with `--fetch-all`. [docs: https://docs.mautic.org/en/7.2/plugins/hubspot.html#troubleshooting-hubspot-integration]
   - The route `mautic_integration_companies` points to a missing method; it is removed in 8.x. [code: plugins/MauticCrmBundle/Config/config.php:19-25 @7.x]
   - HubSpot creates Contacts only for valid emails. [docs: https://docs.mautic.org/en/7.2/plugins/hubspot.html#troubleshooting-hubspot-integration]
+- History: API-key auth replaced by a Private App token in 4.4.5/5.0. [PR #11470] [PR #11857]
 
 ## 3 Zoho CRM
 - Purpose: push, pull (Leads/Contacts/Accounts) and bulk push. Framework: legacy. Features add `push_leads`. [code: plugins/MauticCrmBundle/Integration/ZohoIntegration.php:93-96 @7.x]
@@ -77,17 +81,20 @@ There is no Pipedrive integration class. Only `pipedrive.png` and `cobalt.png` i
 - Limitations:
   - Both accounts must use English, because field aliases change by language. [docs: https://docs.mautic.org/en/7.2/plugins/zoho_crm.html#language-configuration-warning]
   - Empty Mautic values are sent as "Unknown". [docs: https://docs.mautic.org/en/7.2/plugins/zoho_crm.html#configure-the-zoho-crm-plugin]
+- History: moved to Zoho REST API v2 with OAuth in 2.16; installs had to re-authorise. [PR #8272]
 
 ## 4 Microsoft Dynamics CRM
 - Purpose: push and pull contacts/companies. Framework: legacy. Auth: OAuth2 via `login.microsoftonline.com/common`. API: Web API v8.2 with a 300 s timeout. [code: plugins/MauticCrmBundle/Integration/DynamicsIntegration.php:41-159 @7.x] [code: plugins/MauticCrmBundle/Api/DynamicsApi.php:11-60 @7.x]
 - Behaviour: an existing mapping triggers a PATCH, otherwise a POST that parses `OData-EntityId`. Pull follows `@odata.nextLink`, 200 per page. [code: plugins/MauticCrmBundle/Integration/DynamicsIntegration.php:298-423 @7.x]
 - Limitations: `updateBlanks` is added to every form area. The docs page is title only. [code: plugins/MauticCrmBundle/Integration/DynamicsIntegration.php:52-100 @7.x] [docs: https://docs.mautic.org/en/7.2/plugins/microsoft_dynamics_crm.html]
+- History: the plural `Contacts` object fix landed in 5.0.4. [PR #13208]
 
 ## 5 SugarCRM
 - Purpose: push and pull (Leads/Contacts/company), DNC sync, activity push. Framework: legacy. [code: plugins/MauticCrmBundle/Integration/SugarcrmIntegration.php:67-71,417-510 @7.x]
 - Auth: version 6 uses REST login with an md5 password. Version 7 uses an OAuth2 password grant and re-logs in on every `isAuthorized()` call. [code: plugins/MauticCrmBundle/Integration/SugarcrmIntegration.php:100-156,567-643 @7.x]
 - DNC: `updateDnc` pushes `email_opt_out`/`invalid_email`. On pull, `opt_out` adds UNSUBSCRIBED DNC. [code: plugins/MauticCrmBundle/Integration/SugarcrmIntegration.php:1241-1309 @7.x]
 - Limitations: deleted-contact fetch is a `@todo`, and there are `TODO 7.x` markers in the API. The docs page is title only. [code: plugins/MauticCrmBundle/Integration/SugarcrmIntegration.php:1395 @7.x] [code: plugins/MauticCrmBundle/Api/SugarcrmApi.php:298,481 @7.x] [docs: https://docs.mautic.org/en/7.2/plugins/sugar_crm.html]
+- History: the `/filter` endpoint switched to GET in 4.2. [PR #10667]
 
 ## 6 vTiger
 - Purpose: push only (`push_lead`). Framework: legacy. Auth: `getchallenge` + `login` on `<url>/webservice.php`. `assigned_user_id` is forced to the authenticated user. [code: plugins/MauticCrmBundle/Integration/VtigerIntegration.php:25-28,62-222 @7.x]
@@ -97,6 +104,7 @@ There is no Pipedrive integration class. Only `pipedrive.png` and `cobalt.png` i
 - Purpose: push and pull Contacts/Companies, plus creating CW Activities from the campaign action. Framework: legacy. Auth: `basic` plus a `clientId` header. [code: plugins/MauticCrmBundle/Integration/ConnectwiseIntegration.php:36-155 @7.x]
 - Behaviour: `pushLead` updates every CW contact with that email. With `push_activities` it creates an Activity recorded as `Activities`. [code: plugins/MauticCrmBundle/Integration/ConnectwiseIntegration.php:566-626,971-988 @7.x] [code: plugins/MauticCrmBundle/Form/Type/IntegrationCampaignsTaskType.php:27-79 @7.x]
 - Limitations: inverted `update_mautic` convention on update, and `customFields` is a todo. [code: plugins/MauticCrmBundle/Integration/ConnectwiseIntegration.php:344,633 @7.x]
+- History: the appcookie credential was replaced by a Client ID in 5.1. [PR #13408]
 
 ## 8 Shared CRM behaviour (CrmAbstractIntegration)
 - `pushLead` returns `[]` with no mapped fields, `false` on an empty payload or an error, and `true` on success. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:57-84 @7.x]
@@ -106,6 +114,7 @@ There is no Pipedrive integration class. Only `pipedrive.png` and `cobalt.png` i
 - `updateOwner` sets the owner from `owner_email` when a matching user exists. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:437-443 @7.x]
 - Companies without `companyname` are not created. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:271-326 @7.x]
 - A trailing `/` in the `url` key is stripped. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:23-33 @7.x]
+- History: `getLeadData()` detaches the wrong entities from 5.0.0 to 7.2.1, so activity push silently does nothing; fixed in 7.2.2. The 7.x snapshot still has the bug. [PR #12361] [PR #17815] [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:245-254 @7.x]
 - Add a CRM: subclass `CrmAbstractIntegration`, add `Api/<Name>Api extends CrmApi`, and alias `mautic.integration.<name>`. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:155-163 @7.x]
 
 ## 9 Clearbit
@@ -117,6 +126,7 @@ There is no Pipedrive integration class. Only `pipedrive.png` and `cobalt.png` i
   - Notification type is the literal `'FullContact'`. [code: plugins/MauticClearbitBundle/Controller/PublicController.php:50-53 @7.x]
   - Uses raw cURL rather than Mautic's HTTP client. [code: plugins/MauticClearbitBundle/Services/Clearbit_Base.php:79-126 @7.x]
 - Status: **removed in 8.x** (service sunset after the HubSpot acquisition). [PR #17785]
+- History: moved from `AbstractIntegration` to `BasicIntegration` in 7.2. [PR #16586]
 
 ## 10 FullContact
 - Purpose: same enrichment flow as Clearbit against FullContact v2. Framework: legacy, auth `none`, key `apikey`. [code: plugins/MauticFullContactBundle/Integration/FullContactIntegration.php:13-111 @7.x]
@@ -149,7 +159,9 @@ There is no Pipedrive integration class. Only `pipedrive.png` and `cobalt.png` i
   - The payload needs `email`, `subject` and `body`. [code: app/bundles/EmailBundle/Controller/PublicController.php:764-801 @7.x]
   - Outlook's first request is not counted as an open. [code: app/bundles/EmailBundle/Controller/PublicController.php:764-801 @7.x]
 - Limitation (inferred): `GmailIntegration` has no `getDecryptedApiKeys()`, which the tracking code calls, so Gmail tracking would fail with an undefined-method error. [code: app/bundles/EmailBundle/Controller/PublicController.php:741 @7.x] [code: app/bundles/IntegrationsBundle/Integration/BasicIntegration.php:10-40 @7.x]
+- History: Gmail moved from `AbstractIntegration` to `BasicIntegration` in 7.2.0, which is when this limitation appeared. [PR #16847]
 
 ## 14 Other plugins (pointers)
 - Amazon S3 (`plugins/MauticCloudStorageBundle`, feature `cloud_storage`) is covered by the assets skill. Tags UI (`plugins/MauticTagManagerBundle`) is covered by mautic-contacts. [code: plugins/MauticCloudStorageBundle/Integration/AmazonS3Integration.php @7.x] [code: plugins/MauticTagManagerBundle/Integration/TagManagerIntegration.php @7.x]
+- History: S3 gained a custom endpoint in 5.0. Tag Manager moved to `BasicIntegration` in 7.2; its tag-screen history is in pr-history.md section 2.14. [PR #11693] [PR #16795]
 - Social (Facebook, Twitter, Instagram, Foursquare), Focus and GrapesJS builder are separate plugins outside this skill. Twilio (SmsBundle) and OneSignal (NotificationBundle) are core legacy Integrations. [code: app/bundles/SmsBundle/Integration/TwilioIntegration.php @7.x] [code: app/bundles/NotificationBundle/Integration/OneSignalIntegration.php @7.x]

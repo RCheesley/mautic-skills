@@ -73,3 +73,16 @@ Build an `ObjectMappingDAO` with `addFieldMapping('email', 'Email', ObjectMappin
 - **Config**: encrypted `api_keys`, validity only enforced when published, and that unpublished saves still succeed. [code: app/bundles/IntegrationsBundle/Controller/ConfigController.php:48-262 @7.x]
 - **Marketplace**: HTTP status codes (400/403/500), no Composer call when `composer_updates` is false, and resource rollback. [code: app/bundles/MarketplaceBundle/Controller/AjaxController.php:52-225 @7.x]
 - **8.x note**: CRM integration classes become `final`; mock through interfaces or use `dg/bypass-finals`. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
+
+## Regression tests worth adding
+Rows from the pr-history.md regression catalogue with no matching test found by one grep of the 7.x `Tests/` dirs.
+
+| Behaviour to assert | PR | Where to test |
+|---|---|---|
+| `getLeadData()` keeps `Integration`/`Plugin` attached and detaches the rest after each page | [PR #17815] | `plugins/MauticCrmBundle/Tests/CrmAbstractIntegrationTest.php` |
+| SF opt-out ticked then unticked leaves no DNC (history `NewValue` true then false) | [PR #13444] | `plugins/MauticCrmBundle/Tests/Integration/SalesforceIntegrationTest.php` |
+| A newly pulled SF record with `HasOptedOutOfEmail` gets DNC when `updateDncByDate` is on | [PR #13411] | `plugins/MauticCrmBundle/Tests/Integration/SalesforceIntegrationTest.php` |
+| SF activity `Name` is truncated to 80 characters | [PR #8989] | `plugins/MauticCrmBundle/Tests/Integration/SalesforceIntegrationTest.php` |
+| SF update requests send `Sforce-Auto-Assign: FALSE`; creates do not | [PR #3978] | `plugins/MauticCrmBundle/Tests/Api/SalesforceApiTest.php` |
+| SF pull follows `nextRecordsUrl` past 2,000 records | [PR #5841] | `plugins/MauticCrmBundle/Tests/Api/SalesforceApiTest.php` |
+| HubSpot read-only properties are never pushed | [PR #8785] | `plugins/MauticCrmBundle/Tests/Integration/HubspotIntegrationTest.php` |

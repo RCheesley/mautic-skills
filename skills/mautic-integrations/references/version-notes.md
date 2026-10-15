@@ -12,9 +12,41 @@
 - `mautic-resource` packages (campaign ZIPs) install without Composer. [code: app/bundles/MarketplaceBundle/Service/ResourceInstaller.php:57-121 @7.x]
 
 ## 5.x / 6.x differences
-- No 5.x/6.x-specific behaviour difference for this area is recorded in the inputs. The PR-history pass will add it. Treat the 7.2.1 behaviour as the baseline. [unverified]
+### 4.4.x (last 4.x line)
+- 4.4.5/4.4.6: HubSpot authenticates with a Private App access token, and the token fields can be edited. [PR #11470] [PR #11775]
+- 4.4.9: Pipedrive and Citrix show deprecation notices in the config form, notification centre and CLI. [PR #12364] [PR #12367]
+
+### 5.0
+- Pipedrive (with `mautic:integration:pipedrive:fetch|push`) and MauticCitrixBundle (with `mautic:citrix:sync`) are removed. [PR #12081] [PR #12333]
+- IntegrationsBundle, PluginBundle, MarketplaceBundle and plugin templates are Twig, referenced as `@Mautic<Bundle>/...`. [PR #11862] [PR #11960] [PR #11560] [PR #12139]
+- Pulled values are validated against Mautic field type and length; invalid fields are skipped with a notification, and batch-completed events fire. [PR #11303]
+- New extension points: `INTEGRATION_BEFORE_CONTACT_FIELD_CHANGES`/`..._COMPANY_...`, `ConfigFormNotesInterface`, `ObjectMappingRepository` locking helpers, and `--disable-activity-push`. [PR #10512] [PR #11451] [PR #11657] [PR #11255]
+- The sync and `AbstractIntegration` detach entities instead of calling `EntityManager::clear()`. The CRM version of this change inverted the `getLeadData()` check, so `pushleadactivity` pushes nothing from 5.0.0 until 7.2.2. [PR #12341] [PR #12342] [PR #12361] [PR #17815]
+- Each plugin `composer.json` requires `mautic/core-lib` of the same major. [PR #11593]
+- S3 accepts a custom endpoint for S3-compatible storage. [PR #11693]
+- Dynamics fetches the plural `Contacts` object from 5.0.4. [PR #13208]
+
+### 5.1 and 5.2
+- One-way "to integration" fields are never cleared by a pull. [PR #11251]
+- `mautic:integrations:cleanup` deletes orphan change rows. [PR #13340]
+- Sync changes are attributed to the integration; same-batch duplicates reuse one Contact; `--mautic-object-id` limits the push to the named objects. [PR #13426] [PR #13435] [PR #13454]
+- OAuth2 tokens can carry a default expiry, and `ConfigAuthUrlEvent` can rewrite the auth URL. [PR #13429] [PR #13434]
+- Salesforce pulls DNC for new opted-out records and ignores an opt-out that was ticked then unticked (with "Use latest updated Do Not Contact record"). [PR #13411] [PR #13444]
+- ConnectWise uses a Client ID instead of the appcookie credential. [PR #13408]
+- 5.2: Salesforce drops a deleted SF field from the mapping and keeps syncing; logged Authorization headers are `[REDACTED]`; plugin migrations skip the commit after DDL. [PR #13406] [PR #14277] [PR #14440]
+
+### 6.0
+- An empty value for a required Mautic field skips a new object, or that field of an existing object, instead of aborting the sync. [PR #14666]
+- `MauticFactory::getDatabase()` and `FieldModel::getUniqueIdentiferFields()` are removed; plugin install/update receives the connection by DI. [PR #14418] [PR #14144]
+- Froala styles and Gated Video are removed. [PR #14271] [PR #14284]
+- No other 6.x-only integration difference was found in the 492 PRs read. [PR #14532] [PR #14571]
 
 ## 7.x minors
+- 7.0: a `PLUGIN_IS_PUBLISHED_STATE_CHANGING` listener can veto publishing, and credential changes clear tokens. IntegrationsBundle ships a test `TestPass` for HTTP mocking. [PR #13696] [PR #15084]
+- 7.1: the plugin config modal shows the plugin version. [PR #15789]
+- 7.2: Clearbit, Gmail and Tag Manager move to `BasicIntegration`; IntegrationsBundle DAOs without children are `final`; IntegrationsBundle services are autowired in `services.php`; legacy mapping pagination reads POST. [PR #16586] [PR #16847] [PR #16795] [PR #16888] [PR #16781] [PR #16202]
+- 7.2.2: `pushleadactivity` pushes activity again. The 7.x snapshot (and 7.2.1) still contains the inverted check. [PR #17815] [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:245-254 @7.x]
+- Unreleased 7.x (7.3.0-rc): duplicate tag names are refused on create and rename. [PR #17341]
 - 7.2 deprecates the aliases `mautic.integrations.sync.service` and `mautic.integrations.subscriber.controller` in favour of FQCN services. [code: app/bundles/IntegrationsBundle/Config/services.php:91-94 @7.x]
 - 7.2 deprecates the Clearbit alias `mautic.plugin.clearbit.lookup_helper`. [code: plugins/MauticClearbitBundle/Config/services.php:24-25 @7.x]
 - In 7.2 the devdocs still name string service ids (`mautic.integrations.helper`, `mautic.integrations.auth_provider.api_key`...). [devdocs: https://devdocs.mautic.org/en/7.2/plugin_integrations/integrations_authentication.html]
