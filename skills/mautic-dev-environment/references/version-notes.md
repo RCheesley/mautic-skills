@@ -9,6 +9,12 @@
 | 4.2 → 5.0 | The browser updater was deprecated in 4.2. The docs say it was removed in 5.0. | [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_update_mautic.html#updating-in-the-browser] |
 | 5.0 | Composer became the default install and update method. | [docs: https://docs.mautic.org/en/7.2/getting_started/switching_composer.html] |
 | 5.1 | A complex admin password became required. The DDEV default password changed from `mautic` to `Maut1cR0cks!`. | [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#install-mautic-using-ddev] [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#installing-with-command-line] |
+| 3.3 | DDEV became the supported dev environment, with a first-start auto-install. | [PR #9669] |
+| 4.1-4.2 | Gitpod replaced Mautibox for PR testing, and DDEV opened Mautic through `index_dev.php` by default. | [PR #10500] [PR #10986] |
+| 5.0 | `index_dev.php` was removed; `.env` (prod defaults), `.env.local` and `.env.test` select the environment. Generated assets stopped being committed. Front-end libraries moved to npm, and `node_modules` stays out of builds. | [PR #12206] [PR #11865] [PR #12373] [PR #12356] |
+| 5.1 | DDEV runs in dev mode via `.ddev/.env.local.dist`, takes its project name from the folder, and declares `upload_dirs`. `remove-git-submodules` was removed. | [PR #13295] [PR #13293] [PR #13545] [PR #12816] |
+| 5.2 | The repo ships `.ddev/config.yaml`, post-start hooks fix CRLF line endings, PHP 8.3 was added and the minimum rose to PHP 8.1. | [PR #14207] [PR #13813] [PR #13958] [PR #13972] |
+| 6.0 | Update packages list vendor files removed since the minimum version. `.devcontainer` exists alongside Gitpod, and 6.0.5 excludes it from builds. CI tests PHP 8.1 to 8.3. | [PR #14683] [PR #15374] [code: .devcontainer/devcontainer.json @6.0.0] [code: .github/workflows/tests.yml:24-25 @6.0.0] |
 | 5.x (KB Ubuntu guide) | PHP 8.1, Node 20, `recommended-project:^5`. This is outdated for 7.x versions, but the Composer approach still holds. | [kb: https://kb.mautic.org/article/how-to-install-mautic-5-on-ubuntu-22-04-with-ssl-and-node-js-20.html] |
 
 ## 2. 7.x (authoritative: 7.x snapshot, release 7.2.1 plus unreleased merged PRs)
@@ -18,7 +24,10 @@
 - DDEV runs PHP 8.5, MariaDB 10.11 and Node 24. [code: .ddev/config.yaml:1-24 @7.x]
 - Dev tool binaries are in `bin/` (`bin/phpunit`, `bin/phpstan`, `bin/rector`, `bin/codecept`). Code style uses php-cs-fixer plus ECS. Tests run on PHPUnit 11.5. [code: composer.json:28-56 @7.x] [code: composer.json:173-178 @7.x]
 - `composer install` builds the GrapesJS assets without failing on errors, through `build/gjs_build.php`. [code: build/gjs_build.php:1-13 @7.x]
-- Open question: the inputs do not separate dev-environment changes between 7.0, 7.1 and 7.2, and they record no change specific to 6.x. [unverified]
+- 7.0: MySQL 8.4+ and MariaDB 10.11+ (DDEV moved to MariaDB 10.11), Symfony minor-locked to `~7.4.0`, Node 24 in DDEV from 7.0.1, and update zips carry generated pictograms from 7.0.1. [PR #14836] [PR #15705] [PR #15828] [PR #15841]
+- 7.1: DDEV runs in UTC, Guzzle is minor-locked, the release upload is stable-only and remote, and templates point to Codespaces from 7.1.1. Gitpod is still present at 7.1.0. [PR #15650] [PR #15737] [PR #15938] [PR #15704] [PR #16032] [code: .gitpod.yml @7.1.0]
+- 7.2.0: Gitpod removed, Codespaces prebuilds and a Codespaces `post-checkout` hook, grouped lock-only Dependabot with scaffold-lock sync, Actions pinned to SHAs, `js-cookie` and `doctrine/annotations` removed. [PR #16310] [PR #16309] [PR #16405] [PR #16219] [PR #16234] [PR #16227] [PR #16161] [PR #16178]
+- 7.2.1 and 7.2.2 (7.2 branch): runtime libraries such as DomCrawler moved to `require`, vendor exclusions dropped from `build/exclude_files.txt`, the release checks `Crawler.php`, and `package_devhead.php` was deleted. Only the core-lib part (7.2.1) is in this 7.x snapshot; the rest is fixed in 7.2.2 on the 7.2 branch. [PR #17265] [PR #17592] [PR #17616] [PR #17832] [code: build/exclude_files.txt:37 @7.x]
 
 ## 3. 8.x delta (unreleased; branch snapshot 2026-10-15)
 | Item | 7.x | 8.x | Source |

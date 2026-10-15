@@ -116,7 +116,12 @@ More in references/behaviour.md section 7.
 - 8.x moves to PHPUnit 13, keeps PHPStan level 6 with many more custom rules and a smaller baseline, pins Rector `^2.6.5`, drops php-cs-fixer for ECS only, runs tools from `vendor/bin/`, and adds `dg/bypass-finals` so tests can mock final classes [code: composer.json @8.x] [PR #17004] [PR #17280] [PR #17164] [PR #17366].
 - 8.x forbids test doubles of `Request`, `InputBag` and `Router` (final in Symfony 8) [code: composer.json @8.x] [PR #17392].
 - 8.x dispatches most events by class name, so a listener test asserting a string event key from `getSubscribedEvents()` must change [PR #17625].
-- The inputs record no 5.x/6.x test-tooling differences; see references/version-notes.md.
+- 5.x and 6.x run PHPUnit 9.6, 7.0 and 7.1 run PHPUnit 10.5, and 7.2 moved to PHPUnit 11.5 [PR #15814] [PR #15816] [PR #15817] [PR #16891].
+- 5.x and 6.x stop tests defining `MAUTIC_TABLE_PREFIX` with a custom php-cs-fixer rule; 7.2 replaced it with a PHPStan rule [code: .php-cs-fixer.php:39-42 @5.0.0] [PR #11622] [PR #16578].
+- `composer test` uses 1G of memory at 5.0.0 and 2G from 6.0.0 [code: composer.json:134 @5.0.0] [code: composer.json:152 @6.0.0].
+- 6.0 CI crossed PHP 8.1-8.3 with MySQL and MariaDB; 7.0 raised the minimums to MySQL 8.4 and MariaDB 10.11 and 7.x pairs PHP with DB versions [code: .github/workflows/tests.yml:24-25 @6.0.0] [PR #14836].
+- The Codeception E2E suite exists from 5.2; 5.0 and 5.1 have none [PR #13884] [PR #14079].
+- Up to 7.1, CI collected coverage on every PR and failed when the PHPStan baseline changed; 7.2.0 removed both [PR #16646] [PR #16581].
 
 ## Pitfalls
 - `bin/phpstan` without a warmed test container fails with "Container ... AppKernelTestDebugContainer.xml does not exist"; use `composer phpstan` [code: composer.json:166-214 @7.x].
@@ -128,6 +133,10 @@ More in references/behaviour.md section 7.
 - Rector is pinned to `dev-main` on 7.x, so a rebase can surface new Rector findings unrelated to your change [code: composer.json:28-54 @7.x].
 - Coverage is never collected on pull requests; adding the `ready-to-commit` label starts a long coverage run [code: .github/workflows/tests.yml:36-44 @7.x] [code: .github/workflows/coverage-check.yml:7-88 @7.x].
 - Changes under `tests/` trigger a workflow that runs the e2e suite 10 times to catch flakiness [code: .github/workflows/e2e-tests.yml:25-28 @7.x].
+- Fixed `wait()` calls in a Cest are rejected in review because they slow the suite; wait for the element, the closed modal or the notification instead [PR #14304] [PR #14157].
+- E2E selectors that use styling, labels or list positions break; use Page objects with canonical IDs, scope modals to `#MauticSharedModal` and assert exact notification text [PR #14210] [PR #15937] [PR #17118].
+- To see what a functional test wrote inside its rolled-back transaction, set your DB client to READ UNCOMMITTED [PR #9387].
+- Do not add Codeception modules or other unrelated `composer.json` changes in a feature PR; reviewers ask for them to be reverted [PR #14998].
 - A crashed run can leave `config/local.php.backup` behind [code: app/bundles/CoreBundle/Test/MauticMysqlTestCase.php:326-337 @7.x].
 - Near-duplicate test methods trip SonarCloud's duplication gate; extract a helper [code: .agents/skills/mautic-dev/SKILL.md @7.x].
 - The KB says Gitpod fixtures log in as admin/mautic; DDEV and tests use `Maut1cR0cks!` [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html].
@@ -147,4 +156,4 @@ More in references/behaviour.md section 7.
 - references/code-map.md - every test-infrastructure file, helper trait, fixture, PHPStan rule, CI job and composer script.
 - references/docs-digest.md - what devdocs and the KB say about e2e tests, DDEV and testing PRs and emails.
 - references/version-notes.md - toolchain versions in 7.x and the 8.x delta.
-- references/pr-history.md - not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md - why the base classes, table prefix, E2E norms, PHPStan baseline and rules, Rector, CI matrix and coverage policy are the way they are, with a regression catalogue from merged PRs.

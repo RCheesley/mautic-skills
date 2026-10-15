@@ -91,6 +91,12 @@ This area has no PHPUnit suite of its own. Check the environment with the comman
 - Since 3.0, logs are in `var/logs` (2.x: `app/logs`) and cron uses `bin/console` (2.x: `app/console`). The config file is `config/local.php` (older: `app/config/local.php`). [kb: https://kb.mautic.org/article/how-to-set-up-a-staging-server-to-test-new-mautic-releases.html] [docs: https://docs.mautic.org/en/7.2/configuration/cron_jobs.html]
 - 8.x (unreleased): PHP minimum 8.4, Symfony 8.1, PHPUnit 13. Tool binaries move to `vendor/bin/*`. Only ECS checks code style, because php-cs-fixer is removed and the pre-commit hook runs ECS. [code: app/composer.json @8.x] [code: composer.json @8.x]
 - 8.x has not settled the UI asset stack: the 8.x snapshot still uses `twbs/bootstrap-sass 3.4.1` until 7.x is merged forward (the 7.x move to Bootstrap 5.3.8 is after 7.2.1 and unreleased; [PR #17767]). [code: composer.json @8.x]
+- 5.0 removed `index_dev.php`; the environment comes from `APP_ENV`/`APP_DEBUG` in `.env` and `.env.local`. In 4.x DDEV opened Mautic through `index_dev.php` [PR #12206] [PR #10986].
+- 5.0 stopped committing generated `media/css` and `media/js` and moved front-end libraries to npm [PR #11865] [PR #12373].
+- 5.1 made DDEV run in dev mode through `.ddev/.env.local.dist` and took the project name from the checkout folder [PR #13295] [PR #13293].
+- 6.0 to 7.1 ship both Gitpod (`.gitpod.yml`) and Codespaces (`.devcontainer`); 7.2.0 removed Gitpod [code: .gitpod.yml @7.1.0] [code: .devcontainer/devcontainer.json @6.0.0] [PR #16310].
+- 5.2 raised the minimum PHP to 8.1; 6.0 CI tests PHP 8.1 to 8.3 [PR #13972] [code: .github/workflows/tests.yml:24-25 @6.0.0].
+- 7.0 minor-locks Symfony to `~7.4.0` because `^7.3` let production resolve an untested minor [PR #15705] [PR #15710].
 Full detail is in `references/version-notes.md`.
 
 ## Pitfalls
@@ -106,6 +112,10 @@ Full detail is in `references/version-notes.md`.
 - `bin/phpunit` without `-c app/phpunit.xml.dist` fails on the missing `KERNEL_CLASS`. `bin/phpstan` fails until the test container is warmed, which `composer phpstan` does for you. [code: app/phpunit.xml.dist:65-76 @7.x] [code: composer.json:171 @7.x]
 - Settings that are read when the container is compiled need `cache:clear` after you edit local.php by hand. These include cookie security from the `site_url` scheme, the cache and log dirs, and the read replica. [code: app/config/config.php:35-44 @7.x] [code: app/AppKernel.php:316-334 @7.x]
 - Doctrine proxy "failed to open stream" errors under `var/cache/prod` usually come from files owned by a user other than the web server user. [docs: https://docs.mautic.org/en/7.2/troubleshooting/file_ownership_permissions.html]
+- Do not move a runtime library to `require-dev` or list vendor paths in `build/exclude_files.txt`. Production installs and release zips use `--no-dev`, and a missing DomCrawler made saving an email return HTTP 500 in 7.2.1. The root `composer.json` fix is in 7.2.2 on the 7.2 branch, not in this 7.x snapshot [PR #17265] [PR #17592] [PR #17616] [code: composer.json:48 @7.x].
+- Do not widen Symfony or Guzzle constraints to `^`. The `~X.Y.0` minor lock is deliberate, and Dependabot updates lock files only to keep it [PR #15705] [PR #15737] [PR #16234].
+- A PR must not update unrelated packages in `composer.lock`; an unrelated lock bump once broke every binary download [PR #11563].
+- The DDEV project name is not hard-coded; it comes from the checkout folder, so the URL is `https://<folder>.ddev.site` [PR #13293].
 - Open question: the KB DDEV article gives `https://mautic.ddev.site`, but the setup script uses `https://${DDEV_HOSTNAME}`, which depends on the checkout directory name or DDEV project name. [kb: https://kb.mautic.org/article/how-to-set-up-a-mautic-instance-for-testing-locally-with-ddev.html] [code: .ddev/mautic-setup.sh:4 @7.x]
 
 ## Related skills
@@ -123,4 +133,4 @@ Full detail is in `references/version-notes.md`.
 - `references/docs-digest.md`: what the devdocs, user docs and KB say, with URLs, procedures and stale claims.
 - `references/version-notes.md`: 2.x–6.x history, 7.x state and the 8.x delta for tooling and platform.
 - `references/test-patterns.md`: not needed for this skill. Testing is covered by mautic-testing.
-- `references/pr-history.md`: not yet generated; PR-derived history is added in a later pass.
+- `references/pr-history.md`: why DDEV, Codespaces, `.env` handling, git hooks, asset builds, Composer and npm policy, version pinning, Dependabot and release packaging are the way they are, with a regression catalogue from merged PRs.

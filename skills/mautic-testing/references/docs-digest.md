@@ -26,7 +26,7 @@ Discrepancies with code (code wins):
 
 ## 2. KB: test environments and PR testing
 
-- Local DDEV: `gh repo clone mautic/mautic`, `ddev start` (answer yes to install), log in as `admin` / `Maut1cR0cks!` at https://mautic.ddev.site; use `index_dev.php` for dev mode with the debug bar [kb: https://kb.mautic.org/article/how-to-set-up-a-mautic-instance-for-testing-locally-with-ddev.html].
+- Local DDEV: `gh repo clone mautic/mautic`, `ddev start` (answer yes to install), log in as `admin` / `Maut1cR0cks!` at https://mautic.ddev.site; the article says to use `index_dev.php` for dev mode, but that file was removed in 5.0; use `APP_ENV=dev` in `.env.local` [kb: https://kb.mautic.org/article/how-to-set-up-a-mautic-instance-for-testing-locally-with-ddev.html] [PR #12206] [code: .ddev/.env.local.dist @7.x].
 - PR testing: the article uses Gitpod; load fixtures with `ddev exec bin/console d:f:l` (purges the database); its login is admin/mautic; each PR needs testing by two people, who Approve or Request changes [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html].
 - Release cadence: bug fixes monthly, features quarterly, breaking changes about yearly [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html].
 - The default development branch has versioned names (6.0, 7.x) [kb: https://kb.mautic.org/article/how-to-rebase-branch-and-sync-forked-repository-with-upstream-using-git.html].
