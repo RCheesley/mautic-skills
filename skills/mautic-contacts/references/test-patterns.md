@@ -102,3 +102,16 @@ final class MergeKeepsOwnerFunctionalTest extends MauticMysqlTestCase
     }
 }
 ```
+
+## Regression tests worth adding
+
+Rows from the regression catalogue in pr-history.md with no matching test found by one grep in `app/bundles/LeadBundle/Tests` @7.x.
+
+| Behaviour to assert | PR |
+|---|---|
+| `POST /api/contacts/new` that matches an existing contact keeps its stage and owner when they are not sent | [PR #12078] |
+| A duplicate contact sharing an email does not inherit the other contact's DNC (DNC is per contact id) | [PR #6297] |
+| `PUT /api/contacts/batch/edit` with a merged-away id updates the winner and creates no new contact | [PR #15447] |
+| Import with "Create new Contacts?" = No updates matches and skips unmatched rows | [PR #17176] |
+| A company named `R&D` shows once-decoded in the company list, detail and contact views | [PR #17266] |
+| Editing a field of an existing contact moves `date_modified` forward; a DNC-only change does not | [PR #14433] [PR #13994] |

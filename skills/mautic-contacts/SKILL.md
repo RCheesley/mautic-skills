@@ -105,6 +105,12 @@ Custom fields and import
 - 8.x dispatches events by class (56 LeadBundle constants removed; subscribe to `LeadPostSaveEvent`, `LeadPostMergeEvent`, `CompanySoftDeleteEvent` ...). [PR #17218] [PR #17545]
 - 8.x removes `LeadModel::isContactable()`, `FieldModel::getFieldList()`, `CompanyModel::getCompanyLeadRepository()`, `LeadModel::getTagRepository()`, and makes `IdentifyCompanyHelper` an instance service. [PR #17247] [PR #17248] [PR #17260]
 - 8.x unique-identifier columns get length 255 (7.x: 191) and require PHP 8.4, Symfony 8.1, Doctrine ORM 3 / DBAL 4. [PR #17361]
+- 5.0 removed the `mtc_sid` cookie, moved LeadBundle views to Twig and validated unique identifiers server-side. [PR #12440] [PR #11793] [PR #11716]
+- 5.1 added field length and indexable flags, the HTML field type, single-company mode and the Export permission. [PR #13319] [PR #13428] [PR #12219] [PR #12884]
+- 5.2 stopped DNC-only changes bumping `date_modified`, nulled select values outside the option list, removed textarea "Allow HTML" and disabled the company unique flag (re-enabled in 7.1). [PR #13994] [PR #14183] [PR #13926] [PR #14236] [PR #15784]
+- 6.0 sets `date_modified` on create, adds alias-free searchable fields, checks import rows against the last modifier's permissions and makes `LeadEvent` final. [PR #14433] [PR #14393] [PR #14554] [PR #13842]
+- 7.0 made field length editable after creation and removed "Identify visitor by tracking URL". [PR #14762] [PR #14974]
+- 7.2 soft-deletes companies, moves company links on merge and adds the `lead:notes` permission. [PR #16176] [PR #16247] [PR #16067]
 Full detail: references/version-notes.md.
 
 ## Pitfalls
@@ -119,6 +125,11 @@ Full detail: references/version-notes.md.
 - `LEAD_IDENTIFIED`, `LEAD_UTMTAGS_ADD`, batch-save and column events have no core listener; a missing side effect there is expected. [code: app/bundles/LeadBundle/LeadEvents.php:50-140 @7.x]
 - Marking a field unique silently changes its column to varchar and adds an index. [code: app/bundles/LeadBundle/Field/SchemaDefinition.php:17-23 @7.x]
 - Suspected bugs to verify before relying on them: `analyzePermissions()` uses `==` where `!=` looks intended; `addDncForContact()` return value with an unsubscribe and no override; `removeBounceStatusAction` lacks a permission check; `setFrequencyRules(persist: false)` deletes all rules. [code: app/bundles/LeadBundle/Model/DoNotContact.php:105-130 @7.x] [code: app/bundles/LeadBundle/Controller/AjaxController.php:420-447 @7.x] [code: app/bundles/LeadBundle/Model/LeadModel.php:1180-1183 @7.x]
+- An unsubscribe (reason 1) is protected only against being overwritten by another reason; every remove path deletes it: profile toggle, API `dnc/{channel}/remove`, API reason 0, import `doNotEmail` false, campaign and form Remove DNC, and the resubscribe URL. [code: app/bundles/LeadBundle/Model/DoNotContact.php:32-62 @7.x] [PR #7567] [PR #3905]
+- DNC-only changes do not update `date_modified` or `modified_by` on purpose (deadlock avoidance), so `date_modified` cannot detect DNC changes. [code: app/bundles/LeadBundle/Entity/Lead.php:1924-1936 @7.x] [PR #13994]
+- `{leadfield=…}` no longer renders; only `{contactfield=…}` and `{companyfield=…}` match. [code: app/bundles/LeadBundle/Helper/TokenHelper.php:11 @7.x] [PR #1893]
+- "Identify visitor by tracking URL" was removed in 7.0; clickthrough identification runs through `ON_CLICKTHROUGH_IDENTIFICATION` subscribers, although the 7.2 docs still describe the setting. [PR #14974]
+- Time fields are stored and shown as entered with no timezone conversion, so the server must run in UTC. [PR #11040]
 - Open question: one docs page says UTM tags are recorded only by the "Record UTM Tags" form action, while the UTM pages say page visits record them too. [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#utm-code] [docs: https://docs.mautic.org/en/7.2/utm_tags/utm_tags_landing_pages.html]
 - Open question: the docs say companies are matched strictly by name, city and country/state; the code matches on the configured company unique identifiers. [code: app/bundles/LeadBundle/Helper/IdentifyCompanyHelper.php:11-60 @7.x] [docs: https://docs.mautic.org/en/7.2/companies/companies_overview.html#identifying-companies]
 
@@ -141,4 +152,4 @@ Full detail: references/version-notes.md.
 - references/docs-digest.md — what docs.mautic.org and devdocs say, with URLs, procedures and terminology.
 - references/test-patterns.md — base classes, helpers, representative tests and test skeletons.
 - references/version-notes.md — history, 5.x/6.x, 7.x minors and the 8.x delta with dual-version code.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md — why and when contact, company, field, DNC and import behaviour changed: decisions, questions resolved against 7.x code, a regression catalogue, a feature timeline and removals, from merged PRs.

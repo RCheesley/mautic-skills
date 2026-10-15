@@ -18,7 +18,8 @@ and every skill notes what changes there. Differences in 5.x and 6.x are called 
 2. Open the `SKILL.md` of each skill the task touches. Each one lists the essential expected behaviours, where the
    code lives, how to change it, how to test it, version differences and pitfalls.
 3. Open a skill's `references/` file only when you need the detail: the full numbered behaviour list, the code map,
-   the documentation digest, test patterns or version notes.
+   the documentation digest, test patterns, version notes, or the pull request history (`pr-history.md`), which
+   explains why behaviour is the way it is and lists past regressions worth testing for.
 4. Treat every behaviour statement as the expected behaviour (the test oracle) unless it is marked `[unverified]` or
    listed as an open question.
 

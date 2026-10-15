@@ -49,9 +49,17 @@ Release dates used to place PRs in versions: 1.0.0 2015-03-10 · 2.0.0 2016-07-0
 1. Code analysis: one agent per product area read the 7.x tree and wrote a file:line-cited analysis.
 2. Documentation digest: one agent per documentation slice read the RST sources (7.2 and 8.0 branches) and the
    knowledge base and wrote URL-cited digests.
-3. PR analysis: every merged PR was bucketed by the files it touched, split into chronological chunks of about
-   110k tokens, and read in full by an agent that extracted behaviour decisions, regressions, features, removals
-   and maintainer norms; a second pass consolidated each area.
+3. PR analysis (after synthesis, area by area): `scripts/bucket-prs.py` removed 869 noise PRs (bot authors,
+   mechanical tooling titles, 8.x type-hardening sweeps) and bucketed the remaining 6,553 by the files they
+   touched into 26 areas. Each area was split into chunks of about 240,000 characters, ordered by PR number, so
+   chunk file names do not give exact merge-date ranges; every item is dated by its merge date and release tag.
+   One agent read each chunk in full (description and comments) and extracted behaviour decisions, regressions,
+   features, removals, maintainer norms and open questions. For the largest areas (architecture, emails,
+   contacts) a consolidation agent merged the chunk notes first. An integration agent per skill then wrote
+   `references/pr-history.md` and made small, cited additions to SKILL.md, version-notes.md and
+   test-patterns.md, checking disputed claims against the 7.x tree. Where a PR and the current code disagree,
+   the code wins and the PR claim is recorded as history or an open question. Every `[PR #N]` tag was checked
+   against the harvested list of merged PRs.
 4. 8.x delta: one agent catalogued the 7.x to 8.x changes from UPGRADE-8.0.md, the branch diff and the 8.0 docs.
 5. Synthesis: one agent per skill combined the inputs for its area into SKILL.md and the reference files, keeping
    every citation.

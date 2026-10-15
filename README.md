@@ -60,7 +60,8 @@ skills/<name>/
     ├── code-map.md             # entities, tables, services, events, routes, commands, parameters, permissions
     ├── docs-digest.md          # what the official docs say, with URLs and docs-vs-code discrepancies
     ├── test-patterns.md        # base classes, representative tests, skeletons
-    └── version-notes.md        # 5.x/6.x differences, 7.x minors, 8.x changes
+    ├── version-notes.md        # 5.x/6.x differences, 7.x minors, 8.x changes
+    └── pr-history.md           # why behaviour is the way it is: decisions, regressions, timeline, norms
 ```
 
 Some skills add extra reference files, such as the full parameter table, the endpoint inventory, the command
@@ -99,12 +100,13 @@ project instead, copy `skills/*` into that project's skills directory, for examp
 | `scripts/crawl-kb.py` | Crawl the English kb.mautic.org articles |
 | `scripts/check-citations.py` | Report statements in skills that carry no source tag |
 
-### Planned: pull request history
+### Pull request history
 
-Pull request history is not yet included. Each skill will gain `references/pr-history.md`: the behaviour decisions,
-regressions and maintainer norms mined from the area's merged pull requests. The corpus is already harvested and
-filtered (6,553 pull requests after removing 869 bot, tooling and typo pull requests). It is being added one area at
-a time.
+Every product-area and working skill has `references/pr-history.md` (the overview and troubleshooting skills point to them): the behaviour decisions, regression catalogue, feature timeline,
+removals and maintainer norms mined from the area's merged pull requests, with descriptions and review comments.
+The corpus is every merged pull request on mautic/mautic up to 2026-10-15 (7,422), less 869 bot, tooling and
+mechanical pull requests. `mautic-contributing` collects the project-wide norms: branch and release policy,
+backward compatibility and deprecation, review and testing rules, and how those norms changed over time.
 
 ## Updating for a new Mautic release
 

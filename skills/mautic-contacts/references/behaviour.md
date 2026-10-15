@@ -76,7 +76,7 @@ B3.10 On a clickthrough identification, an anonymous tracked contact is merged w
 
 B3.11 A `tags` query parameter on a tracking request is applied with `modifyTags`, so a `-` prefix removes a tag. [code: app/bundles/LeadBundle/Helper/ContactRequestHelper.php:193-195 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#tags]
 
-B3.12 "Identify visitors by tracking URL" requires email to be a unique identifier and publicly editable; the docs do not recommend it because it can be spoofed. [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#identify-visitors-by-tracking-url]
+B3.12 "Identify visitors by tracking URL" (`track_by_tracking_url`) was removed in 7.0.0 and does not exist in 7.x; Contacts are identified from email clickthroughs instead [PR #14974]. Up to 6.x it required email to be a unique identifier and publicly editable, and the docs did not recommend it because it can be spoofed. Discrepancy: the 7.2 docs still describe the setting [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#identify-visitors-by-tracking-url].
 
 B3.13 Traffic from private IP ranges is not tracked unless `track_private_ip_ranges` is true. [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#website-monitoring]
 
