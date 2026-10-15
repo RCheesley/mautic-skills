@@ -81,3 +81,14 @@ This skeleton follows `AssetProjectSearchFunctionalTest`. [code: app/bundles/Ass
 - Categories: test both an in-use delete (flash, row still present) and a delete of an unused Category. For bundle-specific permission checks, use a non-admin User. [code: app/bundles/CategoryBundle/Tests/Controller/CategoryControllerFunctionalTest.php:178-270 @7.x]
 - Projects: test as a non-admin with and without `project:project:associate`, and with entity-level `viewown` only. An admin hides permission bugs; for example, `ProjectApiV2ControllerTest` runs as admin. [code: app/bundles/ProjectBundle/Service/ProjectEntityLoaderService.php:153-176 @7.x]
 - Cloud storage: the plugin has no tests. Mock the `RemoteAssetBrowseEvent` adapter (Gaufrette `InMemory`) when you touch it. [code: plugins/MauticCloudStorageBundle/EventListener/RemoteAssetBrowseSubscriber.php:13-33 @7.x]
+
+## Regression tests worth adding
+Rows from the regression catalogue in references/pr-history.md with no matching test found by grep in the 7.x `Tests` directories.
+
+- Functional: `GET /asset/{id}` (no colon) returns 404; only `AssetModelTest` covers the bare-id case at unit level. [PR #15138]
+- Admin preview (`/s/assets/preview/{id}`) leaves `download_count` unchanged. [PR #4239]
+- The Asset list page size follows `default_assetlimit`, else `default_pagelimit`. [PR #16035]
+- Batch delete removes each local file from `upload_dir`. [PR #949]
+- A Category alias with spaces saves with `-` in place of spaces. [PR #12719]
+- A Category colour submitted with `#` is stored without it and rendered with one `#`. [PR #13123]
+- A Category created inline from the Dynamic Web Content form gets the `dynamicContent` type. [PR #15726]

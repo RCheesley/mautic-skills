@@ -106,6 +106,12 @@ Full detail: references/test-patterns.md.
 - 8.x: `CATEGORY_ON_BUNDLE_LIST_BUILD` is dispatched as `CategoryTypesEvent` (constant kept); `CategoryModel` CRUD events still use string names; duplicate `CATEGORY_*` constants are removed from `DynamicContentEvents`. [PR #17217] [PR #17097]
 - 8.x fixes an asset upload size validation that was off by 1000×. [PR #17080]
 - The `default_assetlimit` parameter is marked for removal in Mautic 8. [code: app/bundles/AssetBundle/Controller/AssetController.php:59-63 @7.x]
+- 5.0 serves public links inline only for `streamed_extensions` and stores UTM fields on downloads; 5.1 turns "Block search engines" on for new Assets. [PR #11474] [PR #12098] [PR #13531]
+- 5.2.7 makes upload validation honour the configured `allowed_extensions`. [PR #15111]
+- 6.0 refuses to delete a Category that registered entities use. [PR #14567]
+- 6.0.0 removed the Category Apply button; 6.0.1 to 6.0.9 restore it (revert [PR #14819]), while 7.x keeps it removed. [PR #14680]
+- Before 7.1 the download URL is `/asset/{id}:{alias}` and bare `/asset/{id}` was not blocked; 7.1 adds UUID URLs. [PR #15138] [PR #15776]
+- Before 7.2 remote Assets are not MIME-checked and `allowed_mimetypes` exists; 7.2 removes it. [PR #16045]
 
 Full detail: references/version-notes.md.
 
@@ -122,6 +128,11 @@ Full detail: references/version-notes.md.
 - The project batch-delete error flash says "Only projects without any contacts can be deleted.", although Projects have no contact relation. [code: app/bundles/ProjectBundle/Controller/ProjectController.php:457-470 @7.x]
 - The "Download an Asset" form action does nothing when the chosen Category has no published Asset (`NoResultException` is swallowed). [code: app/bundles/AssetBundle/EventListener/FormSubscriber.php:76-82 @7.x]
 - Docs list fewer category types and project types than the code registers. Code adds Segments, Marketing Messages, Dynamic Content and SMS category types, and Point Triggers as a project type. [code: app/bundles/CategoryBundle/EventListener/CategorySubscriber.php:41-52 @7.x] [docs: https://docs.mautic.org/en/7.2/categories/categories-overview.html]
+- Bare `/asset/{id}` returning 404 is deliberate (it blocks id enumeration); the generated URL is `/asset/{uuid}` and old `{id}:{alias}` links stay for sent emails. [PR #15138] [PR #15776]
+- `Asset::getSlug()` and `generateUrl()` throw `LogicException` for an Asset with no id. Guard deleted or unsaved Assets; this caused a 500 on API DELETE and on the Contact timeline. [PR #15776] [PR #15934] [PR #16078]
+- The Category form has no Apply button in 7.x (`apply_text => false`). Check buttons with `isButtonClicked()`, not `->get('apply')`, which caused "Child apply does not exist". [PR #14680] [PR #16180]
+- Saving a remote Asset fetches the URL to validate its MIME type, so an unreachable or non-2xx URL fails validation even with `validate_remote_domains` off. [PR #16045]
+- Linking Projects through an entity's v1 API with `"projects": [ids]` replaces the existing links; send the full list. [PR #15569]
 
 ## Related skills
 - mautic-contacts — contact identity, tracking cookies, the Preference Center and `lead_categories` semantics.
@@ -141,4 +152,4 @@ Full detail: references/version-notes.md.
 - references/docs-digest.md — what docs.mautic.org and devdocs say, with URLs, procedures and terminology.
 - references/test-patterns.md — base classes, fixtures, representative tests and test skeletons.
 - references/version-notes.md — 5.x/6.x history, 7.x minors and the 8.x delta for this area.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md — why and when behaviour changed: decisions, regression catalogue, feature timeline and open questions from merged PRs.
