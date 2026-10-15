@@ -105,3 +105,16 @@ Copy `app/bundles/StageBundle/Tests/Unit/EventListener/CampaignSubscriberTest.ph
 
 ## Running
 For example: `bin/phpunit app/bundles/PointBundle/Tests/Functional/PointTriggerFunctionalTest.php`. Environment setup is covered by the mautic-testing skill.
+
+## Regression tests worth adding
+These rows come from the regression catalogue in pr-history.md. A grep of the 7.x `Tests/` directories of PointBundle, StageBundle, LeadBundle, EmailBundle and PageBundle found no test that asserts them.
+
+| Contract | Where to add it | PR |
+|---|---|---|
+| A +35 change with triggers at 1, 20 and 30 runs all three; the 30-point tag result stands | `PointTriggerFunctionalTest` | #12867 |
+| After a trigger fires, its rows in `point_trigger_events` still exist | `PointTriggerFunctionalTest` | #14448 |
+| A repeatable action awards again on a second qualifying event (functional, not mocked) | `PointActionFunctionalTest` | #6388 |
+| A repeatable `email.send` action awards once per send, including segment emails | `EmailBundle/Tests/EventListener/PointSubscriberFunctionalTest.php` | #8619 |
+| A `url.hit` action fires from `/mtracking.gif` with HTTP 200 and adds points | `PointActionFunctionalTest` | #14611 |
+| A Contact moves to stage "1 - Lead" when "10 - Customer" also exists, without `NonUniqueResultException` | `StageBundle/Tests/Functional` | #9066 |
+| Saving a stage whose weight another stage already uses fails server-side with `mautic.stage.weight.unique` | `StageBundle/Tests/Functional/Controller` | #15404 |

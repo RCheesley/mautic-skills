@@ -27,6 +27,7 @@ Points are Mautic's lead-scoring system: a Contact (a person record, `Lead` in c
 - An event result of false or null writes no log, so the event retries on the next evaluation. "Modify contact's segments" never reports success, so it re-runs every time [code: app/bundles/LeadBundle/EventListener/PointSubscriber.php:144-159 @7.x].
 - "Trigger for existing applicable contacts upon saving" runs inline in the save request, unbatched, for published triggers only. It targets Contacts added on or before the trigger's creation date whose score is ≥ the threshold [code: app/bundles/PointBundle/Model/TriggerModel.php:106-187 @7.x].
 - An empty threshold is 0, which means every Contact qualifies, including each new Contact [code: app/bundles/PointBundle/Form/Type/TriggerType.php:66-77 @7.x].
+- One points change that crosses several thresholds runs every trigger now met, in threshold order, so the highest threshold's tag change is the one that stands [PR #12867] (v5.0).
 - The trigger "Contact color" is stored but never shown in 7.2.1: `LeadRepository::setTriggerModel()` has no caller [code: app/bundles/LeadBundle/Entity/LeadRepository.php:95 @7.x] [docs: https://docs.mautic.org/en/7.2/points/points.html#point-triggers].
 
 **Groups, insights, campaigns, API**
@@ -76,6 +77,11 @@ Points are Mautic's lead-scoring system: a Contact (a person record, `Lead` in c
 - 7.x adds Point Insights (table `point_insights`, `/api/points/insights`, the `point:insights` permission) [code: app/migrations/Version20260616075543.php:22 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/point_insights.html].
 - 8.x dispatches `PointBuilderEvent`, `TriggerBuilderEvent`, `PointActionEvent`, `GroupScoreChangeEvent`, `StageBuilderEvent` and `PointsChangeEvent` by class name. Subscribers keyed on the old string constants load without error but never fire [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/points.html]. Trigger-event `eventName` dispatch and the CRUD pre/post events still use strings [code: app/bundles/PointBundle/Model/TriggerModel.php:224,342 @8.x].
 - 8.x removes `StageEvents::ON_CAMPAIGN_TRIGGER_ACTION` and `StageBundle\Helper\EventHelper` [code: app/bundles/StageBundle/StageEvents.php:17-59 @8.x].
+- 5.0 introduced Point Groups and moved Point and Stage templates to Twig [PR #11891] [PR #11565] (v5.0.0). 5.1 added the Point Groups REST API [PR #13517] (v5.1.0).
+- 5.0.0 to 5.2.1 delete trigger events after their first execution; 5.2.2 fixes it [PR #12353] [PR #14448].
+- Before 5.2 a cloned Point Trigger lost its events [PR #14177] (v5.2).
+- 6.0 removes `GenericPointSettingsType` and `MauticFactory::getEntityManager()`; custom point code that used either breaks [PR #13904] [PR #14611] (v6.0).
+- 7.2 adds stage merge, server-side unique stage weights and the trigger event "Change contact's stage"; none exist in 6.x or 7.0-7.1 [PR #15399] [PR #15404] [PR #17041] (v7.2.0).
 - The user docs for points and stages are identical in 7.2 and 8.0 [docs: https://docs.mautic.org/en/8.0/points/points.html]. Details are in references/version-notes.md.
 
 ## Pitfalls
@@ -90,6 +96,10 @@ Points are Mautic's lead-scoring system: a Contact (a person record, `Lead` in c
 - The form submit action "Adjust contact's points" with a group logs `delta = new main points − old main points`, which is 0, and sets no group on the log row (inferred) [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:164-205 @7.x].
 - "Trigger for existing contacts" on a large database can time out the save request [code: app/bundles/PointBundle/Model/TriggerModel.php:106-187 @7.x].
 - The API Platform resource for `Point` checks `point:triggers:*` permissions, not `point:points:*` [code: app/bundles/PointBundle/Entity/Point.php:28-36 @7.x].
+- Trigger events must survive execution. From 5.0.0 to 5.2.1 executing a trigger deleted its rows in `point_trigger_events`, so triggers emptied after first use; assert the event count after a trigger fires [PR #12353] [PR #14448] (v5.2.2).
+- A repeatable `email.send` action must award once per send. `EMAIL_ON_SEND` was once dispatched twice per send and double-awarded [PR #8619] (v3.0.2).
+- A plugin Point Action without its own properties form awards the action's top-level delta; since 5.2 Mautic adds no second "Change points" field to it [PR #14218] (v5.2).
+- Import with a stage column creates a missing stage by name, with weight 0, rather than failing; this is deliberate [PR #2076] (v2.1.1) [code: app/bundles/LeadBundle/Model/LeadModel.php:1440-1450 @7.x].
 - Open question: the KB lead-scoring guide recommends campaigns that "reset scores to 0" and "cap at 70", but the campaign "Adjust contact points" action is delta-only and rejects 0. How the guide's reset is meant to be built is unverified [kb: https://kb.mautic.org/article/lead-scoring-best-practices-with-mautic.html] [code: app/bundles/LeadBundle/Form/Type/PointActionType.php:17-30 @7.x].
 - Open question: the devdocs show a trigger callback `($config, $lead, MauticFactory $factory)`. Only `event`, `lead` and `config` are injected, so `$factory` is null [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/points.html#point-triggers] [code: app/bundles/PointBundle/Model/TriggerModel.php:357-381 @7.x].
 
@@ -112,4 +122,4 @@ Points are Mautic's lead-scoring system: a Contact (a person record, `Lead` in c
 - references/docs-digest.md - what docs.mautic.org, devdocs and the KB say, with URLs, UI procedures and terminology.
 - references/test-patterns.md - base classes, the trigger trait, representative tests and test skeletons.
 - references/version-notes.md - 5.x/6.x history, 7.x additions and the 8.x delta for points and stages.
-- references/pr-history.md - not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md - why and when points and stages behaviour changed: decisions, a regression catalogue, a feature timeline and removals from 78 merged PRs.

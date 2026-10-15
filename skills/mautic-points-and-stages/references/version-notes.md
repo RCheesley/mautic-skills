@@ -1,12 +1,24 @@
 # Points and stages - version notes
 
 ## 5.x / 6.x
-- The analysis inputs record no behaviour differences for points or stages in 5.x or 6.x. Older KB articles (4.x/5.x era) describe stages with a "colour" field and a forward-only rule [kb: https://kb.mautic.org/article/working-with-stages-in-mautic.html]. 7.2.1 has no stage colour column; colour belongs to triggers [code: app/bundles/StageBundle/Entity/Stage.php:60-117 @7.x] [code: app/bundles/PointBundle/Entity/Trigger.php:70 @7.x].
+- 5.0.0 introduced Point Groups: group scores, group-targeted actions and triggers, a campaign condition and action, a segment filter and the "Group points" report [PR #11891].
+- 5.0.0 moved Point and Stage templates from PHP to Twig. The migration lost trigger events on clone until 5.2 [PR #11565] [PR #11968] [PR #14177].
+- 5.0.0 fixed several crossed thresholds: every trigger now met runs [PR #12867].
+- 5.0.0 to 5.2.1 delete a trigger's events from `point_trigger_events` after its first execution; 5.2.2 restores them persisting [PR #12353] [PR #14448].
+- 5.0.2 fixed the `GroupContactScore` mapping [PR #13231].
+- 5.1.0 added the Point Groups REST API under `/api/points/groups` and `/api/contacts/{id}/points/groups` [PR #13517]. The action type label became "Action taken by contact" [PR #13495] [PR #13658].
+- 5.2 stopped adding `GenericPointSettingsType` to custom Point Actions; their top-level delta is awarded [PR #14218].
+- 6.0.0 removes the `GenericPointSettingsType` class and `MauticFactory::getEntityManager()` (UPGRADE-6.0.md), and adds `customContent()` hooks to the point, trigger and stage lists [PR #13904] [PR #14611] [PR #14488].
+- 6.0.3 no longer errors when a Contact is saved without a points log [PR #14714].
+- Older KB articles (4.x/5.x era) describe stages with a "colour" field and a forward-only rule [kb: https://kb.mautic.org/article/working-with-stages-in-mautic.html]. 7.2.1 has no stage colour column; colour belongs to triggers [code: app/bundles/StageBundle/Entity/Stage.php:60-117 @7.x] [code: app/bundles/PointBundle/Entity/Trigger.php:70 @7.x].
 - The docs "now triggers" wording for URL matching implies a recent change to `url.hit` matching. The version is not identified in the inputs [docs: https://docs.mautic.org/en/7.2/points/points_troubleshooting.html#page-visits-not-recognized].
 
 ## 7.x
 - Point Insights are new in Mautic 7: entity `PointInsight`, table `point_insights` created by migration `Version20260616075543`, `/api/points/insights`, the `point:insights` permission and the menu item "Insights". No feature flag was found [code: app/migrations/Version20260616075543.php:22 @7.x] [code: app/bundles/PointBundle/Security/Permissions/PointPermissions.php:19-33 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/point_insights.html].
 - Point, Trigger and Stage carry `ProjectTrait`; Projects are a 7.x feature. The xref tables are `point_projects_xref`, `point_trigger_projects_xref` and `stage_projects_xref` [code: app/bundles/PointBundle/Entity/Point.php:172 @7.x] [code: app/bundles/StageBundle/Entity/Stage.php:109 @7.x].
+- 7.0.0 adds Projects to Point Actions, triggers and stages, and fixes trigger events that stayed visible after delete and Apply [PR #15409] [PR #15186].
+- 7.2.0 adds Point Insights, stage merge, server-side unique stage weights and the trigger event `lead.changestage`; none of these exist in 7.1 [PR #15359] [PR #15399] [PR #15404] [PR #17041].
+- After 7.2.1 the 7.x head warns that deleting a trigger or a Point Group is permanent [PR #17442] [PR #17447].
 - Point Groups have entity export and import keyed by UUID [code: app/bundles/PointBundle/EventListener/GroupImportExportSubscriber.php:45-157 @7.x].
 - API Platform `#[ApiResource]` attributes exist on `Point`, `Trigger`, `TriggerEvent` and `Stage`, next to the legacy `/api/*` controllers [code: app/bundles/PointBundle/Entity/Point.php:28-36 @7.x] [code: app/bundles/StageBundle/Entity/Stage.php:26-44 @7.x].
 
