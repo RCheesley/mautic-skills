@@ -100,6 +100,10 @@ Every registered permission and the bit table: references/code-map.md §7–§8.
 - 7.0.0: timing-safe login; `project:project` permission. [code: app/bundles/UserBundle/Security/TimingSafeFormLoginAuthenticator.php @7.x]
 - 7.2.0: User invitations; `lead:notes` permission with a migration copying Contact levels to Notes. [code: app/bundles/UserBundle/Entity/UserInvite.php @7.x] [code: app/migrations/Version20260501090000.php @7.x]
 - 7.x head after 7.2.1: `is:never_logged_in`; not yet on 8.x. [code: app/bundles/UserBundle/Entity/UserRepository.php:248-249 @7.x]
+- 5.0: logout runs on Symfony's `LogoutEvent`; templates are Twig; each instance generates its own SAML key and certificate when none is configured. [PR #11867] [PR #11580] [PR #12212]
+- 5.1–5.2: the User toggle reads "Active"; the User list gains last login and recent activity; admins changing a User's email or password triggers an email to that User; full-access Roles disable the Permissions tab. [PR #13503] [PR #13074] [PR #13925] [PR #14004]
+- 6.0: form login, SAML, OAuth2 and plugin SSO move to Symfony's authenticator system (bc-break); User preferences are stored in the database; Roles and permission rows get UUIDs. [PR #14219] [PR #14398] [PR #14751]
+- 6.0.3: plugin SSO authenticators (for example Auth0) log the User in again after the 6.0 change. [PR #15020]
 - 8.x: `UserEvents` deleted (event classes such as `PostSaveUserEvent`, `PreAuthenticationEvent`); `AuthenticationEvent`/`UserEvent`/`RoleEvent` abstract; `definePermissions()` removed and permission classes are autoconfigured services; `mautic.security` and `mautic.user.provider` ids removed; SAML moves to lightsaml2. [PR #17510] [PR #17079] [PR #17121] [PR #17370]
 - Full detail: references/version-notes.md.
 
@@ -118,6 +122,10 @@ Every registered permission and the bit table: references/code-map.md §7–§8.
 - Devdocs say plugin permissions use a `plugin:` prefix; the code treats the first segment as the permission class name, so use `<name>:<level>:<perm>`. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/permissions.html#using-permissions] [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:215-245 @7.x]
 - Devdocs say `DELETE /api/users/ID` and that timezone/locale are required on create; the code route is `DELETE /api/users/{id}/delete` and creation succeeds without timezone/locale. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/users.html#delete-user] [code: app/bundles/CoreBundle/EventListener/CoreSubscriber.php:123-200 @7.x] [code: app/bundles/UserBundle/Tests/Controller/Api/UserApiControllerFunctionalTest.php:130-156 @7.x]
 - User docs call complex passwords "recommended"; the strength check is enforced. [docs: https://docs.mautic.org/en/7.2/users_roles/managing_users.html] [code: app/bundles/UserBundle/Model/PasswordStrengthEstimatorModel.php:36-44 @7.x]
+- `PATCH /api/users/{id}/edit` strips `username` and `plainPassword` but accepts `role`, so `user:users:edit` is enough to change any User's Role through the API. It shipped in 4.1.2 and was never reverted. [PR #10668] [code: app/bundles/UserBundle/Controller/Api/UserApiController.php:122-138 @7.x]
+- `UserModel::checkNewPassword()` and `resetPassword()` lost their hasher argument in 7.2.0 with no deprecation step; plugin code calling them must branch on the version. [PR #16980] [code: app/bundles/UserBundle/Model/UserModel.php:110,236 @7.x]
+- The delete-User confirmation says API tokens and scheduled exports are removed, but that PR changed only translation strings; verify the cascade before testing for it. [PR #17444]
+- Login, reset, invite, SAML-retry and OAuth2 consent pages do not load CKEditor (`includeEditor` false); scripts added there must not assume the editor exists. [PR #16987]
 - Open questions: whether login throttling also limits per IP (Symfony default) [unverified]; whether API Platform `POST /api/v2/users` enforces the strength rule (no test) [unverified]; which code sets the `samlsso` session key (presumably the SAML vendor bundle) [unverified].
 
 ## Related skills
@@ -137,4 +145,4 @@ Every registered permission and the bit table: references/code-map.md §7–§8.
 - references/docs-digest.md — what docs.mautic.org and devdocs say, with URLs, procedures and doc/code discrepancies.
 - references/test-patterns.md — base classes, helpers, tests to copy, regression-test checklist, skeletons.
 - references/version-notes.md — 5.1/7.x history and the 8.x delta for users, permissions and SAML.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md — why and when User, Role, login, reset, invite and SAML behaviour changed: decisions, regression catalogue, feature timeline and removals from merged PRs.

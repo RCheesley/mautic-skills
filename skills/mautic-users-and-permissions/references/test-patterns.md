@@ -104,3 +104,17 @@ Based on the implied-level rules. [code: app/bundles/CoreBundle/Security/Permiss
 ## 6. Running
 
 `bin/phpunit --filter RoleControllerFunctionalTest` (or a path under `app/bundles/UserBundle/Tests`). Functional tests need the test database configured by `.env.test` (`mautictest`, prefix `test_`). See mautic-testing for the full setup. [docs: https://devdocs.mautic.org/en/7.2/development-environment/environments.html]
+
+## 7. Regression tests worth adding
+Rows from the regression catalogue in pr-history.md with no matching test found by one grep of `app/bundles/*/Tests` @7.x:
+
+| Behaviour to assert | PR |
+|---|---|
+| An unpublished User cannot log in and sees the generic invalid-login message | [PR #3802] |
+| `/s/account` loads for a User whose Role has no `user:users` permissions | [PR #8571] |
+| An admin changing a User's email or password sends that User a notification email | [PR #13925] |
+| Editing a full-access Role renders the Permissions tab disabled | [PR #14004] |
+| The User list "last login" column orders by `u.lastLogin` | [PR #14982] |
+| The "User management" admin-menu header is hidden without `user:users:view` and `user:roles:view` | [PR #14851] |
+| A Position over 191 characters gives "Position cannot exceed 191 characters." instead of a 500 | [PR #15682] |
+| Contact import with an unknown `ownerusername` fails only that row, with "Unable to find an active user by the username or email" | [PR #15877] |
