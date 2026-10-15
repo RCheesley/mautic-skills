@@ -96,6 +96,8 @@ Sources: [code: app/bundles/CoreBundle/ @7.x] [code: app/release_metadata.json @
 - 4.0: PHP 7.4, Symfony 4, OAuth1 removed; browser updater deprecated in 4.2 [code: UPGRADE-4.0.md @7.x] [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_update_mautic.html#updating-in-the-browser].
 - 5.0: PHP 8.0/8.1, Symfony 5, Symfony Mailer (DSN), Messenger, `config/local.php`, Twig-only templates, Composer default [code: UPGRADE-5.0.md @7.x].
 - 6.0: Symfony 6, legacy builder and Froala removed, `MauticFactory` getters removed, `PluginDatabase` [code: UPGRADE-6.0.md @7.x].
+- 5.0: all 4.x migrations were deleted (upgrade from ≥ 4.4.10); one deleted by mistake was restored in 5.0.1 [PR #12441] [PR #13183]. 5.2 rewrote `Migration.template` around `skipAssertion()`, `getPrefixedTableName()` and an optional `down()` [PR #13823].
+- 6.0: `mautic:update:apply` works without a session [PR #14681]; legacy tables converted to `utf8mb4` [PR #14618]. No migrations were squashed at 6.0 or 7.0 [code: git diff --diff-filter=D 5.2.0 6.0.0 -- app/migrations @7.x].
 - 7.0: PHP 8.2, MySQL 8.4 / MariaDB 10.11, browser updater removed; 7.1/7.2 additive only (9 and 13 migrations), no `UPGRADE-7.x` files; 7.2.1 has no migrations [code: UPGRADE-7.0.md @7.x] [code: app/migrations/ @7.x].
 - 8.x: see references/upgrade-to-8.md and references/event-map-7-to-8.md.
 
@@ -112,6 +114,11 @@ Sources: [code: app/bundles/CoreBundle/ @7.x] [code: app/release_metadata.json @
 - A two-dot `7.x..8.x` diff shows 7.x-only features as "removed in 8"; use a three-dot diff [PR #17253].
 - `app/release_metadata.json@8.x` says 7.2.0; do not read the version from it [code: app/release_metadata.json @8.x].
 - `RELEASE_LEADS.md` dates are stale; use tags [code: RELEASE_LEADS.md @7.x].
+- Skip assertions are ANDed: "skip if X or Y" must be one combined `skipAssertion()`. Two separate ones made the mailer DSN migration overwrite an existing `mailer_dsn` until 7.2.0 [PR #16925] [code: app/migrations/Version20230615101328.php:18-21 @7.x].
+- Prefix bugs are the most repeated migration regression: apply the table prefix exactly once (`getPrefixedTableName()`) in table, index and foreign-key names and in every existence check [PR #10931] [PR #11371] [PR #13823] [PR #14824].
+- Do not assume a column type in a migration: `leads.id` is `INT` on some upgraded databases and `BIGINT` on others, and a foreign key to it fails if the types differ [PR #13284] [PR #9720].
+- Never ship a migration that deletes data third parties may still use; the Citrix table drop was removed from 6.0.5 and 7.0 instead of being fixed [PR #15384] [PR #15385].
+- `release_metadata.json` `stability` must match the release type and `version` must equal the milestone name, or pre-releases reach production instances or the release workflow fails [PR #11172] [PR #14507].
 - `FinalizeUpdateStep` prints a session `post_upgrade_message` that nothing sets [code: app/bundles/CoreBundle/Update/Step/FinalizeUpdateStep.php:34-56 @7.x].
 - Open question: UPGRADE-3.0 lists PHP 7.2–7.4 while `release_metadata.json@3.0.0` caps PHP at 7.3.99 (later 3.x may have raised it) [code: UPGRADE-3.0.md:4 @7.x] [code: app/release_metadata.json @3.0.0].
 - Open question: devdocs 8.0 call `CompanyEvent`, `LeadListEvent`, `WebhookEvent` `final`; 8.x code has them `abstract` [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html#affected-classes] [code: UPGRADE-8.0.md @8.x].
@@ -135,4 +142,4 @@ Sources: [code: app/bundles/CoreBundle/ @7.x] [code: app/release_metadata.json @
 - references/version-notes.md — release timeline with platform per major, upgrade paths, UPGRADE-3.0 → 7.0 and PHP → Twig summaries, 7.x minors.
 - references/upgrade-to-8.md — the full 7.x → 8.x guide: platform, events, campaign actions, per-bundle BC breaks, behaviour changes, removals, dual-version code, porting steps, testing on both versions.
 - references/event-map-7-to-8.md — every removed 7.x event constant and its 8.x event class, plus the kept-constant trap list.
-- references/pr-history.md — not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md — why the migration, updater and release rules exist: decisions with PR numbers (skip assertions, prefix, entity+migration pairs, no destructive data changes, squashing per major, `release_metadata.json`, branch and deprecation policy), a regression catalogue, timeline and open questions.

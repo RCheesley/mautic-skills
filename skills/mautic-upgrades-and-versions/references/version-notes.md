@@ -71,12 +71,16 @@ Only the 7.2.x series is "supported" in the bug template [code: .github/ISSUE_TE
 - Removed: Pipedrive, Citrix, LinkedIn plugins and the calendar; Froala assets disabled by default; new URL shortener configuration [code: UPGRADE-5.0.md @7.x].
 - Composer became the default install/update method [docs: https://docs.mautic.org/en/7.2/getting_started/switching_composer.html]. A complex admin password is required from 5.1 [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#installing-with-command-line].
 - Plugin porting guide M4 → M5: controllers as `Class::method`, PHP views to Twig (`@MauticCore/...html.twig`), `bin/console lint:twig`, `static::getContainer()` in tests [devdocs: https://devdocs.mautic.org/en/7.2/plugins/update_m4_to_m5.html].
+- PR-derived (migrations and releases): all 4.x migrations were deleted from `app/migrations` [PR #12441]; one added during 5.0 alpha was deleted by mistake and restored in 5.0.1 [PR #13183]. Migrations rewrite `local.php`: `%kernel.root_dir%` → `%kernel.project_dir%` [PR #12526], legacy mailer settings → `mailer_dsn`, with `%` doubled from 5.0.3 [PR #13256]. 5.0.2/5.0.3 fixed the point-groups migration for existing tables and `INT` `leads.id` [PR #13195] [PR #13284].
+- 5.0 cadence: alpha, beta1, beta2, rc1, rc2, GA on 2024-01-09 [PR #12517] [PR #12793] [PR #12806] [PR #12897] [PR #13089] [PR #13177]. Release-prep PRs touch only `release_metadata.json` from 5.0 [PR #13177]. Security reports moved to GitHub private vulnerability reporting [PR #12876].
+- 5.1/5.2: entity metadata and a migration are both required for every index [PR #13413]; `emails.read_count` recalculated in 5.1.1 [PR #13915]; `Migration.template` rewritten around `skipAssertion()`, `getPrefixedTableName()` and an optional `down()` in 5.2 [PR #13823]; Türkiye rename migration [PR #13997] [PR #14170].
 
 ### 6.0 (`UPGRADE-6.0.md`)
 - Symfony 6; legacy builder, Froala and Gated Video removed; Froala, CodeMirror (outside GrapesJS), jQuery UI Safe Blur and Modernizr JS removed [code: UPGRADE-6.0.md @7.x].
 - `MauticFactory` getters removed (use DI); `PluginBundleBase` hooks replaced by `PluginEvents` and `PluginDatabase::installPluginSchema/dropPluginSchema` (`updatePluginSchema` removed) [code: UPGRADE-6.0.md:27-33 @7.x].
 - `AbstractIntegration::__construct()` lost `SessionInterface` (session via `RequestStack`); session service gone [code: UPGRADE-6.0.md:25 @7.x].
 - `$request->request->get()` must return a scalar (use `->all()[...]`); Doctrine `Order` enum; functional-test API changes (`xmlHttpRequest` + `setCsrfHeader`, `loginUser($user)`, `assertResponseIsSuccessful`); form submissions stored without HTML-entity encoding; `CoreParametersHelper::getParameter()` → `get()` [code: app/bundles/*/*Events.php @7.x vs @8.x].
+- PR-derived: `mautic:update:apply` works from the CLI without a session [PR #14681]; remaining legacy tables converted to `utf8mb4` [PR #14618]; release `version` must carry the stability suffix of the milestone (`6.0.0-alpha`) [PR #14507]. 6.0.1 fixed index existence checks in two migrations [PR #14824] [PR #14852]. 6.0.5 removed the Citrix table-drop migration [PR #15385]. No migrations were squashed at 6.0 [code: git diff --diff-filter=D 5.2.0 6.0.0 -- app/migrations @7.x].
 
 ### 7.0 (`UPGRADE-7.0.md`)
 - PHP 8.1 → 8.2; MySQL 5.7.14 → 8.4.0; MariaDB 10.2.7 → 10.11.0 [code: UPGRADE-7.0.md:3-6 @7.x].
@@ -86,6 +90,7 @@ Only the 7.2.x series is "supported" in the bug template [code: .github/ISSUE_TE
 - Many deprecated classes removed: `MauticFactory`, `MauticSqliteTestCase`, `CustomFormEvent`, `UTF8Helper`, `EmojiExtension`, `TwilioApi`, Oauth2ThreeLegged interfaces (→ `AuthenticationInterface`/`AuthCredentialsInterface`), and more [code: UPGRADE-7.0.md:13-30 @7.x].
 - Composer deps removed (`symfony/yaml`, `symfony/templating`, `php-amqplib/rabbitmq-bundle`, `symfony/amqp-messenger`, `noxlogic/ratelimit-bundle`, …); JS `Mautic.insertTextInEditor` → `Mautic.insertHtmlInEditor` [code: app/bundles/*/*Events.php @7.x vs @8.x].
 - Citrix migration `Version20230522141144` removed; `plugin_citrix_events` may be dropped by hand [code: UPGRADE-7.0.md @7.x].
+- PR-derived: the Citrix drop migration was removed to avoid data loss for forks [PR #15384]; a missing `point_groups.uuid` migration was added before GA [PR #15351]; the list-permission migration creates the row first [PR #15456]. Cadence: beta 2025-10-20, rc 2025-11-11, rc2, GA 2026-01-20 [PR #15581] [PR #15630] [PR #15717] [PR #15793]. No migrations were squashed at 7.0 [code: git diff --diff-filter=D 6.0.0 7.0.0 -- app/migrations @7.x].
 
 ### PHP → Twig (`UPGRADE-PHP-TO-TWIG-TEMPLATES.md`)
 - Templates extend `@MauticCore/Default/content.html.twig` and fill blocks (`headerTitle`, `mauticContent`, `actions`); use `{% trans %}`, `path()`, `form_start/row/end`, `securityHasEntityAccess()` [code: UPGRADE-PHP-TO-TWIG-TEMPLATES.md @7.x].
@@ -101,6 +106,7 @@ Schema changes shipped per minor (all additive) [code: app/bundles/*/*Events.php
 - **7.2.0** (13): `sms_messages.media` JSON and `is_mms`; `emails.send_to_dnc`; `user_invites`; `campaign_events.date_linked/date_added`; `lead:notes` permission backfill; Company soft delete; Form submission limits; `point_insights`; `emails.settings`; `leads.last_active` index; form auto-fill config flag written to `local.php`; `campaign_lead_event_log` index reorder.
 - **7.2.1**: no migrations.
 - 7.x features after 7.2.1, not yet released and not yet on 8.x ([post-7.2.1-prs.md](post-7.2.1-prs.md)): unsubscribe/resubscribe email-validation page and "Require email validation for unsubscribe" setting, email preview "Download HTML", asset multi-download ZIP, "Any associated company" segment filters, `POST /api/companies/batch/addcontacts`, Users `is:never_logged_in`, Contacts "Save & New" [code: 7.x vs 8.x tree grep].
+- PR-derived 7.2.0: skip assertions are ANDed, so the mailer DSN migration now uses one combined assertion and never overwrites `mailer_dsn` [PR #16925]; API Library tests run in core CI, so release-prep PRs no longer link a manual run [PR #17227]. 7.2.1 was a metadata-only release PR [PR #17504]. Background for all of this: [pr-history.md](pr-history.md) [PR #13823].
 
 Each area skill's `references/version-notes.md` holds the area-specific 5.x/6.x/7.x differences.
 
