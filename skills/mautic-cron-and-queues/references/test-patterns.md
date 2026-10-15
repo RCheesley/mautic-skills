@@ -114,3 +114,18 @@ and prints "Script in progress"; (2) a run with a different key is not blocked; 
 6. `app/bundles/ReportBundle/Tests/Controller/ReportControllerFunctionalTest.php:553-596` — queue DSN end to end.
 
 [code: app/bundles/ReportBundle/Tests/Scheduler/Command/ExportSchedulerCommandTest.php @7.x]
+
+## 7. Regression tests worth adding
+
+Rows from references/pr-history.md (Regression catalogue) for which a grep of the 7.x `Tests/` directories found no test.
+
+| Behaviour to assert | Suggested test | PR |
+|---|---|---|
+| The console skips `set_time_limit()` when the function is unavailable | Unit test of `app/console-application.php` bootstrap, or a process test with `disable_functions` | [PR #3165] |
+| The console uses php.ini `date.timezone` and falls back to UTC only when it is empty | Process test running a command with `-d date.timezone=Europe/Prague` | [PR #7617] |
+| `mautic:segments:update -q` writes nothing when there is no error | Functional `testSymfonyCommand('mautic:segments:update', ['-q' => true])`, assert empty display | [PR #10533] |
+| `mautic:campaigns:trigger`, `mautic:campaigns:rebuild` and `mautic:webhooks:process` exit non-zero for an unknown id | Functional command test with `-i 999`, assert `Command::FAILURE` | [PR #11963] [PR #12203] |
+| Two trigger threads of the same Campaign do not block each other | Unit test in the style of `ModeratedCommandTest` with keys `<id>-1` and `<id>-2` | [PR #11747] |
+| Deleting `var/cache/<env>/middlewares.cache.php` and booting rebuilds it | Unit test of `MiddlewareBuilder::resolve()` with a missing cache file | [PR #8568] |
+| `RetryStrategy` reads the four `messenger_retry_strategy_*` parameters | Unit test with a mocked `CoreParametersHelper`, assert waiting times 1000/2000/4000 ms | [PR #12509] |
+

@@ -166,6 +166,12 @@ Sources: [code: app/bundles/MessengerBundle/Config/services.php:9-18 @7.x] [code
 - 5.0: Symfony Mailer and Messenger replace both. The Segment rebuild stops updating Campaigns [code: UPGRADE-5.0.md:16,55,104-109 @7.x].
 - 5.1: Campaigns are triggered newest first. `mautic:webhooks:process` gains range mode [docs: https://docs.mautic.org/en/7.2/configuration/cron_jobs.html#campaign-cron-jobs].
 - 7.0: the Messenger `TestHandler` is removed, so the test button cannot succeed. `symfony/amqp-messenger` is no longer bundled [code: UPGRADE-7.0.md:15,53 @7.x].
+- 2.11–4.x: the RabbitMQ/Beanstalkd QueueBundle and `mautic:queue:process` are historical; 5.0 replaced them with Messenger [PR #3873] [PR #12648].
+  3.3: CacheBundle and `mautic:cache:clear` arrive [PR #9107].
+- 5.0: Redis lock mode (`-x redis`) and per-thread trigger lock keys [PR #10347] [PR #11747]. 5.1: `--exclude` on segments:update, campaigns:rebuild and campaigns:trigger [PR #13383].
+- 6.x: no queue or cache changes found in the PRs for this area; `mautic:segments:stat` is new in 6.0 [PR #14575].
+- 7.0: separate non-tag-aware and tag-aware Redis cache providers; Segment counts move to the cache provider with `lead:list:count-cache-update` [PR #14724] [PR #15554] [PR #14911].
+- 7.1.3: Queue Settings rejects a retry multiplier < 1 [PR #16157]. 7.2: Messenger message and handler classes are `final` [PR #16897].
 - 8.x: `--lock_mode=file_lock` errors. `CacheStorageHelper` and `cache_items` are removed. `mautic.cache.adapter.*` ids are gone, so use class
   names. A cache miss returns `null`. Symfony 8.1 and PHP 8.4 are required [code: UPGRADE-8.0.md:267 @8.x] [PR #17033] [PR #17155]. See references/version-notes.md.
 
@@ -188,6 +194,13 @@ Sources: [code: app/bundles/MessengerBundle/Config/services.php:9-18 @7.x] [code
 - `CacheProvider::clear($prefix)` ignores the prefix and clears the whole pool [code: app/bundles/CacheBundle/Cache/AbstractCacheProvider.php:55-58 @7.x].
 - Docs and the CLI page list commands that are not in 7.x (`mautic:citrix:sync`, `mautic:integration:pipedrive:*`,
   `mautic:queue:process`, `mautic:email:send`) [docs: https://docs.mautic.org/en/7.2/configuration/command_line_interface.html#mautic-commands] [docs: https://docs.mautic.org/en/7.2/queue/queue.html].
+- Messenger messages are PHP-serialised. This reverses the 2.11 rule against object serialisation, so keep transports trusted
+  [PR #3873] [PR #12648].
+- The lock key ignores `--min-contact-id`/`--max-contact-id`. Split Campaign work with `--thread-id`/`--max-threads`, and scale
+  email with more Messenger workers [PR #10347] [PR #11747].
+- After changing `cache_adapter` or `cache_adapter_tag_aware`, delete the cache directory [PR #14724].
+- Console commands use php.ini `date.timezone`, and UTC only when it is empty. Relative options such as `--time-interval` follow
+  that zone [PR #7617] [code: app/console-application.php:4-6 @7.x].
 - Open question: the `messenger_messages` table name, `auto_setup` and table-prefix handling come from Symfony's Doctrine
   transport and could not be verified (no `vendor/` in the analysed tree; no migration creates the table) [unverified] [code: app/migrations @7.x].
 
@@ -212,4 +225,4 @@ Sources: [code: app/bundles/MessengerBundle/Config/services.php:9-18 @7.x] [code
 - references/docs-digest.md: what docs.mautic.org and the KB say, and where they disagree with the code.
 - references/test-patterns.md: base classes, command and lock tests, Messenger and cache test patterns.
 - references/version-notes.md: ≤ 4.x history, 5.x/7.x changes and the 8.x delta.
-- references/pr-history.md: not yet generated; PR-derived history is added in a later pass.
+- references/pr-history.md: why and when things changed, from merged PRs: decisions (QueueBundle to Messenger, serialisation, locking, cache), regression catalogue, feature timeline, open questions.
