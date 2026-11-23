@@ -1,8 +1,10 @@
 # Event map: Mautic 7.x event-name constants → Mautic 8.x event classes
 
 Generated from the constant diff of `app/bundles/*/*Events.php`, `plugins/*/*Events.php` and `DoNotContact{Add,Remove}Event`
-between 7.x (`419a08a9b35`; its `*Events.php` constants are identical to the 7.2.1 tag) and 8.x (`11599729491`, 2026-10-15) [code: app/bundles/*/*Events.php @7.x vs @8.x]. Open this file when
-you port a listener, review a plugin for 8.x, or need to know what to subscribe to on 8.x.
+between 7.x (release 7.2.2 plus 181 unreleased PRs, snapshot pinned in SOURCES.md; its `*Events.php` constants are identical
+to the 7.2.2 tag) and 8.x (snapshot pinned in SOURCES.md), plus a scan of every non-test `dispatch()` call and listener key on
+both trees [code: app/bundles/*/*Events.php @7.x vs @8.x]. Open this file when you port a listener, review a plugin for 8.x,
+or need to know what to subscribe to on 8.x.
 
 ## Contents
 1. How to read this file
@@ -10,67 +12,85 @@ you port a listener, review a plugin for 8.x, or need to know what to subscribe 
 3. Trap: constants that still exist on 8.x but are no longer dispatched
 4. Names that are still dispatched as strings on 8.x
 5. Constants added on 8.x
-6. Full table of removed constants (225 rows)
+6. Full table of removed constants (226 rows)
 
 ## 1. How to read this file
 
-- On 8.x, almost every `dispatch()` call passes only the event object, so the event name is `$event::class` [code: UPGRADE-8.0.md @8.x] [PR #17157] [PR #17625].
-- A listener must subscribe to the **event class** (`LeadPostSaveEvent::class`), not to the old string constant [code: UPGRADE-8.0.md @8.x].
-- Where one event object used to be dispatched under several names (pre/post save/delete), the shared parent became `abstract` and gained one concrete subclass per name. Type-hinting the abstract parent in the handler method still works; the subscription key must be the concrete class [code: UPGRADE-8.0.md @8.x lines 17-135].
+- On 8.x, almost every `dispatch()` call passes only the event object, so the event name is `$event::class` [code: UPGRADE-8.0.md "Changed code" @8.x] [PR #17157] [PR #17625].
+- A listener must subscribe to the **event class** (`LeadPostSaveEvent::class`), not to the old string constant [code: UPGRADE-8.0.md "Changed code" @8.x].
+- On 8.x most core listeners are `#[AsEventListener(event: X::class)]` methods, not `getSubscribedEvents()` arrays; both forms register the same way, and the event key rules here apply to both [PR #17988] [code: UPGRADE-8.0.md "Changed code" @8.x].
+- Where one event object used to be dispatched under several names (pre/post save/delete), the shared parent became `abstract` and gained one concrete subclass per name. Type-hinting the abstract parent in the handler method still works; the subscription key must be the concrete class [code: UPGRADE-8.0.md "Changed code" @8.x].
 - "Subscribe to / replacement" is a class in the same bundle's `Event` namespace unless a fully qualified class name is given [code: app/bundles/*/Event/ @8.x].
-- "(none)" means the constant had no dispatcher or listener and has no replacement, or the mechanism changed (for example `ON_CAMPAIGN_TRIGGER_ACTION` → register `batchEventName` and listen on `PendingEvent`) [PR #17097].
+- "(none)" means the constant had no dispatcher or listener and has no replacement, the bundle was removed, or the mechanism changed (for example `ON_CAMPAIGN_TRIGGER_ACTION` → register `batchEventName` and listen on `PendingEvent`) [PR #17097].
 - The PR column lists the PRs that touched that bundle's `*Events.php` file plus the bundle's dispatch-by-class PR; #16996 (typed constants) touched every file and is omitted.
 
 ## 2. Summary numbers
 
-- 393 constants on 7.2.1 → 174 on 8.x: 225 removed, 6 added [code: app/bundles/*/*Events.php @7.x vs @8.x].
-- Of the 225 removed: 201 map to an event class, 9 are `ON_CAMPAIGN_TRIGGER_ACTION` (→ batch action + `PendingEvent`), 15 had no dispatcher/listener and have no replacement (the table has 10 `ON_CAMPAIGN_TRIGGER_ACTION` rows: the tenth, `SmsEvents::ON_CAMPAIGN_TRIGGER_ACTION`, was unused and is counted in the 15) [code: app/bundles/*/*Events.php @7.x vs @8.x].
-- Whole classes deleted on 8.x: `ApiEvents`, `ConfigEvents`, `CoreEvents`, `DashboardEvents`, `IntegrationEvents`, `StatEvents`, `UserEvents` [code: app/bundles/*/ @8.x].
-- Removed per bundle: ApiBundle 9, AssetBundle 7, CampaignBundle 21, ConfigBundle 3, CoreBundle 15, DashboardBundle 4, DynamicContentBundle 7, EmailBundle 20, IntegrationsBundle 23, LeadBundle 56, MauticFocusBundle 2, MauticSocialBundle 10, PageBundle 3, PluginBundle 12, SmsBundle 10, StageBundle 1, StatsBundle 1, UserBundle 15, WebhookBundle 6 [code: app/bundles/*/*Events.php @7.x vs @8.x].
+- 393 constants on 7.x → 172 on 8.x: 226 removed, 5 added [code: app/bundles/*/*Events.php @7.x vs @8.x].
+- Of the 226 removed: 193 map to an event class, 8 are `ON_CAMPAIGN_TRIGGER_ACTION` (→ batch action + `PendingEvent`), 15 had no dispatcher or listener and have no replacement, and 10 went with `MauticSocialBundle` [code: app/bundles/*/*Events.php @7.x vs @8.x] [PR #17473].
+- Whole classes deleted on 8.x: `ApiEvents`, `ConfigEvents`, `CoreEvents`, `DashboardEvents`, `IntegrationEvents`, `StatEvents`, `UserEvents`, and `SocialEvents` with its bundle [code: app/bundles/*/ @8.x] [PR #17473].
+- Removed per bundle: ApiBundle 9, AssetBundle 7, CampaignBundle 21, ConfigBundle 3, CoreBundle 15, DashboardBundle 4, DynamicContentBundle 7, EmailBundle 20, IntegrationsBundle 23, LeadBundle 56, MauticFocusBundle 2, MauticSocialBundle 10, PageBundle 4, PluginBundle 12, SmsBundle 10, StageBundle 1, StatsBundle 1, UserBundle 15, WebhookBundle 6 [code: app/bundles/*/*Events.php @7.x vs @8.x].
+- Changes since the previous 8.x snapshot: `PageEvents::PAGE_ON_TOGGLE_PUBLISH` removed and toggling dispatches `EntityTogglePublishEvent` [PR #18137]; `SocialEvents` deleted with the bundle, so its `ON_CAMPAIGN_BATCH_ACTION` is no longer an added constant [PR #17473]; no constant value changed [code: app/bundles/*/*Events.php @7.x vs @8.x].
 
 ## 3. Trap: constants that still exist on 8.x but are no longer dispatched
 
 A listener keyed on one of these constants compiles and loads on 8.x but **never fires**. No error, no log line. Key on the
-class instead [code: UPGRADE-8.0.md @8.x "Changed code"; verified that no 8.x dispatch passes these names].
+class instead. Every constant below is dispatched under its string name somewhere on 7.x and under no string name on 8.x
+[code: app/bundles/*/*Events.php @7.x vs @8.x; non-test `dispatch()` scan of both trees] [code: UPGRADE-8.0.md "Changed code" @8.x].
 
 | Kept constant (8.x) | Old name | Dispatched as |
 |---|---|---|
 | `ChannelEvents::ADD_CHANNEL` / `CHANNEL_BROADCAST` / `MESSAGE_QUEUED` / `PROCESS_MESSAGE_QUEUE` / `PROCESS_MESSAGE_QUEUE_BATCH` | `mautic.add_channel` … | `ChannelEvent` / `ChannelBroadcastEvent` / `MessageQueueEvent` / `MessageQueueProcessEvent` / `MessageQueueBatchProcessEvent` |
 | `WebhookEvents::WEBHOOK_ON_BUILD` / `WEBHOOK_QUEUE_ON_ADD` / `WEBHOOK_ON_REQUEST` | `mautic.webhook_on_build` … | `WebhookBuilderEvent` / `WebhookQueueEvent` / `WebhookRequestEvent` |
-| `PageEvents::VIDEO_ON_HIT` / `PAGE_ON_HIT` / `REDIRECT_DO_NOT_TRACK` / `ON_REDIRECT_GENERATE` / `ON_CONTACT_TRACKED` | `mautic.page_on_hit` … | `VideoHitEvent` / `PageHitEvent` / `UntrackableUrlsEvent` / `RedirectGenerationEvent` / `TrackingEvent` |
-| `SmsEvents::SMS_ON_SEND` | `mautic.sms_on_send` | `SmsSendEvent` |
+| `PageEvents::VIDEO_ON_HIT` / `PAGE_ON_HIT` (also a webhook type id) / `REDIRECT_DO_NOT_TRACK` / `ON_REDIRECT_GENERATE` / `ON_CONTACT_TRACKED` | `mautic.page_on_hit` … | `VideoHitEvent` / `PageHitEvent` / `UntrackableUrlsEvent` / `RedirectGenerationEvent` / `TrackingEvent` |
+| `SmsEvents::SMS_ON_SEND` (also a webhook type id) | `mautic.sms_on_send` | `SmsSendEvent` |
 | `ReportEvents::REPORT_ON_BUILD` / `REPORT_ON_GENERATE` / `REPORT_QUERY_PRE_EXECUTE` / `REPORT_ON_DISPLAY` / `REPORT_ON_GRAPH_GENERATE` / `REPORT_SCHEDULE_SEND` / `REPORT_ON_COLUMN_COLLECT` / `REPORT_PERMANENT_FILE_CREATED` | `mautic.report_on_build` … | `ReportBuilderEvent` / `ReportGeneratorEvent` / `ReportQueryEvent` / `ReportDataEvent` / `ReportGraphEvent` / `ReportScheduleSendEvent` / `ColumnCollectEvent` / `PermanentReportFileCreatedEvent` |
-| `EmailEvents::EMAIL_ON_OPEN` (also a webhook type id) | `mautic.email_on_open` | `EmailOpenEvent` |
+| `EmailEvents::EMAIL_ON_SEND` / `EMAIL_ON_OPEN` (both also webhook type ids) | `mautic.email_on_send` / `mautic.email_on_open` | `EmailSendEvent` / `EmailOpenEvent` [code: app/bundles/EmailBundle/EventListener/BuilderSubscriber.php:97-99 @8.x] |
 | `PointEvents::POINT_ON_ACTION`; `PointGroupEvents::SCORE_CHANGE` | | `PointActionEvent`; `GroupScoreChangeEvent` |
-| `PointEvents::POINT_ON_BUILD` / `TRIGGER_ON_BUILD` | `mautic.point_on_build` / `mautic.trigger_on_build` | `PointBuilderEvent` / `TriggerBuilderEvent` [code: app/bundles/PointBundle/PointEvents.php:45,87 @8.x] [code: app/bundles/EmailBundle/EventListener/PointSubscriber.php:32-33 @11599729491] |
+| `PointEvents::POINT_ON_BUILD` / `TRIGGER_ON_BUILD` | `mautic.point_on_build` / `mautic.trigger_on_build` | `PointBuilderEvent` / `TriggerBuilderEvent` [code: app/bundles/PointBundle/PointEvents.php:45,87 @8.x] [code: app/bundles/EmailBundle/EventListener/PointSubscriber.php:29-31 @8.x] |
 | `CategoryEvents::CATEGORY_ON_BUNDLE_LIST_BUILD` | | `CategoryTypesEvent` |
 | `NotificationEvents::NOTIFICATION_ON_SEND` | `mautic.notification_on_send` | `NotificationSendEvent` |
 | `StageEvents::STAGE_ON_BUILD` | `mautic.stage_on_build` | `StageBuilderEvent` |
 | `FocusEvents::FOCUS_ON_VIEW` | | `FocusViewEvent` |
 | `FormEvents::FORM_ON_SUBMIT` (also a webhook type id) / `FORM_ON_BUILD` / `ON_OBJECT_COLLECT` / `ON_FIELD_COLLECT` | `mautic.form_on_submit` … | `SubmissionEvent` / `FormBuilderEvent` / `ObjectCollectEvent` / `FieldCollectEvent` |
-| `LeadEvents::LEAD_UTMTAGS_ADD`, `LEAD_CATEGORY_CHANGE`, `CHANNEL_SUBSCRIPTION_CHANGED`, `LEAD_BUILD_SEARCH_COMMANDS`, `COMPANY_BUILD_SEARCH_COMMANDS`, `ADJUST_FILTER_FORM_TYPE_FOR_FIELD`, `COLLECT_OPERATORS_FOR_FIELD_TYPE`, `COLLECT_OPERATORS_FOR_FIELD`, `COLLECT_FILTER_CHOICES_FOR_LIST_FIELD_TYPE`, `SEGMENT_ON_DECORATOR_DELEGATE`, `LIST_FILTERS_MERGE`, `LIST_FILTERS_OPERATORS_ON_GENERATE`, `LIST_FILTERS_OPERATOR_QUERYBUILDER_ON_GENERATE`, `LIST_FILTERS_QUERYBUILDER_GENERATED`, `IMPORT_ON_INITIALIZE`, `IMPORT_ON_FIELD_MAPPING`, `IMPORT_ON_PROCESS`, `IMPORT_ON_VALIDATE`, `LEAD_FIELD_PRE_{ADD,UPDATE,DELETE}_COLUMN[_BACKGROUND_JOB]`, `TIMELINE_ON_GENERATE` | | `LeadUtmTagsEvent`, `CategoryChangeEvent`, `ChannelSubscriptionChange`, `LeadBuildSearchEvent`, `CompanyBuildSearchEvent`, `FormAdjustmentEvent`, `TypeOperatorsEvent`, `FieldOperatorsEvent`, `ListFieldChoicesEvent`, `LeadListFiltersDecoratorDelegateEvent`, `LeadListMergeFiltersEvent`, `LeadListFiltersOperatorsEvent`, `SegmentOperatorQueryBuilderEvent`, `LeadListQueryBuilderGeneratedEvent`, `ImportInitEvent`, `ImportMappingEvent`, `ImportProcessEvent`, `ImportValidateEvent`, `Field\Event\{Add,Update,Delete}Column[Background]Event`, `LeadTimelineEvent` [PR #17250] |
-| `LeadEvents::LEAD_POST_SAVE`, `LEAD_POST_DELETE`, `LEAD_POINTS_CHANGE`, `LEAD_COMPANY_CHANGE`, `LEAD_LIST_CHANGE`, `COMPANY_POST_SAVE`, `COMPANY_POST_DELETE` (kept as webhook type ids) | | `LeadPostSaveEvent`, `LeadPostDeleteEvent`, `PointsChangeEvent`, `LeadChangeCompanyEvent`, `ListChangeEvent`, `CompanyPostSaveEvent`, `CompanyPostDeleteEvent` |
+| `LeadEvents::LEAD_UTMTAGS_ADD`, `LEAD_CATEGORY_CHANGE`, `CHANNEL_SUBSCRIPTION_CHANGED` (webhook type id), `LEAD_BUILD_SEARCH_COMMANDS`, `COMPANY_BUILD_SEARCH_COMMANDS`, `ADJUST_FILTER_FORM_TYPE_FOR_FIELD`, `COLLECT_OPERATORS_FOR_FIELD_TYPE`, `COLLECT_OPERATORS_FOR_FIELD`, `COLLECT_FILTER_CHOICES_FOR_LIST_FIELD_TYPE`, `SEGMENT_ON_DECORATOR_DELEGATE`, `LIST_FILTERS_MERGE`, `LIST_FILTERS_OPERATORS_ON_GENERATE`, `LIST_FILTERS_OPERATOR_QUERYBUILDER_ON_GENERATE`, `LIST_FILTERS_QUERYBUILDER_GENERATED`, `IMPORT_ON_INITIALIZE`, `IMPORT_ON_FIELD_MAPPING`, `IMPORT_ON_PROCESS`, `IMPORT_ON_VALIDATE`, `LEAD_FIELD_PRE_{ADD,UPDATE,DELETE}_COLUMN[_BACKGROUND_JOB]`, `TIMELINE_ON_GENERATE` | | `LeadUtmTagsEvent`, `CategoryChangeEvent`, `ChannelSubscriptionChange`, `LeadBuildSearchEvent`, `CompanyBuildSearchEvent`, `FormAdjustmentEvent`, `TypeOperatorsEvent`, `FieldOperatorsEvent`, `ListFieldChoicesEvent`, `LeadListFiltersDecoratorDelegateEvent`, `LeadListMergeFiltersEvent`, `LeadListFiltersOperatorsEvent`, `SegmentOperatorQueryBuilderEvent`, `LeadListQueryBuilderGeneratedEvent`, `ImportInitEvent`, `ImportMappingEvent`, `ImportProcessEvent`, `ImportValidateEvent`, `Field\Event\{Add,Update,Delete}Column[Background]Event`, `LeadTimelineEvent` [PR #17250] |
+| `LeadEvents::LEAD_POST_SAVE`, `LEAD_POST_DELETE`, `LEAD_POINTS_CHANGE`, `LEAD_COMPANY_CHANGE`, `LEAD_LIST_CHANGE`, `COMPANY_POST_SAVE`, `COMPANY_POST_DELETE` (kept as webhook type ids) | | `LeadPostSaveEvent`, `LeadPostDeleteEvent`, `PointsChangeEvent`, `LeadChangeCompanyEvent`, `ListChangeEvent`, `CompanyPostSaveEvent`, `CompanyPostDeleteEvent` [code: app/bundles/LeadBundle/EventListener/WebhookSubscriber.php @8.x] |
+
+Kept constants with a core listener but **no dispatcher on either branch**: `EmailEvents::EMAIL_FAILED` and `EMAIL_RESEND`
+(listeners at `EmailSubscriber.php:135-136` and `:158-159`) and `LeadEvents::LEAD_ON_SEGMENTS_CHANGE` (listener at
+`LeadBundle/EventListener/FormSubscriber.php:332-333`). No non-test code dispatches them on 7.x or 8.x, so their behaviour does
+not change between versions [code: app/bundles/EmailBundle/EventListener/EmailSubscriber.php:135-159 @8.x]
+[code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:332-333 @8.x]. `LeadEvents::FILTER_CHOICE_FIELDS`,
+`NotificationEvents::NOTIFICATION_ON_FORM_ACTION_SEND`, `StageEvents::STAGE_ON_ACTION` and
+`WebhookEvents::WEBHOOK_PRE_EXECUTE` / `WEBHOOK_POST_EXECUTE` are referenced nowhere outside their own class on either branch
+[code: app/bundles/*/*Events.php @7.x vs @8.x].
 
 ## 4. Names that are still dispatched as strings on 8.x
 
-Outside tests, only these dispatches still pass a string name on 8.x [code: app/bundles/*/*Events.php @7.x vs @8.x]:
+Outside tests, these are the only `dispatch()` calls on 8.x that pass a name [code: app/bundles/*/*Events.php @7.x vs @8.x; non-test `dispatch()` scan @8.x]:
 
-- `CampaignEvents::ON_EVENT_DECISION_EVALUATION` and `ON_EVENT_CONDITION_EVALUATION` (`DecisionDispatcher`, `ConditionDispatcher`).
-- `NotificationEvents::TOKEN_REPLACEMENT` and `SmsEvents::TOKEN_REPLACEMENT` (shared `TokenReplacementEvent`).
-- Variable names (`$name`, `$eventName`, `$batchEventName`): the CRUD groups in `ReportModel`, `MessageModel`, `DynamicContentModel`, `PointGroupModel`, `TriggerModel`, `PointModel`, `StageModel`, `Form\FormModel`, `Form\FieldModel`, `NotificationModel`, `CategoryModel`, `PageModel`, `FocusModel`, and the campaign action/decision/condition names a plugin registers in `CampaignBuilderEvent` (`batchEventName`, `eventName` for decisions/conditions).
+- `CampaignEvents::ON_EVENT_DECISION_EVALUATION` and `ON_EVENT_CONDITION_EVALUATION` [code: app/bundles/CampaignBundle/Executioner/Dispatcher/DecisionDispatcher.php:36 @8.x] [code: app/bundles/CampaignBundle/Executioner/Dispatcher/ConditionDispatcher.php:22 @8.x]. Both constants hold the same string, `mautic.campaign_on_event_decision_evaluation`, on 7.x and 8.x, so a listener on either receives both decision and condition evaluations [code: app/bundles/CampaignBundle/CampaignEvents.php:14,21 @8.x].
+- `NotificationEvents::TOKEN_REPLACEMENT` and `SmsEvents::TOKEN_REPLACEMENT` (shared `TokenReplacementEvent`) [code: app/bundles/NotificationBundle/EventListener/CampaignSubscriber.php:214-221 @8.x] [code: app/bundles/SmsBundle/Model/SmsModel.php:291-305 @8.x].
+- `PluginEvents::PLUGIN_ON_INTEGRATION_KEYS_MERGE` / `_ENCRYPT` / `_DECRYPT`, through `AbstractIntegration::dispatchIntegrationKeyEvent()` [code: app/bundles/PluginBundle/Integration/AbstractIntegration.php:385-446,2100-2106 @8.x].
+- Variable names: the CRUD groups in `ReportModel`, `MessageModel`, `DynamicContentModel`, `PointGroupModel`, `TriggerModel`, `PointModel`, `StageModel`, `Form\FormModel`, `Form\FieldModel`, `NotificationModel`, `CategoryModel`, `PageModel`, `FocusModel`; the campaign action, decision and condition names a plugin registers in `CampaignBuilderEvent` (`batchEventName`, `eventName`) [code: app/bundles/CampaignBundle/Executioner/Dispatcher/ActionDispatcher.php:41 @8.x]; Form submit-action and validator `eventName` [code: app/bundles/FormBundle/Model/SubmissionModel.php:942,1236 @8.x]; Point trigger `eventName` [code: app/bundles/PointBundle/Model/TriggerModel.php:343 @8.x]; A/B-test winner `event` [code: app/bundles/CoreBundle/Model/AbTest/AbTestResultService.php:39 @8.x].
 
-So string constants remain meaningful on 8.x only for: those CRUD groups, campaign registration names
-(`*::ON_CAMPAIGN_BATCH_ACTION`, `ON_CAMPAIGN_TRIGGER_DECISION`, `ON_CAMPAIGN_TRIGGER_CONDITION`, …), A/B-winner `ON_DETERMINE_*`
-names, and webhook type identifiers (`LeadEvents::LEAD_POST_SAVE`, `EmailEvents::EMAIL_ON_SEND`, `FormEvents::FORM_ON_SUBMIT`, …)
-[code: UPGRADE-8.0.md @8.x lines 130, 176, 726, 753].
+So string constants remain meaningful on 8.x only for: those CRUD groups, campaign, Form-action and Point-trigger registration
+names (`*::ON_CAMPAIGN_BATCH_ACTION`, `ON_CAMPAIGN_TRIGGER_DECISION`, `ON_CAMPAIGN_TRIGGER_CONDITION`, `FormEvents::ON_EXECUTE_SUBMIT_ACTION`, `PointEvents::TRIGGER_ON_EVENT_EXECUTE`, …),
+A/B-winner `ON_DETERMINE_*` names, the integration key events, and webhook type identifiers (`LeadEvents::LEAD_POST_SAVE`,
+`EmailEvents::EMAIL_ON_SEND`, `FormEvents::FORM_ON_SUBMIT`, …) [code: UPGRADE-8.0.md "Changed code" @8.x].
+
+Publish toggling is not a CRUD-group name any more: `FormModel::togglePublishStatus()` dispatches
+`Mautic\CoreBundle\Event\EntityTogglePublishEvent` for every entity and no longer calls `dispatchEvent('on_toggle_publish', …)`,
+so a model override that handled that action stops running [code: app/bundles/CoreBundle/Model/FormModel.php:234 @8.x] [PR #18137].
 
 `CampaignEvents` keeps only `ON_EVENT_DECISION_EVALUATION`, `ON_EVENT_CONDITION_EVALUATION`, `ON_EVENT_JUMP_TO_EVENT`,
-`ON_CAMPAIGN_ACTION_CHANGE_MEMBERSHIP` [code: app/bundles/CampaignBundle/CampaignEvents.php @8.x].
+`ON_CAMPAIGN_ACTION_CHANGE_MEMBERSHIP` [code: app/bundles/CampaignBundle/CampaignEvents.php:14-35 @8.x].
 
 ## 5. Constants added on 8.x
 
-All six are `ON_CAMPAIGN_BATCH_ACTION` registration names for bundles that used to register only the legacy trigger action
-[code: app/bundles/*/*Events.php @7.x vs @8.x] [PR #17097]:
+All five are `ON_CAMPAIGN_BATCH_ACTION` registration names for bundles that used to register only the legacy trigger action
+[code: app/bundles/*/*Events.php @7.x vs @8.x] [PR #17097]. The sixth, `SocialEvents::ON_CAMPAIGN_BATCH_ACTION`, was removed
+with `MauticSocialBundle` [PR #17473].
 
 | Class | Constant | Value |
 |---|---|---|
@@ -79,11 +99,10 @@ All six are `ON_CAMPAIGN_BATCH_ACTION` registration names for bundles that used 
 | `PluginEvents` | `ON_CAMPAIGN_BATCH_ACTION` | `mautic.plugin.on_campaign_batch_action` |
 | `WebhookEvents` | `ON_CAMPAIGN_BATCH_ACTION` | `mautic.webhook.on_campaign_batch_action` |
 | `FocusEvents` | `ON_CAMPAIGN_BATCH_ACTION` | `mautic.focus.on_campaign_batch_action` |
-| `SocialEvents` | `ON_CAMPAIGN_BATCH_ACTION` | `mautic.social.on_campaign_batch_action` |
 
 ## 6. Full table of removed constants
 
-Source: [code: app/bundles/*/*Events.php @7.x vs @8.x, and the event classes dispatched @8.x]. Every row is a constant that exists on 7.2.1 and does not exist on 8.x.
+Source: [code: app/bundles/*/*Events.php @7.x vs @8.x, and the event classes dispatched @8.x]. Every row is a constant that exists on 7.x and does not exist on 8.x.
 
 | Bundle | Removed constant | Old event name | Subscribe to / replacement (in bundle `Event` namespace unless FQCN given) | PRs |
 |---|---|---|---|---|
@@ -156,7 +175,7 @@ Source: [code: app/bundles/*/*Events.php @7.x vs @8.x, and the event classes dis
 | EmailBundle | `EmailEvents::EMAIL_ON_BUILD` | `mautic.email_on_build` | `EmailOnBuildEvent` | #17059, #17217, #17225, #17675 |
 | EmailBundle | `EmailEvents::EMAIL_ON_DISPLAY` | `mautic.email_on_display` | `EmailDisplayEvent` | #17059, #17217, #17225, #17675 |
 | EmailBundle | `EmailEvents::EMAIL_ON_REPLY` | `mautic.email_on_reply` | `EmailReplyEvent` | #17059, #17217, #17225, #17675 |
-| EmailBundle | `EmailEvents::EMAIL_ON_TOGGLE_PUBLISH` | `mautic.email_on_toggle_publish` | `EmailOnTogglePublishEvent` | #17059, #17217, #17225, #17675 |
+| EmailBundle | `EmailEvents::EMAIL_ON_TOGGLE_PUBLISH` | `mautic.email_on_toggle_publish` | `Mautic\CoreBundle\Event\EntityTogglePublishEvent` (dispatched for every entity; check `$event->getEntity()`) | #17059, #17217, #17225, #17675, #18137 |
 | EmailBundle | `EmailEvents::EMAIL_PARSE` | `mautic.on_email_parse` | `ParseEmailEvent` | #17059, #17217, #17225, #17675 |
 | EmailBundle | `EmailEvents::EMAIL_POST_DELETE` | `mautic.email_post_delete` | `EmailPostDeleteEvent` | #17059, #17217, #17225, #17675 |
 | EmailBundle | `EmailEvents::EMAIL_POST_SAVE` | `mautic.email_post_save` | `EmailPostSaveEvent` | #17059, #17217, #17225, #17675 |
@@ -255,6 +274,7 @@ Source: [code: app/bundles/*/*Events.php @7.x vs @8.x, and the event classes dis
 | PageBundle | `PageEvents::ON_CAMPAIGN_TRIGGER_ACTION` | `mautic.page.on_campaign_trigger_action` | (none) - register `batchEventName` => `PageEvents::ON_CAMPAIGN_BATCH_ACTION`, listen on `PendingEvent` | #17097, #17203, #17638 |
 | PageBundle | `PageEvents::PAGE_ON_BUILD` | `mautic.page_on_build` | `PageBuilderEvent` | #17097, #17203, #17638 |
 | PageBundle | `PageEvents::PAGE_ON_DISPLAY` | `mautic.page_on_display` | `PageDisplayEvent` | #17097, #17203, #17638 |
+| PageBundle | `PageEvents::PAGE_ON_TOGGLE_PUBLISH` | `mautic.page_on_toggle_publish` | `Mautic\CoreBundle\Event\EntityTogglePublishEvent` (dispatched for every entity; check `$event->getEntity()`) | #18137 |
 | PluginBundle | `PluginEvents::ON_CAMPAIGN_TRIGGER_ACTION` | `mautic.plugin.on_campaign_trigger_action` | (none) - register `batchEventName` => `PluginEvents::ON_CAMPAIGN_BATCH_ACTION`, listen on `PendingEvent` | #17097, #17162, #17625 |
 | PluginBundle | `PluginEvents::ON_FORM_SUBMIT_ACTION_TRIGGERED` | `mautic.plugin.on_form_submit_action_triggered` | (none - unused) | #17097, #17162, #17625 |
 | PluginBundle | `PluginEvents::ON_PLUGIN_INSTALL` | `mautic.plugin.on_plugin_install` | `PluginInstallEvent` | #17097, #17162, #17625 |
@@ -302,15 +322,15 @@ Source: [code: app/bundles/*/*Events.php @7.x vs @8.x, and the event classes dis
 | WebhookBundle | `WebhookEvents::WEBHOOK_PRE_SAVE` | `mautic.webhook_pre_save` | `WebhookPreSaveEvent` | #17085, #17202, #17654 |
 | MauticFocusBundle | `FocusEvents::ON_CAMPAIGN_TRIGGER_ACTION` | `mautic.focus.on_campaign_trigger_action` | (none) - register `batchEventName` => `FocusEvents::ON_CAMPAIGN_BATCH_ACTION`, listen on `PendingEvent` | #17097, #17223, #17782 |
 | MauticFocusBundle | `FocusEvents::TOKEN_REPLACEMENT` | `mautic.focus_token_replacement` | `FocusTokenReplacementEvent` (extends `AbstractTokenReplacementEvent`) | #17097, #17223, #17782 |
-| MauticSocialBundle | `SocialEvents::MONITOR_POST_DELETE` | `mautic.monitor_post_delete` | `MonitorPostDeleteEvent` | #17097, #17544 |
-| MauticSocialBundle | `SocialEvents::MONITOR_POST_PROCESS` | `mautic.monitor_post_process` | `SocialMonitorEvent` | #17097, #17544 |
-| MauticSocialBundle | `SocialEvents::MONITOR_POST_SAVE` | `mautic.monitor_post_save` | `MonitorPostSaveEvent` | #17097, #17544 |
-| MauticSocialBundle | `SocialEvents::MONITOR_PRE_DELETE` | `mautic.monitor_pre_delete` | `MonitorPreDeleteEvent` | #17097, #17544 |
-| MauticSocialBundle | `SocialEvents::MONITOR_PRE_SAVE` | `mautic.monitor_pre_save` | `MonitorPreSaveEvent` | #17097, #17544 |
-| MauticSocialBundle | `SocialEvents::ON_CAMPAIGN_TRIGGER_ACTION` | `mautic.social.on_campaign_trigger_action` | (none) - register `batchEventName` => `SocialEvents::ON_CAMPAIGN_BATCH_ACTION`, listen on `PendingEvent` | #17097, #17544 |
-| MauticSocialBundle | `SocialEvents::TWEET_POST_DELETE` | `mautic.tweet_post_delete` | `TweetPostDeleteEvent` | #17097, #17544 |
-| MauticSocialBundle | `SocialEvents::TWEET_POST_SAVE` | `mautic.tweet_post_save` | `TweetPostSaveEvent` | #17097, #17544 |
-| MauticSocialBundle | `SocialEvents::TWEET_PRE_DELETE` | `mautic.tweet_pre_delete` | `TweetPreDeleteEvent` | #17097, #17544 |
-| MauticSocialBundle | `SocialEvents::TWEET_PRE_SAVE` | `mautic.tweet_pre_save` | `TweetPreSaveEvent` | #17097, #17544 |
+| MauticSocialBundle | `SocialEvents::MONITOR_POST_DELETE` | `mautic.monitor_post_delete` | (none) - `MauticSocialBundle` removed on 8.x | #17097, #17544, #17473 |
+| MauticSocialBundle | `SocialEvents::MONITOR_POST_PROCESS` | `mautic.monitor_post_process` | (none) - `MauticSocialBundle` removed on 8.x | #17097, #17544, #17473 |
+| MauticSocialBundle | `SocialEvents::MONITOR_POST_SAVE` | `mautic.monitor_post_save` | (none) - `MauticSocialBundle` removed on 8.x | #17097, #17544, #17473 |
+| MauticSocialBundle | `SocialEvents::MONITOR_PRE_DELETE` | `mautic.monitor_pre_delete` | (none) - `MauticSocialBundle` removed on 8.x | #17097, #17544, #17473 |
+| MauticSocialBundle | `SocialEvents::MONITOR_PRE_SAVE` | `mautic.monitor_pre_save` | (none) - `MauticSocialBundle` removed on 8.x | #17097, #17544, #17473 |
+| MauticSocialBundle | `SocialEvents::ON_CAMPAIGN_TRIGGER_ACTION` | `mautic.social.on_campaign_trigger_action` | (none) - `MauticSocialBundle` removed on 8.x | #17097, #17544, #17473 |
+| MauticSocialBundle | `SocialEvents::TWEET_POST_DELETE` | `mautic.tweet_post_delete` | (none) - `MauticSocialBundle` removed on 8.x | #17097, #17544, #17473 |
+| MauticSocialBundle | `SocialEvents::TWEET_POST_SAVE` | `mautic.tweet_post_save` | (none) - `MauticSocialBundle` removed on 8.x | #17097, #17544, #17473 |
+| MauticSocialBundle | `SocialEvents::TWEET_PRE_DELETE` | `mautic.tweet_pre_delete` | (none) - `MauticSocialBundle` removed on 8.x | #17097, #17544, #17473 |
+| MauticSocialBundle | `SocialEvents::TWEET_PRE_SAVE` | `mautic.tweet_pre_save` | (none) - `MauticSocialBundle` removed on 8.x | #17097, #17544, #17473 |
 
-Per-bundle counts: ApiBundle 9, AssetBundle 7, CampaignBundle 21, ConfigBundle 3, CoreBundle 15, DashboardBundle 4, DynamicContentBundle 7, EmailBundle 20, IntegrationsBundle 23, LeadBundle 56, MauticFocusBundle 2, MauticSocialBundle 10, PageBundle 3, PluginBundle 12, SmsBundle 10, StageBundle 1, StatsBundle 1, UserBundle 15, WebhookBundle 6 ; total 225
+Per-bundle counts: ApiBundle 9, AssetBundle 7, CampaignBundle 21, ConfigBundle 3, CoreBundle 15, DashboardBundle 4, DynamicContentBundle 7, EmailBundle 20, IntegrationsBundle 23, LeadBundle 56, MauticFocusBundle 2, MauticSocialBundle 10, PageBundle 4, PluginBundle 12, SmsBundle 10, StageBundle 1, StatsBundle 1, UserBundle 15, WebhookBundle 6 ; total 226

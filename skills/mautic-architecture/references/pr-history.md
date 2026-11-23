@@ -465,7 +465,7 @@ Review and testing
 - utf8mb4 was applied only to new installs; was there ever a charset migration? [PR #8349]
 - Which classes deprecated by [PR #13066] were removed in 6.0?
 - What replaces `iterator_mode` in `getEntities()`? [PR #14896]
-- Was the BS3 compatibility layer merged up to 8.x? The 8.x snapshot has no `1.bootstrap-compatibility.js`. [PR #17767]
+- Was the BS3 compatibility layer merged up to 8.x? Answered: yes, the 8.x snapshot pinned in SOURCES.md has `1.bootstrap-compatibility.js` and `_bootstrap-3-compatibility.scss`, with `twbs/bootstrap` 5.3.8. [PR #17767] [code: app/bundles/CoreBundle/Assets/js/1.bootstrap-compatibility.js @8.x] [code: app/composer.json:114 @8.x]
 - The minimum database version is checked in two places. [PR #15797]
 - Does DeviceDetector stop email-link scanners from causing clicks or DNC? [PR #12750] [PR #15844]
 - Per-browser state (autosave, dismissed tips, tab state) lives in browser storage and can leak on shared machines. [PR #13610] [PR #13927] [PR #15362]

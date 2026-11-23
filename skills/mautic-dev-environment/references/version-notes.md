@@ -31,7 +31,7 @@
 - 7.2.2 also publishes the GrapesJS plugin with prebuilt assets on each tag, so Composer installs get a working builder [PR #17831], and `mautic:assets:generate` rebuilds a stale `media/css/libraries.css` [PR #17597]. [code: .github/workflows/publish-grapesjs-package.yml @7.x] [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:80-84 @7.x]
 - Unreleased on 7.x (7.3.0-rc): Bootstrap 5.3.8 [PR #17767]; Chart.js `^4.6.1` [PR #17917] [code: package.json:53 @7.x]; new runtime packages `dicebear/core`, `dicebear/styles` for generated user avatars [PR #17862], `jumbojett/openid-connect-php` and `league/commonmark` [code: app/composer.json:32-61 @7.x]; dev tools bumped and `rector/type-perfect` dropped [PR #17846]; Rector runs in parallel with a 300 s timeout [code: rector.php:11 @7.x]; `DESIGN.md` added with an `AGENTS.md` design gate [PR #17879].
 
-## 3. 8.x delta (unreleased; branch snapshot 2026-10-15)
+## 3. 8.x delta: 8.x (snapshot pinned in SOURCES.md), unreleased
 | Item | 7.x | 8.x | Source |
 |---|---|---|---|
 | PHP minimum | 8.2 | 8.4 (max 8.5.99) | [code: app/release_metadata.json @8.x] [PR #16993] |
@@ -41,14 +41,16 @@
 | Tool binaries | `bin/*` | `vendor/bin/*` (composer scripts updated) | [code: composer.json @8.x] [PR #17164] |
 | Code style | php-cs-fixer + ECS | ECS only; `.php-cs-fixer.php` deleted; pre-commit runs `vendor/bin/ecs` | [PR #17280] [PR #17362] |
 | Test finals | — | `dg/bypass-finals` enabled in `app/tests/bootstrap.php` | [PR #17366] |
-| Bootstrap | `twbs/bootstrap` 5.3.8 (7.x after 7.2.1, unreleased [PR #17767]; 7.2.1 ships `bootstrap-sass` 3.4.1) | still `twbs/bootstrap-sass` 3.4.1 until 7.x is merged forward; undecided | [code: composer.json @8.x] |
+| Bootstrap | `twbs/bootstrap` 5.3.8 (7.x after 7.2.2, unreleased [PR #17767]; 7.2.2 ships `bootstrap-sass` 3.4.1) | `twbs/bootstrap` 5.3.8 plus the BS3 compatibility layer (`1.bootstrap-compatibility.js`, `_bootstrap-3-compatibility.scss`), from the 7.x merge; the 7.3 devdocs say Mautic 8 removes the layer | [code: app/composer.json:114 @8.x] [PR #18236] |
 | DB minimums | MySQL 8.4 / MariaDB 10.11 | unchanged | [code: app/release_metadata.json @8.x] |
-| Version string | 7.2.1 | `release_metadata.json` still says 7.2.0; treat 8.x as unreleased dev | [code: app/release_metadata.json @8.x] |
+| Version string | 7.2.2 | `release_metadata.json` says 7.2.2 (minimum PHP 8.4.0); treat 8.x as unreleased dev | [code: app/release_metadata.json:2-4 @8.x] |
+| Agent files | `AGENTS.md`, `DESIGN.md`, `.agents/skills/mautic-dev/` | same files, from the 7.x merge; AGENTS.md still says "Platform Requirements (Mautic 7.0)", PHP 8.2+ | [code: AGENTS.md:112-114 @8.x] [PR #18236] |
 
 Consequences for a dev environment on 8.x:
-- DDEV's PHP 8.5 already meets the 8.4 minimum. The inputs do not say whether `.ddev/config.yaml` changed on 8.x. [code: .ddev/config.yaml:3 @7.x]
+- DDEV's PHP 8.5 already meets the 8.4 minimum; `.ddev/config.yaml` is identical on 7.x and 8.x. [code: .ddev/config.yaml:3 @8.x]
 - Commands documented as `bin/phpunit` or `bin/phpstan` become `vendor/bin/phpunit` and `vendor/bin/phpstan`. `composer test` and `composer phpstan` keep working because the scripts were updated. [PR #17164]
-- `composer cs` and `composer fixcs` change meaning because php-cs-fixer is gone. Check `composer.json@8.x` scripts before you rely on them. [PR #17280]
+- `composer cs` and `composer fixcs` run `vendor/bin/ecs check` and `vendor/bin/ecs check --fix`, because php-cs-fixer is gone. [code: composer.json:199-200 @8.x] [PR #17280]
+- The 7.2.1 and 7.2.2 packaging fixes (runtime DomCrawler, no vendor paths in `build/exclude_files.txt`, no `package_devhead.php`) are on 8.x, because 7.2.2 is merged into 8.x. [PR #18036]
 - The developer-environment devdocs pages are unchanged in the 8.0 branch, so they say nothing about PHP 8.4. [devdocs: https://devdocs.mautic.org/en/8.0/]
 
 Unreleased 7.x changes (not in 7.2.2 or any release yet): see [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md).

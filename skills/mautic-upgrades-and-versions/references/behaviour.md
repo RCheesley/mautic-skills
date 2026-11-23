@@ -95,7 +95,7 @@ UB-D8. Some migrations change data or files, not only schema. `Version2026070910
 
 UB-D9. Migration counts per release: 7.0.0 added 33 migrations vs 6.0.0; 7.1.0 added 9; 7.2.0 added 13; 7.2.1 and 7.2.2 added none. The 7.x branch adds 4 more, unreleased (7.3.0-rc): `Version20260715144000`, `Version20261015121426`, `Version20261022064630`, `Version20261029120000` [code: git ls-tree per tag @7.x] [code: git diff --name-status 7.2.2 838c9c772ec -- app/migrations @7.x].
 
-UB-D10. 8.x adds one migration (`Version20260814141635`, drops `forms.form_type`) and edits many existing migrations for DBAL 4 and typed constants; 8.x CI fails if an existing table changes shape and runs `doctrine:schema:validate` [PR #17082] [PR #17407] [PR #17346].
+UB-D10. 8.x has every 7.x migration and adds three: `Version20260814141635` (drops `forms.form_type`), `Version20261109120000` (moves OneSignal settings under `featureSettings['integration']`) and `Version20261111164904` (copies `form_fields.lead_field` into `mapped_field`, then drops it). It also edits many existing migrations for DBAL 4 and typed constants; 8.x CI fails if an existing table changes shape and runs `doctrine:schema:validate` [code: app/migrations/ @7.x vs @8.x] [PR #17082] [PR #18113] [PR #18158] [PR #17407] [PR #17346].
 
 UB-D11. Plugins do not use `app/migrations`. A plugin bundle extending `Mautic\IntegrationsBundle\Bundle\AbstractPluginBundle` gets its `Migrations/` run by `IntegrationsBundle\Migration\Engine` on install/upgrade; each migration's `isApplicable(Schema)` must return false once applied [devdocs: https://devdocs.mautic.org/en/7.2/plugins/database.html#plugin-schema-migrations].
 
@@ -139,7 +139,7 @@ UB-F5. The release workflow requires the pushed tag to equal `version` in `relea
 
 UB-F6. A plugin bundle class may declare `const MINIMUM_MAUTIC_VERSION`; the kernel skips loading the plugin when the running version is lower [code: app/AppKernel.php:175-181 @7.x].
 
-UB-F7. On the 8.x snapshot the metadata still says `"version": "7.2.0"` while `minimum_php_version` is 8.4.0 [code: app/release_metadata.json @8.x].
+UB-F7. On the 8.x snapshot the metadata says `"version": "7.2.2"` (carried in by the 7.2.2 merge) while `minimum_php_version` is 8.4.0; it is not bumped until an 8.0 release [code: app/release_metadata.json:2-4 @8.x] [PR #18036].
 
 ## G. Support policy, branches and tags
 

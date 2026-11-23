@@ -1,7 +1,7 @@
 # REST API framework: version notes
 
-Authoritative behaviour is 7.x (the 7.x snapshot pinned in SOURCES.md). 8.x is unreleased development (its `release_metadata.json` still says
-7.2.0). [code: app/release_metadata.json @8.x]
+Authoritative behaviour is 7.x (the 7.x snapshot pinned in SOURCES.md). 8.x is unreleased development (its `release_metadata.json` says
+7.2.2, minimum PHP 8.4.0). [code: app/release_metadata.json:2-4 @8.x]
 
 ## History that explains current behaviour
 
@@ -57,11 +57,12 @@ Authoritative behaviour is 7.x (the 7.x snapshot pinned in SOURCES.md). 8.x is u
 - Component versions on 7.2.1: API Platform core `^4.1.0`, FOSRestBundle `^3.8`, OAuth server bundle 5.1.3, Symfony
   `~7.4.0`, PHP 8.2. [PR #17355] [PR #17350] [PR #17342]
 
-## Mautic 8.x delta
+## Mautic 8.x delta (8.x snapshot pinned in SOURCES.md)
 
-Branch topology: 8.x was forked before the 7.2.1 work, so 7.x-only features (7.2.1 and the unreleased work after it) such as
-`POST /api/companies/batch/addcontacts` are absent from 8.x today and are expected with the next forward merge. Do not
-document them as removed. [PR #17253]
+Branch topology: 7.2.2 and the unreleased 7.x work are merged into 8.x, so `POST /api/companies/batch/addcontacts` (now a
+`#[Route]` attribute) and the legacy `/api/projects` routes exist on 8.x. [PR #18036] [PR #18236]
+[code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:127-129 @8.x] [code: app/bundles/ProjectBundle/Config/config.php:11-12 @8.x]
+The 7.2-branch fixes after 7.2.2 are not: 8.x still has the unanchored `^/api` access rule. [PR #18058] [code: app/config/security.php:172 @8.x]
 
 | Change | Impact on API code | Source |
 |---|---|---|

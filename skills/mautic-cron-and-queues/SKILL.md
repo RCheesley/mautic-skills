@@ -112,7 +112,7 @@ The full per-command table (options, exit codes, locks) is in references/command
 |---|---|
 | Lock base class | `app/bundles/CoreBundle/Command/ModeratedCommand.php` |
 | Signal handling | `app/bundles/CoreBundle/ProcessSignal/ProcessSignalService.php` |
-| Commands | `app/bundles/*/Command/`, `app/bundles/LeadBundle/Field/Command/`, `app/bundles/ReportBundle/Scheduler/Command/`, `plugins/MauticSocialBundle/Command/` |
+| Commands | `app/bundles/*/Command/`, `app/bundles/LeadBundle/Field/Command/`, `app/bundles/ReportBundle/Scheduler/Command/`, `plugins/MauticSocialBundle/Command/` (7.x only [PR #17473]) |
 | Messenger wiring | `app/config/config.php:102-126` (transports, routing, `failure_transport`) |
 | Messenger parameters, tab | `app/bundles/MessengerBundle/Config/config.php`, `Form/Type/ConfigType.php`, `/s/config/edit/messengerconfig` |
 | Messages, handlers, retry | `app/bundles/MessengerBundle/Message/`, `MessageHandler/`, `Retry/RetryStrategy.php` |
@@ -141,7 +141,7 @@ Sources: [code: app/bundles/MessengerBundle/Config/services.php:9-18 @7.x] [code
 - Hook into sending: add an `#[AsMessageHandler]` for `SendEmailMessage` with a priority (pattern
   `RemoveReportAttachmentHandler`, -1000) [code: app/bundles/MessengerBundle/MessageHandler/RemoveReportAttachmentHandler.php:13-22 @7.x].
 - Cache: inject `CacheProviderInterface` or `CacheProviderTagAwareInterface`, never `CacheStorageHelper` (removed in 8.x).
-  Treat both `null` and `false` as a miss to support 7.x and 8.x [code: app/bundles/CacheBundle/Config/services.php:38-40 @7.x] [code: UPGRADE-8.0.md @8.x].
+  Treat both `null` and `false` as a miss to support 7.x and 8.x [code: app/bundles/CacheBundle/Config/services.php:38-40 @7.x] [code: UPGRADE-8.0.md:295-316 @8.x].
 - Keep BC: command names, aliases and option names are used in customers' crontabs. Add aliases rather than renaming
   (as with `mautic:campaigns:update`, `mautic:segments:rebuild`) [code: app/bundles/LeadBundle/Command/UpdateLeadListsCommand.php:22 @7.x].
 
@@ -173,7 +173,9 @@ Sources: [code: app/bundles/MessengerBundle/Config/services.php:9-18 @7.x] [code
 - 7.0: separate non-tag-aware and tag-aware Redis cache providers; Segment counts move to the cache provider with `lead:list:count-cache-update` [PR #14724] [PR #15554] [PR #14911].
 - 7.1.3: Queue Settings rejects a retry multiplier < 1 [PR #16157]. 7.2: Messenger message and handler classes are `final` [PR #16897].
 - 8.x: `--lock_mode=file_lock` errors. `CacheStorageHelper` and `cache_items` are removed. `mautic.cache.adapter.*` ids are gone, so use class
-  names. A cache miss returns `null`. Symfony 8.1 and PHP 8.4 are required [code: UPGRADE-8.0.md:358 @8.x] [PR #17033] [PR #17155]. See references/version-notes.md.
+  names. A cache miss returns `null`. Symfony 8.1 and PHP 8.4 are required [code: UPGRADE-8.0.md:358 @8.x] [PR #17033] [PR #17155]. The
+  social monitoring commands are removed with `MauticSocialBundle`; drop their cron entries before upgrading
+  [code: UPGRADE-8.0.md:9-21 @8.x] [PR #17473]. See references/version-notes.md.
 
 ## Pitfalls
 - "Locked" and "ran" both exit 0. A stuck run blocks every later cron run of the same key with no non-zero exit. Check

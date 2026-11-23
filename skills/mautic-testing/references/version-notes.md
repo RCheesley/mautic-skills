@@ -30,7 +30,7 @@ from is 5.0.0 [code: app/release_metadata.json @7.x].
 - 7.2 branch after 7.2.2 (milestone 7.2.3, not in the 7.x head yet): `AbstractMauticTestCase` stops calling `restore_exception_handler()` and core-lib conflicts with `symfony/error-handler <7.4.19` [PR #18053]; two baseline entries are removed by fixing the code [PR #18085] [PR #18086]; new E2E coverage for table sorting and the campaign builder tooltip [PR #18095] [PR #18119].
 - Unreleased on 7.x (7.3.0-rc): dev dependencies bumped, `rector/type-perfect` dropped in favour of type-coverage 2.5's `type_perfect` options, the `declare` coverage floor removed and all `symplify` rule sets switched off [PR #17846] [code: phpstan.neon:14-44 @7.x]; Rector runs in parallel with a 300 s timeout [code: rector.php:11 @7.x]; SonarCloud references removed [PR #17923]; `AGENTS.md` gains "Test Rules" [PR #17955]; CodeRabbit gets E2E review rules [PR #18064]; `AcceptanceTester::login()` gains `reuseSessionSnapshot` [PR #17830].
 
-## 8.x delta (8.x at 11599729491, unreleased)
+## 8.x delta: 8.x (snapshot pinned in SOURCES.md), unreleased
 | Item | 7.x | 8.x | Source |
 |---|---|---|---|
 | PHPUnit | ^11.5 | ^13.0 (via 12) | [code: composer.json @8.x] [PR #17004] [PR #17019] [PR #17063] [PR #17163] |
@@ -39,22 +39,26 @@ from is 5.0.0 [code: app/release_metadata.json @7.x].
 | Doctrine ORM / DBAL | 2.x / 3.x | ^3.7 / ^4.4 | [code: app/composer.json @8.x] [PR #17361] |
 | data-fixtures / fixtures-bundle | ^1.6.6 / ^3.4.4 | ^2.2 / ^4.3 | [code: app/composer.json @8.x] [PR #17353] |
 | Codeception | ^5.1 | ^5.3.5 | [code: composer.json @8.x] |
-| PHPStan | level 6 | still level 6; baseline 12,268 to 8,683 lines; new rules incl. `NoServiceGetterRule`, `NoServiceInEventConstructorRule`, model single-param typing | [code: phpstan.neon @8.x] [PR #17631] [PR #17766] [PR #17799] [PR #17365] [PR #17238] [PR #17640] |
-| Rector | dev-main + type-perfect | ^2.6.5, type-perfect dropped, `withPhpSets(php84: true)`, adds `symfonyCodeQuality`, custom `LoadMetadata*ToDoctrineAttributeRector`, `RequestGetToParameterBagsRector` | [code: rector.php @8.x] [PR #17190] [PR #17498] [PR #17309] [PR #17324] |
+| PHPStan | level 6 | still level 6; baseline down to 6,837 lines; new rules incl. `NoServiceGetterRule`, `NoServiceInEventConstructorRule`, `NoLoadMetadataMethodRule` (static `loadMetadata()` forbidden), model single-param typing | [code: phpstan.neon:7,386,404,413 @8.x] [code: phpstan-baseline.neon @8.x] [PR #18142] [PR #17631] [PR #17766] [PR #17799] [PR #17365] [PR #17238] [PR #17640] |
+| Rector | `dev-main`; `rector/type-perfect` dropped on the 7.x head (unreleased, 7.3.0-rc) [PR #17846] | `^2.8.4`, `withPhpSets(php84: true)`, `symfonyCodeQuality`, parallel with a 300 s timeout; the one-off `LoadMetadata*ToDoctrineAttributeRector` and `RequestGetToParameterBagsRector` rules were used and then deleted, leaving six custom rules in `utils/rector/src/` | [code: composer.json:45 @8.x] [code: rector.php:9-25 @8.x] [PR #17190] [PR #17498] [PR #17309] [PR #17324] [PR #18140] |
 | Coding standard | php-cs-fixer + ECS | ECS only; `.php-cs-fixer.php` deleted; pre-commit runs `vendor/bin/ecs` | [PR #17280] [PR #17362] |
 | Tool paths | `bin/phpunit`, `bin/phpstan`, ... | `vendor/bin/*` | [code: composer.json @8.x] [PR #17164] |
 | Mocking finals | not possible | `dg/bypass-finals ^1.11` enabled in `app/tests/bootstrap.php` | [code: composer.json @8.x] [PR #17366] |
+| Test helpers | `AbstractMauticTestCase::getService()` untyped | `getService(string $serviceId): object` with a conditional return type for common service ids; `ReflectionHelper::getAttributeListeners()` returns a class's `#[AsEventListener]` bindings as sorted `[event, method, priority]` triples | [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:161-164 @8.x] [code: app/bundles/CoreBundle/Test/ReflectionHelper.php:17-30 @8.x] [PR #18221] |
 | Removed test helpers | present | `CoreBundle\Test\DoctrineExtensions\TablePrefix`, `Tests\Twig\TwigIntegrationTestTrait`, Codeception `FunctionalTester`/functional suite | [PR #17182] [PR #17183] [PR #17184] [PR #17185] [PR #17241] [PR #17696] [PR #17033] |
 
 Consequences for tests on 8.x:
 - Do not create test doubles of `Request`, `InputBag` or `Router`; they are final in Symfony 8 [PR #17392].
 - Most events are dispatched by class name; assertions on `getSubscribedEvents()` keys and listener registrations must use event classes. Some constants still exist but are never dispatched, so a listener keyed on them loads but never fires [PR #17625].
+- Most core subscribers no longer implement `EventSubscriberInterface`; their methods carry `#[AsEventListener]`, so a test that calls `getSubscribedEvents()` on them fails. Assert the wiring with `ReflectionHelper::getAttributeListeners()` instead. Listeners at equal priority now run in method-declaration order [code: UPGRADE-8.0.md "Changed code" @8.x] [code: app/bundles/CoreBundle/Test/ReflectionHelper.php:17-30 @8.x] [PR #17988].
+- Entity mappings are `#[ORM\*]` attributes, not static `loadMetadata()`; a test entity or fixture that maps itself with `loadMetadata()` fails PHPStan [code: phpstan.neon:386 @8.x] [PR #17532] [PR #18142].
+- Validators throw `UnexpectedTypeException` when given a foreign constraint, so a validator unit test must pass the matching constraint [PR #18093].
 - A PHPStan rule enforces single-argument `dispatch()` [PR #17625].
 - Event constructors may not receive services [PR #17640].
 - Several models, repositories and events are `final`; prefer interfaces over mocks of concrete classes [PR #17536].
 - `Request::get()` is removed; use `query`, `request` or `attributes` bags in code and tests [PR #17309] [PR #17347].
 - The PHPStan level is unchanged; type-coverage thresholds are being raised PR by PR [PR #17766] [PR #17775].
-- The 8.x snapshot does not yet contain the 7.2.1 fixes (no forward merge since 7.2.0) [PR #17253].
+- 7.2.2 is merged into 8.x [PR #18036], and 7.x was merged into 8.x on 2026-11-17 up to commit `0b906d06a0` [PR #18236], bringing `.agents/skills/mautic-dev/`, the AGENTS.md "Test Rules" section and the CodeRabbit E2E rules to 8.x [code: AGENTS.md:95 @8.x]. 7.x PRs merged after that point (for example [PR #17830], the Bootstrap 5 JS API and `reuseSessionSnapshot`) are not on 8.x yet.
 
 To keep a test working on 7.x and 8.x, subscribe by event class and, where needed, both keys guarded with `defined()`;
 see mautic-upgrades-and-versions for the full porting list [code: UPGRADE-8.0.md @8.x].

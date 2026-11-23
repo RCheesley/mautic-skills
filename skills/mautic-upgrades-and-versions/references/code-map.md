@@ -40,7 +40,7 @@ All paths relative to the repository root at the 7.x snapshot (release 7.2.2 plu
 | Post-migrate generated columns | `app/bundles/CoreBundle/EventListener/MigrationCommandSubscriber.php:28-75` | runs on `doctrine:migrations:migrate` terminate [code: app/bundles/CoreBundle/EventListener/MigrationCommandSubscriber.php @7.x] |
 | Installer marks migrations | `app/bundles/InstallBundle/Install/InstallService.php:528-547` | `sync-metadata-storage` + `version --add --all` [code: app/bundles/InstallBundle/Install/InstallService.php @7.x] |
 | Plugin migrations | `Mautic\IntegrationsBundle\Migration\{Engine,AbstractMigration}` | plugin `Migrations/Version_X_Y_Z.php` [devdocs: https://devdocs.mautic.org/en/7.2/plugins/database.html#plugin-schema-migrations] |
-| 8.x only new migration | `app/migrations/Version20260814141635.php` @8.x | drops `forms.form_type` [PR #17082] |
+| 8.x-only migrations | `app/migrations/Version20260814141635.php`, `Version20261109120000.php`, `Version20261111164904.php` @8.x | drop `forms.form_type`; move OneSignal settings; drop `form_fields.lead_field` [PR #17082] [PR #18113] [PR #18158] |
 
 ## Configuration parameters
 

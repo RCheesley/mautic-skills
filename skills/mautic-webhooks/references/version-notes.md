@@ -31,7 +31,7 @@ The inputs do not map these migrations to release numbers; dates come from the m
 - 7.x adds the API Platform resource `/api/v2/webhooks` alongside v1 `/api/hooks`. [code: app/bundles/WebhookBundle/Entity/Webhook.php:28-121 @7.x]
 - 7.2 still exposes `LeadEvents::COMPANY_SOFT_DELETE` (`mautic.company_soft_delete`) for Plugins; it is not a webhook type. [code: app/bundles/LeadBundle/LeadEvents.php:627-633 @7.x]
 
-## 8.x delta (8.x @ 11599729491, unreleased)
+## 8.x delta (8.x snapshot pinned in SOURCES.md, unreleased)
 
 - Event dispatch by class name. `WebhookEvents::WEBHOOK_ON_BUILD`, `WEBHOOK_QUEUE_ON_ADD` and `WEBHOOK_ON_REQUEST` constants still exist but are dispatched as `WebhookBuilderEvent`, `WebhookQueueEvent`, `WebhookRequestEvent`. A Plugin keyed on the old constant loads but **never fires**: key on the class. [PR #17202]
 - Removed constants and replacements: `WEBHOOK_PRE_SAVE` → `WebhookPreSaveEvent`, `WEBHOOK_POST_SAVE` → `WebhookPostSaveEvent`, `WEBHOOK_PRE_DELETE` → `WebhookPreDeleteEvent`, `WEBHOOK_POST_DELETE` → `WebhookPostDeleteEvent`, `WEBHOOK_KILL` → `WebhookKillEvent`. `WebhookEvent` became `abstract`. [PR #17085] [PR #17202] [PR #17654]
@@ -41,7 +41,9 @@ The inputs do not map these migrations to release numbers; dates come from the m
 - `company_soft_delete` is dispatched as `CompanySoftDeleteEvent`; the 8.0 docs state it "isn't a Webhook event type". [devdocs: https://devdocs.mautic.org/en/8.0/webhooks/events/company_soft_delete.html]
 - Webhook user docs, getting started, example scripts and event pages are unchanged in 8.0. [devdocs: https://devdocs.mautic.org/en/8.0/webhooks/getting_started.html]
 - Devdocs list `WebhookEvent` as `final`; 8.x code has it `abstract` — trust the code. `WebhookBuilderEvent` and `WebhookNotificationEvent` are listed as `final`. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
-- 8.x does not yet contain the 7.2.1 fixes (no forward merge since 7.2.0). [PR #17253]
+- 7.2.2 and the unreleased 7.x work are merged into 8.x; no webhook PR targeted 8.x between the two 8.x snapshots. [PR #18036] [PR #18236]
+- On 8.x the core webhook listeners carry `#[AsEventListener]` instead of `getSubscribedEvents()`; a Plugin subscriber with `getSubscribedEvents()` (below) still works. [PR #17988] [code: UPGRADE-8.0.md:635-638 @8.x]
+- Discrepancy: UPGRADE-8.0.md removes `WEBHOOK_PRE_SAVE`, `WEBHOOK_POST_SAVE`, `WEBHOOK_PRE_DELETE`, `WEBHOOK_POST_DELETE` and `WEBHOOK_KILL` in one entry but says in another that they "keep their string names"; the 8.x class has none of them, so follow the code. [code: UPGRADE-8.0.md:112 @8.x] [code: UPGRADE-8.0.md:805 @8.x] [code: app/bundles/WebhookBundle/WebhookEvents.php:17-53 @8.x]
 
 Plugin porting snippet for 8.x:
 

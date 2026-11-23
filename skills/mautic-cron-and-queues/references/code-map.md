@@ -37,7 +37,7 @@ CampaignBundle `TriggerCampaignCommand`, `SummarizeCommand`, `UpdateLeadCampaign
 | MarketplaceBundle | `app/bundles/MarketplaceBundle/Command/` |
 | InstallBundle | `app/bundles/InstallBundle/Command/` |
 | CacheBundle | `app/bundles/CacheBundle/Command/` |
-| Social plugin | `plugins/MauticSocialBundle/Command/` |
+| Social plugin (7.x only; removed on 8.x [PR #17473]) | `plugins/MauticSocialBundle/Command/` |
 
 No `Command/` directory: Asset, Category, Project, Page, DynamicContent, Point, Stage, User, Dashboard, Stats, Api,
 Messenger [code: app/bundles/PointBundle, app/bundles/UserBundle, app/bundles/PageBundle (directory listings) @7.x].

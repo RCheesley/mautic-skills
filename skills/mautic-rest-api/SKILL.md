@@ -174,7 +174,8 @@ For 8.x compatibility, subscribe by event class where 8.x provides one (see Vers
   - Core `/api` routes move to `#[Route]` attributes. Plugins keep `routes.api`. [PR #17169]
   - API Platform goes to 4.3 and the OAuth server bundle to 6.0. [PR #17355] [PR #17342]
   - `formType` leaves the Forms API. [PR #17082]
-  - 7.x-only endpoints (unreleased, after 7.2.1) arrive with the next forward merge. [PR #17253]
+  - The unreleased 7.x endpoints are on 8.x too: `POST /api/companies/batch/addcontacts` (as a `#[Route]` attribute) and legacy
+    `/api/projects`. The 7.2-branch `^/api` anchoring fix is not on 8.x yet. [PR #18236] [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:127-129 @8.x] [code: app/bundles/ProjectBundle/Config/config.php:11-12 @8.x] [code: app/config/security.php:172 @8.x]
 - Full detail: `references/version-notes.md`.
 
 ## Pitfalls

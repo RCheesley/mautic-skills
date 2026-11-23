@@ -44,9 +44,9 @@
 
 Full history with reasons is in `pr-history.md`.
 
-## 8.x delta (development branch; not released)
+## 8.x delta: 8.x (snapshot pinned in SOURCES.md), not released
 - `ConfigEvents` is deleted. Subscribe to `ConfigBuilderEvent::class` (now `final`), `ConfigPreSaveEvent::class` and `ConfigPostSaveEvent::class`. The old names were `mautic.config_on_generate`, `mautic.config_pre_save` and `mautic.config_post_save`. [PR #17625] [PR #17654]
-- The `mautic.config.model.sysinfo` alias is removed, and `SysinfoModel::getLogTail(int)` is typed. [PR #17625]
+- The `mautic.config.model.sysinfo` alias is removed, and `SysinfoModel::getLogTail(int)` is typed. [code: app/bundles/ConfigBundle/Model/SysinfoModel.php:121 @8.x] [code: UPGRADE-8.0.md:322 @8.x] [PR #17625]
 - For code that must run on both 7.x and 8.x, register both keys and guard the 7.x constant:
   ```php
   $events = [ConfigBuilderEvent::class => ['onConfigGenerate', 0]];
@@ -56,12 +56,13 @@ Full history with reasons is in `pr-history.md`.
   ```
   On 7.x the pre/post-save handlers receive `ConfigEvent`, so type-hint loosely or guard with `class_exists()`. [PR #17625]
 - `config.php` no longer reads the `services` group (including `models` and `menus`); plugins keep `parameters` and `routes` in `config.php`. Core bundle routes move to `#[Route]` attributes. [PR #17470] [PR #17169]
-- `cache_adapter` must be a class name, because the `mautic.cache.adapter.*` service ids are removed. [code: UPGRADE-8.0.md:267 @8.x]
+- `cache_adapter` must be a class name, because the `mautic.cache.adapter.*` service ids are removed; the default is `FilesystemTagAwareAdapter::class`. [code: UPGRADE-8.0.md:267 @8.x] [code: app/bundles/CacheBundle/Config/config.php:16 @8.x]
 - The Redis Sentinel session handler is removed, so configs that reference it break. [PR #17050]
 - SAML moves from `javer/sp-bundle` to `lightsaml2/sp-bundle`; the SAML settings are intended to be unchanged. [PR #17370]
 - Platform: PHP minimum 8.4 [PR #16993], Symfony 8.1 [PR #17392], Doctrine ORM 3.7 / DBAL 4.4 [PR #17361]. The MySQL 8.4.0 and MariaDB 10.11.0 minimums are unchanged. [code: app/release_metadata.json @8.x]
-- `app/release_metadata.json@8.x` still says version 7.2.0, so treat 8.x as unreleased. [code: app/release_metadata.json @8.x]
-- 7.2.1 has not been merged forward. 7.x-only settings, such as the unreleased (post-7.2.1) unsubscribe email validation, are absent from 8.x code until the next merge. The last forward merge was 7.2.0 → 8.x. [PR #17253]
-- The 8.0 user docs for configuration differ from 7.2 only in documenting that unreleased 7.x (post-7.2.1) unsubscribe setting. [docs: https://docs.mautic.org/en/8.0/configuration/settings.html#unsubscribe-settings]
+- `app/release_metadata.json@8.x` says version 7.2.2 with minimum PHP 8.4.0; treat 8.x as unreleased. [code: app/release_metadata.json:2-4 @8.x]
+- 7.2.2 is merged into 8.x [PR #18036], and 7.x was merged into 8.x on 2026-11-17 up to commit `0b906d06a0` [PR #18236]. The unreleased 7.x settings are therefore on 8.x: `validate_unsubscribe_emails` [PR #16870], `gravatar_enabled` [PR #17781], `aggregate_analytics` [PR #17965] and the `open_id_*` settings [PR #17527]. [code: app/bundles/EmailBundle/Config/config.php:108 @8.x] [code: app/bundles/CoreBundle/Config/config.php:181 @8.x] [code: app/bundles/PageBundle/Config/config.php:52 @8.x] [code: app/bundles/UserBundle/Config/config.php:87-89 @8.x]
+- `ConfigBuilderEvent::getParametersFromConfig()` returns `[]` for a bundle with no parameters on 8.x too, as on 7.x. [code: app/bundles/ConfigBundle/Event/ConfigBuilderEvent.php:88-97 @8.x] [PR #18045]
+- The 8.0 user docs for configuration differ from 7.2 only in documenting the "Require email validation for unsubscribe" setting, which the 7.3 docs branch also documents. [docs: https://docs.mautic.org/en/8.0/configuration/settings.html#unsubscribe-settings]
 
 Unreleased 7.x changes (on 7.x, in no release yet, bound for 7.3): see [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md).

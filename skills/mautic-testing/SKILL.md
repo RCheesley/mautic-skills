@@ -113,9 +113,10 @@ More in references/behaviour.md section 7.
 
 ## Version notes
 - 7.x uses PHPUnit 11.5, PHPStan 2 at level 6, Rector `dev-main`, php-cs-fixer plus ECS, Codeception 5 and Symfony 7.4; after 7.2.2, 7.x also drops `rector/type-perfect` (its rules now come from `tomasvotruba/type-coverage` 2.5) and switches off every `symplify/phpstan-rules` set except the rules listed in `phpstan.neon` (unreleased on 7.x, 7.3.0-rc) [code: composer.json:28-54 @7.x] [code: phpstan.neon:21-44 @7.x] [PR #17846].
-- 8.x moves to PHPUnit 13, keeps PHPStan level 6 with many more custom rules and a smaller baseline, pins Rector `^2.6.5`, drops php-cs-fixer for ECS only, runs tools from `vendor/bin/`, and adds `dg/bypass-finals` so tests can mock final classes [code: composer.json @8.x] [PR #17004] [PR #17280] [PR #17164] [PR #17366].
+- 8.x moves to PHPUnit 13, keeps PHPStan level 6 with many more custom rules and a smaller baseline, pins Rector `^2.8.4`, drops php-cs-fixer for ECS only, runs tools from `vendor/bin/`, and adds `dg/bypass-finals` so tests can mock final classes [code: composer.json:44-45 @8.x] [PR #17004] [PR #17280] [PR #17164] [PR #17366].
 - 8.x forbids test doubles of `Request`, `InputBag` and `Router` (final in Symfony 8) [code: composer.json @8.x] [PR #17392].
 - 8.x dispatches most events by class name, so a listener test asserting a string event key from `getSubscribedEvents()` must change [PR #17625].
+- 8.x moves most core subscribers to `#[AsEventListener]` methods, so assert their wiring with `ReflectionHelper::getAttributeListeners()`, not `getSubscribedEvents()` [code: app/bundles/CoreBundle/Test/ReflectionHelper.php:17-30 @8.x] [PR #17988].
 - 5.x and 6.x run PHPUnit 9.6, 7.0 and 7.1 run PHPUnit 10.5, and 7.2 moved to PHPUnit 11.5 [PR #15814] [PR #15816] [PR #15817] [PR #16891].
 - 5.x and 6.x stop tests defining `MAUTIC_TABLE_PREFIX` with a custom php-cs-fixer rule; 7.2 replaced it with a PHPStan rule [code: .php-cs-fixer.php:39-42 @5.0.0] [PR #11622] [PR #16578].
 - `composer test` uses 1G of memory at 5.0.0 and 2G from 6.0.0 [code: composer.json:134 @5.0.0] [code: composer.json:152 @6.0.0].

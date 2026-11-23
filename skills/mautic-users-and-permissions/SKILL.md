@@ -108,7 +108,7 @@ Every registered permission and the bit table: references/code-map.md §7–§8.
 - 5.1–5.2: the User toggle reads "Active"; the User list gains last login and recent activity; admins changing a User's email or password triggers an email to that User; full-access Roles disable the Permissions tab. [PR #13503] [PR #13074] [PR #13925] [PR #14004]
 - 6.0: form login, SAML, OAuth2 and plugin SSO move to Symfony's authenticator system (bc-break); User preferences are stored in the database; Roles and permission rows get UUIDs. [PR #14219] [PR #14398] [PR #14751]
 - 6.0.3: plugin SSO authenticators (for example Auth0) log the User in again after the 6.0 change. [PR #15020]
-- 8.x: `UserEvents` deleted (event classes such as `PostSaveUserEvent`, `PreAuthenticationEvent`); `AuthenticationEvent`/`UserEvent`/`RoleEvent` abstract; `definePermissions()` removed and permission classes are autoconfigured services; `mautic.security` and `mautic.user.provider` ids removed; SAML moves to lightsaml2. [PR #17510] [PR #17079] [PR #17121] [PR #17370]
+- 8.x: `UserEvents` deleted (event classes such as `PostSaveUserEvent`, `PreAuthenticationEvent`); `AuthenticationEvent`/`UserEvent`/`RoleEvent` abstract; `definePermissions()` removed and permission classes are autoconfigured services; `mautic.security` and `mautic.user.provider` ids removed; SAML moves to lightsaml2; `AbstractSsoFormIntegration`/`AbstractSsoServiceIntegration` removed (SSO events unchanged); OIDC and `is:never_logged_in` carried forward from 7.x. [PR #17510] [PR #17079] [PR #17121] [PR #17370] [PR #18118] [PR #18236]
 - Full detail: references/version-notes.md.
 
 ## Pitfalls

@@ -55,7 +55,7 @@
 - 7.2 deprecates the Clearbit alias `mautic.plugin.clearbit.lookup_helper`. [code: plugins/MauticClearbitBundle/Config/services.php:24-25 @7.x]
 - In 7.2 the devdocs still name string service ids (`mautic.integrations.helper`, `mautic.integrations.auth_provider.api_key`...). [devdocs: https://devdocs.mautic.org/en/7.2/plugin_integrations/integrations_authentication.html]
 
-## 8.x delta (from the 8.x branch; unreleased)
+## 8.x delta (8.x snapshot pinned in SOURCES.md; unreleased)
 - `IntegrationEvents` is removed (23 constants), and listeners subscribe by event class. New concrete classes: `InternalContactFieldChangesEvent`, `InternalCompanyFieldChangesEvent`, `InternalContactFullReportBuildEvent`, `InternalCompanyFullReportBuildEvent`, `IntegrationToMauticSyncCompletedEvent`, `MauticToIntegrationSyncCompletedEvent`, `ConfigBeforeSaveEvent` and `ConfigAfterSaveEvent`. `InternalContactEvent`, `InternalCompanyEvent`, `CompletedSyncIterationEvent` and `ConfigSaveEvent` become abstract. [PR #17160] [PR #17654] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_integrations/integrations_sync.html#sync-events]
 - `PluginEvents`: 12 constants are converted to class dispatch. `PLUGIN_ON_INTEGRATION_REQUEST`/`RESPONSE` are removed. Responses now arrive in the new `PluginIntegrationResponseEvent`, so a listener type-hinting the request event for responses gets a `TypeError`. [PR #17162] [PR #17625] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
 - `plugin.leadpush`: `ON_CAMPAIGN_TRIGGER_ACTION` is replaced by `ON_CAMPAIGN_BATCH_ACTION` with `PendingEvent`. [PR #17162]
@@ -65,7 +65,7 @@
   - `makeRequest()`/`prepareRequest()` take `array $parameters`.
   - About 18 methods gain `array` return types.
   - `IntegrationEntityModel::logDataSync()` is removed.
-  - `AbstractSsoFormIntegration` is removed; extend `AbstractSsoServiceIntegration` and return `['sso_form']`.
+  - `AbstractSsoFormIntegration` and `AbstractSsoServiceIntegration` are both removed (no core or bundled integration extended them). The SSO hook is unchanged (`sso_service`/`sso_form` features, `/s/sso_login/{integration}`, `PreAuthenticationEvent`/`FormAuthenticationEvent`); `AuthenticationEvent` types integrations as `UnifiedIntegrationInterface`. A plugin still on `AbstractIntegration` must reproduce the overrides UPGRADE-8.0.md lists. [PR #18118] [code: UPGRADE-8.0.md:501 @8.x]
   [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
 - IntegrationsBundle API:
   - `DefaultConfigFormTrait` is removed.
@@ -81,8 +81,13 @@
   - `ConnectwiseIntegration`, `HubspotIntegration`, `SalesforceIntegration` and `VtigerIntegration` are `final`, and `CrmAbstractIntegration` gains array return types.
   - `HubspotApi::createLead()` validates email itself.
   - The dead route `mautic_integration_companies` is removed. [PR #17231]
+  - Mailchimp, Constant Contact and iContact (`MauticEmailMarketingBundle`) move to the IntegrationsBundle: each extends `BasicIntegration` and implements the new `PushContactInterface` (`getPushContactConfigFormName()`, `pushContact(Lead, array)`); `EmailAbstractIntegration` and the `Api\*Api` classes are replaced by `Client\{Mailchimp,ConstantContact,Icontact}Client`. [PR #18139] [code: app/bundles/IntegrationsBundle/Integration/Interfaces/PushContactInterface.php:15-29 @8.x] [code: plugins/MauticEmailMarketingBundle/Integration/MailchimpIntegration.php:19 @8.x] [code: UPGRADE-8.0.md:503-511 @8.x]
+  - The "Push contact to integration" form, campaign and point actions also list IntegrationsBundle integrations that implement `PushContactInterface` and offer the `push_lead` feature; unpublished integrations are skipped. [PR #18139] [code: UPGRADE-8.0.md:609 @8.x]
+  - Outlook extends `BasicIntegration` with its own `ConfigSupport` and `OutlookKeysType` (only the alias `mautic.integration.outlook`), as on unreleased 7.x. [PR #18135] [code: plugins/MauticOutlookBundle/Integration/OutlookIntegration.php:10 @8.x]
+  - OneSignal (core NotificationBundle) extends `BasicIntegration`; its feature settings move under `featureSettings['integration']` by migration. [PR #18113] [code: app/bundles/NotificationBundle/Integration/OneSignalIntegration.php:10 @8.x] [code: UPGRADE-8.0.md:598-608 @8.x]
+  - `MauticSocialBundle` (Facebook, Twitter/X, Instagram, Foursquare, Social Monitoring) is removed. [PR #17473] [code: UPGRADE-8.0.md "Social media integrations" @8.x]
   - `FullContact_Base` becomes abstract.
   [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
 - Plugin routes stay in `Config/config.php` `routes`; only core moves to `#[Route]` attributes. [PR #17169] [PR #17222]
-- Caution: 7.2.1 fixes are not yet merged forward to 8.x, and UPGRADE-8.0.md contradicts itself about which `*Events` constants survive. The code shows `IntegrationEvents.php` deleted. [PR #17253]
+- 7.2.2 and the unreleased 7.x work are merged into 8.x. [PR #18036] [PR #18236] UPGRADE-8.0.md contradicts itself about `IntegrationEvents`: one entry says the class is removed entirely, another that its constants "are kept for backwards compatibility". The code shows `IntegrationEvents.php` deleted; follow the code. [code: UPGRADE-8.0.md:102 @8.x] [code: UPGRADE-8.0.md:680 @8.x]
 - Porting rule for plugins that target both 7.x and 8.x: never reference `IntegrationEvents::` unguarded; check with `defined()`/`class_exists()`. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]

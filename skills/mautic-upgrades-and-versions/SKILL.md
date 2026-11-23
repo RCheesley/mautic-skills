@@ -18,7 +18,7 @@ Terms: **Contact** = a marketing record (code: `Lead`); **Plugin** = a bundle in
 
 Versions and platform
 - Current stable is 7.2.2 (tagged 2026-10-26, a security release): PHP 8.2.0–8.5.99, MySQL ≥ 8.4.0, MariaDB ≥ 10.11.0. 7.3 is not released; the `7.x` branch carries 181 PRs bound for it, and both docs repositories have a `7.3` branch [code: app/release_metadata.json @7.x] [code: git tag @7.x] [PR #17934].
-- 8.x is unreleased development: PHP 8.4 minimum, Symfony 8.1, Doctrine ORM 3.7 / DBAL 4.4, PHPUnit 13; DB minimums unchanged [code: app/composer.json @8.x] [PR #16993] [PR #17392] [PR #17361].
+- 8.x is unreleased development: PHP 8.4 minimum, Symfony 8.1, Doctrine ORM 3.7 / DBAL 4.4, PHPUnit 13; DB minimums unchanged. It contains 7.2.2 and 7.x up to 2026-11-16 [code: app/composer.json @8.x] [PR #16993] [PR #17392] [PR #17361] [PR #18036] [PR #18236].
 - 7.0 raised the floor from PHP 8.1 / MySQL 5.7.14 / MariaDB 10.2.7 to PHP 8.2 / MySQL 8.4.0 / MariaDB 10.11.0, so a 6.x host usually needs a DB server upgrade before Mautic 7 [code: UPGRADE-7.0.md:3-6 @7.x].
 - Any version ≥ 5.0.0 can update directly to a 7.x release (`minimum_mautic_version`); 5.x needed ≥ 4.4.10; 4.0 needed ≥ 3.2.0; 2.x had to reach the latest 2.x before 3.0 [code: app/release_metadata.json @7.2.2, @5.0.0, @4.0.0] [code: UPGRADE-3.0.md:19 @7.x].
 - Only the 7.2.x series is listed as supported in the bug template; the authoritative matrix is https://www.mautic.org/mautic-releases [code: .github/ISSUE_TEMPLATE/BUG-REPORT.yml:24-41 @7.x] [code: SECURITY.md:17-21 @7.x].
@@ -47,13 +47,15 @@ Migrations and recovery
 - A Plugin bundle with `MINIMUM_MAUTIC_VERSION` above the running version is not loaded [code: app/AppKernel.php:175-181 @7.x].
 
 7.x → 8.x
-- 8.x dispatches events by class (`dispatch($event)`); subscribe to `LeadPostSaveEvent::class`, not `LeadEvents::LEAD_POST_SAVE` [code: UPGRADE-8.0.md @8.x] [PR #17157] [PR #17625].
-- **Silent failure:** some constants still exist on 8.x (webhook type ids, BC) but are no longer dispatched; a listener keyed on them loads and never runs [code: UPGRADE-8.0.md @8.x "Changed code"].
-- 225 event constants are removed and `ApiEvents`, `ConfigEvents`, `CoreEvents`, `DashboardEvents`, `IntegrationEvents`, `StatEvents`, `UserEvents` are deleted (fatal on reference) [code: app/bundles/*/*Events.php @7.x vs @8.x].
-- Campaign actions registered without `batchEventName` are not executed on 8.x [PR #17097].
-- Removed on 8.x: Clearbit plugin, Form "type" (standalone/campaign, column dropped), emoji conversion, `CacheStorageHelper`, `mautic:disable-tracking` attribute, `file_lock` mode, `/sms/receive` [PR #17785] [PR #17082] [PR #17026] [PR #17033] [code: UPGRADE-8.0.md @8.x].
-- 7.2.1 and the later unreleased 7.x work are not merged into 8.x yet; features only on 7.x are pending, not removed [PR #17253].
-- `UPGRADE-8.0.md` contradicts itself about kept constants; code wins [code: UPGRADE-8.0.md @8.x].
+- 8.x dispatches events by class (`dispatch($event)`); subscribe to `LeadPostSaveEvent::class`, not `LeadEvents::LEAD_POST_SAVE`. Most core listeners are `#[AsEventListener]` methods; a plugin subclass of a core subscriber must be autoconfigured and must re-declare the attribute on an overridden method [code: UPGRADE-8.0.md "Changed code" @8.x] [PR #17157] [PR #17625] [PR #17988].
+- **Silent failure:** some constants still exist on 8.x (webhook type ids, BC) but are no longer dispatched; a listener keyed on them loads and never runs [code: UPGRADE-8.0.md "Changed code" @8.x] [code: app/bundles/*/*Events.php @7.x vs @8.x].
+- 226 event constants are removed and `ApiEvents`, `ConfigEvents`, `CoreEvents`, `DashboardEvents`, `IntegrationEvents`, `StatEvents`, `UserEvents` and `SocialEvents` are deleted (fatal on reference) [code: app/bundles/*/*Events.php @7.x vs @8.x].
+- Campaign actions registered without `batchEventName` are not executed on 8.x; `CampaignExecutionEvent` is removed [PR #17097] [PR #18159].
+- Doctrine mappings are attributes on 8.x; plugin `loadMetadata()` still loads, but the trait helpers (`addDateAddedField()`, `addVariantMetadata()`, …) are gone [PR #17532] [code: app/bundles/CoreBundle/Doctrine/Mapping/AttributeAndStaticPhpDriver.php @8.x].
+- Plugin extension points gain native parameter, return and property types; overrides and callers must match [code: UPGRADE-8.0.md "Native parameter and return types for plugin extension points" @8.x] [PR #18230].
+- Removed on 8.x: the social bundle (Facebook, Twitter/X, Instagram, Foursquare, Social Monitoring, `twitter.tweet` action, Social Login field; remove them from Campaigns, Forms and cron before upgrading), Clearbit, Form "type", Form field `leadField`, emoji conversion, `CacheStorageHelper`, `AbstractSso*Integration`, `mautic:disable-tracking`, `file_lock`, `/sms/receive` [PR #17473] [PR #17785] [PR #17082] [PR #18158] [PR #17026] [PR #17033] [PR #18118] [code: UPGRADE-8.0.md "Social media integrations" @8.x].
+- 7.2.2 and 7.x up to 2026-11-16 are on 8.x (squash merge, so compare trees, not ancestry); 7.x PRs merged later are pending, not removed [PR #18036] [PR #18236].
+- `UPGRADE-8.0.md` says several removed constants are "kept"; code wins (references/upgrade-to-8.md §16) [code: UPGRADE-8.0.md "Changed code" @8.x].
 
 ## Where it lives
 
@@ -79,8 +81,8 @@ Sources: [code: app/bundles/CoreBundle/ @7.x] [code: app/release_metadata.json @
 - Raise `minimum_php_version` / `minimum_mysql_version` / `minimum_mariadb_version` only in a major, and write the change into that major's `UPGRADE-X.0.md` under "Platform requirements" [code: UPGRADE-7.0.md:3-6 @7.x] [kb: https://kb.mautic.org/article/understanding-migrations-and-schema-update-with-doctrine-in-mautic.html].
 - Every schema change needs both the entity mapping (fresh installs) and an idempotent migration (upgrades) [code: app/bundles/InstallBundle/Install/InstallService.php:528-547 @7.x]. Migration rules are in mautic-contributing.
 - BC breaks go to the next-major branch (`8.x`) with an `UPGRADE-8.0.md` entry and the `bc-break` label [code: .github/PULL_REQUEST_TEMPLATE.md @7.x] [code: .github/release.yml @7.x].
-- In new 7.x code, avoid everything 8.x removes: string event keys, `ON_CAMPAIGN_TRIGGER_ACTION`, `CacheStorageHelper`, `FormController`, `definePermissions()`, `config.php` `services`, string service ids, `Request::get()` (full list in references/upgrade-to-8.md §12) [code: UPGRADE-8.0.md @8.x].
-- For code that must run on 7.x and 8.x: subscribe with both the class key and the guarded constant key; use `batchEventName` + `PendingEvent`; add native types to every override now (references/upgrade-to-8.md §9) [code: UPGRADE-8.0.md @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html].
+- In new 7.x code, avoid everything 8.x removes: string event keys, `ON_CAMPAIGN_TRIGGER_ACTION`, `CacheStorageHelper`, `FormController`, `definePermissions()`, `config.php` `services`, string service ids, `Request::get()` (full list in references/upgrade-to-8.md §15) [code: UPGRADE-8.0.md @8.x].
+- For code that must run on 7.x and 8.x: subscribe with both the class key and the guarded constant key; use `batchEventName` + `PendingEvent`; add native types to every override now (references/upgrade-to-8.md §12) [code: UPGRADE-8.0.md @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html].
 
 ## How to test it
 
@@ -89,7 +91,7 @@ Sources: [code: app/bundles/CoreBundle/ @7.x] [code: app/release_metadata.json @
 - Migrations: functional tests do not execute migrations, so unit-test a migration against a built `Schema` as in `Tests/Unit/Doctrine/CampaignLeadEventLogIndexMigrationTest.php` [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:159 @7.x].
 - A good updater regression test asserts the observable outcome: which release is chosen for a given stability and running version, which messages print, and that no file step runs after a failed check.
 - Manual end-to-end: clone production to staging (crons off, change `site_url`, capture mail), run the update there, then check System Info > Error Log [kb: https://kb.mautic.org/article/how-to-set-up-a-staging-server-to-test-new-mautic-releases.html].
-- Testing a plugin on 7.x and 8.x: references/upgrade-to-8.md §11. Test base classes are in mautic-testing.
+- Testing a plugin on 7.x and 8.x: references/upgrade-to-8.md §14. Test base classes are in mautic-testing.
 
 ## Version notes
 
@@ -113,9 +115,9 @@ Sources: [code: app/bundles/CoreBundle/ @7.x] [code: app/release_metadata.json @
 - `mautic:update:find` exit code 0 does not mean the check succeeded [code: app/bundles/CoreBundle/Command/FindUpdatesCommand.php @7.x].
 - `doctrine:schema:update --force --complete` (KB last resort) drops custom DB objects and the `migrations` table [kb: https://kb.mautic.org/article/understanding-migrations-and-schema-update-with-doctrine-in-mautic.html].
 - Running updates as root breaks cache ownership (Doctrine proxy "failed to open stream") [docs: https://docs.mautic.org/en/7.2/troubleshooting/file_ownership_permissions.html].
-- On 8.x a listener on a kept constant (`FormEvents::FORM_ON_SUBMIT`, `LeadEvents::LEAD_POST_SAVE`, `PageEvents::PAGE_ON_HIT`, `ReportEvents::*`, `ChannelEvents::*`) never fires and nothing logs it [code: UPGRADE-8.0.md @8.x].
-- A two-dot `7.x..8.x` diff shows 7.x-only features as "removed in 8"; use a three-dot diff [PR #17253].
-- `app/release_metadata.json@8.x` says 7.2.0; do not read the version from it [code: app/release_metadata.json @8.x].
+- On 8.x a listener on a kept constant (`FormEvents::FORM_ON_SUBMIT`, `LeadEvents::LEAD_POST_SAVE`, `EmailEvents::EMAIL_ON_SEND`, `PageEvents::PAGE_ON_HIT`, the `ReportEvents` builder names, the five non-CRUD `ChannelEvents`) never fires and nothing logs it [code: UPGRADE-8.0.md "Changed code" @8.x] [code: app/bundles/*/*Events.php @7.x vs @8.x].
+- 7.x reached 8.x as a squash merge, so `git rev-list 8.x..7.x` still lists 7.x commits that are on 8.x; compare trees (`git diff 7.x 8.x -- <path>`) before calling a 7.x feature missing [PR #18236].
+- `app/release_metadata.json@8.x` says 7.2.2; do not read the version from it [code: app/release_metadata.json:2 @8.x].
 - `RELEASE_LEADS.md` dates are stale; use tags [code: RELEASE_LEADS.md @7.x].
 - Signedness again: `Version20260616075543` (7.2.0) created `point_insights.category_id` unsigned, which fails the foreign key on databases where `categories.id` is signed; the 7.2-branch fix derives the type and repairs a half-created table [PR #17907].
 - Skip assertions are ANDed: "skip if X or Y" must be one combined `skipAssertion()`. Two separate ones made the mailer DSN migration overwrite an existing `mailer_dsn` until 7.2.0 [PR #16925] [code: app/migrations/Version20230615101328.php:18-21 @7.x].
@@ -125,7 +127,7 @@ Sources: [code: app/bundles/CoreBundle/ @7.x] [code: app/release_metadata.json @
 - `release_metadata.json` `stability` must match the release type and `version` must equal the milestone name, or pre-releases reach production instances or the release workflow fails [PR #11172] [PR #14507].
 - `FinalizeUpdateStep` prints a session `post_upgrade_message` that nothing sets [code: app/bundles/CoreBundle/Update/Step/FinalizeUpdateStep.php:34-56 @7.x].
 - Open question: UPGRADE-3.0 lists PHP 7.2–7.4 while `release_metadata.json@3.0.0` caps PHP at 7.3.99 (later 3.x may have raised it) [code: UPGRADE-3.0.md:4 @7.x] [code: app/release_metadata.json @3.0.0].
-- Open question: devdocs 8.0 call `CompanyEvent`, `LeadListEvent`, `WebhookEvent` `final`; 8.x code has them `abstract` [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html#affected-classes] [code: UPGRADE-8.0.md @8.x].
+- The devdocs 8.0 porting page is now only a pointer to `UPGRADE-8.0.md`; the 8.0 user docs still document Social Monitoring, which 8.x removed [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html] [docs: https://docs.mautic.org/en/8.0/channels/social_monitoring.html].
 
 ## Related skills
 

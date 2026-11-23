@@ -53,9 +53,9 @@ Full PR-derived history: pr-history.md.
 | Unreleased on 7.x (7.3.0-rc) | User avatars generated locally (DiceBear "Line Face"); no Gravatar requests for Users. | [PR #17862] |
 | Unreleased on 7.x (7.3.0-rc) | Login, reset and register pages get a card layout with a heading and help line (markup only). | [PR #13766] |
 
-## 3. 8.x delta
+## 3. 8.x delta (8.x snapshot pinned in SOURCES.md)
 
-Branch topology: 7.2.1 is not merged into 8.x yet; `is:never_logged_in` is present on 7.x and absent on 8.x until the next forward merge. [code: app/bundles/UserBundle/Entity/UserRepository.php @8.x]
+Branch topology: 7.2.2 and the unreleased 7.x work are merged into 8.x, so `is:never_logged_in` and OpenID Connect (`Security/OIDC/`, the `open_id_*` settings, migration `Version20261022064630`) are on 8.x too. The 7.2-branch fixes after 7.2.2 are not: 8.x still has the unanchored `^/api` access rule. [PR #18036] [PR #18236] [code: app/bundles/UserBundle/Entity/UserRepository.php:273-275,335 @8.x] [code: app/bundles/UserBundle/Config/config.php:87-89 @8.x] [code: app/migrations/Version20261022064630.php @8.x] [code: app/config/security.php:172 @8.x]
 
 | Change | What to do | Source |
 |---|---|---|
@@ -69,6 +69,7 @@ Branch topology: 7.2.1 is not merged into 8.x yet; `is:never_logged_in` is prese
 | SAML bundle swapped from `javer/sp-bundle ^2.0` to `lightsaml2/sp-bundle ^5.0` + `lightsaml2/symfony-bridge ^6.0` (+ pinned `lightsaml2/lightsaml`). Behaviour intended unchanged. | Re-test IdP login, metadata and ACS on 8.x. | [PR #17370] |
 | `Role::getRawPermissions(): ?array`; `oAuth2\Client::getRole(): ?Role`. | Handle `null`. | [code: app/bundles/UserBundle/Entity/Role.php @8.x] [code: app/bundles/ApiBundle/Entity/oAuth2/Client.php @8.x] |
 | Symfony 8 removes `UserInterface::eraseCredentials()` (7.x already marks `User::eraseCredentials()` deprecated and empty). | Do not call or override it. | [PR #17392] [code: app/bundles/UserBundle/Entity/User.php:392-395 @7.x] |
+| `AbstractSsoFormIntegration` and `AbstractSsoServiceIntegration` removed. The plugin SSO hook is unchanged: `PluginAuthenticator`/`SsoAuthenticator` dispatch `PreAuthenticationEvent`/`FormAuthenticationEvent` for integrations offering `sso_service`/`sso_form`; `AuthenticationEvent` types integrations as `UnifiedIntegrationInterface`. | A plugin still extending `AbstractIntegration` reproduces the overrides UPGRADE-8.0.md lists (features, form settings, `mautic_sso_login_check` callback URL, not saving the User's token). | [PR #18118] [code: UPGRADE-8.0.md:501 @8.x] [code: app/bundles/UserBundle/Event/AuthenticationEvent.php:7,43 @8.x] |
 | User docs 8.0 for users/roles are identical to 7.2 except the "Never logged in" section; devdocs 8.0 permissions page updated as above. | — | [docs: https://docs.mautic.org/en/8.0/users_roles/managing_roles.html] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/permissions.html] |
 
 ## 4. Writing code that works on 7.x and 8.x

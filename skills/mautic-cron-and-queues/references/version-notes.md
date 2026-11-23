@@ -81,13 +81,13 @@
   [code: app/bundles/PluginBundle/Bundle/PluginDatabase.php:42-53 @7.x].
 - The full list of unreleased 7.x PRs is in [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md) [code: git log --first-parent 7.2.2..838c9c772ec @7.x].
 
-## 8.x delta (from 7.x)
+## 8.x delta: 8.x (snapshot pinned in SOURCES.md)
 
 - Symfony `~7.4` → `~8.1`, PHP minimum 8.2 → 8.4; Messenger and Lock follow Symfony 8.1 [code: app/composer.json @8.x].
 - `ModeratedCommand::MODE_LOCK` removed: `--lock_mode=file_lock` now fails with `Unknown locking method specified.`;
   use `flock` [code: UPGRADE-8.0.md:358 @8.x].
 - `CacheStorageHelper`, `mautic.helper.cache_storage` and `Entity\Cache` removed; the `cache_items` table is no longer
-  mapped or written; use CacheBundle (#17033, #17155) [code: UPGRADE-8.0.md @8.x] [PR #17033] [PR #17155].
+  mapped or written; use CacheBundle (#17033, #17155) [code: UPGRADE-8.0.md:229,295 @8.x] [PR #17033] [PR #17155].
 - Legacy filesystem dashboard-widget cache removed; widgets use the tag-aware CacheBundle pool only [PR #17033] [PR #17034].
 - A cache miss returns `null`, not `false`; integration and widget data live in `cache_adapter` and are dropped by a
   cache clear [PR #17033] [PR #17155].
@@ -95,8 +95,18 @@
   [code: UPGRADE-8.0.md:267 @8.x].
 - `ResultCacheHelper::getCache()` returns a PSR-6 pool; `doctrine/cache` and `doctrine/common` removed [PR #17361].
 - `AbstractIntegration` takes `CacheProviderInterface` as its second constructor argument and `getCache()` returns a
-  PSR-16 cache [code: UPGRADE-8.0.md @8.x].
-- No console command is added or removed on 8.x according to the inputs; the 8.0 user docs do not yet mention
-  `file_lock` [code: UPGRADE-8.0.md @8.x] [docs: https://docs.mautic.org/en/8.0/configuration/cron_jobs.html].
+  PSR-16 cache [code: UPGRADE-8.0.md:316 @8.x].
+- `MauticSocialBundle` is removed, and with it `mautic:social:monitoring`, `social:monitor:twitter:hashtags` and
+  `social:monitor:twitter:mentions`. Before upgrading, remove those cron entries; afterwards clear the cache and run
+  `mautic:plugins:reload`. No other console command is added or removed between the 7.x and 8.x snapshots. The 8.0
+  user docs do not yet mention `file_lock` and still describe the social monitoring cron job
+  [code: UPGRADE-8.0.md:9-21 @8.x] [PR #17473] [docs: https://docs.mautic.org/en/8.0/configuration/cron_jobs.html].
+- Most core subscribers, including the ones that feed cron-run listeners, are `#[AsEventListener]` methods on 8.x;
+  a plugin that extends an abstract core subscriber must be an autoconfigured service or its listeners stop firing
+  [code: UPGRADE-8.0.md:635-638 @8.x] [PR #17988].
+- The 7.2.2 `mautic:assets:generate` deletion of a stale `libraries.css` is on 8.x, because 7.2.2 is merged into 8.x
+  [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:82-84 @8.x] [PR #17597] [PR #18036]. The
+  unreleased 7.x fix that skips existing tables such as `messenger_messages` on plugin install is on 8.x too, from the
+  2026-11-17 merge [code: app/bundles/PluginBundle/Bundle/PluginDatabase.php:55 @8.x] [PR #17977] [PR #18236].
 - Code that must run on both: avoid `--lock_mode=file_lock` and `CacheStorageHelper`; inject `CacheProviderInterface`
-  and treat both `null` and `false` as a miss [code: UPGRADE-8.0.md @8.x].
+  and treat both `null` and `false` as a miss [code: UPGRADE-8.0.md:295-316 @8.x].
