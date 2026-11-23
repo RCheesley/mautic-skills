@@ -11,6 +11,8 @@ Form-level options
 - Unpublished Forms are invisible when embedded with JavaScript. Manually copied HTML stays visible, but submissions are refused with an error. Publish at/Unpublish at bound the submission window. [docs: https://docs.mautic.org/en/7.2/components/forms.html#creating-a-new-form]
 - Disable search indexing = Yes sends a `noindex` header. [docs: https://docs.mautic.org/en/7.2/components/forms.html#creating-a-new-form]
 - Kiosk mode = Yes: no cookies, no IP association ("data entry mode") for shared devices at events. [docs: https://docs.mautic.org/en/7.2/components/forms.html#creating-a-new-form]
+- Forms on a website outside Mautic need that site's domain in CORS **Valid Domains**, even when Restrict Domains is No. Mautic returns the visitor only to a relative URL, a URL on the Mautic site or a Valid Domains URL. Otherwise it ignores the return URL and records only the browser's referrer. A "Remain at Form" form submitted without Mautic's JavaScript then shows a Mautic "Thank you!" page. Redirect URL actions are unaffected. Added to the 7.2 docs for [PR #16507]. [docs: https://docs.mautic.org/en/7.2/components/forms.html#adding-forms-to-pages]
+- Upcoming in 7.3 (docs branch, unreleased): the Kiosk Mode toggle reads **Protect visitor privacy** / **Track visitor data**. With protection on, Mautic sets no tracking cookies and stores no IP address or device, so the Results IP column stays empty. A form with no Contact-mapped fields then has no Contact, so Contact actions, Campaigns and Point Actions are skipped. An email that matches an existing Contact updates that Contact (no longer "always creates a new Contact"). [docs: github.com/mautic/user-documentation/blob/7.3/docs/components/forms.rst]
 - Use Theme style (also called Render style) = Yes applies Theme or Attributes-tab styling; Theme selects one with Form styling (check the Features column). [docs: https://docs.mautic.org/en/7.2/components/forms.html#creating-a-new-form]
 - Submissions limit: Maximum submissions (blank = unlimited) and Limit reached message; at the limit the owner is notified; deleting submissions reopens the Form. [docs: https://docs.mautic.org/en/7.2/components/forms.html#submission-limits]
 - Successful Submit Action: Remain at Form, Redirect URL, Display message. Placeholders `{contactfield=ALIAS}`, `{formfield=ALIAS}` and `{pagelink=ID}` are replaced at submission. [docs: https://docs.mautic.org/en/7.2/components/forms.html#details]
@@ -50,6 +52,7 @@ Embedding and maintenance
 - `form.html.twig` renders `/form/ID`, Landing Page embeds and iframes, and outputs `message`, `header`, `content`. [devdocs: https://devdocs.mautic.org/en/7.2/themes/getting_started.html#twig-files]
 - Form styling overrides: `html/MauticFormBundle/Builder/_style.html.twig`, `form.html.twig`, `Field/` templates; point `@MauticForm` includes at `@themes/MyTheme/...`. [devdocs: https://devdocs.mautic.org/en/7.2/themes/forms.html]
 - `config.json` `features` may include `form`, which requires `html/form.html.twig`. [devdocs: https://devdocs.mautic.org/en/7.2/themes/getting_started.html#configuration-file]
+- Uploaded theme templates run in a Twig sandbox: only `get*`/`is*`/`has*` methods on Mautic and Plugin objects, no setters or `__toString`. Form templates may also call `showForContact`, `increaseDisplayedFields`, `generateFormName`, `setCustomParameters`, `setType` and `convertToArray`. A theme form override that calls anything else throws `SecurityNotAllowedMethodError`. [devdocs: https://devdocs.mautic.org/en/7.2/themes/getting_started.html#template-sandbox-restrictions]
 
 ## 3. Developer docs — Form JS hooks
 
@@ -84,6 +87,11 @@ Source for the table: [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/forms
 - Creating a Form via API: include a `button` field. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/forms.html#create-form]
 - 8.0: `formType` removed from responses and ignored on input. [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/forms.html#form-properties]
 - Not documented: posting a submission through the API, permissions per endpoint, error formats. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/forms.html]
+
+## 5a. Knowledge base
+
+- "How to capture email addresses using a form and assets" still asks the reader to choose between a Campaign form and a Standalone form. Form types were deprecated in 7.1, the builder no longer offers the choice, and every form can be a campaign source. It also points to Google reCAPTCHA, which core does not ship. [kb: https://kb.mautic.org/article/how-to-capture-email-addresses-using-a-form-and-assets.html] [code: app/bundles/FormBundle/Entity/Form.php:778-800 @7.x]
+- "How to validate email addresses in a Mautic form using JavaScript" adds a regex check in page JavaScript. Core has no regex validator, so this check runs only in the browser and can be bypassed by a direct POST. [kb: https://kb.mautic.org/article/how-to-validate-email-addresses-in-a-mautic-form-using-javascript.html] [code: app/bundles/FormBundle/EventListener/FormValidationSubscriber.php:35-179 @7.x]
 
 ## 6. Terminology
 

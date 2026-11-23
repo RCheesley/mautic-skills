@@ -37,7 +37,7 @@ B6. Field order is reassigned 1..n from the session order on save; rendering sor
 
 B7. A field alias equal to the generated form name is prefixed `f_` to avoid HTML id collisions. [code: app/bundles/FormBundle/Model/FormModel.php:185-188 @7.x]
 
-B8. Field aliases come from `cleanAlias(label, 'f_', 25)`, get a numeric suffix when already used in the form, and get `f_` when they collide with `message`, `error`, `id`, `return`, `name`, `messenger`. Existing aliases cannot be edited in the UI. [code: app/bundles/FormBundle/Model/FieldModel.php:101-126 @7.x] [code: app/bundles/FormBundle/Form/Type/FieldType.php:216-231 @419a08a9b35]
+B8. Field aliases come from `cleanAlias(label, 'f_', 25)`, get a numeric suffix when already used in the form, and get `f_` when they collide with `message`, `error`, `id`, `return`, `name`, `messenger`. Existing aliases cannot be edited in the UI. [code: app/bundles/FormBundle/Model/FieldModel.php:101-126 @7.x] [code: app/bundles/FormBundle/Form/Type/FieldType.php:216-231 @7.x]
 
 B9. Alias uniqueness is enforced in code only; there is no database unique index on `form_fields.alias`. [code: app/bundles/FormBundle/Model/FieldModel.php:101-126 @7.x] [code: app/bundles/FormBundle/Controller/Api/FormApiController.php:239-245 @7.x]
 
@@ -61,13 +61,15 @@ B18. The audit log records `create`/`update` with the form change set (field and
 
 B19. Post action `message` and `hideform` require message text; `redirect` requires a URL that is valid after `{pagelink=}`, `{formfield=}`, `{contactfield=}` are replaced by dummy data; `progressiveProfilingLimit` must be > 0 when set. [code: app/bundles/FormBundle/Entity/Form.php:311-346 @7.x] [code: app/bundles/FormBundle/Validator/Constraint/IsPostActionRedirectUrlValidator.php:22-57 @7.x]
 
+B19a. Since 7.2.2, `freehtml` and `freetext` content in the builder preview passes through `purify_builder_preview` (HTML Purifier with `form` and `script` removed, plus event handlers and unsafe URLs). Published output still renders the stored HTML raw, and stored content is not rewritten. [code: app/bundles/FormBundle/Resources/views/Field/freehtml.html.twig:189-193 @7.x] [code: app/bundles/CoreBundle/Twig/Extension/PurifyExtension.php:25-28 @7.x] [PR #17796]
+
 ## B. Fields and field options
 
 B20. Builder field types are the `FormFieldHelper::$types` keys plus plugin fields from `FormBuilderEvent::addFormField` (core ships only `plugin.loginSocial`, when MauticSocialBundle is published). Full table: code-map.md section 4. [code: app/bundles/FormBundle/Helper/FormFieldHelper.php:23-74 @7.x] [code: plugins/MauticSocialBundle/EventListener/FormSubscriber.php:27-45 @7.x]
 
 B21. View-only types `button`, `captcha`, `freetext`, `freehtml`, `pagebreak`, and any custom field with `builderOptions.addSaveResult === false`, get no results column, are not saved and are not exported. [code: app/bundles/FormBundle/Model/FormModel.php:651-657 @7.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:241-244 @7.x]
 
-B22. Builder defaults: `showLabel=true`, `isRequired=false`, `saveResult=true`, `showWhenValueExists=true`, `alwaysDisplay=false`, `isAutoFill=false`, `isReadOnly=false`, `fieldWidth='100%'`; an empty label becomes the translated type name; mapped object defaults to `contact`; a new email field is pre-mapped. [code: app/bundles/FormBundle/Form/Type/FieldType.php:179-198 @7.x] [code: app/bundles/FormBundle/Form/Type/FieldType.php:393-542 @419a08a9b35]
+B22. Builder defaults: `showLabel=true`, `isRequired=false`, `saveResult=true`, `showWhenValueExists=true`, `alwaysDisplay=false`, `isAutoFill=false`, `isReadOnly=false`, `fieldWidth='100%'`; an empty label becomes the translated type name; mapped object defaults to `contact`; a new email field is pre-mapped. [code: app/bundles/FormBundle/Form/Type/FieldType.php:179-198 @7.x] [code: app/bundles/FormBundle/Form/Type/FieldType.php:393-542 @7.x]
 
 B23. Per-type options differ: `freetext`/`freehtml` have no help, default, required, mapping, save-result or behaviour options; `hidden` has no label/help/required/width; `captcha` has no show-label/required/default/mapping/behaviour; `file` has no default or behaviour; `rating` has no default; `slider` has no required toggle; conditional children have no behaviour tab. [code: app/bundles/FormBundle/Form/Type/FieldType.php:104-169 @7.x]
 
@@ -99,9 +101,9 @@ B35. A honeypot captcha renders in a `.mauticform-honeypot` container hidden by 
 
 B36. Conditional children render with `mauticform-field-hidden`, `data-mautic-form-show-on="<parentAlias>:v1|v2"` (or `*` for any value unless `notIn`) and `data-mautic-form-expr`; the SDK shows them on matching parent values and sets `data-validate-disable` on hidden ones. Children of a `hidden` parent are not rendered. [code: app/bundles/FormBundle/Resources/views/Field/text.html.twig:96-110 @7.x] [code: app/assets/js/mautic-form-src.js:314-375 @7.x]
 
-B37. The details page offers automatic JS (`<script src="/form/generate.js?id=ID">`), iframe (`<iframe src="/form/ID">`), manual copy (HTML + `getFormScript()`) and a self-hosted script variant. [code: app/bundles/FormBundle/Resources/views/Form/details.html.twig:382-440 @419a08a9b35]
+B37. The details page offers automatic JS (`<script src="/form/generate.js?id=ID">`), iframe (`<iframe src="/form/ID">`), manual copy (HTML + `getFormScript()`) and a self-hosted script variant. [code: app/bundles/FormBundle/Resources/views/Form/details.html.twig:382-440 @7.x]
 
-B38. `generate.js` returns an empty body for unpublished forms, is a non-trackable request, and inserts the HTML with `document.currentScript.insertAdjacentHTML` (scripts appended to `<head>`), falling back to `document.write`. [code: app/bundles/FormBundle/Controller/PublicController.php:588-610 @419a08a9b35] [code: app/bundles/FormBundle/Model/FormModel.php:666-702 @7.x]
+B38. `generate.js` returns an empty body for unpublished forms, is a non-trackable request, and inserts the HTML with `document.currentScript.insertAdjacentHTML` (scripts appended to `<head>`), falling back to `document.write`. [code: app/bundles/FormBundle/Controller/PublicController.php:660-682 @7.x] [code: app/bundles/FormBundle/Model/FormModel.php:666-702 @7.x]
 
 B39. `renderStyle` defaults to true for a new form; when true the theme's `_style`/`style` template is injected before the HTML; theme templates can override `Builder/form.html.twig` and `Field/<type>.html.twig`. [code: app/bundles/FormBundle/Form/Type/FormType.php:158-169 @7.x] [code: app/bundles/FormBundle/Model/FormModel.php:422-440 @7.x]
 
@@ -129,28 +131,32 @@ B48. `showAfterXSubmissions > 0` (and not `alwaysDisplay`) hides the field until
 
 B49. `showWhenValueExists === false` (and not `alwaysDisplay`) hides the field when any earlier submission by the contact has a non-empty value for the alias or the mapped contact field has a value, unless the field is `isAutoFill`. [code: app/bundles/FormBundle/Entity/Field.php:828-847 @7.x]
 
-B50. `progressiveProfilingLimit` caps the number of non-view-only fields displayed: `alwaysDisplay` fields count first; others show while `displayed + (alwaysDisplayTotal - alwaysDisplayShown) < limit`. Rendering and submission both drive `DisplayManager`, so required errors for fields not displayed are dropped. [code: app/bundles/FormBundle/ProgressiveProfiling/DisplayManager.php:21-74 @7.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:308-319 @419a08a9b35]
+B50. `progressiveProfilingLimit` caps the number of non-view-only fields displayed: `alwaysDisplay` fields count first; others show while `displayed + (alwaysDisplayTotal - alwaysDisplayShown) < limit`. Rendering and submission both drive `DisplayManager`, so required errors for fields not displayed are dropped. On 7.x this pruning also runs when the submission has no contact (untracked submitter), matching how the form was rendered. [code: app/bundles/FormBundle/ProgressiveProfiling/DisplayManager.php:21-74 @7.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:318-333 @7.x] [PR #17868]
 
 B51. Auto-fill runs only when `form_field_autofill` is true and the form is not in kiosk mode. It runs inside `getFormHtml()`, so it applies to every server-rendered path: `generate.js`, `/form/ID`, `/form/embed/ID`, the `{form=ID}` token. It does not apply to self-hosted static HTML. Fields with `isAutoFill` mapped to contact/company are prefilled from the tracked contact and primary company. With `isReadOnly` the input gets `readonly`. [code: app/bundles/FormBundle/Model/FormModel.php:372-388 @7.x] [code: app/bundles/FormBundle/Model/FormModel.php:756-808 @7.x] [code: app/bundles/FormBundle/Helper/FormFieldHelper.php:162-183 @7.x]
 
 B52. Top-level auto-fill fields with a known value render as `hidden` inputs when `showWhenValueExists` is false. [code: app/bundles/FormBundle/Resources/views/Builder/form.html.twig:56-69 @7.x]
 
-B53. Kiosk mode on submit ignores the tracked contact. It starts from a fresh contact. If a unique-identifier match exists, that contact is used without merging. No IP is associated, and `setSystemContact()` replaces `setTrackedContact()`, so no tracking cookie is set. [code: app/bundles/FormBundle/Model/SubmissionModel.php:935-955 @419a08a9b35] [code: app/bundles/FormBundle/Model/SubmissionModel.php:1042-1050 @419a08a9b35] [code: app/bundles/FormBundle/Model/SubmissionModel.php:1162-1168 @419a08a9b35]
+B53. Kiosk mode on submit ignores the tracked contact. It starts from a fresh contact. If a unique-identifier match exists, that contact is used without merging. No IP is associated with the contact, and `setSystemContact()` replaces `setTrackedContact()`, so no tracking cookie is set. [code: app/bundles/FormBundle/Model/SubmissionModel.php:954-977 @7.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:1064-1072 @7.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:1179-1185 @7.x]
+
+B53a. Unreleased on 7.x (7.3.0-rc): the submitter is tracked only when the form is not in kiosk mode and `IpLookupHelper::isRequestTrackable()` is true. HEAD, prefetch/prerender, `Sec-GPC: 1`, `DNT: 1` and bot or do-not-track IPs are not trackable. For an untracked submitter (kiosk or not) the submission stores no IP address and no tracking ID, the referer is cut at `?` and `#`, the tracked contact is never looked up, and B53's kiosk rules apply. The request is marked untracked, so the points log, campaign event logs and contact audit entries it writes carry no IP. Mapped fields still create or update a contact, and form point actions still award points. In 7.2.2 and earlier, kiosk submissions stored the IP on the submission and the device ID. [code: app/bundles/FormBundle/Model/SubmissionModel.php:138-164 @7.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:318-319 @7.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:347-352 @7.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:423-429 @7.x] [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:163-174 @7.x] [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:257-290 @7.x] [PR #17847] [PR #17868]
+
+B53b. Unreleased on 7.x (7.3.0-rc): an untracked submission with no contact-mapped fields has no contact (`lead_id` NULL). Contact submit actions, the `form.submit` campaign decision, the `form.submit` point action and campaign-source membership are all skipped for it. [code: app/bundles/FormBundle/Model/SubmissionModel.php:396-403 @7.x] [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:374-384 @7.x] [code: app/bundles/FormBundle/EventListener/CampaignSubscriber.php:68-76 @7.x] [code: app/bundles/FormBundle/EventListener/PointSubscriber.php:49-57 @7.x] [PR #17847]
 
 B54. Docs: progressive profiling needs a server-rendered embed (JS, iframe, preview, landing page) and inspects at most 200 earlier submissions. [docs: https://docs.mautic.org/en/7.2/components/forms.html#limits-of-progressive-profiling]
 
 ## F. Submission pipeline and validation
 
-B55. `/form/submit` accepts POST only (403 otherwise). `post` = `request['mauticform']`. `return` = posted `mauticform[return]`, else `HTTP_REFERER`, with `mauticError`/`mauticMessage` removed. Messenger mode = `post.messenger` set; AJAX = query `ajax`. [code: app/bundles/FormBundle/Controller/PublicController.php:54-112 @419a08a9b35]
+B55. `/form/submit` accepts POST only (403 otherwise). `post` = `request['mauticform']`. The return URL is the posted `mauticform[return]`, else `HTTP_REFERER`, with `mauticError`/`mauticMessage` removed. Since 7.2.2 it is used only when it is trusted: relative (starts with `/` but not `//`), same-origin with `site_url` (scheme, host and port), or its scheme and host match a `cors_valid_domains` pattern (`fnmatch`, case-insensitive). URLs containing a backslash, or `@` outside a relative path, are rejected. An untrusted posted return is removed before `saveSubmission()`, so the stored referer falls back to the browser's `HTTP_REFERER`. Messenger mode = `post.messenger` is `1`, `'1'`, `true` or `'true'`; AJAX = query `ajax`. [code: app/bundles/FormBundle/Controller/PublicController.php:54-181 @7.x] [code: app/bundles/FormBundle/Controller/PublicController.php:273-288 @7.x] [PR #16507]
 
 B56. Pre-checks run in this order:
 1. A missing or unknown form gives "unavailable".
 2. A form whose publish-up date has not arrived (`pending`) gives an error with the publish-up date.
 3. An expired form gives an error with the publish-down date.
 4. Any other non-published state gives "unavailable".
-5. The form is reloaded. If the submission limit is reached, the owner is notified and the limit message (or the default) is returned. [code: app/bundles/FormBundle/Controller/PublicController.php:138-245 @419a08a9b35]
+5. The form is reloaded. If the submission limit is reached, the owner is notified and the limit message (or the default) is returned. [code: app/bundles/FormBundle/Controller/PublicController.php:200-271 @7.x]
 
-B57. `saveSubmission()` order: (1) build `Submission` (now, form, page from `mauticpage`, IP, referer); (2) validate each field; (3) get tracked contact and prune progressive-profiling errors; (4) on any error return errors and persist nothing; (5) `createLeadFromSubmit()` if contact/company fields are mapped; (6) ensure contact is managed, read tracking id; (7) upload files; (8) persist submission and results row; (9) transform file values to URLs; (10) run submit actions in order; (11) update contact with file URLs; (12) add contact to published campaigns sourcing this form; (13) dispatch `FORM_ON_SUBMIT`; (14) return callback or submission event. [code: app/bundles/FormBundle/Model/SubmissionModel.php:121-407 @419a08a9b35]
+B57. `saveSubmission()` order: (1) build `Submission` (now, form, page from `mauticpage`, IP and full referer only for a tracked submitter, see B53a); (2) validate each field; (3) get tracked contact and prune progressive-profiling errors; (4) on any error return errors and persist nothing; (5) `createLeadFromSubmit()` if contact/company fields are mapped; (6) ensure contact is managed, read tracking id; (7) upload files; (8) persist submission and results row; (9) transform file values to URLs; (10) run submit actions in order; (11) update contact with file URLs; (12) add the contact, if there is one, to published campaigns sourcing this form; (13) dispatch `FORM_ON_SUBMIT`; (14) return callback or submission event. [code: app/bundles/FormBundle/Model/SubmissionModel.php:121-421 @7.x]
 
 B58. Captcha with an answer must be non-blank and equal to it; a honeypot must be blank. The error is the field's `errorMessage` or the translated default. Captcha values are never saved. [code: app/bundles/FormBundle/Model/SubmissionModel.php:194-202 @7.x] [code: app/bundles/FormBundle/Helper/FormFieldHelper.php:106-149 @7.x]
 
@@ -172,7 +178,7 @@ B66. `saveResult=false` fields are validated and mapped but their value is not w
 
 B67. The results insert quotes aliases that are SQL reserved words. [code: app/bundles/FormBundle/Entity/SubmissionRepository.php:24-47 @7.x]
 
-B68. Each submission stores form, IP, contact, tracking id, `date_submitted` (UTC), referer and page. UTM values are stored only by the "Record UTM tags" action. [code: app/bundles/FormBundle/Entity/Submission.php:63-98 @7.x] [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:248-286 @419a08a9b35]
+B68. Each submission stores form, IP (none for untracked submitters on 7.x, B53a), contact, tracking id, `date_submitted` (UTC), referer and page. UTM values are stored only by the "Record UTM tags" action. [code: app/bundles/FormBundle/Entity/Submission.php:63-98 @7.x] [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:247-285 @7.x]
 
 B69. Files are uploaded before actions run. An action throwing `ValidationException` deletes the submission and its files and returns the violations as field errors. [code: app/bundles/FormBundle/Model/SubmissionModel.php:354-388 @7.x]
 
@@ -182,17 +188,17 @@ B70. `validateFieldValue` runs twice for non-empty core values, and `form`-level
 
 B71. Only fields mapped to `contact` or `company` feed contact matching; with none mapped, the submission attaches to the tracked contact (possibly null) and no contact is created or updated. [code: app/bundles/FormBundle/Model/SubmissionModel.php:282-287 @7.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:341-345 @7.x]
 
-B72. Non-kiosk submissions start from `ContactTracker::getContact()`, which creates an anonymous contact and cookies for an unknown visitor. Unique-identifier fields (typically email) with non-empty values are looked up excluding the current contact. [code: app/bundles/FormBundle/Model/SubmissionModel.php:941-975 @419a08a9b35] [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-78 @7.x]
+B72. Tracked, non-kiosk submissions start from `ContactTracker::getContact()`, which creates an anonymous contact and cookies for an unknown visitor. Unique-identifier fields (typically email) with non-empty values are looked up excluding the current contact. [code: app/bundles/FormBundle/Model/SubmissionModel.php:963-1048 @7.x] [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-78 @7.x]
 
-B73. If a match is found, it is used as-is in these cases: kiosk mode; the found contact's unique fields conflict case-insensitively with the tracked contact's (both non-empty); or the tracked contact has no id. Otherwise the tracked contact is merged into the found one. The found contact keeps its id and the anonymous contact is deleted. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1027-1066 @419a08a9b35]
+B73. If a match is found, it is used as-is in these cases: kiosk mode (on 7.x, any untracked submitter); the found contact's unique fields conflict case-insensitively with the tracked contact's (both non-empty); or the tracked contact has no id. Otherwise the tracked contact is merged into the found one. The found contact keeps its id and the anonymous contact is deleted. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1049-1088 @7.x]
 
-B74. When submitted unique values conflict with the current contact's, a new contact is created instead of overwriting. Example: the tracked contact has email A and the form submits email B, which matches nobody. The result is a new contact B. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1068-1089 @419a08a9b35]
+B74. For a tracked submitter, when submitted unique values conflict with the current contact's, a new contact is created instead of overwriting. Example: the tracked contact has email A and the form submits email B, which matches nobody. The result is a new contact B. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1090-1110 @7.x]
 
 B75. Values apply through `LeadModel::setFieldValues($lead, $data, false, true, true)`. Empty submitted values never clear existing values. Invalid values are dropped. Non-empty values always overwrite; there is no "only if empty" option. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1127 @7.x] [code: app/bundles/LeadBundle/Model/LeadModel.php:597-668 @7.x]
 
 B76. Pseudo-fields: `stagebyname` sets the stage and logs it (warning if missing); `ownerbyemail`/`ownerbyid` set the owner when a user is found. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1133-1168 @7.x]
 
-B77. The contact gets `lastActive`, a `LeadManipulator('form','submission',id,name)`, is saved, then (non-kiosk) becomes the tracked contact with cookies and gets the request IP. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1092-1168 @419a08a9b35]
+B77. The contact gets `lastActive`, a `LeadManipulator('form','submission',id,name)`, is saved, then (tracked submitters only) becomes the tracked contact with cookies and gets the request IP. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1112-1185 @7.x]
 
 B78. A `companyLookup` field links its company directly; otherwise company-mapped values go through `IdentifyCompanyHelper::identifyLeadsCompany`, which finds or creates the company, updates it, sets it primary and logs the change. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1187-1214 @7.x]
 
@@ -204,11 +210,11 @@ B80. `ContactTracker::getContact()` returns null for logged-in Mautic users and 
 
 B81. Actions run in `action_order`, only if their type is still registered; each is dispatched separately on its `eventName` with the action set on the `SubmissionEvent`. [code: app/bundles/FormBundle/Model/SubmissionModel.php:937-947 @7.x]
 
-B82. Contact actions act on `ContactTracker::getContact()` (the contact resolved in B77), except `lead.remove_do_not_contact`, which uses `$event->getLead()`. [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:164-373 @419a08a9b35]
+B82. Contact actions act on `ContactTracker::getContact()` (the contact resolved in B77), except `lead.remove_do_not_contact`, which uses `$event->getLead()`. On 7.x they return early when the submission has no contact, so a kiosk submission without mapped fields no longer changes the contact the device cookie points to (and "Adjust contact's points" no longer fails with a 500). The points log takes its IP from the submission. [PR #17847] [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:163-384 @7.x]
 
 B83. `email.send.lead` ignores DNC (`ignoreDNC => true`). [code: app/bundles/EmailBundle/EventListener/FormSubscriber.php:83-87 @7.x]
 
-B84. `form.repost` POSTs non-button values (keys remappable), `mautic_contact` and `mautic_form` with `X-Forwarded-For` and optional `authorization_header`, 15 s timeout. A `redirect` in the response becomes a redirect. `error`/`errors`/non-2xx raises `ResponseParsingException`. `violations` raise `ValidationException` (submission deleted). On failure `failure_email` receives the data with passwords masked. [code: app/bundles/FormBundle/EventListener/FormSubscriber.php:191-351 @419a08a9b35]
+B84. `form.repost` POSTs non-button values (keys remappable), `mautic_contact` (an empty array when the submission has no contact) and `mautic_form` with `X-Forwarded-For` (only when the submission has an IP) and optional `authorization_header`, 15 s timeout. A `redirect` in the response becomes a redirect. `error`/`errors`/non-2xx raises `ResponseParsingException`. `violations` raise `ValidationException` (submission deleted). On failure `failure_email` receives the data with passwords masked. [code: app/bundles/FormBundle/EventListener/FormSubscriber.php:191-354 @7.x]
 
 B85. `asset.download` registers callback `asset.download_file`, which returns `download` in messenger mode or a themed page with the link; the URL carries `lead` and `channel=form`. [code: app/bundles/AssetBundle/EventListener/FormSubscriber.php:63-150 @7.x]
 
@@ -218,9 +224,9 @@ B86. Emails sent by earlier actions are not rolled back when a later action reje
 
 B87. Post-submit callbacks are dispatched after `saveSubmission`; a listener that stops propagation and sets a response short-circuits (direct `Response` in standard mode, JSON data in messenger mode). [code: app/bundles/FormBundle/Controller/PublicController.php:370-399 @7.x] [code: app/bundles/FormBundle/Controller/PublicController.php:476-494 @7.x]
 
-B88. Messenger/AJAX JSON keys: `success`, `validationErrors` or `errorMessage`, `results`, `redirect`, `hideform`, `successMessage` (joined `<br /><br />`), `download`, `formName`. `?ajax=1` returns `JsonResponse`; `/form/submit/ajax` adds `message`/`type`. [code: app/bundles/FormBundle/Controller/PublicController.php:334-426 @419a08a9b35] [code: app/bundles/FormBundle/Controller/AjaxController.php:138-160 @7.x]
+B88. Messenger/AJAX JSON keys: `success`, `validationErrors` or `errorMessage`, `results`, `redirect`, `hideform`, `successMessage` (joined `<br /><br />`), `download`, `formName`. `?ajax=1` returns `JsonResponse`; `/form/submit/ajax` adds `message`/`type`. [code: app/bundles/FormBundle/Controller/PublicController.php:404-497 @7.x] [code: app/bundles/FormBundle/Controller/AjaxController.php:138-160 @7.x]
 
-B89. Standard POST: errors → redirect to `return` with `?mauticError=<html>#<alias>`; `redirect` → 302 to the URL; `return` → 302 back (+`mauticMessage` if set); `message`/`hideform` or no return URL → session message and `/form/message` (theme `message.html.twig`). [code: app/bundles/FormBundle/Controller/PublicController.php:432-514 @419a08a9b35]
+B89. Standard POST: errors → redirect to the trusted return URL (B55) with `?mauticError=<html>#<alias>`; `redirect` → 302 to the saved URL; `return` → 302 to the trusted return URL (+`mauticMessage` if set); `message`/`hideform`, or no trusted return URL → session message and `/form/message` (theme `message.html.twig`), which for `return` is the translated "Thank you" text. [code: app/bundles/FormBundle/Controller/PublicController.php:499-563 @7.x]
 
 B90. `hideform` behaves as `message` on the standard path; only the JS path hides the form. [code: app/bundles/FormBundle/Controller/PublicController.php:446-458 @7.x]
 
@@ -232,11 +238,11 @@ B92. The API default `postAction` is `return`; the entity default is `message`. 
 
 B93. Since 7.1 every form can be a campaign source and trigger campaigns; form type is deprecated. [code: app/bundles/FormBundle/Entity/Form.php:778-800 @7.x] [docs: https://docs.mautic.org/en/7.2/components/forms.html#creating-a-new-form]
 
-B94. A contact submitting a form that is a source of a published campaign is added via `MembershipManager::addContact` before `FORM_ON_SUBMIT`. [code: app/bundles/FormBundle/Model/SubmissionModel.php:383-389 @419a08a9b35]
+B94. A contact submitting a form that is a source of a published campaign is added via `MembershipManager::addContact` before `FORM_ON_SUBMIT`. On 7.x a submission without a contact is skipped. [code: app/bundles/FormBundle/Model/SubmissionModel.php:396-403 @7.x]
 
-B95. Campaign decision `form.submit` fires in real time through `RealTimeExecutioner`; condition `form.field_value` compares stored results with `=,!=,gt,gte,lt,lte,like,!like,startsWith,endsWith,contains`. [code: app/bundles/FormBundle/EventListener/CampaignSubscriber.php:45-139 @419a08a9b35] [code: app/bundles/FormBundle/Model/FormModel.php:810-871 @7.x]
+B95. Campaign decision `form.submit` fires in real time through `RealTimeExecutioner` (on 7.x only when the submission has a contact); condition `form.field_value` is not met when the form or the field no longer exists (7.x, [PR #17928]), else compares stored results with `=,!=,gt,gte,lt,lte,like,!like,startsWith,endsWith,contains`. [code: app/bundles/FormBundle/EventListener/CampaignSubscriber.php:45-150 @7.x] [code: app/bundles/FormBundle/Model/FormModel.php:810-871 @7.x]
 
-B96. Point action `form.submit` fires on `FORM_ON_SUBMIT`; webhook `mautic.form_on_submit` uses serializer groups `submissionDetails, ipAddress, leadList, pageList, formList`. [code: app/bundles/FormBundle/EventListener/PointSubscriber.php:47-50 @419a08a9b35] [code: app/bundles/FormBundle/EventListener/WebhookSubscriber.php:44-59 @7.x]
+B96. Point action `form.submit` fires on `FORM_ON_SUBMIT` when the submission has a contact (7.x), without storing the IP for an untracked submitter; webhook `mautic.form_on_submit` uses serializer groups `submissionDetails, ipAddress, leadList, pageList, formList`. [code: app/bundles/FormBundle/EventListener/PointSubscriber.php:46-57 @7.x] [code: app/bundles/FormBundle/EventListener/WebhookSubscriber.php:44-59 @7.x]
 
 B97. The timeline shows `form.submitted` with referer and every non-empty saved value (files as links). [code: app/bundles/FormBundle/EventListener/LeadSubscriber.php:37-83 @7.x]
 
@@ -258,11 +264,15 @@ B104. File downloads are public only when the field's `public` property is set; 
 
 B105. API create/edit: fields without `id` are new; aliases are cleaned and must be unique in the request (400); each field and action is validated through its form type (400); `PUT` removes fields/actions absent from the payload, `PATCH` keeps them; unknown field id → 404. [code: app/bundles/FormBundle/Controller/Api/FormApiController.php:132-293 @7.x]
 
+B105a. Fixed on the 7.2 branch after 7.2.2 (milestone 7.2.3, not in the 7.x snapshot): a field of a plugin type registered through `FORM_ON_BUILD` and created through the API gets its template and form type from the server-side registry. Client-supplied `isCustom` and `customParameters` are ignored, and malformed metadata is repaired on a later update. Before this, such a field was saved as a plain field, rendering failed with a Twig loader error, and retries created duplicate fields. [PR #18163]
+
 B106. The submissions API is read-only (list, by id, by contact). Results are flattened to `alias => value`. Permission is checked on the parent form. There is no API endpoint for posting a submission; clients POST to `/form/submit`. [code: app/bundles/FormBundle/Controller/Api/SubmissionApiController.php:60-143 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/forms.html]
 
 B107. `DELETE /forms/{id}/fields/delete` and `/actions/delete` require `editown|editother`. [code: app/bundles/FormBundle/Controller/Api/FormApiController.php:73-128 @7.x]
 
 B108. `form_results_data_sources=true` turns each results table into a report source. [code: app/bundles/FormBundle/EventListener/ReportSubscriber.php:132-171 @7.x]
+
+B108a. The forms list accepts the search commands `is:published`, `is:unpublished`, `is:uncategorized`, `is:mine`, `is:expired`, `is:pending`, `has:results`, `category:`, `name:` and `project:`. `has:actions` (forms with at least one submit action, an `EXISTS` subquery) is unreleased on 7.x (7.3.0-rc) and is also a quick filter. [code: app/bundles/FormBundle/Entity/FormRepository.php:270-287 @7.x] [code: app/bundles/FormBundle/Entity/FormRepository.php:155-166 @7.x] [PR #18077]
 
 ## L. Landing pages, tokens and A/B
 
@@ -270,7 +280,7 @@ B109. `{form=ID}` in a landing page becomes the form HTML with hidden `mauticfor
 
 B110. Submission rate is an A/B winner criterion (`form.submissions`) for pages and emails. [code: app/bundles/FormBundle/EventListener/DetermineWinnerSubscriber.php:30-120 @7.x]
 
-B111. Unpublished forms are hidden from JS embeds; manually copied HTML still renders but submissions are refused. [docs: https://docs.mautic.org/en/7.2/components/forms.html#creating-a-new-form] [code: app/bundles/FormBundle/Controller/PublicController.php:138-190 @419a08a9b35]
+B111. Unpublished forms are hidden from JS embeds; manually copied HTML still renders but submissions are refused. [docs: https://docs.mautic.org/en/7.2/components/forms.html#creating-a-new-form] [code: app/bundles/FormBundle/Controller/PublicController.php:200-252 @7.x]
 
 ## M. Known performance and race behaviour
 

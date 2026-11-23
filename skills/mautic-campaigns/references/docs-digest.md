@@ -24,6 +24,8 @@ Sources: user docs 7.2 (8.0 copies identical) and dev docs 7.2 / 8.0.
 ## Actions (user docs list)
 Add/Remove Do Not Contact, Add to Company's score, Add Company, Adjust Contact Points, Change Campaigns, Change Contact's Stage, Delete Contact (terminal), Jump to Event, Modify Contact's Segments, Modify Contact's tags, Push Contact to Integration, Send a Webhook, Send Email (Repeatable email toggle), Send Email to User, Send Marketing Message, Update Contact, Update Contact's primary Company, Update Contact owner [docs: https://docs.mautic.org/en/7.2/campaigns/campaign_builder.html#actions].
 
+- Upcoming in 7.3 (docs branch, unreleased): the Send Marketing Message action shows whether the message's Email sends to unsubscribed Contacts, which is the Email's **Send to unsubscribed contacts** (`sendToDnc`) setting, the only DNC bypass since 7.2 [docs: github.com/mautic/user-documentation/blob/7.3/docs/campaigns/campaign_builder.rst].
+
 ## Decisions
 Device visit, Downloads Asset, Request Dynamic Content, Submits Form, Visits a page; Opens/Clicks/Replies to Email only after a Send Email action [docs: https://docs.mautic.org/en/7.2/campaigns/campaign_builder.html#decisions].
 
@@ -40,10 +42,13 @@ Contact Campaigns, Contact device, Contact field value, Contact owner, Contact S
 - `mautic:campaigns:trigger` runs events; `--campaign-id=ID`, `--exclude=ID` (repeatable) [docs: https://docs.mautic.org/en/7.2/campaigns/campaign_builder.html#triggering-campaign-events]. Frequency is not stated on these pages (see mautic-cron-and-queues).
 
 ## Reactivation (republish) behaviour
-- Applies only to relative delays; global in Configuration > Campaign Settings, per campaign override [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#configuring-reactivation-behaviour].
+- Applies only to relative delays; global in Configuration > Campaign Settings, per campaign override. **Use global setting** exists only on a campaign; the global default is **Count delay regardless of activation state** [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#configuring-reactivation-behavior].
+- **Restart on reactivation** restarts the delay of pending events only; it does not restart the campaign or repeat executed events (use "Allow contacts to restart the campaign" for re-entry) [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#configuring-reactivation-behavior].
+- Scheduled activation and deactivation dates follow the same setting: **Count delay only while active** excludes time before publish-up and after publish-down, and **Restart on reactivation** starts the delay from the scheduled activation date [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#scheduled-activation-and-deactivation].
 - Examples: count regardless (1 Jan + 10 d → 11 Jan); restart (reactivated 7 Jan → 17 Jan); only while active (4 days used, reactivated 10 Jan → 16 Jan) [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#campaign-reactivation-behavior].
-- Recalculation happens when cron evaluates the log [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#activate-and-deactivate-campaigns].
-- "Last Publish Date" on the detail page is the reference for restart [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#viewing-last-activation-date].
+- Recalculation happens when the trigger cron reaches the log's original date while the campaign is active, not at reactivation; a future recalculated date reschedules the log. The activation confirmation shows the effective option (the global one for **Use global setting**), and deactivating also asks for confirmation [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#activating-and-deactivating-campaigns].
+- Activating a campaign, including an imported one, does not run events at once: scheduled events wait for the next `mautic:campaigns:trigger`, and decisions run when the Contact acts [docs: https://docs.mautic.org/en/7.2/campaigns/importing_campaigns.html#activating-an-imported-campaign].
+- "Last Activation Date" (shown next to the campaign's reactivation option in the Details drop-down; 'N/A' if never active) is the reference for restart. The 7.2 docs page was rewritten for the 7.2.2 wording [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#viewing-reactivation-details] [PR #17678].
 
 ## Procedures
 - Create: Campaigns > New; properties; Launch Campaign Builder; add sources and ≥1 event; Save & Close [docs: https://docs.mautic.org/en/7.2/campaigns/creating_campaigns.html#create-your-first-campaign].
@@ -65,7 +70,10 @@ Contact Campaigns, Contact device, Contact field value, Contact owner, Contact S
 Endpoints C1–C11 (get, list with `published`/`withContactCounts`, contacts, new, clone, edit, delete, export, import, add/remove contact); counts cached 12 h [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/campaigns.html#list-campaigns]. Event payload schema for create/edit is not documented ("see the unit tests") [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/campaigns.html#create-campaign].
 
 ## Terminology
-"Contact" not "Lead"; "Segment" not "list"; Actions, Decisions, Conditions; green/red paths in user docs vs `yes`/`no` anchors in dev docs; UI says "Republish" while user docs say "Reactivation"/"activation" [code: app/bundles/CampaignBundle/Translations/en_US/messages.ini:194-199 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#configuring-reactivation-behaviour].
+"Contact" not "Lead"; "Segment" not "list"; Actions, Decisions, Conditions; green/red paths in user docs vs `yes`/`no` anchors in dev docs; since 7.2.2 the UI and the user docs both say "activate"/"reactivate"/"Reactivation Behaviour", while config keys and option values keep "publish"/"republish" [code: app/bundles/CampaignBundle/Translations/en_US/messages.ini:194-199 @7.x] [PR #17678] [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#configuring-reactivation-behavior].
+
+## Knowledge base
+- "How to re-engage or sunset inactive contacts" (2026-10-26) builds the flow from an Inactive Segment source with Send email, then "Lands on a page" decisions with a 7-day wait, ending in Add Do Not Contact or a sunset tag on the no path. It prefers page-landing decisions to open/click decisions because privacy proxies and scanners fake opens and clicks, and suggests turning on "Allow contacts to restart the campaign" so Contacts who lapse again re-enter [kb: https://kb.mautic.org/article/how-to-re-engage-or-sunset-inactive-contacts-in-mautic.html].
 
 ## Known doc errors
 - Dev docs: export via POST (route is GET) [code: app/bundles/CampaignBundle/Config/config.php:131-135 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/campaigns.html#exporting-via-api].

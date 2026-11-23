@@ -11,7 +11,7 @@
 8. Coverage
 
 ## 1. How to read this file
-Source: merged pull requests on mautic/mautic for the Campaigns area, harvested 2026-10-15.
+Source: merged pull requests on mautic/mautic for the Campaigns area, harvested 2026-10-15, plus a delta of PRs merged 2026-10-15 to 2026-11-23 added on 2026-11-23. "Unreleased on 7.x (7.3.0-rc)" means on the 7.x head but in no tag; "7.2 branch after 7.2.2" means fixed on the 7.2 branch for 7.2.3 and not yet in the 7.x snapshot.
 Versions are inferred from the base branch, milestone and merge date; where a release tag was checked in the 7.x tree, the first tag that contains the change is used.
 Current behaviour is in behaviour.md. This file explains why and when. Where the two disagree, behaviour.md wins.
 
@@ -56,6 +56,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Action → action connections are an official feature. Why: they worked by accident before 2.14 and users relied on them, although a [PR #906] review had said chaining was unsupported [PR #6187] (v2.15).
 - "Not equal" field conditions treat NULL as matching, and date conditions compare in local time [PR #3180] (v2.6).
 - Exclude operators on select and multiselect fields send empty or non-matching values down the positive path; include operators send empty values down the negative path [PR #14071] (v5.2).
+- An event after a condition or decision runs only once the parent log holds a final path. Condition logs now start with `non_action_path_taken = NULL` ("evaluation in progress"), the real-time pending query and `DecisionHelper` refuse a NULL or mismatched parent path, and resume-stuck no longer reads NULL as yes. Why: an undelayed action right after a condition could, about once in 150 cron runs, run before the condition had chosen its path and leave the campaign stuck; the workaround was a 1-minute delay (issue #16511). hluchas required a data migration so running campaigns with old NULL logs keep moving, and escopecz had the backfill commit in separate 1,000-row batches to avoid holding locks for the whole migration. A review also caught that inactive-branch actions keep `non_action_path_taken = 1`, which the parent filter had to allow [PR #16513] (unreleased on 7.x (7.3.0-rc)).
 - Root decisions are never kickoff events [PR #506] (v1.1) and never send one Contact down both paths [PR #1069] (v1.2.2). For which Contacts a root decision's red path is evaluated, see behaviour.md B56.
 
 ### Scheduling: intervals, hours, weekdays, timezones
@@ -99,6 +100,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Event logs are deleted by explicit queries, optionally in the background (`delete_campaign_event_log_in_background`), not by FK cascade. Why: cascades on millions of rows stalled MySQL [PR #10219] (v5.1).
 - Deleting a campaign removes events, scheduled actions and execution history but not the Contacts' own activity; the confirmation says so [PR #16846] (v7.2.0).
 - A disabled plugin's events no longer stop the builder loading; blocking the plugin disable was proposed but not done [PR #15548] (v7.1).
+- Campaign Library import remaps event references on the target instance: exported entities to their imported copies, UUID-linked ones (stages, campaigns, focus items, marketing messages) to matches or cleared, tags created, custom fields imported. Why: imported events kept the source IDs and selected nothing or an unrelated entity, for example adding Contacts to the wrong Segment. Reviewers kept the 1:10 zip-ratio limit for every entry except `entity_data.json`, made partially unresolved Segment selections leave the Segment unpublished, and fixed the tag name `"0"` being dropped. Stages, campaigns, focus items and marketing messages are still not transferred [PR #17928] (unreleased on 7.x (7.3.0-rc)).
+- Removing the original contact source after adding a replacement goes through the state-aware `ajax-delete` handler, so the builder keeps its `modifiedSources` map [PR #18183] (7.2 branch after 7.2.2).
 
 ### Permissions
 - Campaigns have own/other permissions. [PR #6240] merged in December 2018 without a data migration, so upgraded roles lost access; it was reverted by [PR #6966] and re-landed by [PR #6963] with migration Version20181204000000, which recalculates the stored bitwise [PR #6963] (v2.15.1: `addExtendedPermissions('campaigns')` is absent at tag 2.15.0 and present at 2.15.1).
@@ -157,6 +160,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | State field condition cannot be saved | Grouped choices flattened | [PR #10961] | v5.0 |
 | Exclude operator on select fields chose the wrong path | Empty/non-matching pass | [PR #14071] | v5.2 |
 | 500 switching the operator to including/excluding | Saves | [PR #15469] | v7.0 |
+| Undelayed action after a condition ran before the path was decided; campaign stuck | Child waits for a final parent path | [PR #16513] | unreleased on 7.x (7.3.0-rc) |
+| Form field value condition failed the run when the field was gone | Condition not met | [PR #17928] | unreleased on 7.x (7.3.0-rc) |
 | **Scheduling** | | | |
 | Starting actions with different delays fired together | Each honours its delay | [PR #273] | v1.0.3 |
 | Unpublished campaign's scheduled log executed | Not executed | [PR #6520] | v2.14.2 |
@@ -201,6 +206,9 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | Writes routed to the read replica | `executeStatement` on the primary | [PR #15199] | v6.0.4 |
 | **Builder, clone, delete** | | | |
 | Clone linked to the original's event parents | Own event tree | [PR #606] | v1.1.3 |
+| Replacing the only contact source failed to save ("At least one contact source is required") | Saves with the new source | [PR #18183] | 7.2 branch after 7.2.2 |
+| Chosen dropdowns in event modals threw a Bootstrap tooltip `TypeError` | Tooltips not animated, torn down once | [PR #18119] | 7.2 branch after 7.2.2 |
+| Imported campaign events kept source-instance IDs | Remapped or cleared | [PR #17928] | unreleased on 7.x (7.3.0-rc) |
 | Numeric temp IDs overwrote another campaign | No collision | [PR #1852] | v2.0 |
 | `decision_path` wiped on save without opening the builder | Kept | [PR #3993] | v2.8.1 |
 | Clone with a Form source → duplicate `campaign_form_xref` | Saves | [PR #7642] | v2.15.3 |
@@ -247,6 +255,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | 7.0 | Import/export; orphan validation; log optimistic lock; audit tab; signal handling; anonymous-contact cleanup; string channel IDs; `date_queued` | [PR #14504] [PR #15321] [PR #15348] [PR #14676] [PR #14745] [PR #15198] [PR #15132] [PR #15510] |
 | 7.1 | Redirect on event delete; republish behaviour; auto-align; `withContactCounts`; scheduling labels in preview; per-event graph stats | [PR #15528] [PR #15634] [PR #15820] [PR #15878] [PR #15880] [PR #14996] |
 | 7.2 | `mautic:campaigns:resume-stuck` and `--dry-run`; event IDs in builder; infinite canvas; stats cache TTL; Marketplace campaign resources; final classes | [PR #15310] [PR #17104] [PR #16103] [PR #16127] [PR #16110] [PR #15904] [PR #16896] |
+| 7.2.2 | Activate/reactivate wording in the UI | [PR #17678] |
+| 7.x (7.3.0-rc, unreleased) | Condition path race fix and backfill migration; import reference remapping; no IP on real-time logs for untracked form submitters | [PR #16513] [PR #17928] [PR #17868] |
 | 8.0 | Doctrine ORM 3 / DBAL 4 | [PR #17361] |
 
 ## 5. Removed, deprecated, replaced
@@ -284,6 +294,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Features ship with user documentation [PR #12752] [PR #13383] [PR #15310].
 - The API Library test suite is the REST regression suite [PR #10708] [PR #15614] [PR #16264].
 - Translation keys are kept when wording changes [PR #1643] [PR #17678].
+- A change to how existing log columns are read ships with a data migration for logs already in the database, and large backfills must not run in one transaction [PR #16513].
 
 ## 7. Open questions
 - Conflict, behaviour.md wins: [PR #15476] says two tabs on one campaign now work with "last save wins", but [PR #13659] rejects stale saves and behaviour.md B78 says `campaigns.version` guards edits [PR #15476] [PR #13659].
@@ -304,5 +315,6 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 ## 8. Coverage
 - 429 PRs read across 6 chunks (104, 77, 85, 60, 59, 44) [PR #337] [PR #17678].
 - About 326 substantive; the rest are branch merges, test-only or style changes, kept only for norms [PR #11268] [PR #16466].
+- The 2026-11-23 delta read 6 campaigns PRs (#16513, #17827, #17928, #18060, #18119, #18183); #17827 and #18060 are Bootstrap 5 markup renames with no behaviour change [PR #17827] [PR #18060].
 - 869 noise PRs were excluded upstream before chunking [unverified].
 - Chunk file names carried wrong date ranges; every item here is dated by merge date and release [unverified].

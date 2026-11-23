@@ -31,15 +31,15 @@ MySQL generated columns `generated_date_added_{hour,day,week,month,year}` are ad
 ## 2. Repositories
 | Repository | Notable methods | Source |
 |---|---|---|
-| `CampaignRepository` | `getEntities()` excludes deleted; `setCampaignAsDeleted()`; `getPendingContactIds()` (kickoff); `findStuckEventsToExecute()`; `getCampaignPublishAndVersionData()` (FOR UPDATE); `getPublishedCampaigns()` | [code: app/bundles/CampaignBundle/Entity/CampaignRepository.php:25-827 @419a08a9b35] |
+| `CampaignRepository` | `getEntities()` excludes deleted; `setCampaignAsDeleted()`; `getPendingContactIds()` (kickoff); `findStuckEventsToExecute()`; `getCampaignPublishAndVersionData()` (FOR UPDATE); `getPublishedCampaigns()` | [code: app/bundles/CampaignBundle/Entity/CampaignRepository.php:26-825 @7.x] |
 | `LeadRepository` | `getCampaignContactsBySegments`, `getOrphanedContacts`, `getInactiveContacts`, `getContactRotations`, `incrementCampaignRotationForContacts`, `updateLead` (merge) | [code: app/bundles/CampaignBundle/Entity/LeadRepository.php:92-660 @7.x] |
 | `LeadEventLogRepository` | `getScheduled`, `getScheduledByIds`, `getScheduledCounts`, `unscheduleEvents`, `getCampaignLogCounts`, `getLeadLogs`, `getUpcomingEvents`, `markEventLogsQueued` | [code: app/bundles/CampaignBundle/Entity/LeadEventLogRepository.php:67-742 @7.x] |
-| `EventRepository` | `getContactPendingEvents` (real time), `setEventsAsDeletedWithRedirect`, failed-count helpers | [code: app/bundles/CampaignBundle/Entity/EventRepository.php:56-533 @419a08a9b35] |
+| `EventRepository` | `getContactPendingEvents` (real time; on 7.x the parent log must carry the final path for the decision's branch [PR #16513]), `setEventsAsDeletedWithRedirect`, failed-count helpers | [code: app/bundles/CampaignBundle/Entity/EventRepository.php:56-551 @7.x] |
 
 ## 3. Services and models
 | Class | Responsibility | Source |
 |---|---|---|
-| `Model/CampaignModel` | CRUD + lifecycle events, `setEvents()`, `setCanvasSettings()`, `setLeadSources()`, `transactionalCampaignUnPublish()` | [code: app/bundles/CampaignBundle/Model/CampaignModel.php:101-936 @419a08a9b35] |
+| `Model/CampaignModel` | CRUD + lifecycle events, `setEvents()`, `setCanvasSettings()`, `setLeadSources()`, `transactionalCampaignUnPublish()` | [code: app/bundles/CampaignBundle/Model/CampaignModel.php:101-937 @7.x] |
 | `Model/EventModel` | soft delete with redirect, delete events | [code: app/bundles/CampaignBundle/Model/EventModel.php:74-142 @7.x] |
 | `Model/EventLogModel` | API log edits via `EventScheduler::rescheduleLogs()` | [code: app/bundles/CampaignBundle/Model/EventLogModel.php:82-213 @7.x] |
 | `Model/SummaryModel` | summary buffering/backfill | [code: app/bundles/CampaignBundle/Model/SummaryModel.php:41-169 @7.x] |
@@ -47,11 +47,12 @@ MySQL generated columns `generated_date_added_{hour,day,week,month,year}` are ad
 | `Executioner/*Executioner` | kickoff, scheduled, inactive, real-time, event | [code: app/bundles/CampaignBundle/Executioner/EventExecutioner.php:109-425 @7.x] |
 | `Executioner/Scheduler/EventScheduler` + `Mode/{Interval,DateTime,Optimized}` | dates, rescheduling, republish | [code: app/bundles/CampaignBundle/Executioner/Scheduler/EventScheduler.php:89-433 @7.x] |
 | `Executioner/Dispatcher/{Action,Condition,Decision,LegacyEvent}Dispatcher` | per-type dispatch | [code: app/bundles/CampaignBundle/Executioner/Dispatcher/ActionDispatcher.php:35-124 @7.x] |
-| `Executioner/Logger/EventLogger` | log creation/persistence | [code: app/bundles/CampaignBundle/Executioner/Logger/EventLogger.php:47-219 @419a08a9b35] |
+| `Executioner/Logger/EventLogger` | log creation/persistence; sets `non_action_path_taken` NULL for new condition logs and skips the IP for untracked form submitters (7.x) [PR #16513] [PR #17868] | [code: app/bundles/CampaignBundle/Executioner/Logger/EventLogger.php:47-230 @7.x] |
 | `Executioner/ContactFinder/Limiter/ContactLimiter` | command option limits | [code: app/bundles/CampaignBundle/Executioner/ContactFinder/Limiter/ContactLimiter.php:41-121 @7.x] |
-| `Executioner/Helper/{Decision,Inactive,EventRedirection,Notification}Helper` | decision rules, inactivity, redirects, notifications | [code: app/bundles/CampaignBundle/Executioner/Helper/DecisionHelper.php:22-64 @419a08a9b35] |
+| `Executioner/Helper/{Decision,Inactive,EventRedirection,Notification}Helper` | decision rules, inactivity, redirects, notifications | [code: app/bundles/CampaignBundle/Executioner/Helper/DecisionHelper.php:22-69 @7.x] |
 | `EventCollector/EventCollector` | registry of event types | [code: app/bundles/CampaignBundle/EventCollector/EventCollector.php:26-84 @7.x] |
 | `Service/PublishStateService` | publish history for republish behaviour | [code: app/bundles/CampaignBundle/Service/PublishStateService.php:28-303 @7.x] |
+| `Helper/EventEntityReferences` | which event properties reference which entities, and how import remaps them (exported, linked by UUID, named, removed); 7.x only [PR #17928] | [code: app/bundles/CampaignBundle/Helper/EventEntityReferences.php:50-118 @7.x] |
 | `Service/CampaignShareService` | marketplace ZIP + token | [code: app/bundles/CampaignBundle/Service/CampaignShareService.php:20-61 @7.x] |
 | `Helper/ChannelExtractor`, `Helper/RemovedContactTracker`, `Helper/CampaignContactCountHelper` | channel fields, deleted-contact tracking, cached counts | [code: app/bundles/CampaignBundle/Helper/ChannelExtractor.php:11-59 @7.x] |
 
