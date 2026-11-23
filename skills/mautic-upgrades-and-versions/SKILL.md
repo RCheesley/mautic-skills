@@ -17,12 +17,12 @@ Terms: **Contact** = a marketing record (code: `Lead`); **Plugin** = a bundle in
 ## Expected behaviour (essentials)
 
 Versions and platform
-- Current stable is 7.2.1 (tagged 2026-09-23): PHP 8.2.0–8.5.99, MySQL ≥ 8.4.0, MariaDB ≥ 10.11.0 [code: app/release_metadata.json @7.x] [code: git tag @7.x].
+- Current stable is 7.2.2 (tagged 2026-10-26, a security release): PHP 8.2.0–8.5.99, MySQL ≥ 8.4.0, MariaDB ≥ 10.11.0. 7.3 is not released; the `7.x` branch carries 181 PRs bound for it, and both docs repositories have a `7.3` branch [code: app/release_metadata.json @7.x] [code: git tag @7.x] [PR #17934].
 - 8.x is unreleased development: PHP 8.4 minimum, Symfony 8.1, Doctrine ORM 3.7 / DBAL 4.4, PHPUnit 13; DB minimums unchanged [code: app/composer.json @8.x] [PR #16993] [PR #17392] [PR #17361].
 - 7.0 raised the floor from PHP 8.1 / MySQL 5.7.14 / MariaDB 10.2.7 to PHP 8.2 / MySQL 8.4.0 / MariaDB 10.11.0, so a 6.x host usually needs a DB server upgrade before Mautic 7 [code: UPGRADE-7.0.md:3-6 @7.x].
-- Any version ≥ 5.0.0 can update directly to a 7.x release (`minimum_mautic_version`); 5.x needed ≥ 4.4.10; 4.0 needed ≥ 3.2.0; 2.x had to reach the latest 2.x before 3.0 [code: app/release_metadata.json @7.2.1, @5.0.0, @4.0.0] [code: UPGRADE-3.0.md:19 @7.x].
+- Any version ≥ 5.0.0 can update directly to a 7.x release (`minimum_mautic_version`); 5.x needed ≥ 4.4.10; 4.0 needed ≥ 3.2.0; 2.x had to reach the latest 2.x before 3.0 [code: app/release_metadata.json @7.2.2, @5.0.0, @4.0.0] [code: UPGRADE-3.0.md:19 @7.x].
 - Only the 7.2.x series is listed as supported in the bug template; the authoritative matrix is https://www.mautic.org/mautic-releases [code: .github/ISSUE_TEMPLATE/BUG-REPORT.yml:24-41 @7.x] [code: SECURITY.md:17-21 @7.x].
-- Branches: `7.x` = features, `7.0`/`7.1`/`7.2` = bug fixes (merged upward), `8.x` = BC breaks [code: .github/PULL_REQUEST_TEMPLATE.md:1-36 @7.x].
+- Branches: `7.x` = features (next release 7.3), `7.0`/`7.1`/`7.2` = bug fixes (merged upward after each release; 7.2.2 is merged into 7.x), `8.x` = BC breaks. Fixes merged to `7.2` after 7.2.2 (milestone 7.2.3) are not on 7.x until the next merge-up [code: .github/PULL_REQUEST_TEMPLATE.md:1-36 @7.x] [PR #17953] [PR #17274].
 
 The updater
 - Updating is CLI-only from 7.0; the browser updater (`UpdateController`, `/s/update/schema`) existed through 6.0.x [code: UPGRADE-7.0.md:9 @7.x] [code: git ls-tree 6.0.0 / 7.0.0].
@@ -42,6 +42,7 @@ Migrations and recovery
 - There is no rollback: files are replaced and cache nuked before the schema step [code: app/bundles/CoreBundle/Update/StepProvider.php @7.x].
 - A failed migration step hides Doctrine's output (NullOutput); re-run `php bin/console doctrine:migrations:migrate` to see the error [code: app/bundles/CoreBundle/Update/Step/UpdateSchemaStep.php:41-54 @7.x].
 - Some 7.2 migrations write data or files: `Version20260709103000` writes to `config/local.php` and throws if it is not writable [code: app/migrations/Version20260709103000.php @7.x].
+- `--dry-run` does not protect a migration that writes with `executeStatement()`; such a migration must check `--dry-run` itself, as the unreleased 7.x data migrations `Version20260715144000` and `Version20261015121426` do [code: app/migrations/Version20260715144000.php:31-38 @7.x] [PR #18164].
 - Deleted-file and language-pack failures are only logged; the update continues [code: app/bundles/CoreBundle/Update/Step/RemoveDeletedFilesStep.php:34-77 @7.x] [code: app/bundles/CoreBundle/Update/Step/UpdateTranslationsStep.php:36-80 @7.x].
 - A Plugin bundle with `MINIMUM_MAUTIC_VERSION` above the running version is not loaded [code: app/AppKernel.php:175-181 @7.x].
 
@@ -98,7 +99,9 @@ Sources: [code: app/bundles/CoreBundle/ @7.x] [code: app/release_metadata.json @
 - 6.0: Symfony 6, legacy builder and Froala removed, `MauticFactory` getters removed, `PluginDatabase` [code: UPGRADE-6.0.md @7.x].
 - 5.0: all 4.x migrations were deleted (upgrade from ≥ 4.4.10); one deleted by mistake was restored in 5.0.1 [PR #12441] [PR #13183]. 5.2 rewrote `Migration.template` around `skipAssertion()`, `getPrefixedTableName()` and an optional `down()` [PR #13823].
 - 6.0: `mautic:update:apply` works without a session [PR #14681]; legacy tables converted to `utf8mb4` [PR #14618]. No migrations were squashed at 6.0 or 7.0 [code: git diff --diff-filter=D 5.2.0 6.0.0 -- app/migrations @7.x].
-- 7.0: PHP 8.2, MySQL 8.4 / MariaDB 10.11, browser updater removed; 7.1/7.2 additive only (9 and 13 migrations), no `UPGRADE-7.x` files; 7.2.1 has no migrations [code: UPGRADE-7.0.md @7.x] [code: app/migrations/ @7.x].
+- 7.0: PHP 8.2, MySQL 8.4 / MariaDB 10.11, browser updater removed; 7.1/7.2 additive only (9 and 13 migrations), no `UPGRADE-7.x` files; 7.2.1 and 7.2.2 have no new migrations [code: UPGRADE-7.0.md @7.x] [code: app/migrations/ @7.x].
+- Unreleased on 7.x (7.3.0-rc): 4 new migrations (campaign log backfill, elFinder permissions, OIDC subject ids, contact tracking preferences); the full PR list is references/unreleased-7.x-prs.md [code: git diff --name-status 7.2.2 838c9c772ec -- app/migrations @7.x].
+- 7.2 branch after 7.2.2 (milestone 7.2.3): two 7.2.0 migrations fixed in place for upgrades from 7.1.3 with several Roles and for signed `categories.id` [PR #17274] [PR #17907].
 - 8.x: see references/upgrade-to-8.md and references/event-map-7-to-8.md.
 
 ## Pitfalls
@@ -114,6 +117,7 @@ Sources: [code: app/bundles/CoreBundle/ @7.x] [code: app/release_metadata.json @
 - A two-dot `7.x..8.x` diff shows 7.x-only features as "removed in 8"; use a three-dot diff [PR #17253].
 - `app/release_metadata.json@8.x` says 7.2.0; do not read the version from it [code: app/release_metadata.json @8.x].
 - `RELEASE_LEADS.md` dates are stale; use tags [code: RELEASE_LEADS.md @7.x].
+- Signedness again: `Version20260616075543` (7.2.0) created `point_insights.category_id` unsigned, which fails the foreign key on databases where `categories.id` is signed; the 7.2-branch fix derives the type and repairs a half-created table [PR #17907].
 - Skip assertions are ANDed: "skip if X or Y" must be one combined `skipAssertion()`. Two separate ones made the mailer DSN migration overwrite an existing `mailer_dsn` until 7.2.0 [PR #16925] [code: app/migrations/Version20230615101328.php:18-21 @7.x].
 - Prefix bugs are the most repeated migration regression: apply the table prefix exactly once (`getPrefixedTableName()`) in table, index and foreign-key names and in every existence check [PR #10931] [PR #11371] [PR #13823] [PR #14824].
 - Do not assume a column type in a migration: `leads.id` is `INT` on some upgraded databases and `BIGINT` on others, and a foreign key to it fails if the types differ [PR #13284] [PR #9720].
@@ -140,6 +144,7 @@ Sources: [code: app/bundles/CoreBundle/ @7.x] [code: app/release_metadata.json @
 - references/code-map.md — files, commands, config parameters, extension points and tests of the update system.
 - references/docs-digest.md — what the user docs, devdocs and KB say about updating, with procedures and docs-vs-code discrepancies.
 - references/version-notes.md — release timeline with platform per major, upgrade paths, UPGRADE-3.0 → 7.0 and PHP → Twig summaries, 7.x minors.
+- references/unreleased-7.x-prs.md — the 181 PRs on 7.x that are in no release (bound for 7.3) [code: git log --first-parent 7.2.2..838c9c772ec @7.x].
 - references/upgrade-to-8.md — the full 7.x → 8.x guide: platform, events, campaign actions, per-bundle BC breaks, behaviour changes, removals, dual-version code, porting steps, testing on both versions.
 - references/event-map-7-to-8.md — every removed 7.x event constant and its 8.x event class, plus the kept-constant trap list.
 - references/pr-history.md — why the migration, updater and release rules exist: decisions with PR numbers (skip assertions, prefix, entity+migration pairs, no destructive data changes, squashing per major, `release_metadata.json`, branch and deprecation policy), a regression catalogue, timeline and open questions.

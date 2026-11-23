@@ -11,8 +11,8 @@
 8. Coverage
 
 ## 1. How to read this file
-Source: merged pull requests on mautic/mautic for configuration and the installer, harvested 2026-10-15.
-Versions are inferred from each PR's base branch and merge date; "unreleased 7.x" means merged on 7.x after 7.2.1 (milestone 7.3.0-rc).
+Source: merged pull requests on mautic/mautic for configuration and the installer, harvested 2026-10-15, plus the delta merged 2026-10-15 to 2026-11-23.
+Versions are inferred from each PR's base branch and merge date; "unreleased 7.x" means merged on 7.x and in no release yet (milestone 7.3.0-rc); 7.2.2 was released on 2026-10-26.
 Current behaviour is specified in `behaviour.md`, which is code-verified and wins on any conflict; this file explains why and when.
 
 ## 2. Decisions that shaped current behaviour
@@ -70,9 +70,9 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 - `'debug' => true` in local.php enables debug logging in prod, for temporary troubleshooting only. [PR #1220] (v1.2.3)
 
 ### Configuration UI and saving
-- Each Configuration section is its own page at `/s/config/edit/{tab}`, and only that page's form is built, because rendering every tab was slow. `/s/config/edit` redirects to `coreconfig`, legacy `?tab=` links redirect, and unknown tabs return 404. [PR #17776] (unreleased 7.x) [code: app/bundles/ConfigBundle/Config/config.php:8-15 @7.x]
-- A save merges only the current page's values into local.php. Apply stays on the page; Save and Cancel go to the dashboard; leaving with unsaved changes asks for confirmation. Moving the buttons to the bottom of the form was rejected because the top toolbar is the convention for every form. [PR #17776] (unreleased 7.x). This replaced the earlier rule that Apply returns to the last shown tab. [PR #7156] (v2.15.1)
-- The `last_shown_tab` hidden field and `Mautic.observeConfigTabs()` are removed; `Mautic.parseQuery()` and `Mautic.parseUrlHashParameter()` stay because plugins may use them. [PR #17776] (unreleased 7.x)
+- Each Configuration section is its own page at `/s/config/edit/{tab}`, and only that page's form is built, because rendering every tab was slow. `/s/config/edit` redirects to `coreconfig`, legacy `?tab=` links redirect, and unknown tabs return 404. [PR #17776] (unreleased on 7.x, 7.3.0-rc) [code: app/bundles/ConfigBundle/Config/config.php:8-15 @7.x]
+- A save merges only the current page's values into local.php. Apply stays on the page; Save and Cancel go to the dashboard; leaving with unsaved changes asks for confirmation. Moving the buttons to the bottom of the form was rejected because the top toolbar is the convention for every form. [PR #17776] (unreleased on 7.x, 7.3.0-rc). This replaced the earlier rule that Apply returns to the last shown tab. [PR #7156] (v2.15.1)
+- The `last_shown_tab` hidden field and `Mautic.observeConfigTabs()` are removed; `Mautic.parseQuery()` and `Mautic.parseUrlHashParameter()` stay because plugins may use them. [PR #17776] (unreleased on 7.x, 7.3.0-rc)
 - Settings tabs have no formal ordering rule. [PR #11598] (v5.0)
 - Fields can be removed or locked through `security.php` restrictions. [PR #5194] (v2.12)
 - Every configuration change is written to the audit log. [PR #6720] (v2.15)
@@ -80,6 +80,8 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 - Toggle-dependent fields follow the live checked state of the toggle, so "Identify visitors by IP" is disabled while "Anonymize IP" is on. [PR #14416] (v5.2.2)
 - In the API tab, token lifetimes are shown in minutes (60) and days (14). [PR #8912] (v3.0)
 - Config pages, tab widgets and System Info render with Twig; plugin config widgets must be Twig. [PR #11938] (v5.0)
+- Incomplete bundle metadata must not break the Configuration page: `getParametersFromConfig()` falls back to `[]` when a bundle has no `config` or `parameters` section (seen with a third-party SES plugin). The regression test runs in a separate process because the method caches bundles in a static variable. [PR #18045] (unreleased on 7.x, 7.3.0-rc)
+- Because the UI saves one section at a time, a `CONFIG_PRE_SAVE` listener must check that its tab key exists before reading it; the User bundle listener was fixed for this while OIDC landed. [PR #17527] (unreleased on 7.x, 7.3.0-rc) [devdocs: https://github.com/mautic/developer-documentation-new/blob/7.3/docs/plugins/config.rst]
 
 ### DSNs, Messenger and mailer
 - Queueing is off by default: every Messenger transport defaults to `sync://`. Any Symfony transport is configured by DSN in the UI, the failure transport is optional, and retry changes apply without a cache clear. [PR #12509] (v5.0). This replaced the first Messenger settings `messenger_dsn` and `messenger_type`. [PR #11598] (v5.0) [code: app/bundles/MessengerBundle/Config/config.php:7-13 @7.x]
@@ -94,6 +96,8 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 - Admin session cookies are `SameSite=Lax`. [PR #11511] (v5.0)
 - During install, the Secure cookie flag comes from the request scheme because `site_url` is not yet set. [PR #8422] (v3.0)
 - The SAML IdP entity ID can use the site URL or an alternate `subdomain_url` from local config. [PR #12655] (v5.0)
+- OIDC settings that the browser does not submit while OIDC is off are kept on save, because re-enabling the same provider would otherwise look like a provider change and unlink every User. A provider change is detected only on the client URL (normalised) and the identifier field, after the save. [PR #18162] (unreleased on 7.x, 7.3.0-rc)
+- The API `access_control` rule must match the `/api` path boundary (`^/api(?:/|$)`), not the prefix, or anonymous requests to public paths such as `/api-keys` get 401 from a firewall with no entry point. [PR #18058] (7.2 branch after 7.2.2, milestone 7.2.3)
 
 ### System Info, logging, dev and test environment
 - System Info (admin only) shows PHP info, folder permissions and the error log; `sysinfo_disabled` hides it. [PR #898] (v1.2.1)
@@ -143,6 +147,8 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 | System language change overrode a user's language | User preference wins | [PR #11119] | 4.4.1 |
 | Toggle-dependent fields did not respond | Fields follow the live toggle state | [PR #14416] | 5.2.2 |
 | Save stored only the visible part of the form | Each page saves its own values; unsaved-changes prompt | [PR #17776] | unreleased 7.x |
+| Configuration page 500 ("Undefined array key parameters") in dev with a plugin tab lacking `parameters` | Empty parameter array | [PR #18045] | unreleased 7.x |
+| Re-enabling OIDC with the same provider unlinked all Users | Stored OIDC fields kept while OIDC is off | [PR #18162] | unreleased 7.x |
 | **DSNs and Messenger** | | | |
 | SQS DSN with special characters failed to parse | DSN parts URL-encoded, `%` doubled, decoded by `urlencoded-dsn` | [PR #13255] | 5.0.3 |
 | Retry changes needed a cache clear; failure transport fixed to Doctrine | Retry applies at once; failure transport configurable | [PR #12509] | 5.0 |
@@ -151,6 +157,7 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 | elFinder 401 for remembered users | elFinder routes in `main` firewall | [PR #12430] [PR #12433] | 5.0 / 4.4.10 |
 | Logged out on every cache clear with `parameters_local.php` | Session cookie name stable | [PR #4513] | 2.10 |
 | Theme change invisible until cache clear | Twig `auto_reload` in prod | [PR #3571] | 2.7 |
+| `/api-keys` and other `/api…` public paths returned 401 | Access control limited to the `/api` path boundary | [PR #18058] | 7.2 branch after 7.2.2 (7.2.3) |
 
 ## 4. Feature timeline
 | Version | Change | PR |
@@ -171,7 +178,9 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 | 7.0.1 | Inclusive minimum DB version | [PR #15797] |
 | 7.2.0 | Strict migration bootstrap on install; plain-text CLI installer messages; InstallBundle autowired; `DsnTransformer` final | [PR #17127] [PR #17100] [PR #16787] [PR #16940] |
 | 7.2.1 | CLI install on a never-visited Composer project | [PR #17394] |
+| 7.2.2 | Session timezone applied to local-date rendering; Form return URLs limited to relative, same-origin or `cors_valid_domains` | [PR #17627] [PR #16507] |
 | unreleased 7.x | One page per Configuration section; `last_shown_tab` removed | [PR #17776] |
+| unreleased 7.x | `aggregate_analytics` Tracking setting; OpenID Connect settings; missing bundle parameters tolerated | [PR #17965] [PR #17527] [PR #18162] [PR #18045] |
 
 ## 5. Removed, deprecated, replaced
 | What | Replaced by | PR | Version |
@@ -210,6 +219,7 @@ Project-wide norms (branching, CLA, test requirement) belong to mautic-contribut
 - Use standard Symfony APIs rather than re-implementing removed framework features. [PR #11145]
 - Do not patch third-party bundle routes; adjust Mautic's firewall config. [PR #12430]
 - Keep form action buttons in the top toolbar, and keep JS helpers that plugins may still call. [PR #17776]
+- Code that reads third-party bundle metadata must tolerate missing optional keys. [PR #18045]
 - Only rely on features that MySQL and MariaDB share. [PR #8930]
 - User-facing configuration strings get wording review, and error messages should say how to fix the problem. [PR #12509]
 
@@ -225,7 +235,8 @@ Project-wide norms (branching, CLA, test requirement) belong to mautic-contribut
 - No automated test covers installing or running with a DB table prefix. [PR #11128]
 
 ## 8. Coverage
-The inputs covered 158 merged PRs in two chunks: 97 merged 2015-02 to 2022-07 (#67–#11128) and 61 merged 2022-06 to 2026-10 (#11142–#17789).
+The original inputs covered 158 merged PRs in two chunks: 97 merged 2015-02 to 2022-07 (#67–#11128) and 61 merged 2022-06 to 2026-10 (#11142–#17789).
 140 were substantive and 18 were noise or refactors with no behaviour content.
 Five PRs only loosely about configuration (#11856, #12131, #15440, #17689, #17789) are left out of this file.
 A further 869 noise PRs (translations, dependency bumps, CI) were excluded upstream before chunking.
+The 2026-11-23 delta added the configuration-install bucket (#18045, #18058) and config-related PRs found while re-checking cited code (#16507, #17527, #17627, #17965, #18162).

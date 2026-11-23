@@ -67,7 +67,19 @@
 - 7.2.0: CacheBundle services are autowired [PR #16800]; Messenger message and handler classes are `final` [PR #16897].
   `mautic:motd` always exits 0 (~7.2) [PR #16226].
 - `mautic:campaigns:resume-stuck` with the `campaigns_resume_stuck_records_after` cut-off (default
-  `2025-10-01 00:00:00`) exists in 7.2.1 [code: app/bundles/CampaignBundle/Config/config.php:174 @7.x].
+  `2025-10-01 00:00:00`) exists since 7.2.1 [code: app/bundles/CampaignBundle/Config/config.php:174 @7.x].
+- 7.2.2: `mautic:assets:generate` deletes a stale `media/css/libraries.css` before regenerating it [PR #17597]
+  [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:80-84 @7.x].
+
+## Unreleased on 7.x (7.3.0-rc)
+
+- The email tracking pixel dispatches no `EmailHitNotification` when the Contact has turned activity tracking off
+  [PR #18006] [code: app/bundles/EmailBundle/Controller/PublicController.php:138-157 @7.x].
+- `/mtc/event` returns null ids and no events for untrackable visitors [PR #18013], and `success:0` instead of a 500
+  when no Contact is available [PR #18028] [code: app/bundles/PageBundle/Controller/PublicController.php:400-458 @7.x].
+- Installing a Plugin with entities no longer fails when `messenger_messages` already exists [PR #17977]
+  [code: app/bundles/PluginBundle/Bundle/PluginDatabase.php:42-53 @7.x].
+- The full list of unreleased 7.x PRs is in [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md) [code: git log --first-parent 7.2.2..838c9c772ec @7.x].
 
 ## 8.x delta (from 7.x)
 

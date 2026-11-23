@@ -51,4 +51,4 @@ Consequences for a dev environment on 8.x:
 - `composer cs` and `composer fixcs` change meaning because php-cs-fixer is gone. Check `composer.json@8.x` scripts before you rely on them. [PR #17280]
 - The developer-environment devdocs pages are unchanged in the 8.0 branch, so they say nothing about PHP 8.4. [devdocs: https://devdocs.mautic.org/en/8.0/]
 
-Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
+Unreleased 7.x changes (not in 7.2.2 or any release yet): see [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md).

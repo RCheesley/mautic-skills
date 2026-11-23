@@ -77,4 +77,4 @@ Branch topology: 7.2.1 is not merged into 8.x yet; `is:never_logged_in` is prese
 - Add native return types to every `AbstractPermissions` override now; PHP allows a child to add a return type the parent lacks. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
 - Never reference `UserEvents::*` unguarded; use `defined()` checks. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
 
-Unreleased 7.x changes (bound for 7.3, in no release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
+Unreleased 7.x changes (bound for 7.3, in no release yet): see [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md).

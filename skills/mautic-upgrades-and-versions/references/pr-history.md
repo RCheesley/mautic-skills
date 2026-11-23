@@ -12,8 +12,8 @@
 
 ## 1. How to read this file
 
-- Source: merged pull requests on mautic/mautic in the migrations, upgrades and releases area, harvested 2026-10-15 [PR #261] [PR #17821].
-- The version after each PR is inferred from its base branch and merge date; a 7.3.0-rc milestone would mean unreleased on 7.x after 7.2.1 ([post-7.2.1-prs.md](post-7.2.1-prs.md)) [PR #17504].
+- Source: merged pull requests on mautic/mautic in the migrations, upgrades and releases area, harvested 2026-10-15, plus the delta merged 2026-10-15 to 2026-11-23 [PR #261] [PR #17821].
+- The version after each PR is inferred from its base branch and merge date; a 7.3.0-rc milestone means unreleased on 7.x ([unreleased-7.x-prs.md](unreleased-7.x-prs.md)), and a 7.2.3 milestone means fixed on the 7.2 branch after the 7.2.2 release (2026-10-26) [PR #17504] [PR #17934].
 - Current behaviour is specified in [behaviour.md](behaviour.md). This file explains why and when it came about, and behaviour.md wins on any conflict [PR #13823].
 
 ## 2. Decisions that shaped current behaviour
@@ -50,6 +50,7 @@
 
 - Index and foreign-key names created by a migration must equal the names Doctrine generates from metadata, or `--dump-sql` keeps proposing renames. Use the prefix-aware `generatePropertyName()` / `generateKeys()` helpers [PR #5165] (v2.11).
 - Do not assume a column type. M2-upgraded schemas had signed IDs where M3 had unsigned [PR #9720] (v3.3.1), and `leads.id` can be `INT` or `BIGINT`, which broke a foreign key ("Foreign key constraint is incorrectly formed") [PR #13284] (v5.0.3). Use `getColumnTypeSignedOrUnsigned()` / `getColumnType()` [code: app/bundles/CoreBundle/Doctrine/AbstractMauticMigration.php:203-216 @7.x].
+- The signedness rule keeps recurring: `Version20260616075543` (7.2.0) created `point_insights.category_id` as `INT UNSIGNED` unconditionally and failed the foreign key where `categories.id` is still signed. The fix derives the type from `categories.id`, and, at the reviewer's request, also repairs instances that already ran the broken migration: it nulls orphaned category ids, corrects the column type and adds the missing foreign key, skipping only when both table and key exist [PR #17907] (7.2 branch after 7.2.2, milestone 7.2.3).
 - Migrations must work on every supported DBAL driver, including `mysqli` [PR #8961] (v3.0.1).
 - Use the Doctrine Migrations classes of the bundled version; the old `Doctrine\DBAL\Migrations\SkipMigrationException` namespace broke 3.2.0→3.2.1 upgrades. PHPStan analyses `app/migrations` since [PR #9480] (v3.2.2).
 - `up()` must match the parent signature, including `: void` [PR #8462] (v3.0.1).
@@ -81,6 +82,8 @@
 - Migrations may rewrite `config/local.php`: `db_server_version` [PR #9458] (v3.2.5), `%kernel.root_dir%` → `%kernel.project_dir%` [PR #12526] (v5.0), legacy mailer settings → `mailer_dsn` with URL-encoded parts and `%` doubled [PR #13256] (v5.0.3). The DSN migration never overwrites an existing `mailer_dsn` [PR #16925] (v7.2).
 - Migrations may move config between scopes (SMS "disable trackable URLs" from Twilio to global SMS settings) [PR #11683] (v5.0) and may create notification-centre messages (Pipedrive and Citrix deprecation) [PR #12364] [PR #12367] (v4.4.9).
 - Permission data migrations create the permission row before setting bitwise values [PR #15456] (v7.0).
+- A migration that queries entities must handle the hydration shape: with a scalar `user_count` in the select, Doctrine returns `[Role, user_count]` rows, and `Version20211209022550` failed 7.1.3 → 7.2 updates with more than one Role until it normalised the row [PR #17274] (7.2 branch after 7.2.2).
+- `--dry-run` must not change data. Doctrine runs `up()` in a dry run and holds back only `addSql()` statements, so a migration that writes with `executeStatement()` checks `--dry-run` itself and returns; the reviewer noted that checking Doctrine's execution state would also cover programmatic dry runs [PR #18164] (unreleased on 7.x, 7.3.0-rc).
 - No destructive data changes that third parties may rely on. The migration dropping `plugin_citrix_events` was removed rather than fixed, because forks of the GoTo bundle still use the table: "Losing data sucks"; wasted space is cheap [PR #15384] (v7.0) [PR #15385] (v6.0.5). `UPGRADE-7.0.md` tells admins to drop the table by hand if unused [code: UPGRADE-7.0.md:73 @7.x].
 - No slow row-by-row cleanup over large tables. The null-byte cleanup of `ip_addresses` was reverted in favour of read-time handling [PR #8664] (v3.0), superseding [PR #8636].
 
@@ -99,7 +102,7 @@
 - The updater reads older releases' metadata from GitHub, so every new key must be optional when read. `show_php_version_warning_if_under` (added in 3.2.5) caused undefined-index notices until it was made optional [PR #9622] (v3.3). behaviour.md lists the required and optional keys in 7.x [code: app/bundles/CoreBundle/Release/Metadata.php @7.x].
 - `version` must equal the GitHub milestone name including stability (`6.0.0-alpha`, `7.0.0-rc`), or the release workflow fails. A mismatch meant deleting and re-creating the tag [PR #14507] (v6.0.0-alpha) [PR #15630] (v7.0.0-rc) [PR #15717].
 - Version strings may be `X.Y.Z-stability-suffix` (for example `4.2.0-beta-xxx`); the documented format stays `x.y.z[-alpha|beta|rc]` [PR #10919] (v4.3).
-- Each release-prep PR updates `version` and `announcement_url` (the GitHub release tag URL) [PR #15450] (v6.0.5) [PR #17504] (v7.2.1).
+- Each release-prep PR updates `version` and `announcement_url` (the GitHub release tag URL) [PR #15450] (v6.0.5) [PR #17504] (v7.2.1). The 7.2.2 release PR also carried the security fixes, merged from the private security repository, so the advisories and the release land together [PR #17934] (v7.2.2).
 - The update package ships `deleted_files.txt` so legacy files are removed; a 3.1→4.0-rc upgrade failed without it [PR #10228] (v4.0).
 - `FinalizeUpdateStep` checks for a session before using it, so `mautic:update:apply` works from the CLI [PR #14681] (v6.0).
 - Validated CLI path (5.2 → 7.0.0-beta, prod env): download the zip, `mautic:update:apply --update-package=./X.zip`, then `mautic:update:apply --finish` [PR #15630] (v7.0.0-rc).
@@ -110,7 +113,7 @@
 - Bug fixes target the patch branch (`a.b`), features `a.x`, BC breaks the next major `c.x` [PR #10407] (v4.0.1) [PR #10931] [PR #13915] [PR #14824]. When `a.x` is locked for a release, fixes go to `a.b` [PR #14824] (v6.0.1).
 - A PR merged to the wrong branch is reverted and re-opened on the right one [PR #10843] [PR #10844] (v4.2).
 - Once a major's last minor is out, its `.x` branch gets no more feature releases; fixes there ship only in the next major [PR #11371] (v5.0).
-- After a patch release the patch branch is merged up into the feature branch ("Merging X to Y.x") [PR #13194] [PR #9334].
+- After a patch release the patch branch is merged up into the feature branch ("Merging X to Y.x") [PR #13194] [PR #9334]. 7.2.1 and 7.2.2 reached 7.x through "Merge 7.2.x into 7.x" PRs a day after tagging [PR #17516] [PR #17953].
 - Major cadence: alpha → beta(s) → rc(s) → GA. 5.0: alpha [PR #12517], beta1 [PR #12793], beta2 [PR #12806], rc1 [PR #12897], rc2 [PR #13089], GA [PR #13177] (2024-01-09). 7.0: beta [PR #15581], rc [PR #15630], rc2 [PR #15717], GA [PR #15793] (2026-01-20). Minors also get an rc: 7.2.0-rc [PR #16195], 7.2.0 [PR #17227].
 - Several majors are patched in parallel: 5.2.10, 6.0.8 and 7.0.1 were prepared on 2026-02-24 [PR #15898] [PR #15899] [PR #15895].
 - Until 7.2.0, each release-prep PR linked a green API Library test run; from 7.2.0 those tests run in mautic/mautic CI [PR #13177] [PR #16195] [PR #17227].
@@ -188,6 +191,10 @@ Rows still describing a 7.x contract. Historical-only rows (removed scripts, 1.x
 | `mautic:update:find` undefined-index notices | Missing metadata keys tolerated | [PR #9622] | 3.3 |
 | 3.1→4.0-rc fatal: old files left behind | `deleted_files.txt` shipped and applied | [PR #10228] | 4.0 |
 | Release workflow fails: tag 6.0.0 vs milestone 6.0.0-alpha | `version` includes the stability suffix | [PR #14507] | 6.0.0-alpha |
+| **Delta 2026-10-15 to 2026-11-23** | | | |
+| 7.1.3 → 7.2 update fails in `Version20211209022550` with more than one Role | Hydrated `[Role, user_count]` rows normalised | [PR #17274] | 7.2 branch after 7.2.2 (7.2.3) |
+| `Version20260616075543` fails the foreign key on signed `categories.id`; half-created `point_insights` blocks re-runs | Matching signedness; orphans nulled; missing key added | [PR #17907] | 7.2 branch after 7.2.2 (7.2.3) |
+| `doctrine:migrations:migrate --dry-run` changed campaign log rows | Backfill skipped under `--dry-run` | [PR #18164] | unreleased 7.x (7.3.0-rc) |
 
 ## 4. Feature timeline
 
@@ -210,6 +217,8 @@ Rows still describing a 7.x contract. Historical-only rows (removed scripts, 1.x
 | 7.0 | Citrix drop migration removed; `point_groups.uuid` migration; `MAINTAINERS.md`, `RELEASE_LEADS.md` | [PR #15384] [PR #15351] [PR #15004] |
 | 7.2.0 | Skip-assertion AND semantics clarified; `mailer_dsn` never overwritten; API Library tests in core CI | [PR #16925] [PR #17227] |
 | 7.2.1 | Release-prep only (`version`, `announcement_url`) | [PR #17504] |
+| 7.2.2 | Security release: version bump plus fixes for seven advisories; merged into 7.x | [PR #17934] [PR #17953] |
+| unreleased 7.x | 4 new migrations; data migrations honour `--dry-run` | [PR #18164] [PR #17527] [PR #18006] |
 
 ## 5. Removed, deprecated, replaced
 
@@ -235,7 +244,8 @@ Rows still describing a 7.x contract. Historical-only rows (removed scripts, 1.x
 - Migrations are rarely unit-tested ("None, as migrations aren't tested"); testing is `doctrine:migrations:migrate`, `doctrine:migrations:execute --up/--down` and `--dry-run` against an older or real database [PR #13823] [PR #13195] [PR #14170]. [PR #16759] added a unit test and is the model to copy.
 - Index PRs need EXPLAIN output and measurements on large datasets; redundant composite indexes are rejected without production evidence [PR #14556] [PR #15015] [PR #16759] [PR #7082].
 - Prefer keeping unused tables over data loss [PR #15384].
-- Release-prep PRs touch only `release_metadata.json`, match the milestone name and need an approval [PR #14507] [PR #15630] [PR #17227].
+- Release-prep PRs touch only `release_metadata.json`, match the milestone name and need an approval [PR #14507] [PR #15630] [PR #17227]. A security release is the exception: its release PR also brings in the private security fixes [PR #17934].
+- A fix to a broken migration must also recover instances that already ran it, not only fresh upgrades [PR #17907].
 - One source of truth for supported versions (mautic.org) [PR #12876] [PR #15004].
 
 ## 7. Open questions
@@ -255,3 +265,4 @@ Rows still describing a 7.x contract. Historical-only rows (removed scripts, 1.x
 - 214 PRs across 2 chunks: 109 in chunk 1 (2015-03 to 2022-10, 101 substantive) and 105 in chunk 2 (2022-03 to 2026-10, 62 substantive, 34 routine release bumps used only as release-process evidence, 9 noise) [PR #113] [PR #17821].
 - About 20 PRs are product features or bug fixes that sit in this area only because they carry a migration; section 2.12 lists them as migration examples [PR #3858] [PR #16363].
 - 869 noise PRs (dependency bumps, CI, translations and similar) were excluded upstream before chunking [unverified] (harvest count, not a code fact).
+- 2026-11-23 delta: 5 PRs in the migrations-upgrades-releases bucket. Used: [PR #17274], [PR #17907], [PR #18164]; the two 8.x `UPGRADE-8.0.md` documentation PRs ([PR #17877], [PR #18230]) are left for the 8.x guide. Release history from the 7.2.2 tag: [PR #17934], [PR #17953].

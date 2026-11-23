@@ -71,11 +71,18 @@ Developer docs (33 changed files, 2 new) [devdocs: https://devdocs.mautic.org/en
 - `plugins/config`: menus via `services.php`; `ConfigEvents` replaced [devdocs: https://devdocs.mautic.org/en/8.0/plugins/config.html].
 - `plugins/mvc`, `plugins/permissions`, `plugins/database`, `plugin_services/{security,ip_lookups}`: FQCN services, constructor permissions, `getName()` model registration, Doctrine builders [devdocs: https://devdocs.mautic.org/en/8.0/plugins/mvc.html] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/permissions.html].
 - `rest_api/forms`: `formType` removed [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/forms.html].
-- `rest_api/companies` and `themes/getting_started` document unreleased 7.x features (after 7.2.1) not yet on 8.x code [PR #16512] [PR #16870].
+- `rest_api/companies` and `themes/getting_started` document 7.x features that are unreleased (7.3.0-rc) and not yet on 8.x code [PR #16512] [PR #16870].
 
-User docs (12 files): mostly unreleased 7.x features merged after 7.2.1; the only 8-specific change is the `mautic:disable-tracking` removal
+User docs (12 files): mostly 7.x features that are unreleased (bound for 7.3); the only 8-specific change is the `mautic:disable-tracking` removal
 [docs: https://docs.mautic.org/en/8.0/channels/emails.html]. The update/getting-started pages are unchanged in 8.0
 [docs: https://docs.mautic.org/en/8.0/].
+
+## 5a. Docs changes since 2026-10-15 and upcoming in 7.3 (docs branch, unreleased)
+
+- The 7.2 docs pages this skill cites (update, install, switching to Composer, troubleshooting, plugin database and installation) are unchanged between the 2026-10-15 snapshots and the 7.2 branch head; only `configuration/settings` changed, in areas owned by mautic-configuration [docs: https://docs.mautic.org/en/7.2/configuration/settings.html].
+- Upcoming in 7.3: the developer docs say Mautic 7.3 uses Bootstrap 5.3.8 with a temporary Bootstrap 3 compatibility layer (`_bootstrap-3-compatibility.scss`, `1.bootstrap-compatibility.js`) that Mautic 8 removes, so Plugin templates and JavaScript should move to Bootstrap 5 before upgrading to 8 [devdocs: github.com/mautic/developer-documentation-new/blob/7.3/docs/development-environment/building_assets.rst] [PR #17767].
+- Upcoming in 7.3: the Marketplace page documents type filtering and a details view for packages [docs: github.com/mautic/user-documentation/blob/7.3/docs/marketplace/marketplace.rst].
+- No new KB articles about updating or migrations appeared in the 2026-11-23 crawl [kb: https://kb.mautic.org/article/understanding-migrations-and-schema-update-with-doctrine-in-mautic.html].
 
 ## 6. Discrepancies between docs and 7.x code
 

@@ -72,4 +72,4 @@ DI, models, controllers, entities
 - Use `$request->query->get()` / `request->get()` / `attributes->get()`, never `$request->get()`. [PR #17392]
 - Full porting checklist: mautic-upgrades-and-versions. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
 
-Unreleased 7.x changes (not in 7.2.2 or any release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
+Unreleased 7.x changes (not in 7.2.2 or any release yet): see [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md).

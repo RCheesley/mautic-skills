@@ -8,7 +8,7 @@ flagged inline; the full 8.x guide is [upgrade-to-8.md](upgrade-to-8.md).
 - A. Update entry points and modes (UB-A1 – A6)
 - B. Two-phase CLI update sequence (UB-B1 – B12)
 - C. Pre-update checks and release selection (UB-C1 – C10)
-- D. Migrations during an update (UB-D1 – D12)
+- D. Migrations during an update (UB-D1 – D14)
 - E. Failure modes and recovery (UB-E1 – E9)
 - F. Release metadata, versions and plugin gating (UB-F1 – F7)
 - G. Support policy, branches and tags (UB-G1 – G9)
@@ -23,7 +23,7 @@ UB-A3. The Configuration setting "Update Mautic through Composer [BETA]" stores 
 
 UB-A4. When `composer_updates` is `true`, `mautic:update:apply` prints "You have Composer updates enabled. This means that you can only update Mautic through the 'composer update' command…" and returns FAILURE. The check runs before the `--finish` branch, so `--finish` is refused too [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:84-88 @7.x] [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:136 @7.x].
 
-UB-A5. `composer_updates = true` is a prerequisite for installing and updating Plugins through the Marketplace; the Marketplace is not compatible with ZIP installs [code: messages.ini:231 @7.x] [docs: https://docs.mautic.org/en/7.2/getting_started/switching_composer.html].
+UB-A5. `composer_updates = true` is a prerequisite for installing and updating Plugins through the Marketplace; the Marketplace is not compatible with ZIP installs [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:235 @7.x] [docs: https://docs.mautic.org/en/7.2/getting_started/switching_composer.html].
 
 UB-A6. Admin users get an in-app "update available" notification. It is checked at most once per session per hour and shown at most once per session per version [code: app/bundles/CoreBundle/Model/NotificationModel.php:168-203 @7.x].
 
@@ -31,7 +31,7 @@ UB-A6. Admin users get an in-app "update available" notification. It is checked 
 
 UB-B1. `mautic:update:apply` runs in two invocations. Without `--finish` it runs the initial steps (orders 0–30); with `--finish` it runs the final steps (orders 40–60) [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:90-108 @7.x] [code: app/bundles/CoreBundle/Update/StepProvider.php:33-60 @7.x].
 
-UB-B2. Phase 1 ends with `exit($returnCode)`, a hard process exit, so the old kernel never runs against the new files. It prints "IMPORTANT: Run the same command again with --finish. For example 'php bin/console mautic:update:apply --finish'" [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:92-99 @7.x] [code: messages.ini:133 @7.x].
+UB-B2. Phase 1 ends with `exit($returnCode)`, a hard process exit, so the old kernel never runs against the new files. It prints "IMPORTANT: Run the same command again with --finish. For example 'php bin/console mautic:update:apply --finish'" [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:92-99 @7.x] [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:137 @7.x].
 
 UB-B3. Without `--force`, phase 1 asks for confirmation with default No; declining throws `mautic.core.update.aborted` [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:117-125 @7.x].
 
@@ -45,9 +45,9 @@ UB-B7. Step 30 `DeleteCacheStep` (initial) nukes the cache via `CacheHelper::nuk
 
 UB-B8. Step 40 `UpdateTranslationsStep` (final) re-downloads each installed non-en_US language pack when more than one language is installed. Errors are only logged; en_US is never re-downloaded [code: app/bundles/CoreBundle/Update/Step/UpdateTranslationsStep.php:36-80 @7.x].
 
-UB-B9. Step 50 `UpdateSchemaStep` (final) runs `doctrine:migrations:migrate --quiet --no-interaction` in a fresh console Application. A non-zero exit throws `UpdateFailedException` with "An error occurred while updating the database. Check log for more details." [code: app/bundles/CoreBundle/Update/Step/UpdateSchemaStep.php:41-54 @7.x] [code: messages.ini:659 @7.x].
+UB-B9. Step 50 `UpdateSchemaStep` (final) runs `doctrine:migrations:migrate --quiet --no-interaction` in a fresh console Application. A non-zero exit throws `UpdateFailedException` with "An error occurred while updating the database. Check log for more details." [code: app/bundles/CoreBundle/Update/Step/UpdateSchemaStep.php:41-54 @7.x] [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:667 @7.x].
 
-UB-B10. Step 60 `FinalizeUpdateStep` (final) deletes `upgrade.php` and `lastUpdateCheck.txt` and prints "Success! You are now running version %version% of Mautic." [code: app/bundles/CoreBundle/Update/Step/FinalizeUpdateStep.php:34-56 @7.x] [code: messages.ini:666 @7.x].
+UB-B10. Step 60 `FinalizeUpdateStep` (final) deletes `upgrade.php` and `lastUpdateCheck.txt` and prints "Success! You are now running version %version% of Mautic." [code: app/bundles/CoreBundle/Update/Step/FinalizeUpdateStep.php:34-56 @7.x] [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:674 @7.x].
 
 UB-B11. Any `UpdateFailedException` prints its message and the command returns FAILURE [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:100-108 @7.x].
 
@@ -71,7 +71,7 @@ UB-C7. An empty `system_update_url` disables checks and reports "running the lat
 
 UB-C8. Each uncached check first POSTs anonymous stats (application, version, PHP version, DB driver, server OS, instanceId = sha1(secret_key + install_source + db_driver), installSource) to `stats_update_url` with a 10-second connect timeout. Failures are logged and ignored; an empty URL disables it [code: app/bundles/CoreBundle/Helper/UpdateHelper.php:199-260 @7.x].
 
-UB-C9. Pre-update checks fail, before any file is touched, when: the update data has an error; the instance already runs the latest compatible version; release metadata is missing; PHP is below `minimum_php_version` or above `maximum_php_version`; the DB is MariaDB below `minimum_mariadb_version` or MySQL below `minimum_mysql_version`; or the platform is neither. All messages are collected and printed together [code: app/bundles/CoreBundle/Helper/UpdateHelper.php:166-196 @7.x] [code: app/bundles/CoreBundle/Helper/Update/PreUpdateChecks/CheckPhpVersion.php @7.x] [code: …/CheckDatabaseDriverAndVersion.php @7.x].
+UB-C9. Pre-update checks fail, before any file is touched, when: the update data has an error; the instance already runs the latest compatible version; release metadata is missing; PHP is below `minimum_php_version` or above `maximum_php_version`; the DB is MariaDB below `minimum_mariadb_version` or MySQL below `minimum_mysql_version`; or the platform is neither. All messages are collected and printed together [code: app/bundles/CoreBundle/Helper/UpdateHelper.php:166-196 @7.x] [code: app/bundles/CoreBundle/Helper/Update/PreUpdateChecks/CheckPhpVersion.php @7.x] [code: app/bundles/CoreBundle/Helper/Update/PreUpdateChecks/CheckDatabaseDriverAndVersion.php @7.x].
 
 UB-C10. MariaDB is detected from the DBAL platform class or from `SELECT VERSION()` containing "mariadb"; the comparison is `version_compare` on the raw version string [code: app/bundles/CoreBundle/Helper/Update/PreUpdateChecks/CheckDatabaseDriverAndVersion.php @7.x].
 
@@ -79,7 +79,7 @@ UB-C10. MariaDB is detected from the DBAL platform class or from `SELECT VERSION
 
 UB-D1. Core migrations live in `app/migrations/` (namespace `Mautic\Migrations`); executed versions are recorded in `<db_table_prefix>migrations` [code: app/config/config.php:225-236 @7.x] [code: app/bundles/CoreBundle/Loader/EnvVars/MigrationsEnvVars.php:14 @7.x].
 
-UB-D2. Doctrine runs every migration not yet recorded, in class-name order. The timestamp in a name is the authoring date, not the release: `Version20201007003589` first shipped in 7.0.0. Older-dated files therefore still run on upgrade [code: app/migrations/ @7.2.1; git ls-tree per tag].
+UB-D2. Doctrine runs every migration not yet recorded, in class-name order. The timestamp in a name is the authoring date, not the release: `Version20201007003589` first shipped in 7.0.0. Older-dated files therefore still run on upgrade [code: app/migrations/ @7.2.2; git ls-tree per tag].
 
 UB-D3. Two names force ordering: `Version020230615115326` sorts first ("must run first otherwise the pre-up assertions for other migrations will fail on M5") and `Versionzz20230929183000` sorts last (moves `app/config/*local.php` to `config/`) [code: app/migrations/Version020230615115326.php:9-12 @7.x] [code: app/migrations/Versionzz20230929183000.php:11-40 @7.x].
 
@@ -93,7 +93,7 @@ UB-D7. `down()` is a no-op by default and the updater never calls it; there is n
 
 UB-D8. Some migrations change data or files, not only schema. `Version20260709103000` writes `form_field_autofill => true` into the local config file when any form field has auto-fill, and throws if the file is not writable. `Version20260501090000` copies `lead:leads` permissions into a new `lead:notes` key for non-admin roles. `Version20250804003400` rewrites multiselect segment filter operators [code: app/migrations/Version20260709103000.php @7.x] [code: app/migrations/Version20260501090000.php:14-45 @7.x] [code: app/migrations/Version20250804003400.php @7.x].
 
-UB-D9. Migration counts per release: 7.0.0 added 33 migrations vs 6.0.0; 7.1.0 added 9; 7.2.0 added 13; 7.2.1 added none [code: git ls-tree per tag @7.x].
+UB-D9. Migration counts per release: 7.0.0 added 33 migrations vs 6.0.0; 7.1.0 added 9; 7.2.0 added 13; 7.2.1 and 7.2.2 added none. The 7.x branch adds 4 more, unreleased (7.3.0-rc): `Version20260715144000`, `Version20261015121426`, `Version20261022064630`, `Version20261029120000` [code: git ls-tree per tag @7.x] [code: git diff --name-status 7.2.2 838c9c772ec -- app/migrations @7.x].
 
 UB-D10. 8.x adds one migration (`Version20260814141635`, drops `forms.form_type`) and edits many existing migrations for DBAL 4 and typed constants; 8.x CI fails if an existing table changes shape and runs `doctrine:schema:validate` [PR #17082] [PR #17407] [PR #17346].
 
@@ -101,9 +101,13 @@ UB-D11. Plugins do not use `app/migrations`. A plugin bundle extending `Mautic\I
 
 UB-D12. Removing a core migration is a BC note: 7.0 removed `Version20230522141144` (Citrix); admins may drop `plugin_citrix_events` by hand [code: UPGRADE-7.0.md @7.x].
 
+UB-D13. Doctrine's `--dry-run` only holds back SQL queued with `addSql()`; `up()` still runs. A migration that writes with `executeStatement()` must return early when `--dry-run` is on the command line. On unreleased 7.x (7.3.0-rc) `Version20260715144000` (campaign log backfill) and `Version20261015121426` do this through `(new ArgvInput())->hasParameterOption('--dry-run')` [code: app/migrations/Version20260715144000.php:31-38 @7.x] [code: app/migrations/Version20261015121426.php:19 @7.x] [PR #18164].
+
+UB-D14. Fixed on the 7.2 branch after 7.2.2 (milestone 7.2.3; not in the 7.x snapshot): `Version20211209022550` handles role rows hydrated as `[Role, user_count]`, which failed 7.1.3 → 7.2 updates with more than one Role [PR #17274]; `Version20260616075543` creates `point_insights.category_id` with the signedness of `categories.id`, nulls orphaned category ids and adds a missing foreign key on a half-created table [PR #17907].
+
 ## E. Failure modes and recovery
 
-UB-E1. There is no automatic rollback. Phase 1 overwrites files and nukes the cache before phase 2 touches the schema [code: StepProvider.php @7.2.1; steps 10–30].
+UB-E1. There is no automatic rollback. Phase 1 overwrites files and nukes the cache before phase 2 touches the schema [code: app/bundles/CoreBundle/Update/StepProvider.php @7.x; steps 10–30].
 
 UB-E2. If phase 2 fails in `UpdateSchemaStep`, the files are new and the schema is old. Migration output is sent to a NullOutput, so re-run `php bin/console doctrine:migrations:migrate` by hand to see the error [code: app/bundles/CoreBundle/Update/Step/UpdateSchemaStep.php:41-54 @7.x].
 
@@ -123,13 +127,13 @@ UB-E9. Always take a tested backup (files and DB, restored in a test environment
 
 ## F. Release metadata, versions and plugin gating
 
-UB-F1. `app/release_metadata.json` at 7.2.1: version 7.2.1, stability stable, PHP 8.2.0–8.5.99, MySQL ≥ 8.4.0, MariaDB ≥ 10.11.0, `minimum_mautic_version` 5.0.0 [code: app/release_metadata.json @7.x].
+UB-F1. `app/release_metadata.json` at 7.2.2 and on the 7.x snapshot: version 7.2.2, stability stable, PHP 8.2.0–8.5.99, MySQL ≥ 8.4.0, MariaDB ≥ 10.11.0, `minimum_mautic_version` 5.0.0 [code: app/release_metadata.json @7.x].
 
 UB-F2. `Metadata` is a `final readonly` value object. Required keys: `version`, `stability`, `minimum_php_version`, `maximum_php_version`, `minimum_mautic_version`, `announcement_url`; optional (default `''`): `show_php_version_warning_if_under`, `minimum_mysql_version`, `minimum_mariadb_version`. Versions parse as `major.minor.patch[extra]` [code: app/bundles/CoreBundle/Release/Metadata.php @7.x].
 
 UB-F3. `MAUTIC_VERSION` is defined from the metadata file at kernel boot [code: app/AppKernel.php:41-44 @7.x].
 
-UB-F4. `minimum_mautic_version` defines the oldest version that can update directly to the release via the updater: 7.x releases need ≥ 5.0.0; 6.0.0 needs ≥ 5.0.0; 5.0.0 and 5.2.0 need ≥ 4.4.10; 4.0.0 needs ≥ 3.2.0 [code: app/release_metadata.json @7.2.1, @6.0.0, @5.0.0, @5.2.0, @4.0.0].
+UB-F4. `minimum_mautic_version` defines the oldest version that can update directly to the release via the updater: 7.x releases need ≥ 5.0.0; 6.0.0 needs ≥ 5.0.0; 5.0.0 and 5.2.0 need ≥ 4.4.10; 4.0.0 needs ≥ 3.2.0 [code: app/release_metadata.json @7.2.2, @6.0.0, @5.0.0, @5.2.0, @4.0.0].
 
 UB-F5. The release workflow requires the pushed tag to equal `version` in `release_metadata.json`, so bump `version` and `announcement_url` before tagging [code: .github/workflows/release.yml:38-47 @7.x].
 
@@ -139,7 +143,7 @@ UB-F7. On the 8.x snapshot the metadata still says `"version": "7.2.0"` while `m
 
 ## G. Support policy, branches and tags
 
-UB-G1. Branch model: `a.x` = current-major feature branch (`7.x`, upstream default); `a.b` = maintenance branch for bug fixes (`7.0`, `7.1`, `7.2`, `6.0`, `5.2`, …); `c.x` = next major for BC breaks (`8.x`). Bug fixes target the lowest maintained branch where they apply and are merged upward [code: .github/PULL_REQUEST_TEMPLATE.md:1-36 @7.x]. Contribution rules are in mautic-contributing.
+UB-G1. Branch model: `a.x` = current-major feature branch (`7.x`, upstream default, next release 7.3); `a.b` = maintenance branch for bug fixes (`7.0`, `7.1`, `7.2`, `6.0`, `5.2`, …); `c.x` = next major for BC breaks (`8.x`). Bug fixes target the lowest maintained branch where they apply and are merged upward; a release is merged into `7.x` after it is tagged (7.2.1 by [PR #17516], 7.2.2 by [PR #17953]), so fixes merged to `7.2` after the last release are not on `7.x` yet [code: .github/PULL_REQUEST_TEMPLATE.md:1-36 @7.x]. Contribution rules are in mautic-contributing.
 
 UB-G2. Tags are `X.Y.Z` plus pre-releases `X.Y.0-alpha`, `-beta`, `-rc`, `-rc2`. 7.0 went 7.0.0-alpha (2025-08-04) → beta (2025-10-20) → rc (2025-11-11) → rc2 (2025-12-10) → 7.0.0 (2026-01-20) [code: git tag @7.x].
 

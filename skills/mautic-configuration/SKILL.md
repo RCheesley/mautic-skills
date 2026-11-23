@@ -78,7 +78,7 @@ Installer
 
 ## How to change or extend it
 - Add a parameter: declare its default in your bundle's `Config/config.php` `parameters`. The default's PHP type fixes the env processor, so use `false` (not `0`) for booleans and `[]` for lists. Only declared keys get a `MAUTIC_<KEY>` override and a `mautic.<key>` container parameter. [code: app/config/parameters.php:21-49 @7.x]
-- Add a Configuration tab: subscribe to `ConfigEvents::CONFIG_ON_GENERATE` and call `$event->addForm([...'formAlias','formType','formTheme','parameters' => $event->getParametersFromConfig('MyBundle')])`. Add the translation `mautic.config.tab.<alias>`. A tab with empty `parameters` is not shown. [code: app/bundles/ConfigBundle/Event/ConfigBuilderEvent.php:38-111 @419a08a9b35] [code: app/bundles/ConfigBundle/Controller/ConfigController.php:55 @7.x]
+- Add a Configuration tab: subscribe to `ConfigEvents::CONFIG_ON_GENERATE` and call `$event->addForm([...'formAlias','formType','formTheme','parameters' => $event->getParametersFromConfig('MyBundle')])`. Add the translation `mautic.config.tab.<alias>`. A tab with empty `parameters` is not shown. On unreleased 7.x (7.3.0-rc), `getParametersFromConfig()` returns `[]` for a bundle without a `config` or `parameters` section instead of raising "Undefined array key". [code: app/bundles/ConfigBundle/Event/ConfigBuilderEvent.php:38-107 @7.x] [PR #18045] [code: app/bundles/ConfigBundle/Controller/ConfigController.php:55 @7.x]
 - Validate or transform before save in `CONFIG_PRE_SAVE` (`getConfig`, `setConfig`, `setError`, `unsetIfEmpty`). React after save in `CONFIG_POST_SAVE`. [code: app/bundles/ConfigBundle/Event/ConfigEvent.php:88-159 @7.x]
 - Register uploaded-file settings with `addFileFields()`. They are stored base64-encoded and are downloadable and removable through `/s/config/{download|remove}/<key>`. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:204-265 @7.x]
 - Use `DsnType` for DSN settings. It masks the password and supports a test button wired to an AJAX action. [code: app/bundles/ConfigBundle/Form/Type/DsnType.php:120-175 @7.x]
@@ -86,7 +86,7 @@ Installer
 - Add an installer step as a `mautic.configurator.step` tagged service. Add install fixtures with the `group_install` group. [code: app/bundles/CoreBundle/DependencyInjection/Compiler/ConfiguratorPass.php:21-24 @7.x] [code: app/bundles/InstallBundle/InstallFixtures/ORM/RoleData.php:19-22 @7.x]
 - For code that must run on 7.x and 8.x, subscribe by event class and guard the `ConfigEvents` constants with `defined()`, because 8.x deletes `ConfigEvents`. [PR #17625] [PR #17654]
 - Keep backward compatibility. Never rename a parameter key: existing local.php files and `MAUTIC_<KEY>` deployments depend on it. Changing a default's PHP type changes the env processor. [code: app/config/parameters.php:21-49 @7.x]
-- A new setting usually needs four things together: the default in `config.php`, the form field in the bundle's ConfigType, the label and tooltip translations, and the user docs settings page. [code: app/bundles/ConfigBundle/Event/ConfigBuilderEvent.php:86-99 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html]
+- A new setting usually needs four things together: the default in `config.php`, the form field in the bundle's ConfigType, the label and tooltip translations, and the user docs settings page. [code: app/bundles/ConfigBundle/Event/ConfigBuilderEvent.php:86-95 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html]
 
 ## How to test it
 - Use `MauticMysqlTestCase` for functional tests. Set `$this->configParams['key'] = value` before `parent::setUp()`; the values reach the kernel as `MAUTIC_CONFIG_PARAMETERS`. [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:52-61 @7.x] [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:111-114 @7.x]
@@ -115,6 +115,8 @@ Installer
 - 5.0.3 stores DSNs URL-encoded with `%` doubled and reads them through the `urlencoded-dsn` env processor. [PR #13255]
 - `db_host_ro` (read replica) arrived in 5.0 but was ignored until 5.0.2. [PR #11792] [PR #13211]
 - 7.0 removed the API rate limiter and its `api_rate_limiter_*` parameters; no 6.x-specific configuration change was found in 158 PRs. [code: UPGRADE-7.0.md:52 @7.x] [PR #8305]
+- 7.2.2: the session timezone also drives local-date rendering (`DateTimeHelper::setLocalTimezone()`). [PR #17627]
+- Unreleased on 7.x (7.3.0-rc): OpenID Connect settings on the `userconfig` tab; changing the client URL or identifier field deletes every User's OIDC link on save. [PR #17527] [PR #18162] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:157-176 @7.x]
 - Full detail is in `references/version-notes.md`.
 
 ## Pitfalls
@@ -122,20 +124,21 @@ Installer
 - CORS, HSTS and trusted hosts and proxies ignore env vars, because the middlewares read the PHP files directly. [code: app/middlewares/ConfigAwareTrait.php:17-45 @7.x]
 - `mautic:cache:clear` clears only the Mautic application cache adapter. It is not the Symfony `cache:clear` that compile-time settings need. [code: app/bundles/CacheBundle/Command/ClearCacheCommand.php:18-21 @7.x]
 - `mautic:install` returns exit code 0 when the requirements step fails, so scripts cannot tell that failure from success. [code: app/bundles/InstallBundle/Command/InstallCommand.php:243 @7.x]
+- Since 7.2.2 a Form's return URL must be relative, same-origin with `site_url`, or match a `cors_valid_domains` entry (`fnmatch`), so an empty Valid Domains list silently drops returns to other websites. [code: app/bundles/FormBundle/Controller/PublicController.php:120-178 @7.x] [PR #16507] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings]
 - Wrong `trusted_hosts` lock you out of the UI. Fix them by editing local.php. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings] [code: app/middlewares/TrustMiddleware.php:38-40 @7.x]
-- `anonymize_ip`, `sysinfo_disabled` and the theme tab's `accent` are not declared in any `config.php`, so they have no env override and no typed default. [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:42-64 @419a08a9b35]
+- `anonymize_ip`, `sysinfo_disabled` and the theme tab's `accent` are not declared in any `config.php`, so they have no env override and no typed default. [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:42-65 @7.x]
 - `marketplace_website_url` is declared twice with different defaults, in CampaignBundle and MarketplaceBundle; the winner depends on Finder order. [code: app/bundles/CampaignBundle/Config/config.php:178 @7.x] [code: app/bundles/MarketplaceBundle/Config/config.php:42 @7.x]
 - A literal string containing `getenv(...)` cannot be stored as a value, because it is always treated as an env reference. [code: app/bundles/CoreBundle/Loader/EnvVars/ConfigEnvVars.php:14-16 @7.x]
 - Docs and code disagree on the "Default item limit per page". The docs say `10`; the code default is `30`. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#system-defaults] [code: app/bundles/CoreBundle/Config/config.php:285 @7.x]
 - Docs and code disagree on CORS "Restrict Domains". The docs say the default is No; the code default is `true`, so CORS is restricted out of the box. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings] [code: app/bundles/CoreBundle/Config/config.php:702 @7.x]
 - The docs warn not to pre-set `db_driver` and `mailer_from_name` because they mark Mautic as installed. In code only `db_driver` and `site_url` count, and `db_driver` is always forced. A pre-set `site_url` is what makes Mautic look installed. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#installing-with-command-line] [code: app/AppKernel.php:272-283 @7.x]
-- The docs list `--mailer_*` options for `mautic:install`, but the 7.2.1 command defines only `--db_*`, `--admin_*` and `--force`. [docs: https://docs.mautic.org/en/7.2/configuration/command_line_interface.html#mautic-commands] [code: app/bundles/InstallBundle/Command/InstallCommand.php:58-147 @7.x]
+- The docs list `--mailer_*` options for `mautic:install`, but the 7.x command defines only `--db_*`, `--admin_*` and `--force`. [docs: https://docs.mautic.org/en/7.2/configuration/command_line_interface.html#mautic-commands] [code: app/bundles/InstallBundle/Command/InstallCommand.php:58-147 @7.x]
 - Hand-edited DSNs in local.php must URL-encode special characters and double `%`, because DSNs are decoded by the `urlencoded-dsn` env processor. [PR #13255] [code: app/config/config.php:99-112 @7.x]
-- After 7.2.1 the `coreconfig` field `last_shown_tab` and `Mautic.observeConfigTabs()` no longer exist; legacy `?tab=` links only work because they redirect to `/s/config/edit/<tab>`. [PR #17776] [code: app/bundles/ConfigBundle/Config/config.php:8-15 @7.x]
+- On unreleased 7.x (7.3.0-rc) the `coreconfig` field `last_shown_tab` and `Mautic.observeConfigTabs()` no longer exist; legacy `?tab=` links only work because they redirect to `/s/config/edit/<tab>`. [PR #17776] [code: app/bundles/ConfigBundle/Config/config.php:8-15 @7.x]
 - Install fixtures must not run DDL: put indexes in entity metadata and columns in a `postGenerateSchema` listener, or PHP 8 fails with "There is no active transaction". [PR #10787] [PR #11059]
 - Schema listeners must use the prefixed table name and must not assume core tables exist; no automated test covers a table prefix. [PR #11128] [PR #11206]
 - The minimum database version is inclusive: MySQL 8.4.0 passes both the installer and the pre-update check, which duplicate the same comparison. [PR #15797] [code: app/bundles/InstallBundle/Helper/SchemaHelper.php:198 @7.x] [code: app/bundles/CoreBundle/Helper/Update/PreUpdateChecks/CheckDatabaseDriverAndVersion.php:47 @7.x]
-- Open question: the docs say Mautic wraps trusted-host regexes in `/` delimiters. The code analysis confirms only domain-or-regexp validation. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:190-250 @419a08a9b35] [unverified]
+- Open question: the docs say Mautic wraps trusted-host regexes in `/` delimiters. The code analysis confirms only domain-or-regexp validation. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:190-250 @7.x] [unverified]
 
 ## Related skills
 - mautic-dev-environment: DDEV, `.env.local`, running a local instance.

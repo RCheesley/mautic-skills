@@ -11,7 +11,7 @@
 - [Coverage](#coverage)
 
 ## How to read this file
-Source: merged pull requests on github.com/mautic/mautic for QueueBundle, MessengerBundle, CacheBundle and the console runtime, harvested 2026-10-15.
+Source: merged pull requests on github.com/mautic/mautic for QueueBundle, MessengerBundle, CacheBundle and the console runtime, harvested 2026-10-15, plus the delta merged 2026-10-15 to 2026-11-23.
 Versions are inferred from each PR's base branch and merge date; `~` marks an inference. Versions without `~` were checked against the release tags in the 7.x tree.
 Current behaviour lives in behaviour.md (code-verified); this file explains why and when it came to be.
 
@@ -84,6 +84,8 @@ Everything in this group is historical. QueueBundle and `mautic:queue:process` d
 | Messenger | Retry-strategy changes ignored until the cache was cleared | Retry settings are read from parameters | [PR #12509] | 5.0 |
 | Messenger | Failure transport could not be configured | `messenger_dsn_failed` is configurable and optional | [PR #12509] | 5.0 |
 | Messenger | Multiplier 0 or 0.5 saved; worker crashed hourly, message stuck, duplicate sends | Form rejects multiplier < 1 and negative retries, delay or max delay | [PR #16157] | 7.1.3 |
+| Messenger | First install of a Plugin with entities failed with "Table 'messenger_messages' already exists" under a Doctrine queue DSN; Plugin tables left without foreign keys | Existing tables are dropped from the generated Plugin schema before it runs | [PR #17977] | unreleased 7.x (7.3.0-rc) |
+| Build | `mautic:assets:generate` kept a stale `libraries.css` | The file is deleted before regeneration | [PR #17597] | 7.2.2 |
 | Cache | CLI `cache:clear` with a table prefix dropped plugin routes, menus and services | CLI and web cache builds see the same plugins | [PR #590] | ~1.1.3 |
 | Cache | `rm -rf var/cache/*` then load gave "No middleware cache file found" | Middleware cache is rebuilt on demand | [PR #8568] | ~3.0 |
 | Cache | `cache:clear` failed when `/tmp` was not accessible | Filesystem cache uses `mautic.tmp_path` | [PR #9929] [PR #11885] | ~4.4.7 / 5.0 |
@@ -118,6 +120,8 @@ Historical regressions that no longer apply (QueueBundle, PHP 7 class cache): Ra
 | 7.1.0 | `mautic:segment:delete` (background Segment delete) | [PR #15755] |
 | 7.1.3 | Retry-setting validation in Queue Settings | [PR #16157] |
 | 7.2.0 | CacheBundle autowired services; final Messenger classes; `mautic:motd` always exits 0 | [PR #16800] [PR #16897] [PR #16226] |
+| 7.2.2 | `mautic:assets:generate` regenerates `libraries.css` | [PR #17597] |
+| unreleased 7.x | Email-open pixel queues nothing for Contacts with tracking off; `/mtc/event` returns no ids for untracked visitors and `success:0` without a Contact; Plugin schema install skips existing tables | [PR #18006] [PR #18013] [PR #18028] [PR #17977] |
 
 ## Removed, deprecated, replaced
 
@@ -160,3 +164,4 @@ Historical regressions that no longer apply (QueueBundle, PHP 7 class cache): Ra
 - Cross-checked, not re-analysed: campaigns chunk 3 ([PR #10347], [PR #10550], [PR #11747], [PR #11963], [PR #12203], [PR #13383], [PR #10219]) and segments chunks 2-3 ([PR #10533], [PR #14575], [PR #14911], [PR #15554], [PR #15755]). Their full analysis is in mautic-campaigns and mautic-segments.
 
 869 noise PRs were excluded upstream, before chunking.
+- 2026-11-23 delta: the messenger-queue-cache bucket held only CodeRabbit configuration PRs (#18063, #18064, #18198, #18240), with no behaviour content [PR #18063] [PR #18064] [PR #18198] [PR #18240]. The behaviour items above came from re-checking cited code against the new snapshot.

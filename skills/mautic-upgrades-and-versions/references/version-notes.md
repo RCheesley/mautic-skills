@@ -8,7 +8,7 @@ at the named tag unless stated. The 7.x → 8.x guide is separate: [upgrade-to-8
 1. Release timeline and platform requirements
 2. Upgrade paths between majors
 3. Per-major summaries: 3.0, 4.0, 4.3, 5.0, 6.0, 7.0, PHP → Twig
-4. 7.x minors (7.0 → 7.1 → 7.2 → 7.2.1)
+4. 7.x minors (7.0 → 7.1 → 7.2 → 7.2.1 → 7.2.2, and 7.3 in development)
 5. 8.x (in development)
 
 ## 1. Release timeline and platform requirements
@@ -21,15 +21,26 @@ at the named tag unless stated. The 7.x → 8.x guide is separate: [upgrade-to-8
 | 4.x | 4.0.0 (2021-08-30) | 4.4.13 (2024-09-18) | 7.4.0 – 8.0.99 | MySQL ≥ 5.7.14 / MariaDB ≥ 10.2.7 (at 4.4.0) | 3.2.0 | [code: app/release_metadata.json @4.0.0, @4.4.0] |
 | 5.x | 5.0.0 (2024-01-09) | 5.2.11 (2026-05-28) | 8.0.2 – 8.1.99 at 5.0.0; 8.1.0 – 8.3.99 at 5.2.0 | MySQL ≥ 5.7.14 / MariaDB ≥ 10.2.7 | 4.4.10 | [code: app/release_metadata.json @5.0.0, @5.2.0] |
 | 6.x | 6.0.0 (2025-03-25) | 6.0.9 (2026-05-28) | 8.1.0 – 8.3.99 | MySQL ≥ 5.7.14 / MariaDB ≥ 10.2.7 | 5.0.0 | [code: app/release_metadata.json @6.0.0] |
-| 7.x | 7.0.0 (2026-01-20) | 7.2.1 (2026-09-23) | 8.2.0 – 8.4.99 at 7.0.0; 8.2.0 – 8.5.99 from 7.1.0 | MySQL ≥ 8.4.0 / MariaDB ≥ 10.11.0 | 5.0.0 | [code: app/release_metadata.json @7.0.0, @7.1.0, @7.x] |
+| 7.x | 7.0.0 (2026-01-20) | 7.2.2 (2026-10-26) | 8.2.0 – 8.4.99 at 7.0.0; 8.2.0 – 8.5.99 from 7.1.0 | MySQL ≥ 8.4.0 / MariaDB ≥ 10.11.0 | 5.0.0 | [code: app/release_metadata.json @7.0.0, @7.1.0, @7.x] |
 | 8.x | unreleased | branch `8.x` @ `11599729491` | 8.4 – 8.5.99 | MySQL ≥ 8.4.0 / MariaDB ≥ 10.11.0 | metadata not bumped | [code: app/release_metadata.json @8.x] |
 
 7.x minor dates: 7.0.0-alpha 2025-08-04, -beta 2025-10-20, -rc 2025-11-11, -rc2 2025-12-10, 7.0.0 2026-01-20, 7.1.0-rc 2026-03-06,
-7.1.0 2026-04-14 … 7.1.3 2026-07-07, 7.2.0-rc 2026-06-02, 7.2.0 2026-09-02, 7.2.1 2026-09-23. 5.1.0 2024-06-12; 5.2.0 2024-12-02
+7.1.0 2026-04-14 … 7.1.3 2026-07-07, 7.2.0-rc 2026-06-02, 7.2.0 2026-09-02, 7.2.1 2026-09-23, 7.2.2 2026-10-26. 7.3 is not
+released (no tag); the docs repositories have `7.3` branches. 5.1.0 2024-06-12; 5.2.0 2024-12-02
 [code: git tag @7.x].
 
 Note: majors overlap. 5.2.x and 6.0.x patch releases continued in 2026 while 7.x was current [code: git tag @7.x].
 Only the 7.2.x series is "supported" in the bug template [code: .github/ISSUE_TEMPLATE/BUG-REPORT.yml:24-41 @7.x].
+
+Branches at the snapshot:
+
+| Branch | Role | State on 2026-11-23 | Source |
+|---|---|---|---|
+| `7.x` | Feature branch, next minor 7.3 | 7.2.2 plus 181 unreleased PRs ([unreleased-7.x-prs.md](unreleased-7.x-prs.md)) | [code: git log --first-parent 7.2.2..838c9c772ec @7.x] [PR #17953] |
+| `7.2` | Bug fixes for 7.2.x | 7.2.2 plus fixes for 7.2.3 (last merge 2026-11-17), not yet merged into `7.x` | [code: git log --first-parent 7.2.2..upstream/7.2 @7.x] [PR #17274] [PR #18058] |
+| `7.0`, `7.1` | Former bug-fix branches | "not supported" in the bug template | [code: .github/ISSUE_TEMPLATE/BUG-REPORT.yml:24-41 @7.x] |
+| `8.x` | Next major, BC breaks | Unreleased; see section 5 | [code: app/release_metadata.json @8.x] |
+
 
 ## 2. Upgrade paths between majors
 
@@ -105,8 +116,11 @@ Schema changes shipped per minor (all additive) [code: app/bundles/*/*Events.php
 - **7.1.0** (9): Segment soft delete (`lead_lists.deleted` + index); campaign `redirect_event_id`; `campaigns.republish_behavior`; project name index; `monitoring.uuid`; `pages.version` / `emails.version`; `assets.alias` nullable.
 - **7.2.0** (13): `sms_messages.media` JSON and `is_mms`; `emails.send_to_dnc`; `user_invites`; `campaign_events.date_linked/date_added`; `lead:notes` permission backfill; Company soft delete; Form submission limits; `point_insights`; `emails.settings`; `leads.last_active` index; form auto-fill config flag written to `local.php`; `campaign_lead_event_log` index reorder.
 - **7.2.1**: no migrations.
-- 7.x features after 7.2.1, not yet released and not yet on 8.x ([post-7.2.1-prs.md](post-7.2.1-prs.md)): unsubscribe/resubscribe email-validation page and "Require email validation for unsubscribe" setting, email preview "Download HTML", asset multi-download ZIP, "Any associated company" segment filters, `POST /api/companies/batch/addcontacts`, Users `is:never_logged_in`, Contacts "Save & New" [code: 7.x vs 8.x tree grep].
-- PR-derived 7.2.0: skip assertions are ANDed, so the mailer DSN migration now uses one combined assertion and never overwrites `mailer_dsn` [PR #16925]; API Library tests run in core CI, so release-prep PRs no longer link a manual run [PR #17227]. 7.2.1 was a metadata-only release PR [PR #17504]. Background for all of this: [pr-history.md](pr-history.md) [PR #13823].
+- **7.2.2** (2026-10-26): no migrations. A security release: the release PR carried fixes for seven GitHub security advisories from the private security repository (SQL injection, path traversal, unsafe deserialisation, theme sandbox escape and others) together with the version bump; it was merged into 7.x the next day [PR #17934] [PR #17953] [code: git log 7.2.1..7.2.2 @7.2.2].
+- **7.2 branch after 7.2.2** (milestone 7.2.3, unreleased, not on 7.x yet): two 7.2.0 migrations fixed in place, `Version20211209022550` for updates with several Roles [PR #17274] and `Version20260616075543` for signed `categories.id` [PR #17907].
+- **7.3 (unreleased, on 7.x)**: 4 migrations so far: `Version20260715144000` (campaign log `non_action_path_taken` backfill, skipped under `--dry-run` [PR #18164]), `Version20261015121426` (elFinder permissions), `Version20261022064630` (OIDC subject ids [PR #17527]), `Version20261029120000` (Contact tracking preferences [PR #18006]) [code: git diff --name-status 7.2.2 838c9c772ec -- app/migrations @7.x].
+- 7.x features bound for 7.3, not yet released and not yet on 8.x ([unreleased-7.x-prs.md](unreleased-7.x-prs.md)): unsubscribe/resubscribe email-validation page and "Require email validation for unsubscribe" setting, email preview "Download HTML", asset multi-download ZIP, "Any associated company" segment filters, `POST /api/companies/batch/addcontacts`, Users `is:never_logged_in`, Contacts "Save & New"; since 2026-10-15 also OpenID Connect login, Bootstrap 5 markup, Privacy Centre and aggregate-analytics settings [code: git log --first-parent 7.2.2..838c9c772ec @7.x] [PR #17527] [PR #17767].
+- PR-derived 7.2.0: skip assertions are ANDed, so the mailer DSN migration now uses one combined assertion and never overwrites `mailer_dsn` [PR #16925]; API Library tests run in core CI, so release-prep PRs no longer link a manual run [PR #17227]. 7.2.1 was a metadata-only release PR [PR #17504]. The previous list of 87 PRs after 7.2.1 (`post-7.2.1-prs.md`, snapshot `419a08a9b35`) is superseded by [unreleased-7.x-prs.md](unreleased-7.x-prs.md) [PR #17504]. Background for all of this: [pr-history.md](pr-history.md) [PR #13823].
 
 Each area skill's `references/version-notes.md` holds the area-specific 5.x/6.x/7.x differences.
 

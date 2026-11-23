@@ -32,14 +32,14 @@
 - **UI** is the Configuration tab `formAlias`, followed by the docs label in quotes where the docs name the field. "—" means local.php or env only. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:55 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html]
 - **Meaning** marked *(inferred)* comes from the name and default only; the rest was traced in code or docs.
 - **Citation** gives the declaration (bundle `config.php` line range) plus the main consumer where it was traced.
-- Tab labels: coreconfig = System Settings, themeconfig = Theme Settings, privacyconfig = Privacy Centre (7.x after 7.2.1, unreleased; [PR #17781]), apiconfig = API Settings, assetconfig = Asset Settings, campaignconfig = Campaign Settings, emailconfig = Email Settings, formconfig = Form Settings, leadconfig = Contact Settings, segment_config = Segment Settings, companyconfig = Company Settings, messengerconfig = Queue Settings, notification_config = Notification Settings, pageconfig = Landing Page Settings, trackingconfig = Tracking Settings, reportconfig = Report Settings, smsconfig = Text Message Settings, userconfig = User/Authentication Settings, webhookconfig = Webhook Settings, social_config = Social Settings.
+- Tab labels: coreconfig = System Settings, themeconfig = Theme Settings, privacyconfig = Privacy Centre (unreleased on 7.x, 7.3.0-rc; [PR #17781]), apiconfig = API Settings, assetconfig = Asset Settings, campaignconfig = Campaign Settings, emailconfig = Email Settings, formconfig = Form Settings, leadconfig = Contact Settings, segment_config = Segment Settings, companyconfig = Company Settings, messengerconfig = Queue Settings, notification_config = Notification Settings, pageconfig = Landing Page Settings, trackingconfig = Tracking Settings, reportconfig = Report Settings, smsconfig = Text Message Settings, userconfig = User/Authentication Settings, webhookconfig = Webhook Settings, social_config = Social Settings.
 
 ## 2. CoreBundle
 Owning bundle: CoreBundle. Declared in `app/bundles/CoreBundle/Config/config.php:249-812`. Abbreviated citation: `[code: app/bundles/CoreBundle/Config/config.php:249-812 @7.x]` = **[C]**.
 
 | Parameter | Default | Type | UI | Meaning | Bundle | Citation |
 |---|---|---|---|---|---|---|
-| `site_url` | `''` | string | coreconfig "Site URL" (required, https default) | Public base URL. Drives the router context, https forcing, the secure cookie, the SAML entity id, the ElFinder URL and the installed check. | Core | [C] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:51-68 @419a08a9b35] [code: app/AppKernel.php:272-283 @7.x] |
+| `site_url` | `''` | string | coreconfig "Site URL" (required, https default) | Public base URL. Drives the router context, https forcing, the secure cookie, the SAML entity id, the ElFinder URL and the installed check. | Core | [C] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:51-68 @7.x] [code: app/AppKernel.php:272-283 @7.x] |
 | `webroot` | `''` | string | coreconfig "Mautic's root URL Landing Page" | Landing Page id shown at `/` instead of the dashboard redirect. | Core | [C] [code: app/bundles/CoreBundle/Controller/DefaultController.php:33-40 @7.x] |
 | `404_page` | `''` | string | coreconfig "404 page" | Landing Page id rendered for not-found responses when published. | Core | [C] [code: app/bundles/CoreBundle/Controller/CommonController.php:571-580 @7.x] |
 | `cache_path` | `'%kernel.project_dir%/var/cache'` | string | coreconfig "Path to the cache directory" | Kernel cache root `<cache_path>/<env>`; read from local.php only. | Core | [C] [code: app/AppKernel.php:316-325 @7.x] |
@@ -54,7 +54,7 @@ Owning bundle: CoreBundle. Declared in `app/bundles/CoreBundle/Config/config.php
 | `brand_name` | `'Your Brand (configurable)'` | string | themeconfig | Brand name in the UI *(inferred)*. | Core | [C] |
 | `primary_brand_color` | `'000000'` | string | themeconfig | Brand colour hex *(inferred)*. | Core | [C] |
 | `rounded_corners` | `'0'` | string | themeconfig | UI corner style *(inferred)*. | Core | [C] |
-| `gravatar_enabled` | `false` | bool | privacyconfig | Allow Gravatar lookups *(inferred)*. 7.x after 7.2.1, unreleased [PR #17781]. | Core | [C] [code: app/bundles/CoreBundle/EventListener/ConfigPrivacySubscriber.php:21-34 @7.x] |
+| `gravatar_enabled` | `false` | bool | privacyconfig | Load Contact profile images from Gravatar (the 7.3 docs label is "Load profile images from Gravatar"). Unreleased on 7.x (7.3.0-rc) [PR #17781]. | Core | [C] [code: app/bundles/CoreBundle/EventListener/ConfigPrivacySubscriber.php:21-34 @7.x] |
 | `db_driver` | `'pdo_mysql'` | string | — (restricted) | Always forced to `pdo_mysql`. | Core | [C] [code: app/bundles/CoreBundle/Loader/ParameterLoader.php:219 @7.x] |
 | `db_host` | `'127.0.0.1'` | string | — (restricted) | DBAL host. | Core | [C] [code: app/config/config.php:151 @7.x] |
 | `db_port` | `3306` | int | — (restricted) | DBAL port. | Core | [C] [code: app/config/config.php:152 @7.x] |
@@ -66,7 +66,7 @@ Owning bundle: CoreBundle. Declared in `app/bundles/CoreBundle/Config/config.php
 | `locale` | `'en_US'` | string | coreconfig "Default language" | Default locale; saving downloads the language pack. | Core | [C] [code: app/config/config.php:84 @7.x] [code: app/bundles/CoreBundle/EventListener/ConfigSubscriber.php:54-74 @7.x] |
 | `secret_key` | `'temp'` | string | — (restricted) | `framework.secret`, encryption key, session-name salt, remember-me key, mail hash. Generated at install and on save if missing. | Core | [C] [code: app/config/config.php:74 @7.x] [code: app/bundles/CoreBundle/Helper/EncryptionHelper.php:39 @7.x] [code: app/bundles/InstallBundle/Install/InstallService.php:518 @7.x] |
 | `dev_hosts` | `[]` | array | — | Extra IPs allowed to use the dev front controller. | Core | [C] [code: app/middlewares/Dev/IpRestrictMiddleware.php:33-35 @7.x] |
-| `trusted_hosts` | `[]` | array | coreconfig "Trusted hosts" | Host allow-list (`Request::setTrustedHosts`); domains or regexps. | Core | [C] [code: app/middlewares/TrustMiddleware.php:38-40 @7.x] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:190-250 @419a08a9b35] |
+| `trusted_hosts` | `[]` | array | coreconfig "Trusted hosts" | Host allow-list (`Request::setTrustedHosts`); domains or regexps. | Core | [C] [code: app/middlewares/TrustMiddleware.php:38-40 @7.x] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:190-250 @7.x] |
 | `trusted_proxies` | `[]` | array | coreconfig "Trusted proxies" | Proxy IPs/CIDRs; mandatory behind an SSL-terminating proxy. | Core | [C] [code: app/middlewares/TrustMiddleware.php:34-36 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings] |
 | `validate_remote_domains` | `false` | bool | — | Validate the domains of remote URLs (`SafeRemoteUrlValidator`). | Core | [C] |
 | `allowed_remote_domains` | `[]` | array | coreconfig | Allow-list for remote URLs *(inferred)*. | Core | [C] |
@@ -74,7 +74,7 @@ Owning bundle: CoreBundle. Declared in `app/bundles/CoreBundle/Config/config.php
 | `rememberme_lifetime` | `7776000` (90 days) | int | — | Remember-me cookie lifetime in seconds (`int:` processor). | Core | [C] [code: app/config/security.php:109 @7.x] [code: app/config/parameters.php:30-33 @7.x] |
 | `rememberme_path` | `'/'` | string | — | Remember-me cookie path. | Core | [C] [code: app/config/security.php:110 @7.x] |
 | `rememberme_domain` | `''` | string | — | Remember-me cookie domain. | Core | [C] [code: app/config/security.php:111 @7.x] |
-| `default_pagelimit` | `30` | int | coreconfig "Default item limit per page" (choices 5–100) | Default list page size. The docs say 10. | Core | [C] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:305-329 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#system-defaults] |
+| `default_pagelimit` | `30` | int | coreconfig "Default item limit per page" (choices 5–100) | Default list page size. The docs say 10. | Core | [C] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:305-329 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#system-defaults] |
 | `default_timezone` | `'UTC'` | string | coreconfig "Default timezone" | PHP timezone for sessions without a User timezone. | Core | [C] [code: app/bundles/CoreBundle/Helper/CoreParametersHelper.php:72-79 @7.x] |
 | `date_format_full` | `'F j, Y g:i a T'` | string | coreconfig "Default format for full dates" | PHP date format. | Core | [C] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#system-defaults] |
 | `date_format_short` | `'D, M d'` | string | coreconfig "short dates" | PHP date format. | Core | [C] |
@@ -103,7 +103,7 @@ Owning bundle: CoreBundle. Declared in `app/bundles/CoreBundle/Config/config.php
 | `batch_campaign_sleep_time` | `false` | bool | — | Campaign batch sleep *(inferred)*. | Core | [C] |
 | `transliterate_page_title` | `false` | bool | coreconfig "Translate page titles" | Transliterate non-Latin page titles in activity history. | Core | [C] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#miscellaneous-settings] |
 | `cors_restrict_domains` | `true` | bool | coreconfig "Restrict Domains" | Only `cors_valid_domains` receive CORS headers. The docs say the default is No. | Core | [C] [code: app/middlewares/CORSMiddleware.php:50 @7.x] |
-| `cors_valid_domains` | `[]` | array | coreconfig "Valid Domains" | Exact or `fnmatch`-wildcard origins. | Core | [C] [code: app/middlewares/CORSMiddleware.php:99-119 @7.x] |
+| `cors_valid_domains` | `[]` | array | coreconfig "Valid Domains" | Exact or `fnmatch`-wildcard origins. Since 7.2.2 also the allow-list for Form return URLs on other websites. | Core | [C] [code: app/middlewares/CORSMiddleware.php:99-119 @7.x] [code: app/bundles/FormBundle/Controller/PublicController.php:167-175 @7.x] [PR #16507] |
 | `headers_sts` | `false` | bool | coreconfig | Emit `Strict-Transport-Security`. | Core | [C] [code: app/middlewares/HSTSMiddleware.php:31 @7.x] |
 | `headers_sts_expire_time` | `60` | int | coreconfig | HSTS max-age seconds. | Core | [C] [code: app/middlewares/HSTSMiddleware.php:34 @7.x] |
 | `headers_sts_subdomains` | `false` | bool | coreconfig | HSTS `includeSubDomains`. | Core | [C] [code: app/middlewares/HSTSMiddleware.php:32 @7.x] |
@@ -221,7 +221,7 @@ Declared in `app/bundles/EmailBundle/Config/config.php:137-224` = **[E]**. Behav
 | `email_frequency_number` | `0` | int | emailconfig "Do Not Contact more than" | Global frequency rule count. | Email | [E] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#default-frequency-rule] |
 | `email_frequency_time` | `'DAY'` | string | emailconfig "each" | Frequency period. | Email | [E] |
 | `show_contact_preferences` / `_frequency` / `_pause_dates` / `_preferred_channels` / `_categories` / `_segments` | `false` | bool | emailconfig "Show Contact preference settings" etc. | Preference Center toggles. | Email | [E] |
-| `validate_unsubscribe_emails` | `true` | bool | emailconfig ("Require email validation for unsubscribe", 8.0 docs) | Unsubscribe confirmation page. 7.x after 7.2.1, unreleased [PR #16870]. | Email | [E] [docs: https://docs.mautic.org/en/8.0/configuration/settings.html#unsubscribe-settings] |
+| `validate_unsubscribe_emails` | `true` | bool | emailconfig ("Require email validation for unsubscribe", 8.0 docs) | Unsubscribe confirmation page. Unreleased on 7.x (7.3.0-rc) [PR #16870]. | Email | [E] [docs: https://docs.mautic.org/en/8.0/configuration/settings.html#unsubscribe-settings] |
 | `disable_trackable_urls` | `false` | bool | emailconfig "Disable trackable URLs" | Click tracking off. | Email | [E] |
 | `email_draft_enabled` | `false` | bool | emailconfig | Email drafts *(inferred)*. | Email | [E] |
 | `theme_email_default` | `'blank'` | string | — | Default Email theme. | Email | [E] |
@@ -311,7 +311,7 @@ Declared in `app/bundles/NotificationBundle/Config/config.php:113-124` = **[NO]*
 | `webhook_notification_email_addresses` | `null` | null | notification_config | Extra recipients. | Notification | [NO] |
 
 ## 15. PageBundle
-Declared in `app/bundles/PageBundle/Config/config.php:94-106` = **[P]**. Behaviour is covered in mautic-pages-and-tracking.
+Declared in `app/bundles/PageBundle/Config/config.php:94-107` = **[P]**. Behaviour is covered in mautic-pages-and-tracking.
 
 | Parameter | Default | Type | UI | Meaning | Bundle | Citation |
 |---|---|---|---|---|---|---|
@@ -324,6 +324,7 @@ Declared in `app/bundles/PageBundle/Config/config.php:94-106` = **[P]**. Behavio
 | `facebook_pixel_trackingpage_enabled` / `_landingpage_enabled` | `false` | bool | trackingconfig | Pixel placement. | Page | [P] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#facebook-pixel] |
 | `do_not_track_404_anonymous` | `false` | bool | trackingconfig "Do Not Track 404 error for anonymous Contacts" | Skip 404 hits. | Page | [P] |
 | `append_segment_id_tracking_url` | `false` | bool | trackingconfig "Append Segment IDs to Tracking URLs" | Segment ids in Email links. | Page | [P] |
+| `aggregate_analytics` | `true` | bool | trackingconfig "Record aggregate analytics" | Record totals not linked to any Contact (for example Form submission counts); features check it through `AggregateAnalyticsHelper`. Contact tracking is unaffected. Unreleased on 7.x (7.3.0-rc). | Page | [P] [code: app/bundles/PageBundle/Helper/AggregateAnalyticsHelper.php:14-23 @7.x] [PR #17965] |
 | `validate_page_hit_required_data` | `false` | bool | — | Validate required hit data *(inferred)*. | Page | [P] |
 
 ## 16. ReportBundle
@@ -345,7 +346,7 @@ Declared in `app/bundles/PageBundle/Config/config.php:94-106` = **[P]**. Behavio
 | `sms_disable_trackable_urls` | `false` | bool | smsconfig | Disable SMS link tracking. | Sms | same |
 
 ## 18. UserBundle
-Declared in `app/bundles/UserBundle/Config/config.php:133-142` = **[U]**. Behaviour is covered in mautic-users-and-permissions.
+Declared in `app/bundles/UserBundle/Config/config.php:145-164` (`[code: app/bundles/UserBundle/Config/config.php:145-164 @7.x]`) = **[U]**; the `open_id_*` keys are unreleased on 7.x (7.3.0-rc) [PR #17527]. Behaviour is covered in mautic-users-and-permissions.
 
 | Parameter | Default | Type | UI | Meaning | Bundle | Citation |
 |---|---|---|---|---|---|---|
@@ -356,6 +357,12 @@ Declared in `app/bundles/UserBundle/Config/config.php:133-142` = **[U]**. Behavi
 | `saml_idp_own_password` | `''` | string | userconfig "Private key encryption password" | Preserved if empty on save. | User | [U] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:110 @7.x] |
 | `saml_idp_email_attribute` / `_username_attribute` / `_firstname_attribute` / `_lastname_attribute` | `''` | string | userconfig "Email / Username / First name / Last name attribute" | IdP attribute mapping. | User | [U] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#saml-sso-settings] |
 | `saml_idp_default_role` | `''` | string | userconfig "Default Role for created Users" | Empty means SSO creates no Users. | User | [U] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#turning-on-saml] |
+| `open_id_is_enabled` | `0` | int | userconfig "Enable" (OpenID Connect) | Turns OIDC login on; saving with it on tests the provider connection first. | User | [U] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:84-105 @7.x] [PR #17527] |
+| `open_id_is_required` | `0` | int | userconfig "Require users to authenticate with OpenID" | Users must log in through the provider. | User | [U] [docs: https://github.com/mautic/user-documentation/blob/7.3/docs/configuration/settings.rst] |
+| `open_id_is_user_registration_allowed` | `0` | int | userconfig "Allow new user registration" | Create a User on first provider login. | User | [U] [docs: https://github.com/mautic/user-documentation/blob/7.3/docs/configuration/settings.rst] |
+| `open_id_registered_user_role` | `2` | int | userconfig "Role for new users" | Role for Users created through OIDC; kept when submitted empty. | User | [U] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:21-26 @7.x] |
+| `open_id_client_url` / `open_id_client_id` / `open_id_client_secret` | `''` | string | userconfig "Client URL" / "Client ID" / "Client Secret" | Provider issuer URL and app credentials. Changing the client URL deletes every User's OIDC link. | User | [U] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:157-176 @7.x] [PR #18162] |
+| `open_id_mapping_field` | `'sub'` | string | userconfig "Identifier field" | Claim that identifies an account; changing it deletes every User's OIDC link. | User | [U] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:157-176 @7.x] [PR #18162] |
 
 ## 19. WebhookBundle
 Declared in `app/bundles/WebhookBundle/Config/config.php:45-61` = **[W]**. Meanings come from the inline comments.
@@ -394,7 +401,7 @@ These keys have no typed default, no `mautic.<key>` container parameter and no e
 
 | Key | Where | Meaning | Citation |
 |---|---|---|---|
-| `anonymize_ip` | trackingconfig "Anonymize IP" (form default false) | Stop storing full IPs; turning it on anonymises existing IPs. | [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:42-64 @419a08a9b35] [code: app/bundles/ConfigBundle/EventListener/ConfigSubscriber.php:43-49 @7.x] |
+| `anonymize_ip` | trackingconfig "Anonymize IP" (form default false) | Stop storing full IPs; turning it on anonymises existing IPs. | [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:42-65 @7.x] [code: app/bundles/ConfigBundle/EventListener/ConfigSubscriber.php:43-49 @7.x] |
 | `accent` | themeconfig | Theme accent colour *(inferred)*. | [code: app/bundles/CoreBundle/EventListener/ConfigThemeSubscriber.php:21-38 @7.x] |
 | `sysinfo_disabled` | local.php | Hides and denies `/s/sysinfo`. | [code: app/bundles/ConfigBundle/Controller/SysinfoController.php:23 @7.x] |
 | `transifex_username`, `transifex_password` | local.php | Restricted in prod; the password is excluded from the audit log. | [code: app/config/security.php:213-215 @7.x] |
@@ -409,4 +416,4 @@ These keys have no typed default, no `mautic.<key>` container parameter and no e
 | `mautic.famework.csrf_protection` (sic) | `true` | CSRF protection flag. | [code: app/config/config.php:146 @7.x] |
 
 ## 23. Legacy keys still in docs
-The legacy queue page documents `queue_protocol`, `rabbitmq_*` and `beanstalkd_*`. They are declared in no 7.2.1 `config.php`, and Messenger DSNs replace them. [docs: https://docs.mautic.org/en/7.2/queue/queue.html] [code: app/bundles/MessengerBundle/Config/config.php:7-13 @7.x]
+The legacy queue page documents `queue_protocol`, `rabbitmq_*` and `beanstalkd_*`. They are declared in no 7.x `config.php`, and Messenger DSNs replace them. [docs: https://docs.mautic.org/en/7.2/queue/queue.html] [code: app/bundles/MessengerBundle/Config/config.php:7-13 @7.x]

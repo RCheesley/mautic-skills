@@ -79,4 +79,4 @@ document them as removed. [PR #17253]
 No 8.x change to the v1 URL scheme, response envelopes, `api_*` parameters, the token endpoints or the 409 lock contract
 is recorded in the inputs. [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/getting_started.html]
 
-Unreleased 7.x changes (bound for 7.3, in no release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
+Unreleased 7.x changes (bound for 7.3, in no release yet): see [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md).

@@ -171,6 +171,10 @@ C8. Documented transports: Doctrine (table `messenger_messages`, renameable), Re
 
 C9. The `messenger_messages` table is not created by any Mautic migration; Symfony's Doctrine transport creates it
 (auto-setup, inferred). [code: app/migrations (no reference to messenger_messages) @7.x]
+Symfony's Messenger schema listener also adds `messenger_messages` to any schema Doctrine builds from metadata, so with a
+Doctrine queue DSN the first install of a Plugin with new entities failed with "Table 'messenger_messages' already exists"
+and left the Plugin's tables without foreign keys. On unreleased 7.x (7.3.0-rc) `PluginDatabase::installPluginSchema()`
+drops tables that already exist from the generated schema before running it. [code: app/bundles/PluginBundle/Bundle/PluginDatabase.php:35-53 @7.x] [PR #17977]
 
 C10. DSNs stored via the UI escape `%` as `%%`; the `urlencoded-dsn` env processor unescapes them and turns an
 unparsable value into `invalid://null`. Values pasted into `local.php` by hand must be URL-encoded.
@@ -229,7 +233,9 @@ lock-file-guarded script (540 s stale-lock timeout), and warns that `messenger_m
 ## E. Messenger: email-open and page-hit processing
 
 E1. The tracking pixel dispatches `EmailHitNotification($idHash, $request)` and always returns the pixel; `eventTime`
-is captured at dispatch. [code: app/bundles/EmailBundle/Controller/PublicController.php:131-145 @419a08a9b35]
+is captured at dispatch. On unreleased 7.x (7.3.0-rc) it first checks `EmailModel::allowsOpenTracking($idHash)` and, when
+the stat's Contact has turned activity tracking off, returns the pixel without dispatching anything, so no message is
+queued. [code: app/bundles/EmailBundle/Controller/PublicController.php:138-157 @7.x] [code: app/bundles/EmailBundle/Model/EmailModel.php:679-691 @7.x] [PR #18006]
 
 E2. If the dispatch throws (queue unreachable), the error is logged and the open is processed synchronously.
 [code: app/bundles/EmailBundle/Controller/PublicController.php:150-153 @7.x]
@@ -277,7 +283,9 @@ E15. `lead.last_active` only moves forward (message `eventTime` newer than store
 move it back. [code: app/bundles/EmailBundle/Model/EmailModel.php:555-557 @7.x] [code: app/bundles/PageBundle/Model/PageModel.php:713-732 @7.x]
 
 E16. `/mtc/event` returns `success:1` immediately after `hitPage()`; `ON_CONTACT_TRACKED` fires before the queued hit
-is processed. [code: app/bundles/PageBundle/Controller/PublicController.php:400-443 @419a08a9b35]
+is processed. On unreleased 7.x (7.3.0-rc) an untrackable request gets `id`, `sid` and `device_id` null and no events, and
+`ON_CONTACT_TRACKED` is not dispatched [PR #18013]; when no Contact is available the response is `success:0` instead of
+a 500 [PR #18028]. [code: app/bundles/PageBundle/Controller/PublicController.php:400-458 @7.x]
 
 E17. Because the open and page-hit listeners (Campaign "opens email"/"visits page" decisions, Points) run inside the
 handler, with a queue DSN they run in the `messenger:consume hit` process. [code: app/bundles/EmailBundle/Model/EmailModel.php:505-508 @7.x]
@@ -293,7 +301,7 @@ F2. Retry decisions ignore the exception type except Symfony's markers: `Unrecov
 `RecoverableMessageHandlingException` forces one (inferred Symfony semantics). [code: app/bundles/MessengerBundle/Retry/RetryStrategy.php:21-29 @7.x]
 
 F3. The form rejects a multiplier below 1 and negative values for the other three fields (worker crash mautic/mautic#16017).
-[code: app/bundles/MessengerBundle/Form/Type/ConfigType.php:57-124 @419a08a9b35]
+[code: app/bundles/MessengerBundle/Form/Type/ConfigType.php:57-124 @7.x]
 
 F4. Max retries `0` disables retries. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#retry-strategy]
 
@@ -308,7 +316,7 @@ F7. Handlers take no application lock; several workers per transport may run in 
 
 F8. With a queue DSN and no running consumer: tracking endpoints keep answering, page hits exist as bare rows, email
 opens are not recorded, Emails are not sent, messages accumulate in the transport, and nothing in Mautic alerts about the
-backlog. Symfony Messenger worker events have no Mautic listeners. [code: app/bundles/EmailBundle/Controller/PublicController.php:131-145 @419a08a9b35]
+backlog. Symfony Messenger worker events have no Mautic listeners. [code: app/bundles/EmailBundle/Controller/PublicController.php:138-157 @7.x]
 [code: app/bundles/PageBundle/Model/PageModel.php:468-506 @7.x]
 
 F9. If `messenger:consume` runs from cron it needs at least one of `--memory-limit`, `--limit`, `--time-limit`, or each

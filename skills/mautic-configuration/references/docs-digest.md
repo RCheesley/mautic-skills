@@ -18,7 +18,16 @@ Sources are docs.mautic.org 7.2 and devdocs.mautic.org 7.2 (8.0 where noted). Th
 - Saving Configuration with a new language downloads the language pack. To force a refresh, delete `translations/<locale>` and re-save. [docs: https://docs.mautic.org/en/7.2/translations/translations.html#how-to-update-a-language]
 - The MaxMind license key goes in "IP lookup service authentication" as `AccountID:Licensekey`. [docs: https://docs.mautic.org/en/7.2/configuration/maxmind_license.html]
 - SAML is turned on by uploading the IdP metadata and turned off with Remove beside the file. If the Default Role is empty, SSO creates no Users. [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#turning-on-saml] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#turning-off-saml]
+- Valid Domains is also the list of websites a Form submission may return the Contact to (added to the 7.2 docs after 2026-10-15, matching the 7.2.2 code). [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings] [PR #16507]
+- Hiding the Support Mautic menu item with `'support_mautic_enabled' => false` needs `bin/console cache:clear` afterwards, and so does showing it again. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#support-mautic-menu-item]
 - 8.0 docs add "Require email validation for unsubscribe" (default Yes). [docs: https://docs.mautic.org/en/8.0/configuration/settings.html#unsubscribe-settings]
+
+## Upcoming in 7.3 (docs branch, unreleased)
+- Unsubscribe settings: "Require email validation for unsubscribe" (default Yes) routes unsubscribe and resubscribe links through a confirmation page. [docs: github.com/mautic/user-documentation/blob/7.3/docs/configuration/settings.rst]
+- New Privacy Centre section with "Load profile images from Gravatar" (default No). After upgrading, Gravatar images show the placeholder until it is set to Yes; it does not affect User avatars or uploaded images. [docs: github.com/mautic/user-documentation/blob/7.3/docs/configuration/settings.rst]
+- Tracking settings: "Record aggregate analytics" (default Yes) stops recording totals not linked to a Contact when set to No. [docs: github.com/mautic/user-documentation/blob/7.3/docs/configuration/settings.rst]
+- User/Authentication settings: OpenID Connect section (Enable, Require users to authenticate with OpenID, Allow new user registration, Role for new users, Client URL, Client ID, Client Secret, Identifier field `sub`). Changing Client URL or Identifier field deletes all User-provider links; turning OIDC off keeps the settings and links; an empty secret keeps the saved one. [docs: github.com/mautic/user-documentation/blob/7.3/docs/configuration/settings.rst] [docs: github.com/mautic/user-documentation/blob/7.3/docs/authentication/authentication.rst]
+- Plugin configuration (devdocs): each `addForm()` is its own section at `/s/config/edit/{formAlias}`, listed only with at least one parameter; link to it with route `mautic_config_edit` and `activeTabId`. `CONFIG_PRE_SAVE`/`CONFIG_POST_SAVE` events contain only the saved section, so check that your key exists. [devdocs: github.com/mautic/developer-documentation-new/blob/7.3/docs/plugins/config.rst]
 
 ## Installation
 - Prerequisites: the requirements at mautic.org/download/requirements, a directory writable by the web server, enough disk, and PHP `max_execution_time` ≥ 240 s. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#preparing-for-installation]
@@ -79,7 +88,7 @@ Sources are docs.mautic.org 7.2 and devdocs.mautic.org 7.2 (8.0 where noted). Th
 - The docs use capitalised entity nouns (Contact, Segment, Email, Landing Page, User, Role, Plugin, Theme) and "turn on/turn off". [docs: https://docs.mautic.org/en/7.2/configuration/settings.html]
 
 ## Where the docs disagree with 7.x code
-| Doc claim | Code (7.2.1) |
+| Doc claim | Code (7.x) |
 |---|---|
 | Default item limit per page `10` [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#system-defaults] | `30` [code: app/bundles/CoreBundle/Config/config.php:285 @7.x] |
 | CORS Restrict Domains default No [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings] | `true` [code: app/bundles/CoreBundle/Config/config.php:702 @7.x] |

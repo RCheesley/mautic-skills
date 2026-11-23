@@ -9,7 +9,7 @@ Where docs disagree with code, the code statement is given and the discrepancy i
 3. site_url and URL generation (U1–U8)
 4. Timezone and locale (L1–L4)
 5. Security headers and trust (S1–S4)
-6. Configuration UI (C1–C22)
+6. Configuration UI (C1–C24)
 7. System Info (I1)
 8. Installer (N1–N21)
 9. Caching of parameters (K1–K3)
@@ -23,7 +23,7 @@ B1. The web front controller forces `date_default_timezone_set('UTC')` before bo
 B2. `APP_ENV` defaults to `prod` and `APP_DEBUG` defaults to "environment is not prod". A compiled `.env.local.php` takes precedence over the `.env` files when its `APP_ENV` matches. [code: app/config/bootstrap.php:14-27 @7.x]
 B3. `IPS_ALLOWED` defaults to `127.0.0.1,::1,172.17.0.1`, and APCu is cleared in dev for allowed IPs. [code: app/config/bootstrap.php:23-32 @7.x]
 B4. On the console, `--env/-e` and `--no-debug` are read before bootstrap and exported to `APP_ENV`/`APP_DEBUG`. Debug mode applies `umask(0000)` and `Debug::enable()`. `--no-interaction/-n` adds timestamps to output. [code: app/console-application.php:26-44 @7.x]
-B5. The kernel constructor defines `MAUTIC_ENV` and `MAUTIC_VERSION` (from `app/release_metadata.json`, 7.2.1). [code: app/AppKernel.php:41-44 @7.x] [code: app/release_metadata.json:2 @7.x]
+B5. The kernel constructor defines `MAUTIC_ENV` and `MAUTIC_VERSION` (from `app/release_metadata.json`, 7.2.2). [code: app/AppKernel.php:41-44 @7.x] [code: app/release_metadata.json:2 @7.x]
 B6. `MAUTIC_DB_SERVER_VERSION` is `null` when `config/local.php` exists and `'8.4'` otherwise, so Doctrine can boot without a database during install. [code: app/AppKernel.php:52-55 @7.x] [code: app/config/config.php:167 @7.x]
 B7. Mautic is installed if and only if the local parameters contain non-empty `db_driver` and `site_url`. Because `db_driver` is always forced, `site_url` is the effective flag. [code: app/AppKernel.php:272-283 @7.x] [code: app/bundles/CoreBundle/Loader/ParameterLoader.php:219 @7.x] [code: app/bundles/InstallBundle/Install/InstallService.php:125-139 @7.x]
 B8. A request defines `MAUTIC_INSTALLER` when Mautic is not installed or when the URI contains `installer` anywhere. Non-installer URIs are then redirected to `/installer`, prefixed with `/index.php` unless the server is Apache with `.htaccess`. [code: app/AppKernel.php:60-84 @7.x]
@@ -110,11 +110,11 @@ U4. The session `cookie_secure` is decided at compile time: true when `site_url`
 U5. Trailing-slash redirects are built as `rtrim(site_url,'/') . '/' . ltrim(path,'/')`. [code: app/bundles/CoreBundle/Helper/TrailingSlashHelper.php:14-20 @7.x]
 U6. The ElFinder URL is `rtrim(site_url,'/') . '/' . trim(image_path,'/')`. The path is `<local_root or project dir>/<image_path>`. [code: app/bundles/CoreBundle/Loader/EnvVars/ElFinderEnvVars.php:13-20 @7.x]
 U7. The SAML entity id falls back to `scheme://host` of `site_url`. When `site_url` has no host or is malformed, it is the literal `mautic`. [code: app/bundles/CoreBundle/Loader/EnvVars/SAMLEnvVars.php:11-29 @7.x]
-U8. In the form, `site_url` is a required `UrlType` with default protocol https. No trailing-slash normalisation is applied on save. [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:51-68 @419a08a9b35]
+U8. In the form, `site_url` is a required `UrlType` with default protocol https. No trailing-slash normalisation is applied on save. [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:51-68 @7.x]
 
 ## 4. Timezone and locale
 L1. On login, the session gets `_timezone` (the User's timezone, else `default_timezone`, else UTC) and `_locale` (the User's locale, else the system `locale`). [code: app/bundles/CoreBundle/EventListener/CoreSubscriber.php:60-84 @7.x]
-L2. On each request with a session, PHP's timezone is set from `_timezone` (priority 128). The request locale is set from `_locale` or `locale` (priority 101). [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:21-61 @419a08a9b35]
+L2. On each request with a session, PHP's timezone is set from `_timezone` (priority 128); since 7.2.2 the same value is also passed to `DateTimeHelper::setLocalTimezone()`, so dates rendered as local follow it. The request locale is set from `_locale` or `locale` (priority 101). [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:20-63 @7.x] [PR #17627]
 L3. Saving the configuration sets session `_locale` to the User's locale, else the saved `locale`. A User-level locale always beats the system locale. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:299-310 @7.x] [code: app/bundles/ConfigBundle/Tests/Controller/ConfigControllerFunctionalTest.php:360-416 @7.x]
 L4. Saving a `locale` whose language pack is not installed downloads the pack. If the download fails, the value resets to `en_US` and a form error is added. [code: app/bundles/CoreBundle/EventListener/ConfigSubscriber.php:49-76 @7.x] [docs: https://docs.mautic.org/en/7.2/translations/translations.html#how-to-update-a-language]
 
@@ -125,6 +125,7 @@ S3. CORS behaviour [code: app/middlewares/CORSMiddleware.php:54-124 @7.x]:
 - With `cors_restrict_domains=true` (the default), `Access-Control-Allow-Origin` echoes the Origin only when it is listed in `cors_valid_domains` or matches a case-insensitive `fnmatch` wildcard. A wildcard match also adds `Vary: Origin`.
 - `OPTIONS` preflight gets 204 only when the origin is valid and the request has `Origin` and `Access-Control-Request-Headers`.
 - XHR responses always get the header.
+- Since 7.2.2 the Form submission handler also uses `cors_valid_domains` to accept a return URL on another website: a return is kept only when it is relative (`/` but not `//`), same-origin with `site_url` (scheme, host and port), or its `scheme://host` matches a Valid Domains entry with case-insensitive `fnmatch`; anything else, and any URL with `\` or `@`, is dropped. [code: app/bundles/FormBundle/Controller/PublicController.php:120-178 @7.x] [PR #16507]
 S4. The HSTS header `max-age=<headers_sts_expire_time>[; includeSubDomains][; preload]` is added to main-request responses only when `headers_sts` is true and the expire time is non-zero. [code: app/middlewares/HSTSMiddleware.php:37-52 @7.x] [code: app/middlewares/Tests/HSTSMiddlewareTest.php:50-120 @7.x]
 
 ## 6. Configuration UI
@@ -143,10 +144,10 @@ C11. The core `CONFIG_PRE_SAVE` listeners:
 - Campaign and Page escape `campaign_time_wait_on_event_false` and `google_analytics` with htmlspecialchars.
 - Core preserves `transifex_password` and downloads the locale pack.
 - Email preserves monitored-mailbox passwords and resets incomplete mailboxes.
-- User preserves `saml_idp_own_password` and validates and base64-encodes the uploaded SAML files.
+- User preserves `saml_idp_own_password` and validates and base64-encodes the uploaded SAML files. On unreleased 7.x (7.3.0-rc) it also tests the OpenID Connect connection when OIDC is enabled (a failure is a field error on `open_id_is_enabled`), and keeps the stored `open_id_registered_user_role`, `open_id_client_url`, `open_id_client_id` and `open_id_mapping_field` when they arrive empty (browsers do not submit them while OIDC is off). [PR #17527] [PR #18162]
 - Social escapes `twitter_handle_field`.
 
-[code: app/bundles/ApiBundle/EventListener/ConfigSubscriber.php:36-38 @7.x] [code: app/bundles/CampaignBundle/EventListener/ConfigSubscriber.php:17 @7.x] [code: app/bundles/CoreBundle/EventListener/ConfigSubscriber.php:42-77 @7.x] [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:71-73 @7.x] [code: app/bundles/EmailBundle/EventListener/ConfigSubscriber.php:38-66 @7.x] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:45-93 @419a08a9b35] [code: plugins/MauticSocialBundle/EventListener/ConfigSubscriber.php:23 @7.x]
+[code: app/bundles/ApiBundle/EventListener/ConfigSubscriber.php:36-38 @7.x] [code: app/bundles/CampaignBundle/EventListener/ConfigSubscriber.php:17 @7.x] [code: app/bundles/CoreBundle/EventListener/ConfigSubscriber.php:42-77 @7.x] [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:71-73 @7.x] [code: app/bundles/EmailBundle/EventListener/ConfigSubscriber.php:38-66 @7.x] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:68-155 @7.x] [code: plugins/MauticSocialBundle/EventListener/ConfigSubscriber.php:23 @7.x]
 C12. Fields registered through `unsetIfEmpty()`, and all file fields, are dropped from the submitted data when empty, so stored secrets survive an empty submission. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:127-137 @7.x] [code: app/bundles/ConfigBundle/Event/ConfigEvent.php:88-104 @7.x]
 C13. Saving one tab merges only that tab's array into local.php. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:131-140 @7.x] [code: app/bundles/ConfigBundle/Tests/Controller/ConfigControllerFunctionalTest.php:138 @7.x]
 C14. If local.php has no `secret_key` after merging, a new key is generated before writing: `sha256(uniqid(mt_rand(), true))`. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:144-147 @7.x] [code: app/bundles/CoreBundle/Helper/EncryptionHelper.php:45-48 @7.x]
@@ -167,6 +168,8 @@ C21. local.php is rendered as `$parameters = array(...)`, with these rules [code
 - nested arrays are rendered recursively;
 - keys whose value is `''` are omitted.
 C22. When an OAuth2 lifetime is absent from local.php and its value equals the default in seconds (3600 or 1 209 600), the form converts it back to minutes or days (60, 14). [code: app/bundles/ConfigBundle/Form/Type/ConfigType.php:26-37 @7.x]
+C23. `ConfigBuilderEvent::getParametersFromConfig($bundle)` returns `$bundles[$bundle]['config']['parameters'] ?? []`, caching the bundle list in a static variable for the process. Before this fix (unreleased on 7.x, 7.3.0-rc) a third-party bundle that registered a tab without a `parameters` section raised "Undefined array key", which is a 500 on the Configuration page in `dev`. [code: app/bundles/ConfigBundle/Event/ConfigBuilderEvent.php:86-95 @7.x] [PR #18045]
+C24. On unreleased 7.x (7.3.0-rc), the User bundle's `CONFIG_POST_SAVE` listener deletes every row of the OIDC subject-link table when the saved `open_id_mapping_field` or `open_id_client_url` differs from the stored one. URLs are compared after trimming whitespace and trailing slashes and lower-casing scheme and host; an empty new value counts as "not configured" and deletes nothing. [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:79-187 @7.x] [PR #18162]
 
 ## 7. System Info
 I1. `/s/sysinfo` is denied to non-admins and when `sysinfo_disabled` is truthy. It shows [code: app/bundles/ConfigBundle/Controller/SysinfoController.php:21-43 @7.x] [code: app/bundles/ConfigBundle/Model/SysinfoModel.php:40-141 @7.x]:
@@ -254,7 +257,7 @@ V1. DDEV setup copies files into place and then runs commands [code: .ddev/mauti
 - "Default item limit per page": the docs say `10`; the code default is `30`. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#system-defaults] [code: app/bundles/CoreBundle/Config/config.php:285 @7.x]
 - CORS "Restrict Domains": the docs table says the default is No; the code default is `true`. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings] [code: app/bundles/CoreBundle/Config/config.php:702 @7.x]
 - The install docs say `db_driver` and `mailer_from_name` mark Mautic as installed. In code it is `db_driver` and `site_url`. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#installing-with-command-line] [code: app/AppKernel.php:272-283 @7.x]
-- The docs list `--mailer_*` options (Swiftmailer-era) for `mautic:install`. The 7.2.1 command has none. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#installing-with-command-line] [code: app/bundles/InstallBundle/Command/InstallCommand.php:58-147 @7.x]
+- The docs list `--mailer_*` options (Swiftmailer-era) for `mautic:install`. The 7.x command has none. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#installing-with-command-line] [code: app/bundles/InstallBundle/Command/InstallCommand.php:58-147 @7.x]
 - Several docs pages still use `app/config/local.php`. The 7.x path is `config/local.php`, with a legacy fallback. [docs: https://docs.mautic.org/en/7.2/configuration/smime_email_signing.html#configuration] [code: app/config/paths.php:11 @7.x]
 - The docs say PHP 7.4 is the minimum. The code requires 8.2.0. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#how-can-you-specify-a-php-version] [code: app/release_metadata.json:4 @7.x]
 - The docs say "complex password since 5.1". The CLI installer only checks for at least 6 characters; the web form adds `NotWeak`. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#installing-with-command-line] [code: app/bundles/InstallBundle/Install/InstallService.php:416-509 @7.x]

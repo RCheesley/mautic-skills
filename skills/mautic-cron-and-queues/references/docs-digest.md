@@ -1,6 +1,6 @@
 # Docs digest — cron jobs, CLI, queues (docs.mautic.org 7.2, kb.mautic.org)
 
-What the official user docs and the Knowledge Base say. Where code disagrees, the code is right for 7.2.1; the
+What the official user docs and the Knowledge Base say. Where code disagrees, the code is right for 7.x; the
 discrepancies are listed in section 5.
 
 Main pages:

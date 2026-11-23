@@ -23,18 +23,24 @@
 - 5.2.2 made toggle-dependent config fields follow the live toggle state. [PR #14416]
 - 6.x: no configuration or installer behaviour change was found in the 158 PRs reviewed; 6.0 only added a GitHub Codespaces dev container. [PR #14610]
 
-## 7.x (authoritative: 7.x snapshot, release 7.2.1 plus unreleased merged PRs)
+## 7.x (authoritative: 7.x snapshot, release 7.2.2 plus unreleased merged PRs bound for 7.3)
 - 7.0 removed the web-push notification settings from the UI; the `notification_*` parameters remain. [code: UPGRADE-7.0.md:30 @7.x] [code: app/bundles/NotificationBundle/Config/config.php:113-124 @7.x]
 - Platform requirements are PHP 8.2.0–8.5.99 (enforced per request by `VersionCheckMiddleware`) and MySQL ≥ 8.4.0 or MariaDB ≥ 10.11.0 (enforced at install). [code: app/release_metadata.json:4-7 @7.x] [code: app/middlewares/VersionCheckMiddleware.php:46-59 @7.x] [code: app/bundles/InstallBundle/Helper/SchemaHelper.php:177-201 @7.x]
 - `ConfigBundle/Config/services.php` still carries service aliases marked "@deprecated Remove all aliases in Mautic 6": `mautic.config.model.sysinfo`, `mautic.config.mapper`, `mautic.config.config_change_logger`, `mautic.config.form.escape_transformer` and `mautic.config.form.restriction_helper`. [code: app/bundles/ConfigBundle/Config/services.php:26-31 @7.x]
-- The 7.x branch after 7.2.1 (unreleased; [PR #16870]) has the setting `validate_unsubscribe_emails` (default true), which the 8.0 docs describe as "Require email validation for unsubscribe". [code: app/bundles/EmailBundle/Config/config.php:137-224 @7.x] [docs: https://docs.mautic.org/en/8.0/configuration/settings.html#unsubscribe-settings]
+- Unreleased on 7.x (7.3.0-rc; [PR #16870]): the setting `validate_unsubscribe_emails` (default true), which the 8.0 docs describe as "Require email validation for unsubscribe". [code: app/bundles/EmailBundle/Config/config.php:137-224 @7.x] [docs: https://docs.mautic.org/en/8.0/configuration/settings.html#unsubscribe-settings]
 - 7.0 removed the API rate limiter (`noxlogic/ratelimit-bundle`), so the `api_rate_limiter_*` parameters no longer exist. [code: UPGRADE-7.0.md:52 @7.x]
 - 7.0 configures the mailer with the long `transports` form (`main` is Mautic's DSN), so plugins can add transports. [PR #15422]
 - 7.0.1 made the minimum DB version check inclusive, so MySQL 8.4.0 installs and updates. [PR #15797]
 - 7.1: no configuration or installer change was found in the 158 PRs reviewed. [unverified]
 - 7.2.0 makes install fail if migration metadata sync or version marking fails, and the CLI installer prints plain text. [PR #17127] [PR #17100]
 - 7.2.1 lets the CLI installer run on a Composer project that has never served a web request. [PR #17394]
-- Unreleased 7.x (after 7.2.1): each Configuration section is its own page and `last_shown_tab` is removed. [PR #17776] [code: app/bundles/ConfigBundle/Config/config.php:8-15 @7.x]
+- 7.2.2: the per-request session timezone is also applied to local-date rendering (`DateTimeHelper::setLocalTimezone()`). [PR #17627]
+- 7.2.2: a Form's return URL is accepted only when relative, same-origin with `site_url`, or matching `cors_valid_domains`, so Valid Domains now also governs Form returns. [PR #16507] [code: app/bundles/FormBundle/Controller/PublicController.php:120-178 @7.x]
+- Fixed on the 7.2 branch after 7.2.2 (milestone 7.2.3, not in the 7.x snapshot): the API `access_control` rule in `app/config/security.php` matches `^/api(?:/|$)` instead of `^/api`, so public paths such as `/api-keys` return 404 instead of 401. [PR #18058]
+- Unreleased on 7.x (7.3.0-rc): each Configuration section is its own page and `last_shown_tab` is removed. [PR #17776] [code: app/bundles/ConfigBundle/Config/config.php:8-15 @7.x]
+- Unreleased on 7.x (7.3.0-rc): `ConfigBuilderEvent::getParametersFromConfig()` returns `[]` for a bundle without `config.parameters`. [PR #18045]
+- Unreleased on 7.x (7.3.0-rc): new Tracking setting `aggregate_analytics` (default true, "Record aggregate analytics"). [PR #17965] [code: app/bundles/PageBundle/Config/config.php:106 @7.x]
+- Unreleased on 7.x (7.3.0-rc): OpenID Connect settings (`open_id_*`) on the User/Authentication tab; saving tests the connection, keeps stored values while OIDC is off, and deletes all OIDC links when the client URL or identifier field changes. [PR #17527] [PR #18162] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:68-187 @7.x]
 
 Full history with reasons is in `pr-history.md`.
 
@@ -58,4 +64,4 @@ Full history with reasons is in `pr-history.md`.
 - 7.2.1 has not been merged forward. 7.x-only settings, such as the unreleased (post-7.2.1) unsubscribe email validation, are absent from 8.x code until the next merge. The last forward merge was 7.2.0 → 8.x. [PR #17253]
 - The 8.0 user docs for configuration differ from 7.2 only in documenting that unreleased 7.x (post-7.2.1) unsubscribe setting. [docs: https://docs.mautic.org/en/8.0/configuration/settings.html#unsubscribe-settings]
 
-Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
+Unreleased 7.x changes (on 7.x, in no release yet, bound for 7.3): see [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md).

@@ -1,6 +1,6 @@
 # Console command inventory (Mautic 7.x)
 
-Every console command registered by `app/bundles/` and `plugins/` in 7.2.1, plus the Symfony commands that Mautic
+Every console command registered by `app/bundles/` and `plugins/` in 7.x, plus the Symfony commands that Mautic
 operation depends on. The list was built from section 6 of each code analysis and cross-checked against a grep of
 `#[AsCommand]` in the 7.x tree [code: app/bundles/*/Command/*.php, plugins/*/Command/*.php @7.x].
 
@@ -108,7 +108,7 @@ Each is needed only when the named setting is on; otherwise the work happens inl
 | `mautic:update:apply` | CoreBundle | Two-phase updater; phase 1 ends with a hard `exit()`. | `--force`, `--update-package|-p`, `--finish` | No | None | 1 if `composer_updates` true or `UpdateFailedException` | [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:74-144 @7.x] |
 | `mautic:motd` | CoreBundle | Print a message of the day from `motd_url`. | none | No | None | Always 0 | [code: app/bundles/CoreBundle/Command/MessageOfTheDayCommand.php:44-83 @7.x] |
 | `mautic:assets:cleanup` | CoreBundle | Offer to delete duplicate files under `app/assets`. | interactive | No | None | — | [code: app/bundles/CoreBundle/Command/CleanupMediaAssetsCommand.php:33-78 @7.x] |
-| `mautic:assets:generate` | CoreBundle | Build production CSS/JS. | none | Build step | None | 1 on missing artefact | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:51-123 @419a08a9b35] |
+| `mautic:assets:generate` | CoreBundle | Build production CSS/JS; since 7.2.2 deletes a stale `media/css/libraries.css` before regenerating it. | none | Build step | None | 1 on missing artefact | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:51-128 @7.x] [PR #17597] |
 | `mautic:theme:json-config` | CoreBundle | Convert a theme `config.php` to `config.json`. | `--theme` (required), `--save-php-config` | No | None | 1 on failure | [code: app/bundles/CoreBundle/Command/ConvertConfigCommand.php:57-115 @7.x] |
 | `mautic:transifex:pull` / `mautic:transifex:push` | CoreBundle | Translation sync (needs Transifex credentials). | pull: `--language`, `--bundle`, `--path`; push: `--bundle` | No | None | 1 without credentials | [code: app/bundles/CoreBundle/Command/PullTransifexCommand.php:69-113 @7.x] |
 | `mautic:phpunit:config` | CoreBundle (Test) | Developer tooling for PHPUnit configuration. | — | No | None | — | [code: app/bundles/CoreBundle/Test/PhpUnitConfigCommand.php:36 @7.x] |

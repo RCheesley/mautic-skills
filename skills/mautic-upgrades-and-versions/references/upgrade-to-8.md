@@ -1,6 +1,6 @@
 # Upgrading from Mautic 7.x to 8.x (authoritative guide)
 
-Snapshot: 7.x = 7.2.1 plus 87 unreleased merged PRs (`419a08a9b35`, 2026-10-14; see [post-7.2.1-prs.md](post-7.2.1-prs.md)); 8.x = `11599729491` (2026-10-15), unreleased. Primary sources: `UPGRADE-8.0.md@8.x`
+Snapshot: 7.x = 7.2.1 plus 87 unreleased merged PRs (`419a08a9b35`, 2026-10-14; see [unreleased-7.x-prs.md](unreleased-7.x-prs.md)); 8.x = `11599729491` (2026-10-15), unreleased. Primary sources: `UPGRADE-8.0.md@8.x`
 (read in full), three-dot diffs `upstream/7.x...upstream/8.x`, 294 first-parent merge PRs, devdocs 8.0 `plugins/update_m7_to_m8`
 [code: UPGRADE-8.0.md @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]. The 8.0 devdocs URLs are
 inferred from RST paths; the 8.0 site may not be published yet.
@@ -26,7 +26,7 @@ inferred from RST paths; the 8.0 site may not be published yet.
 
 - 8.x is development-only. `app/release_metadata.json@8.x` still says `"version": "7.2.0"` while requiring PHP 8.4, and root `composer.json@8.x` pins `mautic/core-lib` `"7.0.0-dev"` [code: app/release_metadata.json @8.x] [code: composer.json @8.x].
 - `upstream/7.x` (7.2.1 and later) is not an ancestor of 8.x. The last forward merge was 7.2.0 → 8.x on 2026-09-04; 736 7.x commits (the 7.2.1 release plus the unreleased 7.x work after it) are not on 8.x yet [PR #17253].
-- Use a three-dot (merge-base) diff. A two-dot diff shows 7.x-only features as if 8.x removed them. All of the following are 7.x after 7.2.1 (unreleased; [post-7.2.1-prs.md](post-7.2.1-prs.md)): `twbs/bootstrap 5.3.8` vs `twbs/bootstrap-sass 3.4.1`, the unsubscribe email-validation page, `POST /api/companies/batch/addcontacts`, "Any associated company" segment filters, asset ZIP download, `is:never_logged_in`, Contacts "Save & New" [code: 8.x vs 7.x tree grep]. Do not document these as removed in 8.
+- Use a three-dot (merge-base) diff. A two-dot diff shows 7.x-only features as if 8.x removed them. All of the following are 7.x after 7.2.1 (unreleased; [unreleased-7.x-prs.md](unreleased-7.x-prs.md)): `twbs/bootstrap 5.3.8` vs `twbs/bootstrap-sass 3.4.1`, the unsubscribe email-validation page, `POST /api/companies/batch/addcontacts`, "Any associated company" segment filters, asset ZIP download, `is:never_logged_in`, Contacts "Save & New" [code: 8.x vs 7.x tree grep]. Do not document these as removed in 8.
 - Scale: 1,626 commits / 350 merges since the merge-base; 3,298 files changed (+49,088 / −60,791); 266 of 294 first-parent merges are typing, Rector, PHPStan, event-dispatch and removal work [code: git log upstream/7.x...upstream/8.x].
 - `UPGRADE-8.0.md` is appended per PR, and later entries supersede earlier ones. When it says a constant is "kept for backwards compatibility" but the class is gone in code, the code wins [code: UPGRADE-8.0.md @8.x] [code: app/bundles/CoreBundle/ @8.x — `CoreEvents.php` absent].
 
