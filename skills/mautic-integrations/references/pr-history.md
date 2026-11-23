@@ -28,7 +28,7 @@
 9. Coverage
 
 ## 1. How to read this file
-Source: merged pull requests on mautic/mautic, harvested 2026-10-15. Versions are inferred from the base branch and the
+Source: merged pull requests on mautic/mautic, harvested 2026-10-15, with a delta harvested 2026-11-23. Versions are inferred from the base branch and the
 merge date, so `(v2.8)` means "first released in about 2.8". Current behaviour is in references/behaviour.md; this file
 explains why and when it became so. Where a PR conflicts with behaviour.md, behaviour.md (code-verified) wins and the PR
 is listed as historical or under section 8.
@@ -122,7 +122,7 @@ is listed as historical or under section 8.
 - Fetched text longer than 255 characters for a Mautic text field is truncated. [PR #5197] (v2.12)
 - Missing unique identifiers or "Priority Fields For Mautic" log `getMauticLead: No unique identifiers` / `No fields to update in Mautic` at debug level. [PR #12619] (v5.0) [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:372,400 @7.x]
 - `mautic:integration:pushleadactivity` (alias `pushactivity`) pushes timeline activity for synced Contacts. [PR #1955] (v2.1) Its message is integration-neutral. [PR #4440] (v2.9.1)
-- `getLeadData()` must detach every loaded entity except `Integration` and `Plugin` after each timeline page. In 5.0 the `EntityManager::clear()` replacement [PR #12361] (v5.0) inverted the check, so only those two were detached and the command reported success while pushing nothing. Fixed by [PR #17815] (v7.2.2). The 7.x snapshot still has the inverted check, so it affects the 7.x snapshot and 7.2.1 (and every release since 5.0.0); fixed in 7.2.2. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:245-254 @419a08a9b35]
+- `getLeadData()` must detach every loaded entity except `Integration` and `Plugin` after each timeline page. In 5.0 the `EntityManager::clear()` replacement [PR #12361] (v5.0) inverted the check, so only those two were detached and the command reported success while pushing nothing. Fixed by [PR #17815] (v7.2.2). It affects every release from 5.0.0 to 7.2.1; 7.2.2 is merged into 7.x, which has the corrected check. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:245-254 @7.x]
 - `pushLeadActivity()` only logs exceptions, so a successful exit of `pushleadactivity` does not prove anything was pushed; check the logs. [PR #17815] (v7.2.2)
 - The contact page has an "Integrations" tab listing `integration_entity` links [PR #4426] (v2.10), which can link to the remote record [PR #9096] (v3.2). The object-mapping block came back in 5.0 RC2. [PR #12924] (v5.0)
 - Segment filter "Integration Campaigns" builds a segment from CRM campaign members (Salesforce campaigns, ConnectWise groups). An `integration_entity` composite index was a merge condition, because without it one rebuild took about 20 minutes. [PR #3733] (v2.8) [PR #5037] (v2.11)
@@ -201,6 +201,8 @@ is listed as historical or under section 8.
 - Outlook and Gmail tracking use a signed tracking GIF verified with a shared secret; the public endpoint must be sanitised because it writes into the timeline. [PR #2175] [PR #2604] (v2.2)
 - Tracked emails create email Stat rows and "email read" timeline events. [PR #4022] (v2.8.1) The Outlook config shows the site URL. [PR #4004] (v2.8.1)
 - Gmail moved from `AbstractIntegration` to `BasicIntegration` with `GmailKeysType` in 7.2.0. [PR #16847] (v7.2) This is the change behind the `getDecryptedApiKeys()` pitfall in SKILL.md: 7.1.3 still extends `AbstractIntegration`. [code: plugins/MauticGmailBundle/Integration/GmailIntegration.php:10 @7.x]
+- The 7.2.0 Gmail move did break tracking: `doTracking()` loaded Gmail through the legacy `IntegrationHelper` and called `getDecryptedApiKeys()`, so signed requests returned 500. The fix reads keys through `IntegrationsHelper` first and keeps the legacy path for `AbstractIntegration` objects; its functional test covers Gmail and Outlook, signed, badly signed and unknown. [PR #18061] (7.2 branch, after 7.2.2) [PR #18065] (unreleased 7.x) [code: app/bundles/EmailBundle/Controller/PublicController.php:906-921 @7.x]
+- Outlook moved from `AbstractIntegration` to `BasicIntegration` with `ConfigSupport` and `OutlookKeysType`. The reviewer asked whether this was a BC break needing re-authentication or a migration; the answer was no, because Outlook has only a secret and the integration name, settings row, key name and `EncryptionHelper` are unchanged. The migration exposed the tracking bug above, so it was merged only with that fix. [PR #16848] (unreleased 7.x, 7.3.0-rc)
 - Zapier is info-only, and plugin descriptions split on `\n---\n` into a secondary description. [PR #5794] (v2.13)
 
 ### 2.13 Amazon S3 (CloudStorage)
@@ -230,6 +232,7 @@ Manager plugin's own screens.
 - Plugin migrations load from the plugin's own directory [PR #8688] (v3.0), a plugin that newly declares a version runs its update [PR #13423] (v5.1), and `mautic:plugins:reload` runs DDL outside a transaction [PR #13249] (v5.1).
 - The IntegrationsBundle migration engine skips the commit when DDL already committed. [PR #14440] (v5.2.2)
 - `MauticFactory::getDatabase()` is removed; install and update classes receive the connection by DI. [PR #14418] (v6.0) Plugins without an `Entity` directory update correctly. [PR #15951] (v7.0.2)
+- First install creates only the plugin's own tables: tables a schema listener adds (Messenger's `messenger_messages`) are dropped from the generated schema when they already exist. Before this, the reload failed midway and left plugin tables without foreign keys, which a second reload did not repair. The reviewer asked for the check to cover tables added by plugin listeners too. [PR #17977] (unreleased 7.x, 7.3.0-rc)
 
 ### 2.16 Marketplace
 - MarketplaceBundle is a core bundle, read-only at first, listing allowlisted packages, with view/create permissions and a config switch. [PR #9650] (v4.0)
@@ -239,6 +242,7 @@ Manager plugin's own screens.
 - Detail pages show the CLI install command, and a failed UI install returns a JSON error. [PR #12529] (v5.0)
 - Pager and cache-clear fixes [PR #12728] [PR #12729] (v5.0), marketer-friendly copy [PR #13326] [PR #13329] [PR #13375] [PR #13377] (v5.1), and `|purify` for HTML descriptions [PR #12528] (v5.0).
 - A name-derived, theme-aware header colour [PR #14199] (v6.0) and a working check-all box [PR #14413] (v5.2.2).
+- Type filter (Plugin, Theme, Campaign) through the standard list-filter popover, sent to the registry as a separate `type` parameter; a Type column; Markdown descriptions (HTML stripped, unsafe links disabled, then purified) with a fallback to the short description; author metadata on the details tab. Needs registry support (mautic-public-marketplace PR 115). The maintainer confirmed that all 7.x PRs are merged into 8.x. [PR #17764] (unreleased 7.x, 7.3.0-rc)
 - The registry moved from Packagist to `marketplace.mautic.org` outside the inputs; log messages still say "Packagist". [PR #9650] [code: app/bundles/MarketplaceBundle/Service/Config.php:32-38 @7.x]
 
 ## 3. Removed plugins
@@ -333,6 +337,8 @@ Rows describe contracts still true in 7.x. Seeds for tests.
 | Tag Manager | Duplicate name "updated" a null-id tag | Nothing saved; link to existing tag | [PR #17341] | unreleased 7.x |
 | Marketplace | UI install failure returned nothing | JSON error | [PR #12529] | 5.0 |
 | Marketplace | Check-all selected nothing | All visible rows selected | [PR #14413] | 5.2.2 |
+| Gmail | Signed tracking pixel returned 500 (`getDecryptedApiKeys()` undefined) | Keys read via `IntegrationsHelper`; open recorded | [PR #18061] [PR #18065] | 7.2 branch after 7.2.2; unreleased 7.x |
+| Plugin install | `messenger_messages` already exists: reload failed, plugin tables without foreign keys | Existing tables skipped; full schema with foreign keys | [PR #17977] | unreleased 7.x |
 
 ## 5. Feature timeline
 | Version | Change | PR |
@@ -357,6 +363,8 @@ Rows describe contracts still true in 7.x. Seeds for tests.
 | 7.2 | Clearbit, Gmail, Tag Manager on `BasicIntegration`; final DAOs; autowired services; tag merge, search, delete-in-use; legacy mapping pagination | [PR #16586] [PR #16847] [PR #16795] [PR #16888] [PR #16781] [PR #15331] [PR #16003] [PR #16132] [PR #16202] |
 | 7.2.2 | `pushleadactivity` pushes again | [PR #17815] |
 | unreleased 7.x | Duplicate tag names refused | [PR #17341] |
+| unreleased 7.x | Outlook on `BasicIntegration`; Marketplace type filter and Markdown details; plugin install skips existing tables | [PR #16848] [PR #17764] [PR #17977] |
+| 7.2 branch after 7.2.2 | Gmail tracking pixel fixed | [PR #18061] |
 | 8.x | Clearbit removed | [PR #17785] |
 
 ## 6. Removed, deprecated, replaced
@@ -395,6 +403,7 @@ Rows describe contracts still true in 7.x. Seeds for tests.
 - Two tests are required to merge, but code review plus production evidence is accepted when nobody has the third-party account. [PR #10993] [PR #13208] [PR #15948]
 - Bug fixes need a regression test that fails without the fix. [PR #16202] [PR #17815]
 - When a shared CRM base class changes, check every caller. [PR #17815]
+- Migrating a plugin off `AbstractIntegration` must check callers outside the plugin that use legacy-only methods (for example `getDecryptedApiKeys()` in EmailBundle), and show that stored credentials survive without re-authentication. [PR #16848] [PR #18061]
 - No back-merges; each branch needs its own PR. [PR #11775] [PR #11857]
 - BC breaks need labelling and an UPGRADE entry; childless classes are made `final`. [PR #9886] [PR #13842] [PR #16902]
 - "Unforking" upstreams Acquia fork code but drops needless indirection. [PR #14666] [PR #15056]
@@ -406,7 +415,7 @@ Rows describe contracts still true in 7.x. Seeds for tests.
 - PR #12081 says its migration removes `integration_entity` records; whether only Pipedrive rows or all rows were removed is unclear. [PR #12081]
 - PR #10497 gates company push on `push_companies`, which Salesforce may never set. [PR #10497]
 - PR #16888 and PR #16902 made classes `final` in a 7.x minor, while PR #13842 treats subclass-breaking changes as major-only. [PR #16888] [PR #13842]
-- The Gmail move to `BasicIntegration` may have broken Gmail tracking (`getDecryptedApiKeys()`); not verified at runtime. [PR #16847]
+- Resolved: the Gmail move to `BasicIntegration` did break Gmail tracking (`getDecryptedApiKeys()`); fixed by [PR #18061] and [PR #18065]. [PR #16847]
 - PR #13406: whether auto-unmapping covers Lead and Contact equally. [PR #13406]
 - PR #1825: whether the Salesforce 30-day lookback limit still applies. [PR #1825]
 - PR #5424 removed the ConnectWise company from the push while PR #5333 added company lookup; current precedence unchecked. [PR #5424] [PR #5333]
@@ -419,4 +428,5 @@ Rows describe contracts still true in 7.x. Seeds for tests.
 - bundled-plugins: 271 PRs in 4 chunks (99 + 83 + 86 + 3); 227 substantive. Mis-bucketed core editor PRs were skipped. [PR #846] [PR #17815]
 - Some PRs appear in both buckets (for example [PR #3784], [PR #4024], [PR #11470]) and are merged here.
 - 869 noise PRs were excluded upstream before chunking. [PR #740]
+- November 2026 delta (merged 2026-10-15 to 2026-11-23): integrations-plugins-marketplace 4 PRs, bundled-plugins 3 PRs, plus [PR #18061] and [PR #18065] from the emails bucket. The 8.x-only PRs are not described in this file. [PR #17764] [PR #16848]
 - Items tagged [plugin-dev] are covered by mautic-plugin-development and are summarised here only where they change integration behaviour. [PR #13696]

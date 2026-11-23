@@ -27,6 +27,12 @@ Fixtures: `LeadFieldData` and `LoadLeadData` for the sync service test. Marketpl
 12. `app/bundles/MarketplaceBundle/Tests/Functional/Command/InstallCommandTest.php`, `Tests/Functional/Service/ResourceInstallerTest.php`: dry-run, 404, wrong type, unsafe URLs, size cap, rollback.
 Source list: [code: app/bundles/IntegrationsBundle/Tests/Unit/Sync/SyncJudge/Modes/HardEvidenceTest.php @7.x] and the code analysis test list.
 
+Added on 7.x (7.3.0-rc), worth copying:
+- `app/bundles/EmailBundle/Tests/Functional/PluginTrackingGifFunctionalTest.php`: signed, badly signed and unknown-integration tracking pixel requests for Gmail and Outlook. [PR #18065] [code: app/bundles/EmailBundle/Tests/Functional/PluginTrackingGifFunctionalTest.php @7.x]
+- `plugins/MauticOutlookBundle/Tests/Functional/Controller/ConfigControllerTest.php`: saves the Outlook secret, asserts encryption at rest and that it is shown again. [PR #16848] [code: plugins/MauticOutlookBundle/Tests/Functional/Controller/ConfigControllerTest.php @7.x]
+- `app/bundles/PluginBundle/Tests/Functional/Command/ReloadCommandFunctionalTest.php`: plugin install with `messenger_messages` already present. [PR #17977] [code: app/bundles/PluginBundle/Tests/Functional/Command/ReloadCommandFunctionalTest.php @7.x]
+- `app/bundles/MarketplaceBundle/Tests/Functional/Controller/ListControllerTest.php` with `Tests/ApiResponse/list_{all_types,plugin,theme,resource}.json`: type filter request parameters, AJAX updates, reset and session persistence against the mock HTTP client. [PR #17764] [code: app/bundles/MarketplaceBundle/Tests/Functional/Controller/ListControllerTest.php @7.x]
+
 `SyncServiceTest` is skipped ("disabled for now"), so there is no end-to-end DB test of the engine. Its `TestExamples/Integration/ExampleIntegration.php` and `TestExamples/Sync/SyncDataExchange/ExampleSyncDataExchange.php` are the canonical minimal sync implementation. [code: app/bundles/IntegrationsBundle/Tests/Functional/Services/SyncService/TestExamples/Sync/SyncDataExchange/ExampleSyncDataExchange.php:124-169 @7.x]
 
 FullContact, EmailMarketing, Zapier and CloudStorage have no tests. [code: plugins/MauticFullContactBundle @7.x]

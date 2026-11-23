@@ -73,6 +73,11 @@ All six developer pages under `plugin_integrations/` carry the banner "requires 
   [devdocs: https://devdocs.mautic.org/en/7.2/marketplace/listing.html]
 - Allowlist: the core team must allowlist each plugin. Apply via mau.tc/marketplace-allowlist; the list is github.com/mautic/marketplace-allowlist. [devdocs: https://devdocs.mautic.org/en/7.2/marketplace/allowlist_what_and_why.html]
 - Best practices: a README, GitHub issues, tagged releases with changelogs, CI, and semver starting at 1.0. [devdocs: https://devdocs.mautic.org/en/7.2/marketplace/best_practices.html]
+- Upcoming in 7.3 (docs branch, unreleased): the Marketplace page describes Plugins, Themes and Campaigns with a Type column, a **Quick filters** Type option that writes `type:mautic-plugin`, `type:mautic-theme` or `type:mautic-resource` into the search box (one type at a time; the search survives paging and a visit to a package), an Overview tab with the Markdown description, optional "Expected outcomes" and the CLI install command (not for Campaign packages), and a Details tab with author-supplied metadata (supported Mautic versions, languages, industry, price, support and funding links). It says the supported versions come from the author and must be verified. This matches the code of [PR #17764]. [docs: github.com/mautic/user-documentation/blob/7.3/docs/marketplace/marketplace.rst]
+
+## Knowledge base
+- Salesforce setup: create a Connected App with the "Access and manage your data (API)" and "refresh_token, offline_access" scopes, enter the consumer key and secret, authorise, then map the required SF Lead and Contact fields to Mautic Email, Last Name and Company. Only the Enterprise, Unlimited, Developer and Performance editions have the API. [kb: https://kb.mautic.org/article/how-to-integrate-mautic-with-salesforce.html]
+- The article's activity options: a custom `mautic_timeline` object with seven named fields (reportable in SF), or a URL field mapped to "Contact's timeline link" (Mautic → SF; SF users need Mautic logins to open it). It says blank required SF fields are pushed as `Unknown`, which matches the placeholder rule in pr-history.md section 2.4. It also says republishing pushes activity for the last 7 days, and that "8-10 minutes" is the sync interval. Both depend on the cron set-up and are unverified against the code. [kb: https://kb.mautic.org/article/how-to-integrate-mautic-with-salesforce.html] [PR #4718]
 
 ## 8.0 doc changes
 - The sync page gains "Sync events" (six event classes) and the removal of `IntegrationEvents`, with a constant → class map. [devdocs: https://devdocs.mautic.org/en/8.0/plugin_integrations/integrations_sync.html#sync-events]
@@ -86,7 +91,7 @@ All six developer pages under `plugin_integrations/` carry the banner "requires 
 - The sync order is documented as Mautic → Integration first; the code pulls first. [code: app/bundles/IntegrationsBundle/Sync/SyncProcess/SyncProcess.php:63-70 @7.x]
 - The three-legged example returns a `Response` and imports two-legged classes; the interface returns `string`. [code: app/bundles/IntegrationsBundle/Integration/Interfaces/AuthenticationInterface.php:21 @7.x]
 - Several dev pages say `app/config.php`; plugins use `Config/config.php` / `Config/services.php`. [devdocs: https://devdocs.mautic.org/en/7.2/plugin_integrations/integrations_configuration.html]
-- The Marketplace docs say "Packagist API". The code uses the `marketplace.mautic.org` registry API. [code: app/bundles/MarketplaceBundle/Api/Connection.php:26-50 @419a08a9b35] [devdocs: https://devdocs.mautic.org/en/7.2/marketplace/getting_started.html#marketplace-under-the-hood]
+- The Marketplace docs say "Packagist API". The code uses the `marketplace.mautic.org` registry API. [code: app/bundles/MarketplaceBundle/Api/Connection.php:26-53 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/marketplace/getting_started.html#marketplace-under-the-hood]
 - The listing example pins `mautic/core-lib ^5.0` and PHP `>=8.0 <8.1`, which is stale for 7.x. [devdocs: https://devdocs.mautic.org/en/7.2/marketplace/listing.html]
 
 ## Gaps in the docs

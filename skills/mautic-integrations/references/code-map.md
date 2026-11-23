@@ -46,9 +46,10 @@ Repositories: `IntegrationRepository::getIntegrations()` (inner join plugin), `g
 | `Migration\Engine`, `AbstractMigration` | `app/bundles/IntegrationsBundle/Migration/` | plugin migrations |
 | `ComposerHelper` | `app/bundles/CoreBundle/Helper/ComposerHelper.php` | in-process Composer [code: app/bundles/CoreBundle/Helper/ComposerHelper.php:32-169 @7.x] |
 | `Config` (`marketplace.service.config`), `Connection`, `PluginCollector`, `PackageModel`, `ResourceInstaller`, `RouteProvider` | `app/bundles/MarketplaceBundle/{Service,Api,Model}/` | Marketplace |
+| `PackageSearch` DTO (splits a `type:` command from the search text), Twig `MarkdownExtension` (filter `marketplace_markdown`); unreleased on 7.x (7.3.0-rc) | `app/bundles/MarketplaceBundle/{DTO,Twig}/` | Marketplace type filter and Markdown details [PR #17764] [code: app/bundles/MarketplaceBundle/DTO/PackageSearch.php:7-30 @7.x] [code: app/bundles/MarketplaceBundle/Twig/MarkdownExtension.php:11-32 @7.x] |
 
 ## 3. Interfaces (modern framework)
-Path: `app/bundles/IntegrationsBundle/Integration/Interfaces/`. [code: app/bundles/IntegrationsBundle/Form/Type/IntegrationConfigType.php:32-88 @419a08a9b35] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_integrations/integrations_configuration.html]
+Path: `app/bundles/IntegrationsBundle/Integration/Interfaces/`. [code: app/bundles/IntegrationsBundle/Form/Type/IntegrationConfigType.php:32-88 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_integrations/integrations_configuration.html]
 | Interface | Methods / purpose | Tag |
 |---|---|---|
 | `IntegrationInterface`, `BasicInterface` | `getName()`, `getDisplayName()`, `getIcon()` | `mautic.integration`, `mautic.basic_integration` (auto) |
