@@ -63,5 +63,8 @@ See terminology.md for the full FeatureList, WordList and accepted vocabulary ta
   [docs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html] [docs: https://devdocs.mautic.org/en/8.0/plugins/event_listeners.html]
 - The dev-docs accept list adds `LeadBundle`; style rules are otherwise unchanged in 8.0.
   [docs: https://github.com/mautic/developer-documentation-new/blob/8.0/.github/styles/config/vocabularies/Mautic/accept.txt]
-- The 8.0 user docs mostly describe unreleased 7.x features (merged after 7.2.1) not yet merged into 8.x code; the only 8-specific user-facing change
-  is the removal of `mautic:disable-tracking`. [docs: https://docs.mautic.org/en/8.0/channels/emails.html]
+- The 8.0 user docs mostly describe 7.x features; since the 7.x → 8.x merge [PR #18236] those are in 8.x code too.
+  8-specific user-facing changes include the removal of `mautic:disable-tracking`
+  [docs: https://docs.mautic.org/en/8.0/channels/emails.html] and of the Social bundle (Twitter, Social Login), which the
+  8.0 user docs still describe (`plugins/twitter.rst`, `plugins/social_login.rst`).
+  [PR #17473] [code: UPGRADE-8.0.md "Social media integrations" @8.x]

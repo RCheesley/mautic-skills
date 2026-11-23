@@ -166,7 +166,11 @@ A good contribution test fails before the change and passes after it, through th
 - 8.x: PHP 8.4, Symfony 8.1, Doctrine ORM 3.7 / DBAL 4.4, PHPUnit 13, ECS only (php-cs-fixer removed), tools in
   `vendor/bin/`, event dispatch by class enforced by PHPStan, entity mapping moving to attributes.
   [PR #16993] [PR #17392] [PR #17361] [PR #17004] [PR #17280] [PR #17164] [PR #17625] [PR #17382]
-- 8.x is unreleased: `app/release_metadata.json@8.x` still says 7.2.0. [code: app/release_metadata.json @8.x]
+- 8.x is unreleased: `app/release_metadata.json@8.x` says 7.2.2 (carried over by the 7.2.2 forward merge) with minimum
+  PHP 8.4.0. [code: app/release_metadata.json @8.x] [PR #18036]
+- 8.x process norms: a plugin-facing signature or type change is documented in `UPGRADE-8.0.md`, checked against the
+  8.x source; run Rector with `--clear-cache` to see findings the CI cache hides.
+  [PR #17877] [PR #18230] [PR #18299] [code: UPGRADE-8.0.md "Native parameter and return types for plugin extension points" @8.x]
 - 4.4/5.x era: fix 5.x first, then a duplicate backport PR; classic merge-up branching restored in January 2024.
   [PR #11644] [PR #11676] [PR #11775] [PR #13110]
 - 5.0: security reports moved from huntr.dev to GitHub private reporting; supported versions moved to mautic.org.

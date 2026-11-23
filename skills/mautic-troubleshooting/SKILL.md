@@ -35,6 +35,7 @@ Start with the first check; the full cause list for each symptom is in reference
 | 16 | Permission surprises | Test as a non-admin; `view` means `viewown`; `isGranted()` per-request cache | mautic-users-and-permissions |
 | 17 | 8.x listener silently not firing | Subscriber keyed on a constant instead of the event class | mautic-plugin-development, mautic-upgrades-and-versions |
 | 18 | Development-time failures (tests, PHPStan, DDEV) | `-c app/phpunit.xml.dist`; `composer phpstan`; delete `var/cache` | mautic-testing, mautic-dev-environment |
+| 19 | 8.x: Campaign, Form or plugin broken after upgrading | Leftover `twitter.tweet` actions or Social Login fields; removed classes; `TypeError` from native types | mautic-upgrades-and-versions, mautic-plugin-development |
 
 ### Cross-cutting facts behind most symptoms
 - Mautic has no internal scheduler; Segments, Campaign membership and events, Segment Emails/SMS, background imports and
@@ -117,6 +118,12 @@ Start with the first check; the full cause list for each symptom is in reference
 - 8.x: core events dispatch by class; listeners on constants go silent. [code: UPGRADE-8.0.md:860-882 @8.x] [code: app/bundles/LeadBundle/Model/LeadModel.php:2059-2061 @8.x]
 - 8.x: the `services` array in `config.php` is no longer read. [code: UPGRADE-8.0.md:205 @8.x] [code: app/bundles/CoreBundle/DependencyInjection/Builder/Metadata/ConfigMetadata.php:30-52 @8.x]
 - 8.x: `--lock_mode=file_lock` is an error (7.x maps it to `flock`). [code: UPGRADE-8.0.md:358 @8.x]
+- 8.x removes MauticSocialBundle; a retained `twitter.tweet` Campaign action can interrupt the rest of the Campaign and
+  a Social Login field no longer renders. [PR #17473] [code: UPGRADE-8.0.md "Social media integrations" @8.x]
+- 8.x: plugins built on removed classes (for example `AbstractSsoServiceIntegration`) stop loading, and native types on
+  plugin extension points turn loose arguments into `TypeError`s. [PR #18118] [code: UPGRADE-8.0.md "Other removed code" @8.x] [code: UPGRADE-8.0.md "Native parameter and return types for plugin extension points" @8.x]
+- `UPGRADE-8.0.md` calls `TIMELINE_ON_GENERATE` "unchanged", but 8.x dispatches `LeadTimelineEvent` by class; follow the
+  code. [code: UPGRADE-8.0.md:951 @8.x] [code: app/bundles/LeadBundle/Model/LeadModel.php:2059-2061 @8.x]
 
 ## Pitfalls
 - "Locked" and "ran" both exit 0, so cron monitoring never alerts on a stuck lock. [code: app/bundles/CoreBundle/Command/ModeratedCommand.php:113-117,171-179 @7.x]

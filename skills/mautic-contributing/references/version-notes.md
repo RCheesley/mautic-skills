@@ -38,11 +38,21 @@
 | Classes | — | many more `final` classes; do not extend or mock them | [PR #17536] |
 
 Notes:
-- `app/release_metadata.json@8.x` still says 7.2.0; treat 8.x as unreleased development. [code: app/release_metadata.json @8.x]
-- 7.x work since 7.2.0 (736 commits: the 7.2.1 release plus unreleased PRs merged after it) is not yet merged forward into 8.x; a 7.x fix is not on 8.x until the next forward merge.
-  [PR #17253]
+- `app/release_metadata.json@8.x` says 7.2.2, minimum PHP 8.4.0; treat 8.x as unreleased development.
+  [code: app/release_metadata.json @8.x]
+- 7.2.1 and 7.2.2 are in 8.x (7.2.2 merged on 2026-11-03 [PR #18036]), and 7.x up to #15680 was squash-merged into 8.x on 2026-11-17
+  [PR #18236]. Because of the squash, `git rev-list 8.x..7.x` still lists 7.x commits; compare trees, not ancestry, to
+  see whether a 7.x change is on 8.x. 7.x work merged after #15680 reaches 8.x at the next forward merge or through an
+  `[8.x]` "Backport of #N" PR. [PR #17253] [PR #18135] [PR #18136]
+- Plugin-facing type and signature changes must be recorded in `UPGRADE-8.0.md` and checked against the 8.x source.
+  [PR #17877] [PR #18230] [code: UPGRADE-8.0.md "Native parameter and return types for plugin extension points" @8.x]
+- 8.x CI caches Rector by `composer.lock` hash, which hides findings in unchanged files; run
+  `vendor/bin/rector process --dry-run --clear-cache` locally for the full set. [PR #18299] PHPStan on 8.x reports
+  unmatched ignored errors, so remove an ignore once the error it covers is fixed. [PR #17852]
 - `UPGRADE-8.0.md` is appended per PR and contradicts itself in places (for example constants described as "kept" that
-  the code removed); prefer the code. [code: UPGRADE-8.0.md @8.x]
+  the code removed, or `LeadEvents::TIMELINE_ON_GENERATE` listed as "unchanged" although `LeadModel` dispatches
+  `LeadTimelineEvent` by class); prefer the code. [code: UPGRADE-8.0.md:951 @8.x]
+  [code: app/bundles/LeadBundle/Model/LeadModel.php:2059-2061 @8.x]
 
 ## 4. Writing code that lands on 7.x and survives 8.x
 Avoid in new 7.x contributions: `*Events::CONST` subscriber keys or second `dispatch()` argument; `CacheStorageHelper`;

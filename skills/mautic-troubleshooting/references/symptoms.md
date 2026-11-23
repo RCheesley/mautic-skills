@@ -24,6 +24,7 @@ as the working directory and run as the web-server user. SQL assumes no table pr
 16. [Permission surprises](#16-permission-surprises)
 17. [8.x: an event listener silently never fires](#17-8x-an-event-listener-silently-never-fires)
 18. [Development-time failures](#18-development-time-failures)
+19. [8.x: Campaign, Form or plugin broken after upgrading](#19-8x-campaign-form-or-plugin-broken-after-upgrading)
 
 ---
 
@@ -575,6 +576,9 @@ Detail: mautic-users-and-permissions.
   on a kept constant or raw string silently receives nothing. [code: UPGRADE-8.0.md:860-882 @8.x] [code: app/bundles/ReportBundle/Model/ReportModel.php:206-207 @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/event_listeners.html#mautic-8-class-name-event-dispatch]
 - Examples of kept constants that load fine and never fire: `FormEvents::FORM_ON_BUILD`, `PointEvents::POINT_ON_BUILD`,
   `ReportEvents::REPORT_ON_BUILD`, `LeadEvents::TIMELINE_ON_GENERATE`. [code: app/bundles/FormBundle/Model/FormModel.php:640-642 @8.x] [code: app/bundles/PointBundle/Model/PointModel.php:162-163 @8.x] [code: app/bundles/ReportBundle/ReportEvents.php:46 @8.x] [code: app/bundles/LeadBundle/Model/LeadModel.php:2059-2061 @8.x]
+- Docs vs code: `UPGRADE-8.0.md` lists `TIMELINE_ON_GENERATE` among the constants that are "unchanged", but the 8.x
+  code dispatches `new LeadTimelineEvent(...)` by class and core subscribers listen on `LeadTimelineEvent::class`. Follow
+  the code: subscribe to `LeadTimelineEvent::class`. [code: UPGRADE-8.0.md:951 @8.x] [code: app/bundles/LeadBundle/Model/LeadModel.php:2059-2061,2079,2092 @8.x] [code: app/bundles/EmailBundle/EventListener/LeadSubscriber.php:28 @8.x]
 - Fix: subscribe with the event class name. Names a plugin defines itself (campaign `batchEventName`, decision
   `eventName`, form action `eventName`) stay string-dispatched. [code: app/bundles/CampaignBundle/Executioner/Dispatcher/ActionDispatcher.php:40-41 @8.x] [code: app/bundles/CampaignBundle/Executioner/Dispatcher/DecisionDispatcher.php:27 @8.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:942 @8.x]
 - Also on 8.x: the `services` array in `config.php` is no longer read, and `--lock_mode=file_lock` is an error.
@@ -600,3 +604,31 @@ Use it alongside this guide for failures during development. [code: .agents/skil
 - `mautic:install` exits 0 when the requirements step fails; check the output. [code: app/bundles/InstallBundle/Command/InstallCommand.php:243 @7.x]
 
 Detail: mautic-testing, mautic-dev-environment.
+
+---
+
+## 19. 8.x: Campaign, Form or plugin broken after upgrading
+
+1. A Campaign stops partway after the upgrade. 8.x removed MauticSocialBundle, and saved Campaigns are not rewritten, so
+   a retained `twitter.tweet` action is no longer registered and can interrupt the rest of that Campaign. The event
+   lookup throws "Action twitter.tweet is not valid" before the action runs; look for it in `var/logs/mautic_prod-<date>.php`.
+   Confirm: `SELECT id, campaign_id, name FROM campaign_events WHERE type = 'twitter.tweet' AND deleted IS NULL;`
+   Fix: delete those actions and reconnect the steps that followed them. [PR #17473] [code: UPGRADE-8.0.md "Social media integrations" @8.x]
+   [code: app/bundles/CampaignBundle/EventCollector/Accessor/EventAccessor.php:50-53 @8.x] [code: app/bundles/CampaignBundle/Executioner/EventExecutioner.php:124 @8.x]
+2. A Form with a Social Login field no longer renders: the `plugin.loginSocial` field type is gone. Remove the field,
+   save the Form to regenerate its HTML and update any static embed copies. [code: UPGRADE-8.0.md "Social media integrations" @8.x]
+3. Social Monitoring, Tweets and the Facebook, Twitter/X, Instagram and Foursquare integrations are missing. They were
+   removed, not hidden. Remove the scheduled `mautic:social:monitoring` and `social:monitor:twitter:*` crons, clear the
+   cache and run `bin/console mautic:plugins:reload`, which marks the plugin missing and keeps its settings and tables.
+   [PR #17473] [code: UPGRADE-8.0.md "Social media integrations" @8.x] [code: app/bundles/PluginBundle/Tests/Functional/RemovedSocialBundleTest.php:15-40 @8.x]
+4. A third-party plugin fatals with "Class ... not found" or fails to load: it extends or uses a class 8.x removed, for
+   example `AbstractSsoServiceIntegration` / `AbstractSsoFormIntegration` (SSO plugins), MauticSocialBundle classes,
+   `CampaignExecutionEvent` or `IntegrationEntityModel::getRecordList()`. Check the plugin against `UPGRADE-8.0.md`
+   "Removed code". [PR #18118] [code: UPGRADE-8.0.md "Other removed code" @8.x] [code: UPGRADE-8.0.md "Social media integrations" @8.x]
+5. A plugin fails with a `TypeError` or a "Declaration of ... must be compatible with ..." fatal: 8.x added native
+   parameter and return types to plugin extension points. An `array` parameter now rejects `null`, scalars and
+   collections; overrides must keep compatible parameter types (narrowing `iterable` to `array` is not allowed) and
+   declare the new return types. Date and category setters take objects or `null`, not strings or IDs. [code: UPGRADE-8.0.md "Native parameter and return types for plugin extension points" @8.x]
+6. A listener stops firing: see §17.
+
+Detail: mautic-upgrades-and-versions, mautic-plugin-development, mautic-campaigns, mautic-forms.
