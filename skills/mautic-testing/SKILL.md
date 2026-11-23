@@ -49,10 +49,10 @@ Test container and side effects
 - A test that defines `MAUTIC_INTEGRATION_SYNC_IN_PROGRESS` without `#[RunInSeparateProcess]` makes the whole suite fail at the end [code: app/bundles/CoreBundle/Test/Extensions/SeparateProcess/SeparateProcess.php:29-31, 48-87 @7.x].
 
 Static analysis and CI
-- PHPStan runs at level 6 over `app/bundles`, `app/migrations`, `plugins` and `utils`, tests included, with type-coverage floors that new code must not lower [code: phpstan.neon:5-35 @419a08a9b35].
+- PHPStan runs at level 6 over `app/bundles`, `app/migrations`, `plugins` and `utils`, tests included, with type-coverage floors that new code must not lower [code: phpstan.neon:5-49 @7.x].
 - `composer phpstan` first warms the test container because PHPStan reads `var/cache/test/AppKernelTestDebugContainer.xml` [code: composer.json:164-212 @7.x] [code: phpstan.neon:271-276 @7.x].
-- An obsolete baseline or `ignoreErrors` entry fails PHPStan, and an unused Rector skip fails Rector (`reportUnusedSkips()`) [code: phpstan.neon:8 @7.x] [code: rector.php:56-122 @419a08a9b35].
-- On every PR CI runs PHPUnit on four PHP/database cells, Codeception e2e, PHPStan, php-cs-fixer on changed files, Rector dry-run, Twig lint, scaffold diff, `composer validate` and the api-library suite; ECS is not run in CI [code: .github/workflows/tests.yml:22-32, 181-316 @419a08a9b35] [code: .github/workflows/api-library-tests.yml:20-125 @7.x].
+- An obsolete baseline or `ignoreErrors` entry fails PHPStan, and an unused Rector skip fails Rector (`reportUnusedSkips()`) [code: phpstan.neon:8 @7.x] [code: rector.php:55-129 @7.x].
+- On every PR CI runs PHPUnit on four PHP/database cells, Codeception e2e, PHPStan, php-cs-fixer on changed files, Rector dry-run, Twig lint, scaffold diff, `composer validate` and the api-library suite; ECS is not run in CI [code: .github/workflows/tests.yml:22-32, 181-316 @7.x] [code: .github/workflows/api-library-tests.yml:20-125 @7.x].
 
 ## Where it lives
 | Concern | Path |
@@ -81,7 +81,7 @@ Full detail, with line numbers, is in references/code-map.md [code: app/phpunit.
 - Use `#[DataProvider('name')]` with a `public static` provider; `@dataProvider` annotations are not used anywhere [code: app/bundles/LeadBundle/Tests/Model/LeadModelFunctionalTest.php:189, 263-268 @7.x].
 - Get services with `static::getContainer()->get(Foo::class)`; string service ids fail PHPStan's `NoContainerGetRule` in tests [code: utils/phpstan/src/Rule/NoContainerGetRule.php:42-47 @7.x].
 - Do not change production code when the task is only to add a test [code: .github/prompts/write-test.prompt.md:29-31 @7.x].
-- Suppress a PHPStan error only with an `ignoreErrors` entry that has `identifier` and `path`, or by regenerating the baseline with `composer phpstan-baseline` [code: phpstan.neon:42-239 @419a08a9b35] [code: composer.json:182 @7.x].
+- Suppress a PHPStan error only with an `ignoreErrors` entry that has `identifier` and `path`, or by regenerating the baseline with `composer phpstan-baseline` [code: phpstan.neon:66-262 @7.x] [code: composer.json:182 @7.x].
 - Before a PR run `ddev composer test`, `ddev composer phpstan`, `ddev composer cs`, `ddev exec bin/rector --dry-run`, and `ddev composer run e2e-test` for UI changes [code: AGENTS.md @7.x] [code: .github/workflows/tests.yml:245-264 @7.x].
 - A new Doctrine migration is not exercised by functional tests; run it by hand with `doctrine:migrations:execute --up` and check `doctrine:schema:update --dump-sql` prints nothing [code: .agents/skills/mautic-dev/SKILL.md @7.x].
 - A change to a scaffolded root file (`.env`, `package.json`, `importmap.php`, `bin/console` and others) must be mirrored in `app/assets/scaffold/files/`, or the CI scaffold check fails [code: app/composer.json:116-137 @7.x] [code: .github/workflows/tests.yml:265-277 @7.x].
@@ -112,7 +112,7 @@ For QA agents that test a running instance, not the code.
 More in references/behaviour.md section 7.
 
 ## Version notes
-- 7.x uses PHPUnit 11.5, PHPStan 2 at level 6, Rector `dev-main`, php-cs-fixer plus ECS, Codeception 5 and Symfony 7.4 [code: composer.json:28-54 @419a08a9b35].
+- 7.x uses PHPUnit 11.5, PHPStan 2 at level 6, Rector `dev-main`, php-cs-fixer plus ECS, Codeception 5 and Symfony 7.4; after 7.2.2, 7.x also drops `rector/type-perfect` (its rules now come from `tomasvotruba/type-coverage` 2.5) and switches off every `symplify/phpstan-rules` set except the rules listed in `phpstan.neon` (unreleased on 7.x, 7.3.0-rc) [code: composer.json:28-54 @7.x] [code: phpstan.neon:21-44 @7.x] [PR #17846].
 - 8.x moves to PHPUnit 13, keeps PHPStan level 6 with many more custom rules and a smaller baseline, pins Rector `^2.6.5`, drops php-cs-fixer for ECS only, runs tools from `vendor/bin/`, and adds `dg/bypass-finals` so tests can mock final classes [code: composer.json @8.x] [PR #17004] [PR #17280] [PR #17164] [PR #17366].
 - 8.x forbids test doubles of `Request`, `InputBag` and `Router` (final in Symfony 8) [code: composer.json @8.x] [PR #17392].
 - 8.x dispatches most events by class name, so a listener test asserting a string event key from `getSubscribedEvents()` must change [PR #17625].
@@ -130,7 +130,7 @@ More in references/behaviour.md section 7.
 - An outbound call that "succeeds" in a test proves nothing; the mock answers 200 with an empty body [code: app/config/config_test.php:150-154 @7.x].
 - `.env.test` says `MAUTIC_ADMIN_PASSWORD=mautic`, but the fixtures and the client use `Maut1cR0cks!` [code: .env.test @7.x] [code: app/bundles/UserBundle/DataFixtures/ORM/LoadUserData.php:24-49 @7.x].
 - php-cs-fixer in CI checks only changed files, so `composer cs` locally can report errors CI never would [code: .github/workflows/tests.yml:256-264 @7.x].
-- Rector is pinned to `dev-main` on 7.x, so a rebase can surface new Rector findings unrelated to your change [code: composer.json:28-54 @419a08a9b35].
+- Rector is pinned to `dev-main` on 7.x, so a rebase can surface new Rector findings unrelated to your change [code: composer.json:45 @7.x].
 - Coverage is never collected on pull requests; adding the `ready-to-commit` label starts a long coverage run [code: .github/workflows/tests.yml:36-44 @7.x] [code: .github/workflows/coverage-check.yml:7-88 @7.x].
 - Changes under `tests/` trigger a workflow that runs the e2e suite 10 times to catch flakiness [code: .github/workflows/e2e-tests.yml:25-28 @7.x].
 - Fixed `wait()` calls in a Cest are rejected in review because they slow the suite; wait for the element, the closed modal or the notification instead [PR #14304] [PR #14157].
@@ -138,7 +138,10 @@ More in references/behaviour.md section 7.
 - To see what a functional test wrote inside its rolled-back transaction, set your DB client to READ UNCOMMITTED [PR #9387].
 - Do not add Codeception modules or other unrelated `composer.json` changes in a feature PR; reviewers ask for them to be reverted [PR #14998].
 - A crashed run can leave `config/local.php.backup` behind [code: app/bundles/CoreBundle/Test/MauticMysqlTestCase.php:326-337 @7.x].
-- Near-duplicate test methods trip SonarCloud's duplication gate; extract a helper [code: .agents/skills/mautic-dev/SKILL.md @7.x].
+- Extract a helper instead of writing near-duplicate test methods. SonarCloud's duplication gate used to enforce this; the 7.x head no longer has SonarCloud references, and the `.agents` skill dropped the warning (unreleased on 7.x, 7.3.0-rc) [PR #17923] [code: .agents/skills/mautic-dev/SKILL.md @7.x].
+- Do not write tests that read source files by path, assert a stubbed helper's exact call arguments or order or hard-coded style values, or add globals only so a test can reach a helper; core's `AGENTS.md` forbids all three on the 7.x head (unreleased on 7.x, 7.3.0-rc) [code: AGENTS.md "Test Rules" @7.x] [PR #17955].
+- In a Cest, every `waitFor...()` passes `AcceptanceTester::TIMEOUT`, clicks go through `waitForElementClickable()` plus `click()` rather than `executeJS()`, and each test creates its own uniquely named data because the E2E database is loaded once; CodeRabbit checks these on `tests/acceptance` and `tests/_support` (unreleased on 7.x, 7.3.0-rc) [code: .coderabbit.yaml:164-187 @7.x] [PR #18064].
+- A Cest that changes saved list filters or sort order leaves them in the shared login session snapshot and breaks later Cests; log out in a `finally` block, or call `login()` with `reuseSessionSnapshot: false` (the parameter is unreleased on 7.x, 7.3.0-rc; [PR #17830]) [PR #18095] [code: tests/_support/AcceptanceTester.php:27-53 @7.x].
 - The KB says Gitpod fixtures log in as admin/mautic; DDEV and tests use `Maut1cR0cks!` [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html].
 - The e2e devdocs show `tests/Acceptance` and `Support/` with capitals; the tree uses `tests/acceptance/` and `tests/_support/` [docs: https://devdocs.mautic.org/en/7.2/testing/e2e_test_suite.html] [code: codeception.yml @7.x].
 - Open question: the KB DDEV article mentions MailHog while D13 notes DDEV now ships Mailpit [unverified]; either way the SMTP port is 1025 [kb: https://kb.mautic.org/article/how-to-set-up-a-mautic-instance-for-testing-locally-with-ddev.html].

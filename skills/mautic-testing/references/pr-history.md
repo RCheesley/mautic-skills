@@ -25,7 +25,7 @@
 
 ## How to read this file
 Source: merged pull requests on github.com/mautic/mautic for the test suite, static analysis and CI, harvested 2026-10-15.
-Versions are inferred from each PR's base branch and merge date; `~` marks an inference. "7.x, unreleased" means merged to 7.x after 7.2.1.
+Versions are inferred from each PR's base branch and merge date; `~` marks an inference. "7.x, unreleased" means merged to 7.x after 7.2.1 and not in 7.2.2; entries added from the 2026-10-15 to 2026-11-23 delta say "unreleased on 7.x (7.3.0-rc)" or "7.2 branch after 7.2.2" (milestone 7.2.3, not yet merged into the 7.x head).
 Current behaviour lives in behaviour.md (code-verified); this file explains why and when it came to be.
 
 ## Decisions that shaped current behaviour
@@ -58,6 +58,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - `MauticMysqlTestCase` has an `afterRollback()` hook so schema changes are undone even when the test fails. The author chose a new hook over `setUp()`/`beforeTearDown()` [PR #14482] (v5.2.2).
 - The suite fails when a test needs a separate process and is not marked for it. Why: tests that only pass in isolation hide state leaks [PR #12137] (~v5.0). Today this is the `SeparateProcess` extension (behaviour 3.20).
 - Flaky functional tests are fixed in shared base classes where possible [PR #15058] (~v7.0).
+- `AbstractMauticTestCase::tearDown()` no longer needs `restore_exception_handler()`, because Symfony stopped leaking the kernel's exception handler; core-lib conflicts with `symfony/error-handler <7.4.19` instead (7.2 branch after 7.2.2) [PR #18053].
 - Fixture users `admin` and `sales` use the password `Maut1cR0cks!`, matching DDEV. Why: password complexity rules made `mautic` trigger an insecure-password warning; see issue mautic/mautic#13104 [PR #13105] (~v5.1).
 - Fixture classes that DI needs at runtime live outside `Tests/` (for example `DataFixtures/`), because `Tests/` folders are stripped from packages. Optional services whose class is missing are dropped [PR #8356] [PR #8377] (~v3.0).
 
@@ -104,6 +105,10 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - GrapesJS builder tests wait for `Mautic.launchBuilder`, click `#page_buttons_builder` (not `.btn-builder`), wait for the theme request and the enabled button, then for `.builder.builder-active` [PR #17118] (v7.2.0).
 - UI bug fixes are expected to ship with a Cest where practical [PR #14750] [PR #14794] [PR #14833] [PR #15914]. An E2E assertion checks the real contract (every action link has an `href`) rather than a proxy attribute [PR #14833] (~v6.0.1).
 - PHP-CS-Fixer also covers `tests/` [PR #16729]; `tests/_support` classes are `final` [PR #16733] (v7.2.0).
+- `AcceptanceTester::login()` checks a restored session through `window.LoginUserId` instead of looking for the login form, and can force a fresh login with `reuseSessionSnapshot: false` [PR #17830] (unreleased on 7.x, 7.3.0-rc).
+- CodeRabbit has path instructions for `tests/{acceptance,_support}/**`: condition-based waits with `AcceptanceTester::TIMEOUT`, no `executeJS()` clicks, self-contained data, page-object selectors [PR #18064] (unreleased on 7.x, 7.3.0-rc).
+- A reviewer asked for a JavaScript URL-building fix to be covered in the existing Codeception suite rather than a new standalone Node test; the Cest then clicks the rendered sort header and observes the AJAX request [PR #18095] (7.2 branch after 7.2.2). Its first version left a contact filter in the shared login session and failed later Cests in CI, so it now logs out in `finally` [PR #18095].
+- [PR #18119] adds `CampaignChosenTooltipCest`, a browser regression test that checks no asynchronous JavaScript error follows repeated tooltip teardown; all 10 E2E verification runs were green before approval (7.2 branch after 7.2.2).
 
 ### PHPStan and the baseline
 - PHPStan analyses migrations too. Why: a migration referencing a non-existent class shipped in 3.2.0 and broke upgrades; see issue mautic/mautic#9479 [PR #9480] (~v3.2.2).
@@ -119,6 +124,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - A git-ignored `phpstan.neon.dist` can include `phpstan.neon` and override parallel settings for faster local runs [PR #16550] (v7.2.0).
 - PHPStan is at level 6 at 5.0.0, 6.0.0 and 7.x [code: phpstan.neon:6 @5.0.0] [code: phpstan.neon:6 @6.0.0] [code: phpstan.neon:6 @7.x]. The "level 3 fixes" PRs worked from a no-baseline level-3 run [PR #16494] [PR #16545] (v7.2.0).
 - `symplify/phpstan-rules` [PR #16716] [PR #16742] and the `rector/type-perfect` ruleset [PR #16850] are enabled (v7.2.0). Under type-perfect, objects are checked with `instanceof`, not `empty()` or `isset()` [PR #16850].
+- `rector/type-perfect` was dropped from 7.x because type-coverage 2.3+ ships the same rules and installing both registered them twice; `phpstan.neon` opts back in to `no_param_type_removal`, `no_isset_on_object` and `no_empty_on_object`, drops the `declare` floor, and turns every `symplify` rule set off so `phpstan-rules` 14.19 does not enable new rules by default [PR #17846] (unreleased on 7.x, 7.3.0-rc; 8.x did the same in [PR #17498]) [code: phpstan.neon:21-44 @7.x].
+- Baseline entries for undefined properties are removed by fixing the code in the same PR (declare the property, call the right method), not by regenerating the baseline [PR #18085] [PR #18086] (7.2 branch after 7.2.2).
 
 ### Custom PHPStan rules
 - Custom rules live in `utils/phpstan/src/Rule/` with tests in `utils/phpstan/tests/`, run by PHPUnit [PR #16583] (v7.2.0).
@@ -161,13 +168,15 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - The 7.x matrix pairs PHP with databases instead of crossing them: PHP 8.2 with MySQL 8.4 and MariaDB 10.11, PHP 8.5 with MySQL 9.2 and MariaDB 11.4 [code: .github/workflows/tests.yml:22-32 @7.x] [PR #16646].
 - `api-library-tests.yml` runs mautic/api-library against the checkout [PR #16532] (v7.2.0). Fixes on a patch branch are merged up so the scheduled api-library tests stay green [PR #13457] (~v5.1).
 - `validate-json.yml` checks changed JSON files with `jq` [PR #14622] (~v6.0).
-- From 7.2.2 the release workflow checks that DomCrawler is in the full package [PR #17616]; this is fixed in 7.2.2 on the 7.2 branch and not in the 7.x snapshot.
+- From 7.2.2 the release workflow checks that DomCrawler is in the full package [PR #17616]; 7.2.2 is merged into 7.x, so the 7.x head has the check [code: .github/workflows/release.yml:71 @7.x].
+- From 7.2.2 a tag push also runs `publish-grapesjs-package.yml`, which builds the GrapesJS assets apart from the publishing credentials, pushes the tag with compiled `dist` files to the split plugin repository and verifies it with a clean Composer install; development branches stay source-only [PR #17831] [code: .github/workflows/publish-grapesjs-package.yml @7.x].
 - In 8.x, CI runs PHP 8.4 only [PR #16993] and fails when an existing table changes shape [PR #17407] (8.x only).
 
 ### Coverage policy
 - Coverage was generated for one PHP version only, and `composer test` does not collect it by default [PR #8954] (~v3.0.1).
 - PRs are expected to keep or improve coverage; a drop is ignored when no PHP code changed [PR #9120] [PR #9523] [PR #10105].
 - Codecov and SonarCloud are advisory [PR #12199] [PR #13622]. JUnit and clover reports feed SonarCloud [PR #12454] (~v5.0).
+- SonarQube/SonarCloud references were removed from 7.x, including the `.agents` skill's duplication warning [PR #17923] (unreleased on 7.x, 7.3.0-rc).
 - Coverage is no longer collected on pull requests, only on push and schedule. Why: the coverage leg took about 19 minutes against about 11 [PR #16646] (v7.2.0).
 - A PR gets a one-off coverage run when labelled `check-coverage` (removed afterwards) or `ready-to-commit` (kept). Label removal runs through `workflow_run` because fork PRs have read-only tokens [PR #16697] (v7.2.0).
 
@@ -201,12 +210,14 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | Most E2E tests failed locally in dev mode | `EnvHelper` forces `APP_ENV=test` | [PR #16729] | 7.2.0 |
 | CI E2E failure showed only an exit code | Output streamed to the log | [PR #16730] | 7.2.0 |
 | GrapesJS Cest missed the builder button | Canonical selector plus AJAX and state waits | [PR #17118] | 7.2.0 |
+| A new Cest left a list filter in the shared session; later Cests failed in CI | The Cest logs out in `finally` | [PR #18095] | 7.2 branch after 7.2.2 |
 | **Static analysis** | | | |
 | Upgrade broke on a migration using a missing class | Migrations are analysed by PHPStan | [PR #9480] | ~3.2.2 |
 | `composer phpstan` failed on a clean checkout | It builds the test container first | [PR #12515] | ~5.0 |
 | PHPStan cache lost on every branch switch | Cache in `var/phpstan-cache` | [PR #13302] | ~5.1 |
 | Rector took 13 minutes in dry-run | Rector cache populated in CI | [PR #12475] | ~5.0 |
 | A tool upgrade merged red and broke all PRs | Tool-upgrade PRs must be green | [PR #12556] | ~5.0 |
+| PHPStan failed to boot with type-coverage 2.3+ and `rector/type-perfect` together | `rector/type-perfect` removed | [PR #17846] | unreleased on 7.x (7.3.0-rc) |
 | **CI** | | | |
 | No CI on 4.x for two months | Triggers on every `[MAJOR].*` branch | [PR #10591] | ~4.x |
 | Forks got scheduled-workflow failure emails | Side-effect workflows run only in mautic/mautic | [PR #10594] [PR #10894] | ~4.2 |
@@ -229,7 +240,9 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | ~7.0 | MySQL 8.4+ / MariaDB 10.11+ matrix; deprecation-free PHPUnit on PHP 8.4 | [PR #14836] [PR #15280] |
 | 7.1.0 | `mautic:phpunit:config`; deterministic E2E selectors | [PR #15628] [PR #15937] |
 | 7.2.0 | PHPUnit 11; custom PHPStan and Rector rules in `utils/`; baseline cut; baseline job removed; no coverage on PRs; label-triggered coverage; api-library CI; SHA-pinned actions; Chromium image; `EnvHelper` | [PR #16891] [PR #16583] [PR #16500] [PR #16581] [PR #16646] [PR #16697] [PR #16532] [PR #16227] [PR #16724] [PR #16729] |
-| 7.2.2 (7.2 branch) | Release workflow asserts DomCrawler in the package | [PR #17616] |
+| 7.2.2 | Release workflow asserts DomCrawler in the package; GrapesJS package published with prebuilt assets | [PR #17616] [PR #17831] |
+| 7.2 branch after 7.2.2 | No `restore_exception_handler()` in `AbstractMauticTestCase`; sorting and campaign-tooltip Cests | [PR #18053] [PR #18095] [PR #18119] |
+| Unreleased on 7.x (7.3.0-rc) | Dev-dependency bump without `rector/type-perfect`; Sonar references removed; `AGENTS.md` test rules; CodeRabbit E2E rules; `login(reuseSessionSnapshot)` | [PR #17846] [PR #17923] [PR #17955] [PR #18064] [PR #17830] |
 | 8.x | PHP 8.4-only CI; table-shape check | [PR #16993] [PR #17407] |
 
 ## Removed, deprecated, replaced
@@ -251,6 +264,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | Coverage on every PR | Push/schedule plus label opt-in | [PR #16646] [PR #16697] | 7.2.0 |
 | seleniarm image | `selenium/standalone-chromium` | [PR #16724] | 7.2.0 |
 | phpspec/prophecy (5.2, 6.0) | PHPUnit mocks | [PR #15816] [PR #15817] | 5.2.10 / 6.0.8 |
+| `rector/type-perfect` package, `type_coverage.declare` | `type_perfect` options of type-coverage 2.5 | [PR #17846] | unreleased on 7.x (7.3.0-rc) |
+| SonarCloud references | None | [PR #17923] | unreleased on 7.x (7.3.0-rc) |
 
 ## Maintainer norms for this area
 - PRs that change only tests or CI can merge with one approval once CI is green; CI blockers may be self-merged [PR #11045] [PR #12137] [PR #12765] [PR #13797].
@@ -266,6 +281,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - Test schema changes must be reverted even when the test fails [PR #14482].
 - Keep CI affordable: test the latest version per DB major, and keep tooling fast [PR #14836] [PR #13048] [PR #16646].
 - Update paired GitHub Actions together, for example upload and download artifact [PR #13830].
+- Cover front-end fixes with the existing Codeception suite rather than starting a new kind of test [PR #18095].
+- Tests assert observable results through the public entry point, not stubbed call arguments or source-file contents [PR #17955].
 
 ## Open questions
 - Resolved: behaviour.md 9.7 previously repeated the KB's `index_dev.php` advice; it now says dev mode is `APP_ENV=dev` in `.env.local` [PR #12206] [PR #13295].
@@ -284,3 +301,4 @@ The dev-tooling-testing area has 588 merged PRs in six chunks (#258 to #17832, 2
 About 440 are substantive across testing and dev-env; the rest are dependency bumps, template edits, reverts and branch merges.
 This file uses the `[testing]` items; `[dev-env]` items are in mautic-dev-environment, and product-code PRs that landed in the bucket were skipped.
 A further 869 noise PRs across all areas were excluded upstream before chunking.
+The 2026-11-23 update read the delta bucket (10 PRs, #17831 to #18236, merged 2026-10-19 to 2026-11-17) and the 7.x commits that changed the cited tooling files; 8.x-only items went to the Phase 4 notes.

@@ -32,13 +32,13 @@ All paths are relative to the repository root of `mautic/mautic` 7.x (the snapsh
 | Item | Location | Source |
 |---|---|---|
 | Root package `mautic/mautic` `require` | `composer.json:23-27` | [code: composer.json:23-27 @7.x] |
-| `require-dev` (PHPUnit 11.5, PHPStan 2, Rector dev-main, php-cs-fixer, ECS, Codeception 5, liip test bundles) | `composer.json:28-56` | [code: composer.json:28-56 @419a08a9b35] |
+| `require-dev` (PHPUnit 11.5, PHPStan 2, Rector dev-main, php-cs-fixer, ECS, Codeception 5, liip test bundles; no `symfony/dom-crawler` since 7.2.2, no `rector/type-perfect` on the 7.x head) | `composer.json:28-54` | [code: composer.json:28-54 @7.x] [PR #17592] [PR #17846] |
 | `replace` (plugins, themes, GrapesJS bundle) | `composer.json:57-110` | [code: composer.json:55-108 @7.x] |
 | Path repo `app` = `mautic/core-lib` | `composer.json:124-148` | [code: composer.json:122-146 @7.x] |
 | Scripts | `composer.json:149-193` | [code: composer.json:147-191 @7.x] |
 | `config` (platform php 8.2.0, `bin-dir bin`, `component-dir media/assets`, `process-timeout 5000`) | `composer.json:195-211` | [code: composer.json:193-209 @7.x] |
 | `extra.installer-paths`, `extra.patches` | `composer.json:212-240` | [code: composer.json:210-238 @7.x] |
-| Core-lib manifest (runtime deps, `Mautic\` autoload, scaffold file map, `pre-autoload-dump`) | `app/composer.json` | [code: app/composer.json:7-136 @419a08a9b35] |
+| Core-lib manifest (runtime deps, `Mautic\` autoload, scaffold file map, `pre-autoload-dump`) | `app/composer.json` | [code: app/composer.json:7-163 @7.x] |
 | Scaffold templates | `app/assets/scaffold/files/` | [code: app/composer.json:116-137 @7.x] |
 
 ### Composer scripts
@@ -59,14 +59,14 @@ All paths are relative to the repository root of `mautic/mautic` 7.x (the snapsh
 ## 4. Front-end build
 | Item | Location | Source |
 |---|---|---|
-| npm manifest (`build`, `postinstall`, CKEditor 5, jQuery, Chart.js and others) | `package.json` | [code: package.json:5-65 @419a08a9b35] |
+| npm manifest (`build`, `postinstall`, CKEditor 5, jQuery, Chart.js `^4.6.1` on the 7.x head, unreleased [PR #17917], and others) | `package.json` | [code: package.json:5-65 @7.x] |
 | CKEditor webpack build | `webpack.config.js` → `media/libraries/ckeditor/ckeditor.js` | [code: webpack.config.js:14-37 @7.x] |
 | npm patches | `patches/at.js+1.5.4.patch`, `patches/chosen-js+1.8.7.patch` | [code: composer.json:178 @7.x] |
 | Importmap entry | `importmap.php` → `app/bundles/CoreBundle/Assets/app.js` | [code: importmap.php:3-12 @7.x] |
 | AssetMapper and Sass config | `app/config/config.php:50-73`, `:134-144` | [code: app/config/config.php:50-73 @7.x] |
 | Sass source | `app/bundles/CoreBundle/Assets/css/app.scss` | [code: app/config/config.php:134-144 @7.x] |
 | TypeScript config | `tsconfig.json` (strict, es2019, `include: []`) | [code: tsconfig.json:7-21 @7.x] |
-| Asset generation command `mautic:assets:generate` | `app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php` | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:32-120 @419a08a9b35] |
+| Asset generation command `mautic:assets:generate` | `app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php` | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:32-130 @7.x] |
 | Bundle asset combiner | `app/bundles/CoreBundle/Helper/AssetGenerationHelper.php` | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:86 @7.x] |
 | GrapesJS plugin build (`build`, `build-dev`, `rebuild-dev`, Parcel) | `plugins/GrapesJsBuilderBundle/package.json` | [code: plugins/GrapesJsBuilderBundle/package.json:18-22 @7.x] |
 | Non-fatal GrapesJS wrapper | `build/gjs_build.php` | [code: build/gjs_build.php:1-13 @7.x] |
@@ -76,7 +76,7 @@ All paths are relative to the repository root of `mautic/mautic` 7.x (the snapsh
 |---|---|---|
 | `node_modules/` | `npm ci` | [code: .gitignore:66-105 @7.x] |
 | `media/libraries/ckeditor/*` | webpack (`npm run build`) | [code: webpack.config.js:28-37 @7.x] |
-| `media/css/app.css`, `media/css/libraries.css`, `media/js/app.js`, `media/js/libraries.js`, `media/js/mautic-form.js` | `mautic:assets:generate` | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:80-96 @419a08a9b35] |
+| `media/css/app.css`, `media/css/libraries.css` (deleted and rebuilt on each run since 7.2.2 [PR #17597]), `media/js/app.js`, `media/js/libraries.js`, `media/js/mautic-form.js` | `mautic:assets:generate` | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:80-104 @7.x] |
 | `var/sass/` | `sass:build` | [code: .gitignore:68-69 @7.x] |
 | `assets/build/` (incl. `manifest.json`) | `asset-map:compile` | [code: .gitignore:67 @7.x] |
 | `plugins/GrapesJsBuilderBundle/Assets/library/js/dist/` | Parcel build | [code: plugins/GrapesJsBuilderBundle/package.json:18-19 @7.x] |
@@ -88,7 +88,9 @@ All paths are relative to the repository root of `mautic/mautic` 7.x (the snapsh
 | `build/hooks/pre-commit` | php-cs-fixer on staged files, re-add | [code: build/hooks/pre-commit:17-20 @7.x] |
 | `build/hooks/post-checkout` | `rm -rf var/cache`; in Codespaces also `ddev composer install` and migrations | [code: build/hooks/post-checkout:1-12 @7.x] |
 | `build/package_release.php` | Build release and update ZIPs (`-b=<branch-or-tag>`) | [code: build/package_release.php:8-274 @7.x] |
-| `build/exclude_files.txt` | Excludes `.ddev/*`, `.devcontainer/*`, test tooling from packages | [code: build/exclude_files.txt @7.x] |
+| `build/exclude_files.txt` | Excludes `.ddev/*`, `.devcontainer/*`, test tooling from packages; no vendor paths since 7.2.2 | [code: build/exclude_files.txt @7.x] [PR #17616] |
+| `build/package_devhead.php` | Removed in 7.2.2 ("broken dev_head packaging"); not in the 7.x head | [PR #17832] |
+| `.github/workflows/publish-grapesjs-package.yml`, `.github/scripts/publish-grapesjs-package.sh` | On every tag, build GrapesJS and push the tag with compiled assets to the split plugin repo (7.2.2) | [code: .github/workflows/publish-grapesjs-package.yml @7.x] [PR #17831] |
 | `build/processfiles.php` | Deletes tests, dev config and caches from packages | [code: build/processfiles.php:9-32 @7.x] |
 
 ## 6. Install, bootstrap and platform
@@ -103,7 +105,7 @@ All paths are relative to the repository root of `mautic/mautic` 7.x (the snapsh
 | "Installed" check | `app/AppKernel.php:272-283` | [code: app/AppKernel.php:272-283 @7.x] |
 | `.env` loading, `APP_ENV`/`APP_DEBUG` defaults | `app/config/bootstrap.php:14-32` | [code: app/config/bootstrap.php:14-32 @7.x] |
 | Console bootstrap | `bin/console`, `app/console-application.php` | [code: app/console-application.php:26-51 @7.x] |
-| Platform versions | `app/release_metadata.json` | [code: app/release_metadata.json:4-10 @419a08a9b35] |
+| Platform versions (`version` 7.2.2 on the 7.x head) | `app/release_metadata.json` | [code: app/release_metadata.json:2-10 @7.x] |
 | PHP version gate | `app/middlewares/VersionCheckMiddleware.php` | [code: app/middlewares/VersionCheckMiddleware.php:46-59 @7.x] |
 | Dev IP restriction (DDEV allowed) | `app/middlewares/Dev/IpRestrictMiddleware.php` | [code: app/middlewares/Dev/IpRestrictMiddleware.php:27-56 @7.x] |
 
@@ -133,8 +135,8 @@ All paths are relative to the repository root of `mautic/mautic` 7.x (the snapsh
 | `.env.test` | `DB_HOST=127.0.0.1`, `DB_PORT=3306`, `DB_NAME=mautictest`, `DB_USER=root`, empty password, prefix `test_`, `MAUTIC_ENV=test`, unused admin vars, SAML host/port | [code: .env.test:1-13 @7.x] |
 | `.env.test.local` (DDEV copy) | `DB_HOST=db`, `DB_USER=db`, `DB_PASSWD=db`, `DB_NAME=test` | [code: .ddev/.env.test.local @7.x] |
 | `app/phpunit.xml.dist` | `KERNEL_CLASS=AppTestKernel`, `APP_ENV=test`, extensions | [code: app/phpunit.xml.dist:65-82 @7.x] |
-| `codeception.yml`, `tests/` | E2E suite; `AcceptanceTester::login('admin','Maut1cR0cks!')` | [code: tests/_support/AcceptanceTester.php:27 @419a08a9b35] |
-| `AGENTS.md`, `.agents/skills/mautic-dev/SKILL.md` | In-repo agent guidance (run via DDEV, PR checklist) | [code: AGENTS.md @7.x] |
+| `codeception.yml`, `tests/` | E2E suite; `AcceptanceTester::login('admin','Maut1cR0cks!', reuseSessionSnapshot: true)` (third parameter unreleased on 7.x [PR #17830]) | [code: tests/_support/AcceptanceTester.php:27 @7.x] |
+| `AGENTS.md`, `CLAUDE.md`, `.agents/skills/mautic-dev/SKILL.md`, `.claude/skills/mautic-dev` (symlink to the `.agents` skill) | In-repo agent guidance (run via DDEV, PR checklist). Changes on the 7.x head since the previous snapshot, all unreleased: `AGENTS.md` adds "Test Rules" [PR #17955] and a "Design System" section that sends UI work to the new root `DESIGN.md` [PR #17879]; the `.agents` skill drops its SonarCloud duplication bullet [PR #17923]; `CLAUDE.md` still only points to `AGENTS.md` | [code: AGENTS.md @7.x] [code: CLAUDE.md @7.x] [code: DESIGN.md @7.x] |
 
 ## 10. CI jobs that exercise the environment
 | Workflow | What it proves | Source |

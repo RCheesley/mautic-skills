@@ -23,7 +23,7 @@
 
 ## How to read this file
 Source: merged pull requests on github.com/mautic/mautic for DDEV, Codespaces, build, packaging and dependency tooling, harvested 2026-10-15.
-Versions are inferred from each PR's base branch and merge date; `~` marks an inference. "7.x, unreleased" means merged to 7.x after 7.2.1.
+Versions are inferred from each PR's base branch and merge date; `~` marks an inference. "7.x, unreleased" and "unreleased on 7.x (7.3.0-rc)" mean merged to 7.x and not in 7.2.2.
 Current behaviour lives in behaviour.md (code-verified); this file explains why and when it came to be.
 
 ## Decisions that shaped current behaviour
@@ -91,7 +91,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - `config.platform.php` is set to the lowest supported PHP [PR #5718] (~v2.13). 7.x pins 8.2.0 (behaviour 1.2).
 - Security releases raise the floor in `composer.json`, not only the lock [PR #8417] [PR #9025].
 - Test-only packages belong in `require-dev`, so `--no-dev` builds stay small; moving a production dependency there is a BC break [PR #8404] (~v3.0).
-- A runtime library must be in `require` in both `app/composer.json` and the root `composer.json`, because production installs use `--no-dev` [PR #17265] (v7.2.1) [PR #17592] (7.2.2). The 7.x snapshot has DomCrawler in core-lib `require` but still in the root `require-dev`; the root fix is in 7.2.2 on the 7.2 branch [code: app/composer.json:79 @7.x] [code: composer.json:48 @419a08a9b35].
+- A runtime library must be in `require` in both `app/composer.json` and the root `composer.json`, because production installs use `--no-dev` [PR #17265] (v7.2.1) [PR #17592] (7.2.2). The root fix shipped in 7.2.2, which is merged into 7.x: the 7.x head has DomCrawler in core-lib `require` and no longer in the root `require-dev` [code: app/composer.json:79 @7.x] [code: composer.json:28-54 @7.x].
 - A PR must not update unrelated packages in `composer.lock`, and lock changes go in the same PR as the constraint change [PR #11563] [PR #12473] (~v5.0).
 - Dependency updates use targeted `composer update <pkg> -W` and paste the command and lock output; `composer why-not` justifies blockers [PR #14262] [PR #15814] [PR #17342].
 - Security updates are backported to every maintained line in parallel PRs [PR #15637] [PR #15656] [PR #16141] [PR #16142]. Old lines get lock-only updates validated by `composer audit --locked` [PR #16141].
@@ -126,7 +126,9 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - Update packages include renamed files, use a higher rename limit and run Composer scripts explicitly [PR #12519] [PR #12521] (~v5.0).
 - Update packages include generated Carbon pictograms and `media/bundles`; missing pictograms caused HTTP 500 on emails after 7.0.0 [PR #15841] (7.0.1).
 - The release zip is uploaded to m.mautic.org only for stable releases, comparing `is-prerelease` as the string `'false'` [PR #10882] [PR #15938] (v7.1.0). It is registered as a remote asset pointing at the GitHub download [PR #15704] (v7.1.0).
-- `build/exclude_files.txt` must not list vendor packages, because the build already uses `--no-dev`; a vendor exclusion stripped DomCrawler from the 7.2.1 package. The release workflow now checks `Crawler.php` is present, and `build/package_devhead.php` was deleted [PR #17616] [PR #17832] (7.2.2). These are fixed in 7.2.2 on the 7.2 branch; the 7.x snapshot still has the exclusion and the script [code: build/exclude_files.txt:37 @419a08a9b35] [code: build/package_devhead.php @419a08a9b35].
+- `build/exclude_files.txt` must not list vendor packages, because the build already uses `--no-dev`; a vendor exclusion stripped DomCrawler from the 7.2.1 package. The release workflow now checks `Crawler.php` is present, and `build/package_devhead.php` was deleted [PR #17616] [PR #17832] (7.2.2). These shipped in 7.2.2 and are in the 7.x head: `exclude_files.txt` lists no vendor paths, and `build/package_devhead.php` was removed by commit `acca20fdd53` ("Remove broken dev_head packaging and stale vendor exclusions") [PR #17832] [code: build/exclude_files.txt @7.x] [code: .github/workflows/release.yml:71 @7.x].
+- Composer releases of the GrapesJS plugin carry prebuilt assets: on each tag, `publish-grapesjs-package.yml` builds them in a job without publishing credentials, pushes the tag with the compiled `dist` files to the split repository, verifies it with a clean Composer install, and the monorepo split skips that tag. Development branches stay source-only, and the matching `mautic/recommended-project` release waits for this workflow. Why: Composer installs of 7.2.1 had no builder assets (issue mautic/mautic#17261) [PR #17831] (7.2.2) [code: .github/workflows/publish-grapesjs-package.yml @7.x] [code: .github/workflows/split-monorepo-in-multi-repo.yml:95-97 @7.x].
+- `mautic:assets:generate` deletes `media/css/libraries.css` before regenerating it, so a stale combined file is not kept [PR #17597] (7.2.2) [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:80-84 @7.x].
 
 ## Regression catalogue
 | Symptom | Expected behaviour | PR | Version |
@@ -164,6 +166,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | Emails returned 500 after upgrading to 7.0.0 | Pictograms in the update zip | [PR #15841] | 7.0.1 |
 | Pre-releases were uploaded to m.mautic.org | String comparison of `is-prerelease` | [PR #15938] | 7.1.0 |
 | 7.2.1 release zip lacked DomCrawler | No vendor exclusions; package check | [PR #17616] | 7.2.2 |
+| Composer installs had no GrapesJS builder assets | Tags in the split repo carry compiled assets | [PR #17831] | 7.2.2 |
+| `media/css/libraries.css` stayed stale after asset generation | The file is deleted and rebuilt | [PR #17597] | 7.2.2 |
 
 ## Feature timeline
 | Version | Change | PR |
@@ -178,8 +182,9 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | 7.0 | MySQL 8.4 / MariaDB 10.11; `~7.4.0` Symfony; Node 24 (7.0.1) | [PR #14836] [PR #15705] [PR #15828] |
 | 7.1 | DDEV UTC; Guzzle minor lock; stable-only release upload; Codespaces in templates (7.1.1) | [PR #15650] [PR #15737] [PR #15938] [PR #16032] |
 | 7.2.0 | Gitpod removed; Codespaces prebuilds; grouped lock-only Dependabot; SHA-pinned actions; `js-cookie` removed | [PR #16310] [PR #16309] [PR #16219] [PR #16234] [PR #16227] [PR #16161] |
-| 7.2.1-7.2.2 (7.2 branch) | DomCrawler in `require`; no vendor exclusions; `package_devhead.php` deleted | [PR #17265] [PR #17592] [PR #17616] [PR #17832] |
-| 7.x, unreleased | Bug template lists 7.2 first; imports sorted | [PR #17340] [PR #17556] |
+| 7.2.1-7.2.2 | DomCrawler in `require`; no vendor exclusions; `package_devhead.php` deleted; GrapesJS package with prebuilt assets; stale `libraries.css` fix (all merged into 7.x) | [PR #17265] [PR #17592] [PR #17616] [PR #17832] [PR #17831] [PR #17597] |
+| Unreleased on 7.x (7.3.0-rc) | Bug template lists 7.2 first; imports sorted | [PR #17340] [PR #17556] |
+| Unreleased on 7.x (7.3.0-rc) | `DESIGN.md` and the `AGENTS.md` design gate; `AGENTS.md` test rules; Sonar references removed; Chart.js 4; dev-tool bump without `rector/type-perfect` | [PR #17879] [PR #17955] [PR #17923] [PR #17917] [PR #17846] |
 | 8.x | PHP 8.4 minimum; Symfony 8 dependency upgrades | [PR #16993] [PR #17342] [PR #17370] |
 
 ## Removed, deprecated, replaced
@@ -217,7 +222,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - `gaufrette/extras` was mirrored as `mautic/gaufrette-extras` [PR #15923] and its removal was questioned in release prep [PR #15927]; the final state is not recorded.
 - [PR #9341] blocks web access to `composer.json` and `composer.lock` only on Apache; whether Nginx installs expose them is open.
 - Whether `upgrade.php` still ships in the full package, a security concern raised in [PR #8577], is not checked.
-- Whether the root DomCrawler fix [PR #17592] and the packaging fixes [PR #17616] [PR #17832] have been merged up to 7.x is not visible in this snapshot.
+- Resolved: the root DomCrawler fix [PR #17592] and the packaging fixes [PR #17616] [PR #17832] are in the 7.x head, because 7.2.2 is merged into 7.x [code: composer.json:28-54 @7.x] [code: build/exclude_files.txt @7.x].
 - When DDEV moves to a new PHP version is not stated as a policy [PR #12467].
 - Testing a lock-less Composer install in CI was suggested [PR #13272]; the recommended-project job [PR #15436] covers part of it.
 
@@ -227,3 +232,4 @@ About 440 are substantive across testing and dev-env; the rest are dependency bu
 This file uses the `[dev-env]` items; `[testing]` items are in mautic-testing, and product-code PRs that landed in the bucket were skipped.
 Repository-process items (PR and issue templates, branching, stalebot, bounties, Transifex) are left to mautic-contributing.
 A further 869 noise PRs across all areas were excluded upstream before chunking.
+The 2026-11-23 update read the delta bucket (10 PRs, #17831 to #18236, merged 2026-10-19 to 2026-11-17) and the 7.x commits that changed the cited build files; 8.x-only items went to the Phase 4 notes.

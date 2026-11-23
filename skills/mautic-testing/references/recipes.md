@@ -293,7 +293,7 @@ final class SegmentSubscriberTest extends TestCase
     }
 }
 ```
-Use `createStub()` when you do not assert calls (Rector `phpunitMockToStub`) [code: rector.php:10-25 @419a08a9b35].
+Use `createStub()` when you do not assert calls (Rector `phpunitMockToStub`) [code: rector.php:16-24 @7.x].
 On 8.x, `final` classes can be mocked through `dg/bypass-finals`, but `Request`, `InputBag` and `Router` must not be
 doubled [code: composer.json @8.x] [PR #17366] [PR #17392].
 For repository unit tests, `RepositoryConfiguratorTrait::configureRepository()` exists but its docblock recommends a

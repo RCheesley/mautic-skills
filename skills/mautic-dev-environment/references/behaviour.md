@@ -69,7 +69,7 @@ Every item states one observable behaviour and its source. "Managed setup" means
 4.6 For CLI work, including emulating a cron job, run `ddev ssh` in the Codespace and run the commands there. [code: .devcontainer/CODESPACES.md @7.x]
 
 ## 5. Composer and the two-package layout
-5.1 The root `composer.json` is the `mautic/mautic` distribution package. It requires `composer/installers`, `cweagans/composer-patches` and `mautic/core-lib ^7.0`, and holds all dev tooling in `require-dev`. [code: composer.json:23-56 @419a08a9b35]
+5.1 The root `composer.json` is the `mautic/mautic` distribution package. It requires `composer/installers`, `cweagans/composer-patches` and `mautic/core-lib ^7.0`, and holds all dev tooling in `require-dev`. Since 7.2.2 `symfony/dom-crawler` is no longer in the root `require-dev`; it is a core-lib runtime dependency. [code: composer.json:23-54 @7.x] [code: app/composer.json:79 @7.x] [PR #17592]
 5.2 `mautic/core-lib` is the `app/` directory, loaded as a path repository (as version `7.0.0-dev`). All runtime dependencies and the `Mautic\` autoload are declared in `app/composer.json`. [code: composer.json:122-146 @7.x] [code: app/composer.json:7-16 @7.x]
 5.3 The root package declares that it replaces every `mautic/plugin-*`, `mautic/theme-*` and `mautic/grapes-js-builder-bundle` package. A monorepo split workflow publishes them. [code: composer.json:55-108 @7.x]
 5.4 Installer paths: `mautic-core` packages go to `app`, `mautic-plugin` to `plugins/{$name}` and `mautic-theme` to `themes/{$name}`. [code: composer.json:210-231 @7.x]
@@ -92,17 +92,18 @@ Every item states one observable behaviour and its source. "Managed setup" means
 6.8 Otherwise `mautic:assets:generate` takes these steps:
    1. Run `sass:build`, `importmap:install --no-interaction` and `asset-map:compile`.
    2. Install elFinder assets.
-   3. Combine and minify every bundle's `Assets/css/*` and `Assets/js/*` into `media/css/{app,libraries}.css` and `media/js/{app,libraries}.js`.
+   3. Delete any existing `media/css/libraries.css` (since 7.2.2, so a stale file is not reused [PR #17597]), then combine and minify every bundle's `Assets/css/*` and `Assets/js/*` into `media/css/{app,libraries}.css` and `media/js/{app,libraries}.js`.
    4. Copy libraries from `node_modules`, and minify `mautic-form-src.js` into `media/js/mautic-form.js`.
    5. Check that a fixed list of output files exists.
 
-   [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:65-120 @419a08a9b35]
+   [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:65-128 @7.x]
 6.9 `composer generate-assets` runs `mautic:assets:generate`, then `assets:install --symlink --relative ./`. [code: composer.json:190 @7.x]
 6.10 `composer gjs-build` runs `npm ci` and then `npm run build` (a Parcel production build) in `plugins/GrapesJsBuilderBundle`. [code: composer.json:179 @7.x] [code: plugins/GrapesJsBuilderBundle/package.json:18 @7.x]
 6.11 During `composer install`, `gjs-build-safe` runs `build/gjs_build.php`. On failure it only prints "WARN: GrapesJS builder assets failed to build…" and exits 0. [code: build/gjs_build.php:5-13 @7.x]
 6.12 These generated files are gitignored: `media/libraries/ckeditor/*`, `media/css/app.css`, `media/js/app.js` and related files, `assets/build/` and `var/sass/`. GrapesJS dist files are not tracked either. [code: .gitignore:66-105 @7.x] [code: .github/workflows/build-grapesjs-assets.yml:28 @7.x]
-6.13 Release packages ship pre-built assets. The release workflow requires `assets/build/manifest.json` and `var/sass/app.output.css`. [code: .github/workflows/release.yml:72-73 @7.x]
+6.13 Release packages ship pre-built assets. The release workflow requires `assets/build/manifest.json` and `var/sass/app.output.css` in the update zip and, since 7.2.2, `vendor/symfony/dom-crawler/Crawler.php` in the full zip. [code: .github/workflows/release.yml:71-73 @7.x] [PR #17616]
 6.14 The devdocs list `composer sass:build`, `composer sass:watch`, `composer generate-assets` and `bin/console mautic:assets:generate`. They also say `composer install` compiles Sass automatically. [devdocs: https://devdocs.mautic.org/en/7.2/development-environment/building_assets.html]
+6.15 Since 7.2.2 each tag also publishes the GrapesJS plugin to its split repository with compiled assets (`publish-grapesjs-package.yml`), so a Composer install of a release gets a working builder without a local `npm` build. Development branches stay source-only, so a git checkout still needs `composer gjs-build`. [code: .github/workflows/publish-grapesjs-package.yml @7.x] [code: .github/workflows/split-monorepo-in-multi-repo.yml:95-97 @7.x] [PR #17831]
 
 ## 7. Installing with mautic:install
 7.1 Usage: `bin/console mautic:install <site_url> [step]`. The options are `--force`, `--db_driver`, `--db_host`, `--db_port`, `--db_name`, `--db_user`, `--db_password`, `--db_table_prefix`, `--db_backup_tables`, `--db_backup_prefix`, `--admin_firstname`, `--admin_lastname`, `--admin_username`, `--admin_email` and `--admin_password`. [code: app/bundles/InstallBundle/Command/InstallCommand.php:52-147 @7.x]
@@ -152,7 +153,7 @@ Every item states one observable behaviour and its source. "Managed setup" means
 11.2 Codespaces: `admin` / `Maut1cR0cks!`. [code: .devcontainer/CODESPACES-READY.tpl.md @7.x]
 11.3 Sample-data fixtures: `admin` / `Maut1cR0cks!` (`admin@yoursite.com`) and `sales` / `Maut1cR0cks!` (`sales@yoursite.com`). [code: app/bundles/UserBundle/DataFixtures/ORM/LoadUserData.php:24-49 @7.x]
 11.4 PHPUnit functional tests authenticate as `admin` / `Maut1cR0cks!` through HTTP basic auth server variables. [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:48-49 @7.x]
-11.5 Codeception `login()` defaults to `admin` / `Maut1cR0cks!`. [code: tests/_support/AcceptanceTester.php:27 @419a08a9b35]
+11.5 Codeception `login()` defaults to `admin` / `Maut1cR0cks!`. [code: tests/_support/AcceptanceTester.php:27 @7.x]
 11.6 `.env.test` sets `MAUTIC_ADMIN_USERNAME=admin` and `MAUTIC_ADMIN_PASSWORD=mautic`. No PHP, YAML or workflow file in the tree reads either variable (checked with grep over `app`, `tests` and `.github`). [code: .env.test:10-11 @7.x]
 11.7 The docs give `Maut1cR0cks!` as the DDEV password and `mautic` for versions before 5.1. The KB PR-testing article still gives `admin` / `mautic`. The KB DDEV article gives `Maut1cR0cks!` for both DDEV and Gitpod. Resolution: in 7.x, use `admin` / `Maut1cR0cks!` for DDEV, Codespaces, fixtures and tests. `admin` / `mautic` applies only to pre-5.1 environments and to old Gitpod images. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#install-mautic-using-ddev] [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html] [kb: https://kb.mautic.org/article/how-to-set-up-a-mautic-instance-for-testing-locally-with-ddev.html]
 11.8 The DDEV database credentials are `db` / `db`, database `db`, host `db`. [code: .ddev/local.config.php.dist @7.x]

@@ -15,23 +15,25 @@ Contents
 
 ## 1. Composer packages and scripts
 
-Dev tooling is in the root `composer.json` `require-dev`; runtime dependencies in `app/composer.json` [code: composer.json:28-54 @419a08a9b35] [code: app/composer.json:15-105 @419a08a9b35].
+Dev tooling is in the root `composer.json` `require-dev`; runtime dependencies in `app/composer.json` [code: composer.json:28-54 @7.x] [code: app/composer.json:18-116 @7.x]. Locked versions below are from `composer.lock` at the 7.x head [code: composer.lock @7.x].
 
 | Package | Constraint | Locked |
 |---|---|---|
-| phpunit/phpunit | ^11.5 | 11.5.56 |
-| codeception/codeception | ^5.1 | 5.3.6 |
+| phpunit/phpunit | ^11.5 | 11.5.57 |
+| codeception/codeception | ^5.1 | 5.3.7 |
 | codeception/module-webdriver | ^4.0 | 4.0.5 |
 | liip/functional-test-bundle / test-fixtures-bundle | ^4.3 / ^3.5 | 4.16.0 / 3.9.0 |
-| phpstan/phpstan | ^2.2.6 | 2.3.1 |
+| phpstan/phpstan | ^2.2.6 | 2.3.2 |
 | phpstan/phpstan-doctrine, -symfony, -phpunit, -deprecation-rules | ^2.0 | |
-| symplify/phpstan-rules | ^14.10 | 14.10.0 |
-| tomasvotruba/type-coverage | ^2.2.1 | 2.2.1 |
+| symplify/phpstan-rules | ^14.19 | 14.19.3 |
+| tomasvotruba/type-coverage | ^2.5.1 | 2.5.1 (also provides the former `rector/type-perfect` rules, removed in [PR #17846]) |
 | rector/rector | dev-main | dev-main |
-| friendsofphp/php-cs-fixer | ^v3.95.11 | v3.95.27 |
-| symplify/easy-coding-standard | ^13.2.17 | 13.3.2 |
-| symfony/browser-kit, dom-crawler, phpunit-bridge | ~7.4.0 | |
-[code: composer.json:28-54 @419a08a9b35]
+| friendsofphp/php-cs-fixer | ^v3.95.11 | v3.95.30 |
+| symplify/easy-coding-standard | ^13.2.17 | 13.3.17 |
+| symfony/browser-kit, phpunit-bridge | ~7.4.0 | |
+[code: composer.json:28-54 @7.x]
+
+`symfony/dom-crawler` is no longer in the root `require-dev`; it is a runtime dependency in `app/composer.json` because `--no-dev` installs need it (7.2.2) [code: app/composer.json:79 @7.x] [PR #17592].
 
 Composer `bin-dir` is `bin`, so tools are `bin/phpunit`, `bin/phpstan`, `bin/rector`, `bin/ecs`, `bin/php-cs-fixer`, `bin/codecept`; only `bin/console` is in git [code: composer.json:213-228 @7.x] [code: .gitignore:62-64 @7.x].
 
@@ -143,7 +145,7 @@ Helper traits and classes:
 | Others | `FormBundle/Tests/FormTestHelperTrait`, `SmsBundle/Tests/SmsTestHelperTrait`, `PointBundle/Tests/Functional/TriggerTrait`, `NotificationBundle/Tests/NotificationTrait`, `AssetBundle/Tests/RemoteFileServerTrait`, `CoreBundle/Tests/Twig/TwigIntegrationTestTrait`, `UserBundle/Tests/Traits/CreateEntityTrait`, `UserBundle/Tests/Controller/LoginUserWithSamlTrait` | area helpers |
 [code: app/bundles/CoreBundle/Tests/Functional/ @7.x]
 
-Counts at 7.x (`419a08a9b35`): 1296 `*Test.php` files, 445 extend `MauticMysqlTestCase`, 16 extend `AbstractMauticTestCase` directly, 224 use `#[DataProvider]`, 87 set `$useCleanupRollback` false, 0 non-final concrete test classes [code: app/bundles/ @7.x].
+Counts at 7.x (`838c9c772ec`), over `*Test.php` files in `app/bundles` and `plugins` (`git ls-tree` and `git grep -l`): 1370 test files, 468 extend `MauticMysqlTestCase`, 14 extend `AbstractMauticTestCase` directly, 253 use `#[DataProvider]`, 99 set `$useCleanupRollback` false, 0 declare a non-final `class ...Test`. The same method at the previous snapshot `419a08a9b35` gives 1301, 438, 15, 222, 86 and 0 [code: app/bundles/ @7.x].
 
 ## 6. Representative tests to copy
 
@@ -188,7 +190,7 @@ Counts at 7.x (`419a08a9b35`): 1296 `*Test.php` files, 445 extend `MauticMysqlTe
 
 ## 8. PHPStan rules
 
-Config: `phpstan.neon` (includes `phpstan-baseline.neon` first, about 2040 entries), bootstrap `phpstan-bootstrap.php` defines `MAUTIC_ENV`, `MAUTIC_VERSION`, `MAUTIC_TABLE_PREFIX` as `''` and `MAUTIC_DB_SERVER_VERSION='8.0.0'`; `dynamicConstantNames` covers the first three [code: phpstan.neon:1-39 @419a08a9b35] [code: phpstan-bootstrap.php @7.x].
+Config: `phpstan.neon` (includes `phpstan-baseline.neon` first, about 2040 entries), bootstrap `phpstan-bootstrap.php` defines `MAUTIC_ENV`, `MAUTIC_VERSION`, `MAUTIC_TABLE_PREFIX` as `''` and `MAUTIC_DB_SERVER_VERSION='8.0.0'`; `dynamicConstantNames` covers the first three [code: phpstan.neon:1-65 @7.x] [code: phpstan-bootstrap.php @7.x]. The baseline has 2038 entries at the 7.x head [code: phpstan-baseline.neon @7.x].
 
 Registered custom rules in `utils/phpstan/src/Rule/`, tests in `utils/phpstan/tests/Rule/` [code: phpstan.neon:279-299 @7.x]:
 
@@ -212,11 +214,11 @@ Registered custom rules in `utils/phpstan/src/Rule/`, tests in `utils/phpstan/te
 | NoServiceJugglingRule | Service passed as an argument instead of injected |
 Symplify `NoJustPropertyAssignRule` is also on. Present but not registered: `NoObjectPropertyAssignToVariableInTestsRule`, `NoServiceInMethodParameterRule`, `NoUnusedServiceAliasRule` [code: phpstan.neon:279-299 @7.x].
 
-Project-wide `ignoreErrors` (`phpstan.neon:42-239`) tolerate, among others, `missingType.generics`, `missingType.iterableValue`, deprecated `Request::get()`, and use of Mautic's own deprecated classes [code: phpstan.neon:42-239 @419a08a9b35].
+Project-wide `ignoreErrors` (`phpstan.neon:66-262`) tolerate, among others, `missingType.generics`, `missingType.iterableValue`, deprecated `Request::get()`, and use of Mautic's own deprecated classes [code: phpstan.neon:66-262 @7.x]. The project-wide `typePerfect.noArrayAccessOnObject` ignore was removed with `rector/type-perfect` [PR #17846].
 
 ## 9. Rector and coding standard
 
-- `rector.php`: paths `app/bundles`, `plugins`; sets listed in behaviour.md 6.9; extra rules `AssertClassToThisAssertRector`, `MergePhpstanDocTagIntoNativeRector`, `FlipNegatedTernaryInstanceofRector`, `NarrowArrayCollectionUnionReturnDocblockRector`, `Utils\Rector\UnserializeToSerializerDecodeRector`, `Utils\Rector\ModelGetRepositoryToRepositoryServiceRector`; `withTypeGuardedClasses` protects common controllers, `CommonRepository`, `AbstractPermissions`, `AbstractIntegration`, `CrmAbstractIntegration`; cache `var/cache/rector` [code: rector.php:10-122 @419a08a9b35].
+- `rector.php`: paths `app/bundles`, `plugins`; sets listed in behaviour.md 6.9; extra rules `AssertClassToThisAssertRector`, `MergePhpstanDocTagIntoNativeRector`, `FlipNegatedTernaryInstanceofRector`, `NarrowArrayCollectionUnionReturnDocblockRector`, `Utils\Rector\UnserializeToSerializerDecodeRector`, `Utils\Rector\ModelGetRepositoryToRepositoryServiceRector`; `withTypeGuardedClasses` protects common controllers, `CommonRepository`, `AbstractPermissions`, `AbstractIntegration`, `CrmAbstractIntegration`; cache `var/cache/rector`; `withParallel(timeoutSeconds: 300)`; `ReturnTypeFromStrictTypedCallRector` is skipped for `UserBundle/Security/Provider/UserProvider.php` so authentication plugins that override the untyped `saveUser()` keep working [code: rector.php:10-129 @7.x] [PR #18117].
 - Custom rectors: `utils/rector/src/`, fixture tests in `utils/rector/tests/` (`*.php.inc`) [code: rector.php:42-54 @7.x].
 - `.php-cs-fixer.php`: finder over `app/bundles`, `app/config`, `app/middlewares`, `app/migrations`, `plugins`, `tests`, `utils` and root PHP files [code: .php-cs-fixer.php:5-57 @7.x].
 - `ecs.php`: sets `comments`, `docblocks`, `namespaces`, `cleanup`, `controlStructures`, `standaloneLine`, with skips; run only by `composer fixcs` [code: ecs.php:7-43 @7.x].
@@ -234,8 +236,9 @@ Project-wide `ignoreErrors` (`phpstan.neon:42-239`) tolerate, among others, `mis
 | `api-library-tests.yml` | every PR | `mautic/api-library` suite against an installed instance |
 | `build-grapesjs-assets.yml` | `plugins/GrapesJsBuilderBundle/**` | npm build |
 | `validate-json.yml` | changed JSON | `jq empty` |
-| `release.yml` | tags | package, install and update tests |
-[code: .github/workflows/tests.yml:3-316 @419a08a9b35] [code: .github/workflows/e2e-tests.yml:25-28 @7.x] [code: .github/workflows/coverage-check.yml:7-88 @7.x] [code: .github/workflows/api-library-tests.yml:20-125 @7.x]
+| `release.yml` | tags | package, install and update tests; checks the full zip contains `vendor/symfony/dom-crawler/Crawler.php` (7.2.2) |
+| `publish-grapesjs-package.yml` | every tag | builds the GrapesJS assets and pushes the tag, with compiled assets, to the split plugin repository (7.2.2) |
+[code: .github/workflows/tests.yml:3-316 @7.x] [code: .github/workflows/release.yml:71 @7.x] [code: .github/workflows/publish-grapesjs-package.yml @7.x] [PR #17616] [PR #17831] [code: .github/workflows/e2e-tests.yml:25-28 @7.x] [code: .github/workflows/coverage-check.yml:7-88 @7.x] [code: .github/workflows/api-library-tests.yml:20-125 @7.x]
 
 CI support files: `.github/ci-files/.my.cnf` (`column-statistics=0` for mysqldump), `.github/ci-files/local.php`, `.github/ci-files/composer.json` [code: .github/workflows/tests.yml:94-101 @7.x].
 

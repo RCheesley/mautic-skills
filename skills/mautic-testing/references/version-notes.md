@@ -17,16 +17,18 @@ its admin/mautic login come from older setups; current DDEV and test fixtures us
 [code: app/bundles/UserBundle/DataFixtures/ORM/LoadUserData.php:24-49 @7.x]. The minimum version that 7.2.1 upgrades
 from is 5.0.0 [code: app/release_metadata.json @7.x].
 
-## 7.x (snapshot: release 7.2.1 plus unreleased merged PRs)
+## 7.x (snapshot: release 7.2.2 plus unreleased merged PRs)
 - PHP `~8.2` (composer platform 8.2.0); release metadata allows PHP 8.2.0-8.5.99, MySQL >= 8.4.0, MariaDB >= 10.11.0 [code: app/composer.json:16 @7.x] [code: composer.json:214-216 @7.x] [code: app/release_metadata.json @7.x].
-- PHPUnit 11.5 (locked 11.5.56), schema 10.5 config; Codeception 5.3.6; PHPStan 2.3.1 at level 6; Rector `dev-main`; php-cs-fixer 3.95 plus ECS 13; Symfony 7.4 [code: composer.json:28-54 @419a08a9b35].
+- PHPUnit 11.5 (locked 11.5.57), schema 10.5 config; Codeception 5.3.7; PHPStan 2.3.2 at level 6; Rector `dev-main`; php-cs-fixer 3.95 plus ECS 13; Symfony 7.4 [code: composer.json:28-54 @7.x] [code: composer.lock @7.x].
 - DDEV runs PHP 8.5 with MariaDB 10.11 while CI's minimum cell is PHP 8.2; check behaviour that differs between PHP versions [code: .ddev/config.yaml:1-24 @7.x] [code: .github/workflows/tests.yml:22-32 @7.x].
 - CI matrix: PHP 8.2 x (MySQL 8.4, MariaDB 10.11), PHP 8.5 x (MySQL 9.2, MariaDB 11.4) [code: .github/workflows/tests.yml:22-32 @7.x].
 - Twig is patched so `IntegrationTestCase` data providers are static for PHPUnit 11 [code: composer.json:252-256 @7.x].
 - 7.0: MySQL 8.4+/MariaDB 10.11+ in CI and DDEV; PHPUnit 10.5 runs without deprecations on PHP 8.4 [PR #14836] [PR #15280] [PR #15814].
 - 7.1: `mautic:phpunit:config <N>` and deterministic E2E selectors [PR #15628] [PR #15937].
 - 7.2.0: PHPUnit 11.5; custom PHPStan and Rector rules move to `utils/`; `NoTablePrefixDefinitionInTestsRule` replaces the CS fixer; baseline cut to about 14.1k lines; the baseline-change job and PR coverage removed, label-triggered coverage added; api-library CI; Actions pinned to SHAs; `EnvHelper` for E2E [PR #16891] [PR #16583] [PR #16578] [PR #16500] [PR #16581] [PR #16646] [PR #16697] [PR #16532] [PR #16227] [PR #16729].
-- 7.2.2 (7.2 branch, not in this snapshot): the release workflow checks DomCrawler is in the package [PR #17616].
+- 7.2.2 (released 2026-10-26, merged into 7.x): the release workflow checks DomCrawler is in the package [PR #17616] [code: .github/workflows/release.yml:71 @7.x]; `symfony/dom-crawler` moved from the root `require-dev` to the core-lib `require` [PR #17592] [code: app/composer.json:79 @7.x]; tags publish the GrapesJS plugin with prebuilt assets to its split repository [PR #17831] [code: .github/workflows/publish-grapesjs-package.yml @7.x].
+- 7.2 branch after 7.2.2 (milestone 7.2.3, not in the 7.x head yet): `AbstractMauticTestCase` stops calling `restore_exception_handler()` and core-lib conflicts with `symfony/error-handler <7.4.19` [PR #18053]; two baseline entries are removed by fixing the code [PR #18085] [PR #18086]; new E2E coverage for table sorting and the campaign builder tooltip [PR #18095] [PR #18119].
+- Unreleased on 7.x (7.3.0-rc): dev dependencies bumped, `rector/type-perfect` dropped in favour of type-coverage 2.5's `type_perfect` options, the `declare` coverage floor removed and all `symplify` rule sets switched off [PR #17846] [code: phpstan.neon:14-44 @7.x]; Rector runs in parallel with a 300 s timeout [code: rector.php:11 @7.x]; SonarCloud references removed [PR #17923]; `AGENTS.md` gains "Test Rules" [PR #17955]; CodeRabbit gets E2E review rules [PR #18064]; `AcceptanceTester::login()` gains `reuseSessionSnapshot` [PR #17830].
 
 ## 8.x delta (8.x at 11599729491, unreleased)
 | Item | 7.x | 8.x | Source |
