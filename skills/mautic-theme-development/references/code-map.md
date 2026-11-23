@@ -20,13 +20,14 @@ All paths relative to the repository root; all tags `@7.x` unless marked.
 | `Mautic\CoreBundle\Helper\ThemeHelper` (+ `ThemeHelperInterface`) | discovery, install, zip, copy, rename, delete, visibility, sandboxed render, template fallback | [code: app/bundles/CoreBundle/Helper/ThemeHelper.php:110-899 @7.x] |
 | `ThemeHelper::$defaultThemes` / `addDefaultThemes()` | undeletable themes (incl. reserved `system`); plugins can add | [code: app/bundles/CoreBundle/Helper/ThemeHelper.php:61-134 @7.x] |
 | `Mautic\CoreBundle\Twig\Helper\ThemeHelper` | per-theme value object (`getName`, `getTheme`, `getConfig`, `getThemePath`, `getErrorPageTemplate`) | [code: app/bundles/CoreBundle/Twig/Helper/ThemeHelper.php:58-106 @7.x] |
-| `Twig\Sandbox\ThemeSandboxPolicy` | deny-list | [code: app/bundles/CoreBundle/Twig/Sandbox/ThemeSandboxPolicy.php:27-83 @419a08a9b35] |
+| `Twig\Sandbox\ThemeSandboxPolicy` | denied functions and `less_compile`; since 7.2.2 a method/property allow-list on `Mautic\`/`MauticPlugin\` objects | [code: app/bundles/CoreBundle/Twig/Sandbox/ThemeSandboxPolicy.php:24-217 @7.x] |
+| `Helper\ThemeFavoritesHelper` (unreleased 7.x, 7.3.0-rc) | per-user favourite themes for `email`/`page` in `users.preferences['theme_favorites']`; AJAX `setThemeFavoriteAction`; Twig `getFavoriteThemes(type)` [PR #18138] | [code: app/bundles/CoreBundle/Helper/ThemeFavoritesHelper.php:16-110 @7.x] [code: app/bundles/CoreBundle/Controller/AjaxController.php:337-357 @7.x] |
 | `Twig\Extension\ThemesExtension` | `getBrandPrimaryColor`, `getTextOnBrandColor`, `getTextOnBrandHelperColor`, `getRoundedCorners` | [code: app/bundles/CoreBundle/Twig/Extension/ThemesExtension.php:18-70 @7.x] |
-| `Twig\Extension\ThemeExtension` | `getThemeName` | [code: app/bundles/CoreBundle/Twig/Extension/ThemeExtension.php:33-43 @7.x] |
+| `Twig\Extension\ThemeExtension` | `getThemeName`; `getFavoriteThemes` (unreleased 7.x, [PR #18138]) | [code: app/bundles/CoreBundle/Twig/Extension/ThemeExtension.php:33-53 @7.x] |
 | `Twig\Helper\AssetsHelper` | `getOverridableUrl`; injects `Mautic.getActiveBuilderName()` | [code: app/bundles/CoreBundle/Twig/Helper/AssetsHelper.php:88-100,440-447 @7.x] |
 | `Helper\ThemeSearchFilter`, `ThemeSearchScopeProvider` | Theme Manager search (feature/builder commands; dir, name, author text) | [code: app/bundles/CoreBundle/Helper/ThemeSearchFilter.php:64-70 @7.x] |
 | `DependencyInjection\Compiler\SystemThemeTemplatePathPass` | registers `themes/system/<Bundle>/Resources/views` overrides | [code: app/bundles/CoreBundle/DependencyInjection/Compiler/SystemThemeTemplatePathPass.php:30-33,90-96 @7.x] |
-| `Form\Type\ThemeListType`, `ThemeUploadType`, `ConfigThemeType` | dropdown (adds Code Mode), upload, Theme Settings | [code: app/bundles/CoreBundle/Form/Type/ThemeListType.php:25-32 @7.x] [code: app/bundles/CoreBundle/Form/Type/ConfigThemeType.php:54-107 @419a08a9b35] |
+| `Form\Type\ThemeListType`, `ThemeUploadType`, `ConfigThemeType` | dropdown (adds Code Mode), upload, Theme Settings | [code: app/bundles/CoreBundle/Form/Type/ThemeListType.php:25-32 @7.x] [code: app/bundles/CoreBundle/Form/Type/ConfigThemeType.php:54-107 @7.x] |
 | `IntegrationsBundle\Integration\Interfaces\BuilderInterface`, `Helper\BuilderIntegrationsHelper` | builder plug-point (`mautic.builder_integration` tag, autoconfigured) | [code: app/bundles/IntegrationsBundle/Helper/BuilderIntegrationsHelper.php:37-59 @7.x] [code: app/bundles/IntegrationsBundle/DependencyInjection/IntegrationsExtension.php:32-33 @7.x] |
 | `CoreBundle\Event\BuilderEvent` (Email/PageBuilderEvent) | token registration | [code: app/bundles/CoreBundle/Event/BuilderEvent.php:73-260 @7.x] |
 | `CoreBundle\Model\BuilderModelTrait` | common builder components (tokens) | [code: app/bundles/CoreBundle/Model/BuilderModelTrait.php:18-42 @7.x] |
@@ -93,7 +94,7 @@ No events are dispatched by the theme code or the GrapesJS plugin.
 - Root front-end build is separate: `npm run build` builds only CKEditor 5 into `media/libraries/ckeditor/`; `bin/console mautic:assets:generate` produces `media/css/app.css`, `libraries.css`, `media/js/app.js`, `libraries.js`; AssetMapper entry `app/bundles/CoreBundle/Assets/app.js` [code: webpack.config.js:30-40 @7.x] [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:24-27,111-115 @7.x].
 
 ## Shared admin JS used by builders
-`app/bundles/CoreBundle/Assets/js/4.builder.js`: `Mautic.launchBuilder` stub, theme selection, `inBuilder` hidden input, `Mautic.sanitizeHtmlBeforeSave`, `openMediaManager` (elFinder), `getBuilderTokensMethod` [code: app/bundles/CoreBundle/Assets/js/4.builder.js:1-131 @419a08a9b35].
+`app/bundles/CoreBundle/Assets/js/4.builder.js`: `Mautic.launchBuilder` stub, theme selection, `inBuilder` hidden input, `Mautic.sanitizeHtmlBeforeSave`, `openMediaManager` (elFinder), `getBuilderTokensMethod`; on 7.x also the CSRF-token refresh after Apply [PR #15403] and the favourite-theme toggles `initThemeFavorites`, `setThemeFavoriteState`, `insertThemeCard` [PR #18138] (both unreleased, 7.3.0-rc) [code: app/bundles/CoreBundle/Assets/js/4.builder.js:1-293 @7.x].
 
 ## Bundled themes (44 dirs)
 | Group | Dirs | features / builder |

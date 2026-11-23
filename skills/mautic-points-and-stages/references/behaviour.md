@@ -24,7 +24,7 @@ Terms: **Contact** = a person record (`Lead` in code). **Point Action** = a rule
    - `FORM_ON_SUBMIT` → `form.submit`.
    - `ASSET_ON_LOAD` → `asset.download`.
    - `PAGE_ON_HIT` → `page.hit` for a Mautic landing page; otherwise `url.hit` (tracking pixel or JS).
-   There is no cron. [code: app/bundles/EmailBundle/EventListener/PointSubscriber.php:86-106 @7.x] [code: app/bundles/FormBundle/EventListener/PointSubscriber.php:46-49 @7.x] [code: app/bundles/AssetBundle/EventListener/PointSubscriber.php:44-51 @7.x] [code: app/bundles/PageBundle/EventListener/PointSubscriber.php:55-64 @7.x]
+   There is no cron. [code: app/bundles/EmailBundle/EventListener/PointSubscriber.php:86-106 @7.x] [code: app/bundles/FormBundle/EventListener/PointSubscriber.php:46-57 @7.x] [code: app/bundles/AssetBundle/EventListener/PointSubscriber.php:44-51 @7.x] [code: app/bundles/PageBundle/EventListener/PointSubscriber.php:55-64 @7.x]
 3. `triggerAction()` returns at once when the current user is a logged-in Mautic user, unless `$allowUserRequest` is true. Only the `email.send` caller passes true. So form submits, page hits, downloads and opens made while logged in award no points. [code: app/bundles/PointBundle/Model/PointModel.php:177-179 @7.x] [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:406-411 @7.x] The docs describe this as ignoring "Mautic Administrators". [docs: https://docs.mautic.org/en/7.2/points/points_troubleshooting.html#page-visits-not-recognized]
 4. In `prod`, during a main request, a non-null `$typeId` is remembered in the session key `mautic.triggered.point.actions` and is not processed again in that session. All core callers pass `$typeId = null`, so core never uses this de-duplication. [code: app/bundles/PointBundle/Model/PointModel.php:181-190 @7.x]
 5. Only published actions count: `isPublished = 1` and inside the publish-up/down window at query time. If no action exists for the type, the method returns before it resolves the Contact. [code: app/bundles/PointBundle/Entity/PointRepository.php:45-58 @7.x] [code: app/bundles/PointBundle/Model/PointModel.php:193-196 @7.x] [docs: https://docs.mautic.org/en/7.2/points/points.html#point-actions]
@@ -48,7 +48,8 @@ Terms: **Contact** = a person record (`Lead` in code). **Point Action** = a rule
     - `event_name` = `"<id>: <name>"`.
     - `action_name` = the part after the dot (`open`).
     - It also stores `delta`, the IP address, and `group_id` when the action is grouped.
-    [code: app/bundles/PointBundle/Model/PointModel.php:269,278-286 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:902-923 @419a08a9b35]
+    - Unreleased on 7.x (7.3.0-rc): `triggerAction()` takes `storeIpAddress` (default true). The `form.submit` point action passes false for a submitter Mautic does not track (kiosk mode, DNT, Global Privacy Control, bot, prefetch), so the row has no IP, and it is not called at all when the submission has no Contact. `addPointsChangeLogEntry()` accepts a null IP [PR #17847] [PR #17868].
+    [code: app/bundles/PointBundle/Model/PointModel.php:174,197,269,278-286 @7.x] [code: app/bundles/FormBundle/EventListener/PointSubscriber.php:49-57 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:926-946 @7.x]
 13. After the change log, the model dispatches `PointEvents::POINT_ON_ACTION` with `PointActionEvent(point, lead)`. Non-repeatable actions then get a `LeadPointLog` row. Logs are saved in one batch. The Contact is saved only if something changed. [code: app/bundles/PointBundle/Model/PointModel.php:288-310 @7.x]
 14. Main points are persisted by delta at the SQL level, which keeps concurrent increments safe:
     - `Lead::adjustPoints` accumulates pending changes per operator.
@@ -91,7 +92,8 @@ Terms: **Contact** = a person record (`Lead` in code). **Point Action** = a rule
     - The configured `points` value goes to the group when one is selected, otherwise to `Lead::adjustPoints($points)` with `plus`. A negative value subtracts.
     - The form rejects `0` (`NotEqualTo('0')`), and the run time skips empty values.
     - The log row has `type='campaign'`, `event_name = "<campaignId>: <campaignName>"`, `action_name = "<eventId>: <eventName>"` and the group, if any.
-    [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:273-313 @419a08a9b35] [code: app/bundles/LeadBundle/Form/Type/PointActionType.php:17-30 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/points/point_groups.html#campaign-action]
+    - Unreleased on 7.x (7.3.0-rc): the log row has no IP when the current request's visitor is marked untracked (a form submission by an untracked submitter that starts the campaign action inline) [PR #17868].
+    [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:273-315 @7.x] [code: app/bundles/LeadBundle/Form/Type/PointActionType.php:17-30 @7.x] [docs: https://docs.mautic.org/en/7.2/points/point_groups.html#campaign-action]
 25. The campaign condition `lead.points` compares `leads.points`, or the group score when `group` is set. The operators are =, ≠, >, <, ≥ and ≤. For a group, `compareScore` needs an existing score row, so a Contact without a row fails every comparison, including `= 0`. [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:263-270,693-708 @7.x] [code: app/bundles/PointBundle/Entity/GroupContactScoreRepository.php:11-29 @7.x] [code: app/bundles/PointBundle/Tests/Functional/GroupScoreRepositoryFunctionalTest.php:54 @7.x]
 26. The campaign condition `lead.stages` passes when the Contact's current stage is one of those selected. An empty selection always fails. The selector offers only published stages. [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:216-223,522-523 @7.x] [code: app/bundles/LeadBundle/Entity/LeadRepository.php:1237-1257 @7.x] [code: app/bundles/StageBundle/Form/Type/StageListType.php:44-54 @7.x]
 
@@ -111,8 +113,8 @@ Terms: **Contact** = a person record (`Lead` in code). **Point Action** = a rule
 29. `TriggerModel::triggerEvents(Lead)` selects two sets of events:
     - Events of published ungrouped triggers whose `points` ≤ the Contact's points.
     - Events of published grouped triggers whose `points` ≤ the Contact's score in that trigger's group.
-    A grouped trigger never matches main points, and the reverse also holds. Events are ordered by event order, then by trigger points. [code: app/bundles/PointBundle/Entity/TriggerEventRepository.php:11-61 @7.x] [code: app/bundles/PointBundle/Model/TriggerModel.php:387-423 @419a08a9b35] [code: app/bundles/PointBundle/Tests/Functional/PointTriggerFunctionalTest.php:19-75 @7.x] [docs: https://docs.mautic.org/en/7.2/points/point_groups.html#using-point-triggers]
-30. Each trigger event runs at most once per Contact. Event ids already in `point_lead_event_log` are skipped. A `LeadTriggerLog` row is written only when `triggerEvent()` returns a truthy value. Nothing re-arms an event when the score drops and climbs back. [code: app/bundles/PointBundle/Model/TriggerModel.php:398-421 @419a08a9b35]
+    A grouped trigger never matches main points, and the reverse also holds. Events are ordered by event order, then by trigger points. [code: app/bundles/PointBundle/Entity/TriggerEventRepository.php:11-61 @7.x] [code: app/bundles/PointBundle/Model/TriggerModel.php:387-424 @7.x] [code: app/bundles/PointBundle/Tests/Functional/PointTriggerFunctionalTest.php:19-75 @7.x] [docs: https://docs.mautic.org/en/7.2/points/point_groups.html#using-point-triggers]
+30. Each trigger event runs at most once per Contact. Event ids already in `point_lead_event_log` are skipped. A `LeadTriggerLog` row is written only when `triggerEvent()` returns a truthy value. Nothing re-arms an event when the score drops and climbs back. Unreleased on 7.x (7.3.0-rc): for an untracked visitor no IP is looked up or stored on the trigger log rows [PR #17868]. [code: app/bundles/PointBundle/Model/TriggerModel.php:398-422 @7.x]
 31. `triggerEvent(array $event, ?Lead $lead, bool $force)`:
     - Without `$force`, it refuses logged-in users and re-checks the log. `triggerEvents` and the existing-contacts run always pass `$force`.
     - Unknown types return false.
@@ -139,8 +141,9 @@ Terms: **Contact** = a person record (`Lead` in code). **Point Action** = a rule
     - On edit only, it excludes Contacts already in the event log.
     - It forces the event for each Contact and writes a log row on success.
     This runs inline in the save request and is not batched. The form label is "Trigger for existing applicable contacts upon saving (if published)?". [code: app/bundles/PointBundle/Model/TriggerModel.php:106-187 @7.x] [code: app/bundles/PointBundle/Tests/Functional/PointTriggerFunctionalTest.php:77-107 @7.x] The docs say the default is No: then only Contacts that reach the threshold after saving are affected. [docs: https://docs.mautic.org/en/7.2/segments/manage_segments.html#points-trigger]
-38. The trigger threshold is optional in the form and defaults to 0. An empty threshold therefore fires for every Contact, including new ones (item 27b). [code: app/bundles/PointBundle/Form/Type/TriggerType.php:66-77 @419a08a9b35]
+38. The trigger threshold is optional in the form and defaults to 0. An empty threshold therefore fires for every Contact, including new ones (item 27b). [code: app/bundles/PointBundle/Form/Type/TriggerType.php:66-77 @7.x]
 39. The trigger colour is not applied in 7.2.1. `getColorForLeadPoints()` returns the colour of the lowest matching threshold, but `LeadRepository::setTriggerModel()` has no production caller. The contact list therefore never gets a colour. The default colour is `a0acb8`. [code: app/bundles/PointBundle/Model/TriggerModel.php:431-444 @7.x] [code: app/bundles/LeadBundle/Entity/LeadRepository.php:107 @7.x] [code: app/bundles/PointBundle/Entity/Trigger.php:70 @7.x] The docs describe a working "Contact color". [docs: https://docs.mautic.org/en/7.2/points/points.html#point-triggers]
+39a. Unreleased on 7.x (7.3.0-rc): the Point Actions list has the search commands `type:gain` (`delta > 0`), `type:loss` (`delta < 0`) and `is:repeatable`, offered as a "Point change" quick-filter group and under "Others". A zero-delta action matches neither `type:gain` nor `type:loss`; `!type:gain` matches `delta <= 0` and `!is:repeatable` finds one-time actions [PR #18078] [code: app/bundles/PointBundle/Entity/PointRepository.php:15-17,127-215 @7.x] [code: app/bundles/PointBundle/Helper/PointSearchScopeProvider.php:22-37 @7.x].
 40. The audit log covers create, update (with changes) and delete for Point Actions and Point Triggers (`bundle='point'`), and for Stages (`bundle='stage'`). Point Groups and Point Insights have no save or delete audit log. [code: app/bundles/PointBundle/EventListener/PointSubscriber.php:34-101 @7.x] [code: app/bundles/StageBundle/EventListener/StageSubscriber.php:29-57 @7.x]
 
 ## F. Contact timeline, merge, deletion
@@ -167,7 +170,7 @@ Terms: **Contact** = a person record (`Lead` in code). **Point Action** = a rule
 
 ## H. Stages
 
-47. Stage `weight` must be unique across all stages; validation message `mautic.stage.weight.unique`. Weight is an integer, optional in the form, default 0. The API returns 400 with `weight: Another stage with this weight already exists.` [code: app/bundles/StageBundle/Entity/Stage.php:112-117 @7.x] [code: app/bundles/StageBundle/Form/Type/StageType.php:47-56 @419a08a9b35] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/stages.html#create-stage] [docs: https://docs.mautic.org/en/7.2/stages/stages.html#creating-stages]
+47. Stage `weight` must be unique across all stages; validation message `mautic.stage.weight.unique`. Weight is an integer, optional in the form, default 0. The API returns 400 with `weight: Another stage with this weight already exists.` [code: app/bundles/StageBundle/Entity/Stage.php:112-117 @7.x] [code: app/bundles/StageBundle/Form/Type/StageType.php:47-56 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/stages.html#create-stage] [docs: https://docs.mautic.org/en/7.2/stages/stages.html#creating-stages]
 48. **Weight rule.** `LeadModel::changeStage()` throws `UnexpectedValueException` in two cases:
     - "Contact is already in this stage."
     - "Contact was not able to move into this stage." when the current stage's weight is greater than the target's.
@@ -196,6 +199,7 @@ Terms: **Contact** = a person record (`Lead` in code). **Point Action** = a rule
     - `group_points_<id>` works as in item 17.
     [code: app/bundles/LeadBundle/EventListener/FilterOperatorSubscriber.php:201-206,307-320 @7.x]
 55. The dashboard widgets `points.in.time` and `stages.in.time` count change-log rows per period. Users without `viewother` see only their own Contacts. [code: app/bundles/PointBundle/Model/PointModel.php:321-337 @7.x] [code: app/bundles/StageBundle/Model/StageModel.php:133-149 @7.x] The docs also describe a **Lifecycle** widget (Contacts per stage within segments). [docs: https://docs.mautic.org/en/7.2/stages/stages.html#lifecycle]
+56a. Unreleased on 7.x (7.3.0-rc): the Stages list has a Contacts column, shown only to users with `lead:leads:viewother`. Each row's count comes from a `count(l.id)` subquery over all Contacts in the stage (not limited to the user's own Contacts) and links to the Contacts list searched with `stage_id:<id>`; a zero count is shown without a link. A **View Contacts** row action appears with `lead:leads:viewown` or `viewother`. The new Contacts search command `stage_id:<id>` matches `leads.stage_id` exactly (`!stage_id:` excludes). The list pagination now uses the total number of stages instead of the number on the current page [PR #15403] [code: app/bundles/StageBundle/Entity/StageRepository.php:22-31 @7.x] [code: app/bundles/StageBundle/Model/StageModel.php:221-237 @7.x] [code: app/bundles/StageBundle/Controller/StageController.php:48-49,73,114-120 @7.x] [code: app/bundles/StageBundle/Resources/views/Stage/list.html.twig:108-114,128-140,191-206,217 @7.x] [code: app/bundles/LeadBundle/Entity/LeadRepository.php:1037-1042 @7.x].
 56. Stage "actions" are vestigial. `STAGE_ON_BUILD` has no subscribers, `STAGE_ON_ACTION` is never dispatched, and core never writes `stage_lead_action_log`. [code: app/bundles/StageBundle/Model/StageModel.php:116-131 @7.x] [code: app/bundles/StageBundle/Helper/EventHelper.php:9-14 @7.x]
 57. Validation:
     - Point Action: name, type and delta required; delta within int32.
@@ -208,13 +212,14 @@ Terms: **Contact** = a person record (`Lead` in code). **Point Action** = a rule
 
 ## D (cont.). Form submit action
 
-59. The form submit action `lead.pointschange` ("Adjust contact's points") applies `operator` and `points` to the tracked Contact, or to a group when `group` is set. It has no logged-in-user check. [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:70-78,164-205 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/points/point_groups.html#form-action]
+59. The form submit action `lead.pointschange` ("Adjust contact's points") applies `operator` and `points` to the tracked Contact, or to a group when `group` is set. It has no logged-in-user check. Unreleased on 7.x (7.3.0-rc): it does nothing when the submission has no Contact (a kiosk-mode or untracked submission without contact fields), instead of falling back to the Contact the device cookie points to [PR #17847]. [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:69-77,163-205,374-384 @7.x] [docs: https://docs.mautic.org/en/7.2/points/point_groups.html#form-action]
 60. That action's change-log row has these values:
     - `type='form'`.
     - `event_name = "<formId>:<formName>"`.
     - `action_name` = the action name.
     - `delta` = new main points minus old main points.
-    With a group, the delta is therefore 0 and no group is recorded (inferred). [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:174-202 @419a08a9b35]
+    - The IP address is the submission's IP; unreleased on 7.x (7.3.0-rc) it is null for an untracked submitter, where 7.2.2 used the current request IP [PR #17847].
+    With a group, the delta is therefore 0 and no group is recorded (inferred). [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:173-202 @7.x]
 
 ## I. Imports and webhooks
 

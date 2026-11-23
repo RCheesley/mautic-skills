@@ -115,7 +115,7 @@ Category types are registered under `config['categories']`; the `global` type co
   [code: app/bundles/CategoryBundle/Model/CategoryModel.php:23-223 @7.x]
 - `CategoryBundle/Model/ContactActionModel.php`. [code: app/bundles/CategoryBundle/Model/ContactActionModel.php:14-40 @7.x]
 - `CategoryBundle/Entity/CategoryRepository.php`: `getCategoryList` (`:37-77`) and `checkUniqueCategoryAlias` (`:152-169`). [code: app/bundles/CategoryBundle/Entity/CategoryRepository.php:37-169 @7.x]
-- Form types: `Form/Type/CategoryListType.php` (the picker), `CategoryType.php`, `CategoryBundlesType.php`. [code: app/bundles/CategoryBundle/Form/Type/CategoryListType.php:30-84 @419a08a9b35]
+- Form types: `Form/Type/CategoryListType.php` (the picker), `CategoryType.php`, `CategoryBundlesType.php`. [code: app/bundles/CategoryBundle/Form/Type/CategoryListType.php:30-84 @7.x]
 
 ### Projects
 - `app/bundles/ProjectBundle/Model/ProjectModel.php` is final, with permission base `project:project`. [code: app/bundles/ProjectBundle/Model/ProjectModel.php:18,82-85 @7.x]
@@ -188,7 +188,7 @@ AJAX endpoints:
 | `default_assetlimit` | falls back to `default_pagelimit` | marked for removal in 8 |
 | `validate_remote_domains` | false (per docs) | `local.php`; see docs digest |
 
-[code: app/bundles/AssetBundle/Config/config.php:59-64 @7.x] [code: app/bundles/AssetBundle/Form/Type/ConfigType.php:18-65 @419a08a9b35] [code: app/bundles/AssetBundle/Controller/AssetController.php:59-63 @7.x] [docs: https://docs.mautic.org/en/7.2/components/assets.html#using-remote-assets]
+[code: app/bundles/AssetBundle/Config/config.php:59-64 @7.x] [code: app/bundles/AssetBundle/Form/Type/ConfigType.php:18-65 @7.x] [code: app/bundles/AssetBundle/Controller/AssetController.php:59-63 @7.x] [docs: https://docs.mautic.org/en/7.2/components/assets.html#using-remote-assets]
 
 ## 6. Permissions
 

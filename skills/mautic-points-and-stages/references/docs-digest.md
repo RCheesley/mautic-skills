@@ -59,6 +59,8 @@ Point Insights:
 - **Merge Stage** (Options menu, needs edit and delete) moves Contacts and stage history into the target, then deletes the merged stage. This cannot be undone. The success message is "Stage 'name' was successfully merged into 'target'" [docs: https://docs.mautic.org/en/7.2/stages/stages.html#merging-stages].
 - Dashboard widgets: **Stages in time** and **Lifecycle** (Contacts per stage within segments) [docs: https://docs.mautic.org/en/7.2/stages/stages.html#lifecycle].
 
+- Upcoming in 7.3 (docs branch, unreleased): the Points page warns that deleting a Point Trigger permanently deletes its event configuration and trigger history, and the Point Groups page that deleting a Point Group permanently deletes the Contact scores in that group, matching [PR #17442] [PR #17447] [docs: github.com/mautic/user-documentation/blob/7.3/docs/points/points.rst] [docs: github.com/mautic/user-documentation/blob/7.3/docs/points/point_groups.rst]. The 7.3 "Searching Mautic" page adds a Category quick filter for list views including Point Actions, Point Triggers and Stages [docs: github.com/mautic/user-documentation/blob/7.3/docs/search/search_operators.rst]. The Stages Contacts column [PR #15403] and the Point Actions `type:gain`/`type:loss`/`is:repeatable` filters [PR #18078] are not on the 7.3 docs branch yet; docs PRs mautic/user-documentation#1134 and #1139 were opened for them.
+
 ## 5. REST API (devdocs)
 
 Point Groups (library key `pointGroups`):

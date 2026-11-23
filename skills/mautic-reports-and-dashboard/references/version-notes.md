@@ -10,7 +10,7 @@
 - 6.0.0: Page Hits Reports no longer include rows with a NULL `date_hit` in a date range [PR #14486]. 6.0.3: the tag detail page tolerates Reports with empty tag filters [PR #15134]. No other 6.x differences were found in 235 PRs [PR #14486].
 
 ## 7.x
-- The 7.x branch, after 7.2.1 and not yet released, contains relative date filters (`RelativeDateHelper`; [PR #17256]) and the `is:scheduled` search command ([PR #17449]). The user docs describe them only on the 8.0 branch [code: app/bundles/ReportBundle/Helper/RelativeDateHelper.php:11-93 @7.x] [code: app/bundles/ReportBundle/Entity/ReportRepository.php:46-68 @419a08a9b35] [docs: https://docs.mautic.org/en/8.0/reports/reports.html#relative-date-filters].
+- Unreleased on 7.x (7.3.0-rc): relative date filters (`RelativeDateHelper`; [PR #17256]) and the `is:scheduled` search command ([PR #17449]). The user docs describe them on the 7.3 and 8.0 branches, not 7.2 [code: app/bundles/ReportBundle/Helper/RelativeDateHelper.php:11-93 @7.x] [code: app/bundles/ReportBundle/Entity/ReportRepository.php:65-69 @7.x] [docs: github.com/mautic/user-documentation/blob/7.3/docs/reports/reports.rst] [docs: https://docs.mautic.org/en/8.0/reports/reports.html#relative-date-filters].
 - 7.0.0: the API keeps an exact `dateTo` time while the UI uses 23:59:59 [PR #15532]; `isScheduled` is serialised [PR #15131]; Page Hits gains Time Spent [PR #15141]; the Emails source gains a Report View (Table) graph [PR #14827]. 7.0.1: date filters accept string operators, compared against the UTC string [PR #15393].
 - 7.1.0: dynamic filters show their operator [PR #15366]; a failing widget shows a generic error instead of breaking the dashboard [PR #15989].
 - 7.2.0: `mautic:reports:scheduler --cleanup-only` [PR #16077]; `prefix`/`suffix` columns with numeric sorting [PR #16126]; the date range moves above the table with quick filters [PR #16204] [PR #16205]; GROUP BY is rebuilt for `ONLY_FULL_GROUP_BY` [PR #17099]; Report and Dashboard controllers get injected models [PR #16620] [PR #16634]. 7.2.1: tag filter values are cast to integers (security fix) [PR #17129].
@@ -18,6 +18,9 @@
 - 7.x already has a tag-aware cache provider for widgets. The legacy filesystem cache is a fallback used only when no provider is injected [code: app/bundles/DashboardBundle/Event/WidgetDetailEvent.php:289-305,346-349 @7.x].
 - `Report` has an API Platform `#[ApiResource]` alongside the legacy `loadApiMetadata`. Which of the two backs `/api/reports` is outside this area (open question) [code: app/bundles/ReportBundle/Entity/Report.php:28-45,232-261 @7.x].
 - The Mautic 7.x devdocs say Symfony attribute validation is enabled, so attribute constraints on entities work [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/forms_advanced.html#using-entity-attribute-constraints].
+
+- 7.2.2 (2026-10-26) still has the `is:mine` Reports-list crash (HTTP 500 that persists through the session-stored search); it is fixed on the 7.2 branch after 7.2.2 (milestone 7.2.3) and not on the 7.x snapshot [PR #17978] [code: app/bundles/ReportBundle/Entity/ReportRepository.php:61-64 @7.x].
+- Unreleased on 7.x (7.3.0-rc): `source:<context>` search and a "Data source" quick-filter group on the Reports list [PR #18070]; `ReportFilterConditionEvent` lets a report listener supply the SQL condition for a filter [PR #18233]; the uploaded dashboard file is previewed right after import [PR #16513].
 
 ## 8.x delta (8.x @ 11599729491; three-dot diff from 7.2.1)
 Branch caveat: 7.x-only work (7.2.1 and the unreleased PRs after it) is not yet merged forward into 8.x. Do not read features missing on 8.x as removed.
@@ -45,4 +48,4 @@ Branch caveat: 7.x-only work (7.2.1 and the unreleased PRs after it) is not yet 
 - Do not mock final event classes; build real instances [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html].
 - See mautic-upgrades-and-versions for the cross-bundle event table.
 
-Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
+Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md).

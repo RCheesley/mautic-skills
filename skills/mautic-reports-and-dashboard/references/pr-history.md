@@ -42,7 +42,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Date filter values are not shifted to UTC; datetime values are. Why: a date at 00:00 moved to the previous or next day in non-UTC instances [PR #10800] (~v4.2.1).
 - A datetime filter keeps its time across saves (14:00 stays 14:00). Date columns accept string operators, which compare against the stored UTC string; date operators compare as dates in local time. A tooltip on the value says which applies [PR #15393] (v7.0.1).
 - The UI, export, export command and widget push `dateTo` to 23:59:59. The API keeps an exact `dateTo` time. Why: the UI cannot set a time, API callers can [PR #15532] (v7.0.0).
-- Relative expressions (`today`, `-2 days`, `last month`) are stored as typed and evaluated on every run. Why: they used to be frozen to fixed dates on save. `equals today` covers the whole day [PR #17256] (unreleased 7.x).
+- Relative expressions (`today`, `-2 days`, `last month`) are stored as typed and evaluated on every run. Why: they used to be frozen to fixed dates on save. `equals today` covers the whole day [PR #17256] (unreleased on 7.x, 7.3.0-rc).
 - Report graph widgets on the dashboard and the "Most hit email redirects" widget count to the end of the `dateTo` day [PR #8460] (v3.0.1) [PR #11086] (~v4.4.1).
 
 ### Query building: joins, GROUP BY, aggregators, ORDER BY
@@ -78,7 +78,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Column-header sorting works and is kept [PR #14096] (~v5.2), and stays on the current Report [PR #15387] (v7.0.0).
 - The SQL query shows on the detail page in dev, and when `debug` is true. Why: to check queries on production [PR #11397] (~v5.0).
 - The date range sits above the table, and the Filters panel appears only when there are dynamic filters [PR #16204] (v7.2.0). Quick filters (Today to Last 90 days) fill the range [PR #16205] (v7.2.0).
-- The details page shows tags [PR #14832] (v7.0.0) and has a Clone action [PR #17450] (unreleased 7.x). The list has an "Has scheduled reports" quick filter, `is:scheduled` [PR #17449] (unreleased 7.x).
+- The details page shows tags [PR #14832] (v7.0.0) and has a Clone action [PR #17450] (unreleased on 7.x, 7.3.0-rc). The list has an "Has scheduled reports" quick filter, `is:scheduled` [PR #17449] (unreleased on 7.x, 7.3.0-rc). It also has a "Data source" quick-filter group backed by a new `source:` search command; review asked that `source` not appear as a search-scope value and that switching or clearing the filter drop the old value, and that Focus Stats show only with the Focus plugin, all of which the merged version does [PR #18070] (unreleased on 7.x, 7.3.0-rc).
 
 ### Export
 - CSV and Excel exports include the header and every row [PR #2628] (v2.2.1) [PR #3583] (v2.7.1), and apply the active dynamic filters [PR #3536] (v2.7.1).
@@ -101,7 +101,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Attached files are deleted after sending and linked zips after 7 days. Why: files piled up on disk [PR #13405] (v5.1.0). Under a queued mailer the attachment stays on disk until the queued message is sent [PR #15052] (v5.2.7).
 - `--cleanup-only` (`-co`) runs only the 7-day cleanup. Why: a send and a cleanup running at once sent duplicate emails, so cleanup can have its own cron entry [PR #16077] (v7.2.0).
 - The Schedule tab shows recipients and example dates for every frequency. Mautic 5 had hidden them (issue mautic/mautic#14665) [PR #14932] (v5.2.5).
-- Deleting a Report stops its scheduled emails, and the delete prompt now says so [PR #17446] (unreleased 7.x).
+- Deleting a Report stops its scheduled emails, and the delete prompt now says so [PR #17446] (unreleased on 7.x, 7.3.0-rc).
 
 ### Reports API
 - `GET /api/reports/{id}` returns compiled `data` and `totalResults` [PR #244] (~v1.0). It accepts `limit`, `page`, `dateFrom` and `dateTo`. Why: reports of 500k rows killed requests [PR #6841] (v2.15.0).
@@ -143,6 +143,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Report and Dashboard views moved to Twig [PR #11980] (v5.0.0) [PR #11791] (v5.0.0).
 - ReportBundle, Dashboard and related controllers receive models by injection [PR #16620] (v7.2.0) [PR #16634] (v7.2.0). Nine ReportBundle services moved to autowired `services.php` [PR #16786] (v7.2.0).
 
+- `MauticReportBuilder::applyFilters()` dispatches `ReportFilterConditionEvent` for every filter, before the built-in tag and DNC conditions, so a listener can supply the SQL for a plugin filter (or override `tag` / `dnc_preferences`) instead of copying `applyFilters()` and clearing the Report's filters. The condition joins the current AND/OR group. A reviewer asked for a `ReportEvents` constant; the author kept dispatch by class only, following the Symfony 4.3+ convention used by newer core events, and added the requested regression test for overriding `tag` and `dnc_preferences` [PR #18233] (unreleased on 7.x, 7.3.0-rc).
+
 ## 3. Regression catalogue
 | Symptom | Expected behaviour | PR | Version |
 |---|---|---|---|
@@ -170,7 +172,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | Date filter missed Contacts in non-UTC instance | Date values not shifted | [PR #10800] | 4.2.1 |
 | Datetime filter time shifted on each save | Time preserved | [PR #15393] | 7.0.1 |
 | API `dateTo` with time returned rows to midnight | API keeps the exact time | [PR #15532] | 7.0.0 |
-| Relative filters frozen on save | Evaluated on each run | [PR #17256] | unreleased 7.x |
+| Relative filters frozen on save | Evaluated on each run | [PR #17256] | unreleased on 7.x (7.3.0-rc) |
+| `is:mine` on the Reports list gives HTTP 500, and every later list request in the session too | `r.createdBy` compared directly; list loads | [PR #17978] | 7.2 branch after 7.2.2 |
 | SUM gave 2 instead of 6 | Aggregates without DISTINCT | [PR #4398] | 2.9.0 |
 | AVG rounded to integers | Decimals kept in view and exports | [PR #11273] [PR #11514] | 5.0.0 |
 | Saving with calculated columns gave empty `SUM()` | Report saves | [PR #11538] | 5.0 |
@@ -243,7 +246,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | 7.1.0 | Dynamic filter operator; widget-created flash; per-widget error isolation | [PR #15366] [PR #15378] [PR #15989] |
 | 7.2.0 | `--cleanup-only`; prefix/suffix columns; date range above table; quick filters; GROUP BY rebuild; injected models | [PR #16077] [PR #16126] [PR #16204] [PR #16205] [PR #17099] [PR #16620] |
 | 7.2.1 | Tag filter integer cast; widget scrollbar fix | [PR #17129] [PR #17232] |
-| Unreleased 7.x | Relative date filters; delete warns about schedules; `is:scheduled`; Clone on details | [PR #17256] [PR #17446] [PR #17449] [PR #17450] |
+| 7.2 branch after 7.2.2 (milestone 7.2.3) | `is:mine` Reports search fixed | [PR #17978] |
+| Unreleased on 7.x (7.3.0-rc) | Relative date filters; delete warns about schedules; `is:scheduled`; Clone on details; `source:` search and Data source quick filters; `ReportFilterConditionEvent` | [PR #17256] [PR #17446] [PR #17449] [PR #17450] [PR #18070] [PR #18233] |
 
 ## 5. Removed, deprecated, replaced
 | What | Replaced by | PR | Version |
@@ -262,7 +266,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | `CONCAT(…,'%')` ratio formulas | Numeric formula plus `suffix` | [PR #16126] | 7.2.0 |
 | Date range in the Filters panel | Above the table | [PR #16204] | 7.2.0 |
 | `getModel('report')` in controllers | Injection | [PR #16620] [PR #16634] | 7.2.0 |
-| Relative filters converted on save | Stored relative; older saved Reports keep fixed dates | [PR #17256] | unreleased 7.x |
+| Relative filters converted on save | Stored relative; older saved Reports keep fixed dates | [PR #17256] | unreleased on 7.x (7.3.0-rc) |
 
 ## 6. Maintainer norms for this area
 - Never put raw filter values in SQL; cast or bind them. Typed binding is preferred [PR #17129].
@@ -278,6 +282,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Use "pre-defined dashboard", not "template" or "preset" [PR #13364].
 - Do not use double quotes in INI translation strings [PR #14908].
 - `app/bundles/ReportBundle/` changes need CODEOWNERS review [PR #17099].
+
+- New events may be dispatched by class only, without a `ReportEvents` constant [PR #18233].
 
 ## 7. Open questions
 - Resolved: the command is `mautic:reports:scheduler`, with no alias in 7.x. The `mautic:report:scheduler` in the test steps of [PR #6220] is a typo [code: app/bundles/ReportBundle/Scheduler/Command/ExportSchedulerCommand.php:18-21 @7.x].

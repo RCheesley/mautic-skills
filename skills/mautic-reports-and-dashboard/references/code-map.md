@@ -24,7 +24,7 @@ All paths are relative to the repo root at 7.2.1. `RB` = `app/bundles/ReportBund
 | `Mautic\DashboardBundle\Entity\Widget` (extends `FormEntity`) | `widgets` | `name`, `type`, `width`, `height`, `cache_timeout`, `ordering`, `params` (array). Runtime-only fields: `template`, `errorMessage`, `cached`, `loadTime`, `templateData`. `toArray()` defines the export JSON shape. | [code: app/bundles/DashboardBundle/Entity/Widget.php:53-104,331-342 @7.x] |
 | StatsBundle | none | In-memory DAOs: `StatsDAO`, `StatDAO`, `YearStat`…`HourStat`, `WeekStat` | [code: app/bundles/StatsBundle/Aggregate/Collection/DAO/StatsDAO.php:34-129 @7.x] |
 
-Repositories: `ReportRepository` handles search commands and the widget Report list [code: app/bundles/ReportBundle/Entity/ReportRepository.php:46-135 @419a08a9b35]. `SchedulerRepository::getScheduledReportsForExport()` returns due schedulers [code: app/bundles/ReportBundle/Entity/SchedulerRepository.php:16-40 @7.x]. `WidgetRepository::updateOrdering()` [code: app/bundles/DashboardBundle/Entity/WidgetRepository.php:17-41 @7.x].
+Repositories: `ReportRepository` handles search commands and the widget Report list [code: app/bundles/ReportBundle/Entity/ReportRepository.php:42-143 @7.x]. `SchedulerRepository::getScheduledReportsForExport()` returns due schedulers [code: app/bundles/ReportBundle/Entity/SchedulerRepository.php:16-40 @7.x]. `WidgetRepository::updateOrdering()` [code: app/bundles/DashboardBundle/Entity/WidgetRepository.php:17-41 @7.x].
 
 ## 2. Services and models
 | Class / service id | Path | Role |
@@ -64,8 +64,9 @@ Other ReportBundle service ids: `.csv_exporter`, `.excel_exporter`, `.report_exp
 | `REPORT_SCHEDULE_SEND` | `ReportScheduleSendEvent` | `ReportExporter.php:85-87` | `SchedulerSubscriber::onScheduleSend` → `SendSchedule::send` |
 | `REPORT_ON_COLUMN_COLLECT` | `ColumnCollectEvent` | `ReportHelper.php:119-120` | LeadBundle `ReportSubscriber::onReportColumnCollect:654-684` |
 | `REPORT_PERMANENT_FILE_CREATED` | `PermanentReportFileCreatedEvent` | `SendSchedule.php:50-51` | none |
+| (no constant; dispatched by class, unreleased on 7.x, 7.3.0-rc) | `ReportFilterConditionEvent` (context = Report source; `getFilter()`, `getFilterDefinition()`, `getQueryBuilder()`, `setCondition()` stops propagation) | `MauticReportBuilder.php:613-620`, once per non-empty filter | none in core; plugin hook [PR #18233] |
 
-[code: app/bundles/ReportBundle/ReportEvents.php @7.x] [code: app/bundles/ReportBundle/Model/ReportModel.php:145-629 @7.x]
+[code: app/bundles/ReportBundle/ReportEvents.php @7.x] [code: app/bundles/ReportBundle/Model/ReportModel.php:145-629 @7.x] [code: app/bundles/ReportBundle/Event/ReportFilterConditionEvent.php:11-50 @7.x]
 
 `AbstractReportEvent::checkContext()` is true when the event has no context, or when its context equals or starts with one of the given contexts. `ReportBuilderEvent::addTable()` stops propagation when the added context equals the requested one [code: app/bundles/ReportBundle/Event/AbstractReportEvent.php:37-53 @7.x] [code: app/bundles/ReportBundle/Event/ReportBuilderEvent.php:90-92 @7.x].
 
@@ -188,7 +189,7 @@ StatsBundle has no routes. `GET /api/stats` belongs to the API/Core area (see ma
 | `report_temp_dir` | `%mautic.application_dir%/media/files/temp` | Scheduled CSVs and `csv_reports/` permanent zips | [code: app/bundles/ReportBundle/Config/config.php:79-84 @7.x] |
 | `report_export_batch_size` | 1000 | Rows per batch (scheduled and UI CSV) | same |
 | `report_export_max_filesize_in_bytes` | 5000000 | Attach / zip / link threshold | same |
-| `csv_always_enclose` | false | Quote every CSV cell (Configuration → Report settings) | same; [code: app/bundles/ReportBundle/Form/Type/ConfigType.php:18-30 @419a08a9b35] |
+| `csv_always_enclose` | false | Quote every CSV cell (Configuration → Report settings) | same; [code: app/bundles/ReportBundle/Form/Type/ConfigType.php:18-30 @7.x] |
 | `dashboard_import_dir` | `%mautic.application_dir%/app/assets/dashboards` | Global dashboard files | [code: app/bundles/DashboardBundle/Config/config.php:44-47 @7.x] |
 | `dashboard_import_user_dir` | `%mautic.application_dir%/media/dashboards` | Per-User saved dashboards (`<dir>/<userId>/`) | same; [code: app/bundles/CoreBundle/Helper/PathsHelper.php:202-215 @7.x] |
 | `cached_data_timeout` | 10 (minutes) | Widget cache default | [code: app/bundles/CoreBundle/Config/config.php:698 @7.x] |

@@ -12,10 +12,10 @@
 
 | Test | What it covers |
 |---|---|
-| `app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php` | stream vs attachment, `{id}:{alias}` slug, invalid slug, unpublished (403), remote 302, missing file 404, robots header, UTM |
+| `app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php` | stream vs attachment, `{id}:{alias}` slug, invalid slug, unpublished (403), remote 302, missing file 404, robots header, UTM; since 7.2.2 `Content-Disposition` file names and a traversal `path` that must 404 |
 | `app/bundles/AssetBundle/Tests/Controller/AssetControllerFunctionalTest.php` | upload validation, path traversal, batch ZIP matrix (`testBatchDownload*`), preview, `testEditWithPermissions`, `testAssetWithProject`, remote-domain validation |
 | `app/bundles/AssetBundle/Tests/Controller/UploadControllerFunctionalTest.php` | Dropzone endpoint MIME and extension checks |
-| `app/bundles/AssetBundle/Tests/Controller/Api/AssetApiControllerFunctionalTest.php` | API create (local and remote), invalid remote files, delete |
+| `app/bundles/AssetBundle/Tests/Controller/Api/AssetApiControllerFunctionalTest.php` | API create (local and remote), invalid remote files, delete; since 7.2.2 traversal `file` values rejected with 400 |
 | `app/bundles/AssetBundle/Tests/Controller/AssetDownloadFunctionalTest.php` | click-through attribution from a Page or an Email |
 | `app/bundles/AssetBundle/Tests/Model/AssetModelTest.php` | `testTrackDownload`, `testGetEntityBySlugs` (unit, mocked) |
 | `app/bundles/AssetBundle/Tests/EventListener/DetermineWinnerSubscriberTest.php` | A/B winner maths |
@@ -27,7 +27,7 @@
 | `app/bundles/ProjectBundle/Tests/Functional/Controller/AjaxControllerTest.php`, `ProjectPopoverSecurityTest.php` | inline creation, duplicate names, XSS escaping |
 | `app/bundles/ProjectBundle/Tests/Functional/Controller/Api/ProjectApiControllerTest.php`, `ProjectApiV2ControllerTest.php` | legacy and API Platform CRUD and validation |
 
-[code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:17-155 @419a08a9b35] [code: app/bundles/CategoryBundle/Tests/Controller/CategoryControllerFunctionalTest.php:59-270 @7.x]
+[code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:19-232 @7.x] [code: app/bundles/CategoryBundle/Tests/Controller/CategoryControllerFunctionalTest.php:59-270 @7.x]
 
 ## Conventions observed
 - Log out before testing public downloads. Tracking ignores logged-in Users, so a download made while logged in writes no `asset_downloads` row. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:79 @7.x] [code: app/bundles/AssetBundle/Model/AssetModel.php:104-116 @7.x]
@@ -53,7 +53,7 @@ final class MyAssetDownloadTest extends \Mautic\AssetBundle\Tests\Asset\Abstract
     }
 }
 ```
-This skeleton follows the pattern of `PublicControllerFunctionalTest::testDownloadActionWithUTM`. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:71-97 @419a08a9b35]
+This skeleton follows the pattern of `PublicControllerFunctionalTest::testDownloadActionWithUTM`. Since 7.2.2 that test also asserts `Content-Disposition: inline; filename="Product brochure.png"`, and `testDownloadFilename` runs a data provider of awkward file names (quotes, umlauts, non-Latin, `%`, path separators) in both inline and attachment mode; copy it when you touch download headers [PR #17526]. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:76-145 @7.x]
 
 ## Skeleton: project search for a new project-aware entity
 ```php

@@ -20,7 +20,7 @@ The 8.0 Categories and Projects pages are identical to 7.2. The 8.0 Assets page 
 3. Assets are Local (upload, drag-drop, auto-upload on selection) or Remote (a URL, or browse integrated cloud storage). [docs: https://docs.mautic.org/en/7.2/components/assets.html#creating-a-new-asset]
 4. Server settings limit the upload size, and warnings may show in the upload area. [docs: https://docs.mautic.org/en/7.2/components/assets.html#creating-a-new-asset]
 5. Default allowed types are csv, doc, docx, epub, gif, jpg, jpeg, mpg, mpeg, mp3, odt, odp, ods, pdf, png, ppt, pptx, tif, tiff, txt, xls, xlsx and wav. Extra types, the maximum size and the Assets directory are set in Configuration > Asset Settings. [docs: https://docs.mautic.org/en/7.2/components/assets.html#uploading-an-asset]
-6. Documented fields: Title, Alias (code: no such field in 7.2.1), Description, Category, Language, Published, Publish at, Unpublish at, and "Block search engines from indexing this file" (`X-Robots-Tag`). [docs: https://docs.mautic.org/en/7.2/components/assets.html#uploading-an-asset]
+6. Documented fields: Title, Description, Category, Projects (added in the November 2026 docs update; several allowed, needs the "Associate with other entities" Project permission; Alias was removed from the list, matching the code), Language, Published, Publish at, Unpublish at, and "Block search engines from indexing this file" (`X-Robots-Tag`). [docs: https://docs.mautic.org/en/7.2/components/assets.html#uploading-an-asset]
 7. UTM parameters on the download URL appear in the Asset download Report. [docs: https://docs.mautic.org/en/7.2/components/assets.html#add-utm-codes-to-asset]
 8. Setting `validate_remote_domains => true` in local.php restricts remote URLs to Configuration > System Settings > Miscellaneous > Allowed remote domains, plus the Mautic domain. [docs: https://docs.mautic.org/en/7.2/components/assets.html#using-remote-assets]
 9. The download URL tracks which Contacts download. Append `?stream=1` to open the file in a new tab; the result depends on the browser. [docs: https://docs.mautic.org/en/7.2/components/assets.html#viewing-an-asset]
@@ -33,7 +33,9 @@ The 8.0 Categories and Projects pages are identical to 7.2. The 8.0 Assets page 
     - Duplicate names get a ` (1)` suffix.
     - Any violation aborts the whole download.
 
-    The code has this on the 7.x branch after 7.2.1, not yet released [PR #15609]. [docs: https://docs.mautic.org/en/8.0/components/assets.html#downloading-multiple-assets]
+    The code has this unreleased on 7.x (7.3.0-rc) [PR #15609]. [docs: https://docs.mautic.org/en/8.0/components/assets.html#downloading-multiple-assets]
+
+14a. Upcoming in 7.3 (docs branch, unreleased): the 7.3 Assets page adds the same "Downloading multiple Assets" section; renames the fields to **Available for use**, **Available from** and **Unavailable from**; and its delete warning says a locally stored file is permanently deleted while a remote file (URL, Amazon S3) is left alone, matching [PR #17448] [docs: github.com/mautic/user-documentation/blob/7.3/docs/components/assets.rst]. The 7.3 Categories page points to a Category filter on list views [docs: github.com/mautic/user-documentation/blob/7.3/docs/categories/categories-overview.rst].
 
 ## Assets REST API (devdocs)
 15. Legacy endpoints:
@@ -72,6 +74,7 @@ The 8.0 Categories and Projects pages are identical to 7.2. The 8.0 Assets page 
 34. Assign from the Project: the button reads **Add new to project <Type>** when only one type is editable, and **Add Entities to Project** otherwise. Remove an entity with three-dot > **Remove from project**. [docs: https://docs.mautic.org/en/7.2/projects/projects-overview.html#assigning-entities-to-a-project] [docs: https://docs.mautic.org/en/7.2/projects/projects-overview.html#deleting-entities-from-projects]
 35. Project permissions are View, Edit, Create, Delete, Full and **Associate with other entities**. Associate is required to use the Projects field or to add and remove entities. [docs: https://docs.mautic.org/en/7.2/projects/projects-overview.html#permissions]
 36. The docs do not state the version that introduced Projects, their API, or which lists filter by Project. [docs: https://docs.mautic.org/en/7.2/projects/projects-overview.html]
+37. Upcoming in 7.3 (docs branch, unreleased): a new devdocs page documents the Projects REST API: v1 `GET /projects/ID`, `GET /projects` (list returns only `id` and `name`), `POST /projects/new`, `PUT|PATCH /projects/ID/edit`, `DELETE /projects/ID/delete`, `DELETE /projects/batch/delete?ids=`, linking by sending `projects: [ids]` on an entity edit, and API v2 `/api/v2/projects` (JSON-LD, `merge-patch+json` for PATCH, 403 without the Project permission). This matches behaviour.md 110 [PR #15569] [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/rest_api/projects.rst].
 
 ## Procedures
 - **Create an Asset:**

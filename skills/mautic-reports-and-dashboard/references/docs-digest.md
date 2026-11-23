@@ -44,7 +44,7 @@ Where the docs disagree with 7.x code, the disagreement is flagged with **Code d
 - Export to CSV, Excel or HTML from the view dropdown. To download immediately, the docs suggest setting Schedule = No or now, saving, exporting, then resetting. Data is also available through the API [docs: https://docs.mautic.org/en/7.2/reports/reports.html#exporting-reports].
 - Export requires the Reports **Export** permission [docs: https://docs.mautic.org/en/7.2/users_roles/managing_roles.html#explaining-the-permission-options].
 
-### 8.0 additions (behaviour present on the 7.x branch after 7.2.1, unreleased; [PR #17256] [PR #17449])
+### 8.0 additions, also on the 7.3 docs branch (behaviour unreleased on 7.x, 7.3.0-rc; [PR #17256] [PR #17449])
 - Relative date filters [docs: https://docs.mautic.org/en/8.0/reports/reports.html#relative-date-filters]:
   - Expressions: `today`/`tomorrow`/`yesterday`; `this|last|next week|month|year`; signed intervals (`+1 week`, `-3 months 2 days`, `-2 days 12:34:56`); `N unit ago`; `first day of next month`; `birthday`, `anniversary`, `birthday +2 days`.
   - Not applied with Contains, Doesn't contain, Starts with, Ends with or In list.
@@ -55,7 +55,8 @@ Where the docs disagree with 7.x code, the disagreement is flagged with **Code d
   - For rolling windows, use Greater than or equal with `-7 days` or `first day of this month`.
 
   The code matches [code: app/bundles/ReportBundle/Helper/RelativeDateHelper.php:11-93 @7.x] [code: app/bundles/CoreBundle/Helper/DateTimeHelper.php:386-391 @7.x].
-- The **Has scheduled Reports** filter and the `is:scheduled` search [docs: https://docs.mautic.org/en/8.0/reports/reports.html#schedule] [code: app/bundles/ReportBundle/Entity/ReportRepository.php:46-68 @419a08a9b35].
+- The **Has scheduled Reports** filter and the `is:scheduled` search [docs: https://docs.mautic.org/en/8.0/reports/reports.html#schedule] [code: app/bundles/ReportBundle/Entity/ReportRepository.php:65-69 @7.x].
+- Upcoming in 7.3 (docs branch, unreleased): the 7.3 Reports page carries the same relative-date section and `is:scheduled` filter, plus **Clone** in the Report view's actions menu (needs create permission) [PR #17450] and "deleting a Report with scheduled Emails also stops those sends" [PR #17446] [docs: github.com/mautic/user-documentation/blob/7.3/docs/reports/reports.rst]. Not yet documented on any branch: the `source:` search and Data source quick filter [PR #18070] (docs PR mautic/user-documentation#1140) and `ReportFilterConditionEvent` [PR #18233] (devdocs PR mautic/developer-documentation-new#944).
 
 ## 2. Dashboard (user docs)
 - Each User composes their own Dashboard [docs: https://docs.mautic.org/en/7.2/dashboard/dashboard.html].

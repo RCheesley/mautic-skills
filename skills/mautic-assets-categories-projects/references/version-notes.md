@@ -28,8 +28,10 @@
 - 7.1.1 and 7.1.3: list page size honours `default_assetlimit`; deleted Assets no longer break the Contact timeline; Category edits save without an Apply button. [PR #16035] [PR #16078] [PR #16180]
 - 7.2: remote Assets are MIME-validated at save; `allowed_mimetypes` is removed (absent from the 7.2.0 tag onwards). [PR #16045]
 - 7.2: single Category delete confirmation, the one-type Project add shortcut, working Asset dashboard widgets, and `final` controllers. [PR #16830] [PR #16927] [PR #16498] [PR #16603]
-- 7.x after 7.2.1 (unreleased): legacy `/api/projects` CRUD and new delete-confirmation wording for Asset files. [PR #15569] [PR #17448]
-- 7.x after 7.2.1 (unreleased; [PR #15609]) adds the Asset batch ZIP download: `batchDownload`, at most 100 Assets and 500 MiB. It is among the 736 7.x commits not yet forward-merged into 8.x. [code: app/bundles/AssetBundle/Service/ArchiveBuilder.php:13 @7.x]
+- 7.2.2 (2026-10-26): downloads send the original file name for inline and attachment responses, with a UTF-8 `filename*` and an ASCII fallback [PR #17526]; a local Asset path that resolves outside `upload_dir` is treated as missing (404 on download, 400 on API create; security advisory GHSA-wfhm-289v-79vp) [PR #17934] [code: app/bundles/AssetBundle/Entity/Asset.php:760-780 @7.x].
+- Unreleased on 7.x (7.3.0-rc): legacy `/api/projects` CRUD and new delete-confirmation wording for Asset files. [PR #15569] [PR #17448]
+- Unreleased on 7.x (7.3.0-rc; [PR #15609]): the Asset batch ZIP download, `batchDownload`, at most 100 Assets and 500 MiB. The 8.x snapshot received it with the 7.x-to-8.x merge of 2026-11-16 [PR #18236]. [code: app/bundles/AssetBundle/Service/ArchiveBuilder.php:13 @7.x]
+- Unreleased on 7.x (7.3.0-rc): the Assets, Categories and Projects lists group their quick filters (Assets add "no longer available" and "not yet available" for `is:expired`/`is:pending`), and the search-command help text is gone from the list toolbars [PR #18069]; the Projects list uses the shared count-tag styling [PR #15403].
 
 ## 8.x delta (8.x @ 11599729491 vs 7.2.1)
 - **Asset events by class.** Asset CRUD events are dispatched as `AssetPreSaveEvent`, `AssetPostSaveEvent`, `AssetPreDeleteEvent` and `AssetPostDeleteEvent`, alongside `AssetLoadEvent` and `RemoteAssetBrowseEvent`. Subscribe with `::class` keys.
@@ -47,4 +49,4 @@
 - **Not yet decided.** The `default_assetlimit` parameter is marked "remove in Mautic 8" but is still read on 7.2.1. [code: app/bundles/AssetBundle/Controller/AssetController.php:59-63 @7.x]
 - **Unchanged.** The 8.0 docs for Categories and Projects are unchanged, and the inputs record no 8.x code change for ProjectBundle. [docs: https://docs.mautic.org/en/8.0/projects/projects-overview.html]
 
-Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
+Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md).

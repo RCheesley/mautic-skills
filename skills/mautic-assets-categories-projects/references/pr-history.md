@@ -64,10 +64,12 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - The edit page enforces edit permission on the server; a view-only User gets 403 at `/s/assets/edit/{id}`. A hidden button had been the only guard [PR #13345] (v5.1.0).
 - The list has Created, Modified and Created by columns and sorts by modified date descending. A reviewer objected that items shift around; the default was kept as user-friendly [PR #9688] (v4.2.0).
 - The list page size uses `default_assetlimit`, else `default_pagelimit`; a find-and-replace bug had ignored it [PR #16035] (v7.1.1).
-- Batch delete removes files from disk as single delete does [PR #949] (~v1.2.1). The delete confirmation says a locally stored file is deleted permanently, while for remote Assets only the record goes [PR #17448] (unreleased 7.x).
+- Batch delete removes files from disk as single delete does [PR #949] (~v1.2.1). The delete confirmation says a locally stored file is deleted permanently, while for remote Assets only the record goes [PR #17448] (unreleased on 7.x, 7.3.0-rc).
+- Every local download sends the original file name in `Content-Disposition`, inline as well as attachment, using Symfony's header builder for quoting and Unicode (`filename*`) with a transliterated ASCII fallback; path separators become `_`. Why: saving an inline PDF or image used the Asset UUID from the URL as its name. Review asked for fallback handling and test coverage before approval [PR #17526] (v7.2.2).
+- A local Asset `path` must resolve inside `upload_dir`; otherwise the file is treated as missing, the download returns 404 and the API create returns 400. Why: security advisory GHSA-wfhm-289v-79vp (Asset API path traversal); the fix shipped with the 7.2.2 release PR [PR #17934] (v7.2.2).
 - List "Preview" opens the preview modal for images and PDFs [PR #15054] (~v7.0). Images zoom on hover, PDFs open in a dialog, and a message replaces the tile when no preview exists [PR #15110] (~v7.0).
 - The detail page shows labels for type, indexing block, storage location and language [PR #14756] (v7.0.0).
-- Bulk "Download selected assets" builds one ZIP, checking each Asset's permission. Review raised DoS (no limit) and CSRF (GET without token); 7.x has a 100-Asset cap and a CSRF check [PR #15609] (unreleased 7.x).
+- Bulk "Download selected assets" builds one ZIP, checking each Asset's permission. Review raised DoS (no limit) and CSRF (GET without token); 7.x has a 100-Asset cap and a CSRF check [PR #15609] (unreleased on 7.x, 7.3.0-rc).
 - The dashboard and data-API Asset widgets work again; "unique vs repetitive downloads" builds the unique-Contact subquery first. The bug had been hidden in the PHPStan baseline [PR #16498] (v7.2.0).
 
 ### Asset reports
@@ -106,7 +108,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - The empty Projects list shows a content block; a search with no results shows the normal message [PR #15292] (~v7.0).
 - Project screens avoid `bg-white`, `bg-auto` and `table-striped`, which break dark mode [PR #15438] (~v7.0).
 - Project, Asset Download, Company, ContactCategory and User are exposed in API v2. v2 PUT replaces rather than creates. It was cherry-picked to 7.0 to ship in the major [PR #15552] (v7.0.0).
-- Legacy `/api/projects` CRUD and batch delete, plus `/api/v2/projects`, arrived after 7.2.1. To link Projects through an entity's v1 API, PATCH `"projects": [ids]`; the array replaces the existing links [PR #15569] (unreleased 7.x).
+- Legacy `/api/projects` CRUD and batch delete arrived after 7.2.1 and are not in 7.2.2; `/api/v2/projects` is older (7.0). To link Projects through an entity's v1 API, PATCH `"projects": [ids]`; the array replaces the existing links [PR #15569] (unreleased on 7.x, 7.3.0-rc).
 
 ### Cross-cutting code changes
 - Concrete controllers, including Asset, Category and Project controllers, are `final` [PR #16603] (v7.2.0). Event subscribers are `final` (and `readonly` where possible) [PR #16735] (~v7.2).
@@ -131,6 +133,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | Large remote download exhausts memory | 302 redirect to remote URL | [PR #944] | ~1.2.1 |
 | Asset downloadable by guessing its id | `/asset/{id}` gives 404; UUID URL | [PR #15138] [PR #15776] | 7.1.0 |
 | Unknown Asset slug gives 500 | 404 | [PR #14663] | 5.2.4 |
+| Saved inline PDF or image named after the UUID | Original file name in `Content-Disposition` | [PR #17526] | 7.2.2 |
+| Asset `path` with `..` served a file outside `upload_dir` | 404 on download, 400 on API create | [PR #17934] | 7.2.2 |
 | ICS files shown as plain text | Only `streamed_extensions` inline | [PR #11474] | 5.0 |
 | Form download action no longer downloads | Submission starts a download | [PR #11462] | 4.4.3 |
 | Admin preview increments download count | Preview not counted | [PR #4239] | ~2.9.0 |
@@ -179,7 +183,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | 7.0 | Projects bundle and coverage; Asset detail labels; preview modal; API v2 entities | [PR #15002] [PR #15072] [PR #15327] [PR #14756] [PR #15110] [PR #15552] |
 | 7.1 | UUID download URLs; remote domain allow-list; unique Project names; per-type detail routes | [PR #15138] [PR #15776] [PR #15868] [PR #15564] [PR #15493] |
 | 7.2 | Remote MIME validation; single-type add shortcut; single Category delete confirmation; final controllers | [PR #16045] [PR #16927] [PR #16830] [PR #16603] |
-| unreleased 7.x | Bulk ZIP download; Projects legacy API; delete confirmation wording | [PR #15609] [PR #15569] [PR #17448] |
+| 7.2.2 | Original file names in download headers; local paths confined to `upload_dir` (GHSA-wfhm-289v-79vp) | [PR #17526] [PR #17934] |
+| Unreleased on 7.x (7.3.0-rc) | Bulk ZIP download; Projects legacy API; delete confirmation wording | [PR #15609] [PR #15569] [PR #17448] |
 | 8.0 dev | Upload size fix (BC break); v2 Category filter test | [PR #17080] [PR #17421] |
 
 ## Removed, deprecated, replaced

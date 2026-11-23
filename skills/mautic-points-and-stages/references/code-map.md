@@ -36,8 +36,8 @@ All paths are relative to the Mautic root. The citation tag `@7.x` applies throu
 
 | Service (alias) | Path | Key methods |
 |---|---|---|
-| `PointModel` (`mautic.point.model.point`) | `app/bundles/PointBundle/Model/PointModel.php` | `getPointActions()` registry (:149-162); `triggerAction($type, $eventDetails, $typeId, ?Lead, $allowUserRequest)` (:173-310); `getPointLineChartData` (:320-336); `getPointActionIdsWithDependenciesOnEmail` (:341-362) [code: app/bundles/PointBundle/Model/PointModel.php:149-362 @419a08a9b35] |
-| `TriggerModel` (`mautic.point.model.trigger`) | `.../Model/TriggerModel.php` | `saveEntity` + existing contacts (:106-187); `setEvents` (:240-269); `getEvents` registry (:276-285); `triggerEvent` (:311-353); `invokeCallback` (:355-382); `triggerEvents(Lead)` (:387-423); `getColorForLeadPoints` (:430-443) [code: app/bundles/PointBundle/Model/TriggerModel.php:106-443 @419a08a9b35] |
+| `PointModel` (`mautic.point.model.point`) | `app/bundles/PointBundle/Model/PointModel.php` | `getPointActions()` registry (:149-162); `triggerAction($type, $eventDetails, $typeId, ?Lead, $allowUserRequest, bool $storeIpAddress = true)` (:174-311; `storeIpAddress` unreleased on 7.x, [PR #17868]); `getPointLineChartData` (:321-337); `getPointActionIdsWithDependenciesOnEmail` (:342-363) [code: app/bundles/PointBundle/Model/PointModel.php:149-363 @7.x] |
+| `TriggerModel` (`mautic.point.model.trigger`) | `.../Model/TriggerModel.php` | `saveEntity` + existing contacts (:106-187); `setEvents` (:240-269); `getEvents` registry (:276-285); `triggerEvent` (:311-353); `invokeCallback` (:355-382); `triggerEvents(Lead)` (:387-424); `getColorForLeadPoints` (:431-444) [code: app/bundles/PointBundle/Model/TriggerModel.php:106-444 @7.x] |
 | `TriggerEventModel` (`mautic.point.model.triggerevent`) | `.../Model/TriggerEventModel.php` | dependency finders for segment, email and tag (:57-131) [code: app/bundles/PointBundle/Model/TriggerEventModel.php:57-131 @7.x] |
 | `PointGroupModel` (`mautic.point.model.group`) | `.../Model/PointGroupModel.php` | `adjustPoints(Lead, Group, int, operator)` (:100-130); `isAllowedPointOperation` (:132-135) [code: app/bundles/PointBundle/Model/PointGroupModel.php:100-135 @7.x] |
 | `InsightModel` (`mautic.point.model.insight`) | `.../Model/InsightModel.php` | `executePointInsights(Lead, Group)` (:67-139) [code: app/bundles/PointBundle/Model/InsightModel.php:67-139 @7.x] |
@@ -64,7 +64,7 @@ There are no console commands and no `parameters` in either bundle's config [cod
 | `page.hit` | `mautic.page.point.action.pagehit` | `PageBundle\Helper\PointActionHelper::validatePageHit` | `PointActionPageHitType` | `PageEvents::PAGE_ON_HIT` (landing page) | `app/bundles/PageBundle/EventListener/PointSubscriber.php:31-41,55-62` |
 | `url.hit` | `mautic.page.point.action.urlhit` | `[$this->pointActionHelper, 'validateUrlHit']` (service) | `PointActionUrlHitType` | `PageEvents::PAGE_ON_HIT` (tracking pixel/JS) | `app/bundles/PageBundle/EventListener/PointSubscriber.php:43-52,63-65` |
 
-[code: app/bundles/EmailBundle/EventListener/PointSubscriber.php:33-107 @7.x] [code: app/bundles/FormBundle/EventListener/PointSubscriber.php:26-49 @419a08a9b35] [code: app/bundles/AssetBundle/EventListener/PointSubscriber.php:26-52 @7.x] [code: app/bundles/PageBundle/EventListener/PointSubscriber.php:26-65 @7.x]
+[code: app/bundles/EmailBundle/EventListener/PointSubscriber.php:33-107 @7.x] [code: app/bundles/FormBundle/EventListener/PointSubscriber.php:25-57 @7.x] [code: app/bundles/AssetBundle/EventListener/PointSubscriber.php:26-52 @7.x] [code: app/bundles/PageBundle/EventListener/PointSubscriber.php:26-65 @7.x]
 
 `GET /api/points/actions/types` returns this registry [code: app/bundles/PointBundle/Controller/Api/PointApiController.php:56-66 @7.x].
 
@@ -121,8 +121,8 @@ Events consumed from other bundles:
 [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:31-34 @7.x] [code: app/bundles/PointBundle/EventListener/SegmentFilterSubscriber.php:29-35 @7.x] [code: app/bundles/PointBundle/EventListener/ReportSubscriber.php:56-57 @7.x] [code: app/bundles/StageBundle/EventListener/CampaignSubscriber.php:29-62 @7.x] [code: app/bundles/PointBundle/EventListener/StatsSubscriber.php:18-23 @7.x]
 
 Campaign and form handlers that live in LeadBundle:
-- `lead.changepoints` action and the `lead.points` and `lead.stages` conditions [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:107-112,216-313,521-522,692-707 @419a08a9b35].
-- Form submit action `lead.pointschange` [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:53-54,70-78,164-205 @419a08a9b35].
+- `lead.changepoints` action and the `lead.points` and `lead.stages` conditions [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:107-112,216-315,522-523,693-708 @7.x].
+- Form submit action `lead.pointschange` [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:52-53,69-77,163-205 @7.x].
 
 ## 6. Routes
 
@@ -181,10 +181,10 @@ Trigger events are edited in the session under `mautic.point.<id>.triggerevents.
 
 Form types:
 - `PointType`: `repeatable` defaults to No [code: app/bundles/PointBundle/Form/Type/PointType.php:111-150 @7.x].
-- `TriggerType`: points, color and trigger_existing_leads [code: app/bundles/PointBundle/Form/Type/TriggerType.php:66-127 @419a08a9b35].
-- `GroupListType`: `return_entity` defaults to true [code: app/bundles/PointBundle/Form/Type/GroupListType.php:23-49 @419a08a9b35].
+- `TriggerType`: points, color and trigger_existing_leads [code: app/bundles/PointBundle/Form/Type/TriggerType.php:66-127 @7.x].
+- `GroupListType`: `return_entity` defaults to true [code: app/bundles/PointBundle/Form/Type/GroupListType.php:23-49 @7.x].
 - `PointInsightType`.
-- `StageType` [code: app/bundles/StageBundle/Form/Type/StageType.php:47-56 @419a08a9b35].
+- `StageType` [code: app/bundles/StageBundle/Form/Type/StageType.php:47-56 @7.x].
 - `StageListType`: published stages only [code: app/bundles/StageBundle/Form/Type/StageListType.php:44-54 @7.x].
 - `StageActionListType`.
 - LeadBundle `PointActionType` (campaign) and `CampaignEventPointType` (condition).

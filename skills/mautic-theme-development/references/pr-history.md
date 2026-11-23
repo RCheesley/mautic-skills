@@ -31,6 +31,10 @@ Source: merged pull requests on github.com/mautic/mautic, harvested 2026-10-15. 
 - Core themes credit "Mautic Team" as author, even when a company donated them. Why: Product Team and Community Council decision. Rejected: crediting the donor in `config.json`. [PR #10271] (v4.0)
 - `tags` in `config.json` label themes in the picker with one of 9 translated purpose values. Why: help users choose by purpose. [PR #15691] (v7.2.0)
 
+### Theme sandbox (added in the November 2026 update)
+- The `@themes/` sandbox moved from a function/filter deny-list to also restricting objects: methods and properties only on `Mautic\`/`MauticPlugin\` classes (parents included, for Doctrine proxies), methods only as existing `get`/`is`/`has` accessors minus a sensitive deny-list, six form-template methods allowed by name, `Twig\Markup::__toString` allowed. Why: security advisory GHSA-h7pm-79gc-8867 (theme template escape); method calls were previously all allowed. The fix was prepared privately and reached the public `7.2` branch with the 7.2.2 release PR [PR #17934], which also denies `less_compile` because Less `@import (inline)` reads arbitrary files. Separately, Mautic's own `map`/`filter`/`reduce` deny-list was dropped because Twig's sandbox already accepts only closures, which unblocked `sort` and arrow-function use in themes [PR #17620]. (v7.2.2) [code: app/bundles/CoreBundle/Twig/Sandbox/ThemeSandboxPolicy.php:24-217 @7.x]
+- Core templates rendered in the sandbox must not read properties of non-Mautic objects; the email-validation controller passes the `FormView` children and their state as separate variables. Why: the 7.2.2 sandbox broke the core `email-validation.html.twig` when 7.2.2 was merged into 7.x. [PR #17953] (unreleased on 7.x, 7.3.0-rc)
+
 ### Theme manager and install
 - Theme zip install extracts only whitelisted file types and drops everything else, notably PHP. Why: security. [PR #2066] (v2.1). The list is now the `theme_import_allowed_extensions` parameter without `tiff` [code: app/bundles/CoreBundle/Config/config.php:261 @7.x].
 - A zip without `config.json` is rejected. [PR #2066] (v2.1)
@@ -69,7 +73,7 @@ Source: merged pull requests on github.com/mautic/mautic, harvested 2026-10-15. 
 - Resolved `mj-class` attributes, `<mj-font>` stylesheets and non-inline `<mj-style>` CSS are applied in the canvas only and never leak into saved MJML; explicit component attributes win and merging is shorthand-aware. [PR #16403] (v7.2.0)
 - `<mj-preview>` is stripped from head content injected into component templates while editing but kept in the saved document. Why: its hidden div crashed the builder. [PR #16106] (v7.2.0)
 - Top-level comments in `mj-body` become invisible canvas markers so drops land at the right position; saved MJML is unchanged. Why: a narrowly scoped workaround for a GrapesJS 0.22.16 regression. [PR #16765] (v7.2.0)
-- `<mj-style>` text is serialised verbatim while all other text nodes stay HTML-escaped. Why: escaped `>` broke saved CSS. [PR #17474] (7.2 branch after 7.2.1, unreleased; not on the 7.x snapshot)
+- `<mj-style>` text is serialised verbatim while all other text nodes stay HTML-escaped. Why: escaped `>` broke saved CSS. [PR #17474] (v7.2.2)
 - The source editor reparses MJML only in MJML mode; in HTML mode saving from "Edit code" keeps styling. [PR #15971] (v7.1.2)
 - The email builder has a Typography block category (H1–H4, Subtitle, Text), and its blocks belong in the theme-token block patcher. [PR #15694] (v7.2.0)
 
@@ -89,11 +93,11 @@ Source: merged pull requests on github.com/mautic/mautic, harvested 2026-10-15. 
 - The builder keeps up to 10 localStorage backups keyed by type, theme and ID, and offers a restore; the copy is cleared when a new entity is saved. Why: crash recovery within the ~10 MiB storage limit. Keying by user was proposed and not done. [PR #13610] (v5.1)
 - No restore prompt appears when the backup equals what was just saved. [PR #16383] (v7.2.0)
 - "Apply" saves a new email or page without leaving the builder and switches the URL to the edit route. [PR #13665] (v5.1)
-- A failed Apply shows the validation modal plus a message that builder content is preserved in the form but not yet saved. Rejected: a JavaScript pre-check duplicating `EmailListsValidator`, because validation belongs in Symfony entity validation. [PR #17604] (7.2 branch after 7.2.1, unreleased; not on the 7.x snapshot)
+- A failed Apply shows the validation modal plus a message that builder content is preserved in the form but not yet saved. Rejected: a JavaScript pre-check duplicating `EmailListsValidator`, because validation belongs in Symfony entity validation. [PR #17604] (v7.2.2)
 - Code Mode content can be opened in the builder after a warning. Originally the builder button was blocked [PR #11102] (v4.2.2); changed by [PR #11339] (v5.0). Why: users want to tweak code and continue in the builder.
 - Tags in the head with `data-source="mautic"` (builder JS/CSS) are stripped before save. Why: live pages loaded builder assets. [PR #10360] (v4.0)
 - Saving a parent email must not overwrite translation children's content. [PR #10620] (v4.2.1)
-- Email components with styles can be copied and pasted between emails through a localStorage clipboard. [PR #15124] (v7.0.0). Multi-section selection and paste in document order: [PR #17590] (unreleased 7.3, on 7.x after 7.2.1).
+- Email components with styles can be copied and pasted between emails through a localStorage clipboard. [PR #15124] (v7.0.0). Multi-section selection and paste in document order: [PR #17590] (unreleased on 7.x, 7.3.0-rc).
 - Landing Page images have `href`, `target` and `rel` traits and are wrapped in `<a>` when `href` is set; the email builder keeps its own image linking. [PR #16267] (v7.2.0). The extended type must keep an `isComponent` detector [PR #16330]; bare domains get `https://` [PR #16369] (v7.2.0).
 
 ### Asset manager and API
@@ -101,6 +105,13 @@ Source: merged pull requests on github.com/mautic/mautic, harvested 2026-10-15. 
 - SVG uploads are listed with dimensions from width/height or viewBox. SVG sanitisation and a Landing-Page-only restriction were raised and not done. [PR #15954] (v7.2.0)
 - The email API returns and accepts `grapesjsbuilder.customMjml`, through a JMS serializer subscriber in GrapesJsBuilderBundle. Rejected: reusing the legacy `Email` builder property, a separate REST endpoint, an API save subscriber. [PR #13775] (v5.2)
 - Custom fonts from `editor_fonts` appear in the Style Manager, and only used fonts are written to the saved head. [PR #12067] (v5.0)
+
+- Users can star favourite themes; favourites are per user and per type (`email`, `page`) in the existing `users.preferences` JSON under `theme_favorites`, so no migration is needed and the account appearance keys are untouched. The picker keeps alphabetical order in both sections and Code Mode has no star. Reviewers checked that hiding a starred theme just drops it from the favourites list. [PR #18138] (unreleased on 7.x, 7.3.0-rc)
+- After an in-builder Apply the form's CSRF token is refreshed from the response alongside the optimistic-lock version. [PR #15403] (unreleased on 7.x, 7.3.0-rc)
+- Apply and save include the `editor_fonts` links in both MJML and HTML mode, keep the generated `<html>` attributes (`lang`, `dir`, `xmlns:o`), stop wrapping inline MJML spans and links in block containers, and restore dynamic content after a failed MJML conversion. A reviewer requested the `<html>` attribute fix before approval. Kept separate from the save-error work of #17608. [PR #17794] (fixed on the 7.2 branch after 7.2.2, milestone 7.2.3)
+- CKEditor's initial content is cleaned of GrapesJS editor-only attributes (generated ids, `draggable`, `data-gjs-*`, `gjs-*` classes); affected content is cleaned on its next edit. Why: `draggable="true"` reached sent emails and made text hard to copy. [PR #18016] (fixed on the 7.2 branch after 7.2.2, milestone 7.2.3)
+- The disabled Apply button of a segment email without a segment shows a translated reason instead of the raw key. [PR #18014] (fixed on the 7.2 branch after 7.2.2, milestone 7.2.3)
+- The admin UI moves to Bootstrap 5.3.8 with SCSS and JavaScript compatibility layers for Bootstrap 3 classes, attributes and jQuery plugin calls; templates are migrated in follow-up PRs, and the spacing utilities move to a single pixel scale with logical `ms`/`me`/`ps`/`pe` classes while old aliases stay defined so custom templates keep working. [PR #17767] [PR #17827] [PR #17829] [PR #17830] [PR #18060] (unreleased on 7.x, 7.3.0-rc)
 
 ### Legacy builder (historical)
 - The Froala/slot builder decisions (drag-and-drop slots, clone button, Mailchimp column stacking, editor-safe inline styles) no longer apply: the legacy builder was removed in 6.0. [PR #1921] [PR #1941] [PR #3587] [PR #5635] [PR #2474]
@@ -134,7 +145,7 @@ Source: merged pull requests on github.com/mautic/mautic, harvested 2026-10-15. 
 | **MJML editing** | | | |
 | `<mj-image />` broke output | Self-closing tags converted | [PR #13431] | v5.1 |
 | `<mj-spacer/>` broke rendering | Spacer renders | [PR #14142] | v5.2 |
-| `<mj-style>` CSS saved as `&gt;` | Verbatim serialisation | [PR #17474] | 7.2 branch, unreleased |
+| `<mj-style>` CSS saved as `&gt;` | Verbatim serialisation | [PR #17474] | v7.2.2 |
 | Drops misplaced in themes with comments in `mj-body` | Sections insert at drop point | [PR #16765] | v7.2.0 |
 | DC block missing in MJML emails | DC block available | [PR #11319] | v4.4.1 |
 | **Rich text** | | | |
@@ -149,7 +160,12 @@ Source: merged pull requests on github.com/mautic/mautic, harvested 2026-10-15. 
 | **Save flow and UX** | | | |
 | Apply errored and did not save a new email | Apply saves and switches to edit URL | [PR #13665] | v5.1 |
 | Restore prompt right after a clean save | No prompt | [PR #16383] | v7.2.0 |
-| Users unsure if content survived failed Apply | Modal says preserved but unsaved | [PR #17604] | 7.2 branch, unreleased |
+| Users unsure if content survived failed Apply | Modal says preserved but unsaved | [PR #17604] | v7.2.2 |
+| 500 on save, inline content split, fonts or `lang`/`dir`/`xmlns:o` lost with MJML themes such as Brienz | Content, fonts, attributes and DC kept | [PR #17794] | 7.2 branch after 7.2.2 |
+| `draggable="true"`, `data-gjs-type`, generated ids in sent text | Editor-only attributes stripped on edit | [PR #18016] | 7.2 branch after 7.2.2 |
+| Disabled Apply tooltip shows `grapesjsbuilder.panelsViewsButtonsApplyTitleError` | Readable reason | [PR #18014] | 7.2 branch after 7.2.2 |
+| Form kept a stale CSRF token after an in-builder Apply | CSRF token refreshed from the response | [PR #15403] | unreleased 7.x |
+| Unsubscribe validation page fails under the 7.2.2 sandbox | Controller passes field views as variables | [PR #17953] | unreleased 7.x |
 | Landing Page "Edit code" save removed styling | HTML mode not reparsed as MJML | [PR #15971] | v7.1.2 |
 | Live pages loaded builder JS/CSS | `data-source="mautic"` head tags stripped | [PR #10360] | v4.0 |
 | Parent save overwrote translations | Translations keep content | [PR #10620] | v4.2.1 |
@@ -185,8 +201,9 @@ Source: merged pull requests on github.com/mautic/mautic, harvested 2026-10-15. 
 | 7.1.3 | Typography/list tools back; MS-Word-only style stripping; table fix | [PR #16098] [PR #16058] [PR #16476] |
 | 7.2.0 | MJML theme tokens and core-theme rollout; canvas `mj-class`/`mj-font`/`mj-style`; Typography blocks; theme `tags`; SVG listing; Landing Page image links; in-repo preset; build-time assets | [PR #16042] [PR #16778] [PR #16403] [PR #15694] [PR #15691] [PR #15954] [PR #16267] [PR #16436] [PR #16435] |
 | 7.2.1 | Plugins-path asset lookup | [PR #17375] |
-| 7.2 branch (unreleased) | `<mj-style>` verbatim; failed-Apply message | [PR #17474] [PR #17604] |
-| 7.x after 7.2.1 (unreleased 7.3) | Multi-section copy/paste | [PR #17590] |
+| 7.2.2 | `<mj-style>` verbatim; failed-Apply message; theme sandbox allow-list for methods and properties, arrow-function-only collection filters | [PR #17474] [PR #17604] [PR #17620] |
+| 7.2 branch after 7.2.2 (milestone 7.2.3) | Inline MJML content and editor fonts kept; editor-only attributes stripped; segment-email Apply tooltip | [PR #17794] [PR #18016] [PR #18014] |
+| Unreleased on 7.x (7.3.0-rc) | Multi-section copy/paste; favourite themes; Bootstrap 5.3.8 with Bootstrap 3 compatibility layers; Apply refreshes CSRF token; `email-validation.html.twig` variables for the sandbox | [PR #17590] [PR #18138] [PR #17767] [PR #15403] [PR #17953] |
 
 ## 5. Removed, deprecated, replaced
 
@@ -215,6 +232,7 @@ Source: merged pull requests on github.com/mautic/mautic, harvested 2026-10-15. 
 - Removing themes is a BC break for a major release and must be listed in UPGRADE-x.md. [PR #12524]
 - Canvas-only GrapesJS workarounds stay isolated in their own file and must not change saved MJML; narrowly scoped workarounds for upstream regressions are acceptable. [PR #16403] [PR #16765]
 - Validation belongs in Symfony entity validation, not duplicated in builder JavaScript. [PR #17604]
+- Sandbox hardening ships with functional tests that render a shipped theme and an entity accessor through the sandbox, so a tighter policy cannot silently break legitimate themes. [PR #17620] [code: app/bundles/PageBundle/Tests/Functional/Controller/ThemeHelperSandboxTest.php:153-198 @7.x]
 - Large builder JS plugins are split into `Assets/library/js/plugins/<name>/`. [PR #15839]
 - UX policy for builder modals: "Save" saves and closes, static pages use "Apply", and a backdrop click must not discard work. [PR #14533]
 - Email rendering fixes are checked against caniemail and real clients (EmailOnAcid, Litmus). [PR #15780] [PR #14155]
@@ -237,7 +255,7 @@ Source: merged pull requests on github.com/mautic/mautic, harvested 2026-10-15. 
 - `{dynamiccontent=...}` duplication after save was reported in 4.2 with no fix found. [PR #10782]
 - Docker images built without compiled assets show "enable the plugin" after 7.2.1; tracked in mautic/docker-mautic. [PR #17375]
 - Editing an entity whose theme is not available for the active builder may show the wrong theme in the picker. [PR #9654]
-- test-patterns.md says no Codeception coverage exists for the builder, but `tests/acceptance/GrapesJsBuilderPageCest.php` is on the 7.x snapshot and [PR #17604] adds `GrapesJsBuilderEmailCest.php` on the 7.2 branch. [PR #17604]
+- test-patterns.md says no Codeception coverage exists for the builder, but `tests/acceptance/GrapesJsBuilderPageCest.php` is on the 7.x snapshot and [PR #17604] adds `GrapesJsBuilderEmailCest.php` on the 7.2 branch. Since 7.2.2 (merged into 7.x) both Cest files are on the 7.x snapshot [code: tests/acceptance/GrapesJsBuilderEmailCest.php @7.x]. [PR #17604]
 
 ## 8. Coverage
 - 169 PRs in 3 chunks (84, 60, 25); 147 substantive after excluding 20 noise PRs, the 7.1→7.x branch merge [PR #16327] (used for norms only) and the misfiled search fix [PR #9679]. [PR #16327] [PR #9679]

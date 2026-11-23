@@ -18,7 +18,9 @@
 - Point, Trigger and Stage carry `ProjectTrait`; Projects are a 7.x feature. The xref tables are `point_projects_xref`, `point_trigger_projects_xref` and `stage_projects_xref` [code: app/bundles/PointBundle/Entity/Point.php:172 @7.x] [code: app/bundles/StageBundle/Entity/Stage.php:109 @7.x].
 - 7.0.0 adds Projects to Point Actions, triggers and stages, and fixes trigger events that stayed visible after delete and Apply [PR #15409] [PR #15186].
 - 7.2.0 adds Point Insights, stage merge, server-side unique stage weights and the trigger event `lead.changestage`; none of these exist in 7.1 [PR #15359] [PR #15399] [PR #15404] [PR #17041].
-- After 7.2.1 the 7.x head warns that deleting a trigger or a Point Group is permanent [PR #17442] [PR #17447].
+- Unreleased on 7.x (7.3.0-rc): deleting a trigger or a Point Group warns that it is permanent [PR #17442] [PR #17447]; the 7.3 user docs carry the same warnings [docs: github.com/mautic/user-documentation/blob/7.3/docs/points/points.rst] [docs: github.com/mautic/user-documentation/blob/7.3/docs/points/point_groups.rst].
+- Unreleased on 7.x (7.3.0-rc): Stages list Contacts column and **View Contacts** action, the Contacts search command `stage_id:<id>`, and correct Stages list pagination [PR #15403]; Point Actions list search commands `type:gain`, `type:loss`, `is:repeatable` with a "Point change" quick-filter group [PR #18078]; the Point, Trigger and Stage lists group their quick filters and drop the search-command help text [PR #18069].
+- Unreleased on 7.x (7.3.0-rc): no IP is stored on points change-log and trigger-log rows caused by an untracked form submitter (kiosk mode, DNT, Global Privacy Control, bot, prefetch), and the `form.submit` point action and the "Adjust contact's points" form action are skipped when the submission has no Contact [PR #17847] [PR #17868].
 - Point Groups have entity export and import keyed by UUID [code: app/bundles/PointBundle/EventListener/GroupImportExportSubscriber.php:45-157 @7.x].
 - API Platform `#[ApiResource]` attributes exist on `Point`, `Trigger`, `TriggerEvent` and `Stage`, next to the legacy `/api/*` controllers [code: app/bundles/PointBundle/Entity/Point.php:28-36 @7.x] [code: app/bundles/StageBundle/Entity/Stage.php:26-44 @7.x].
 
@@ -28,13 +30,13 @@ Event dispatch by class. Subscribers must use the class as the key; the string c
 - `TriggerBuilderEvent` is dispatched by class [code: app/bundles/PointBundle/Model/TriggerModel.php:276 @8.x].
 - `PointActionEvent` (formerly `POINT_ON_ACTION`) and `GroupScoreChangeEvent` (formerly `SCORE_CHANGE`) are dispatched by class [code: app/bundles/PointBundle/Model/PointGroupModel.php:162 @8.x].
 - `StageBuilderEvent` (formerly `STAGE_ON_BUILD`) is dispatched by class.
-- The LeadBundle events the PointBundle listens to are now keyed by class: `PointsChangeEvent`, `LeadPostSaveEvent`, `LeadPostMergeEvent` and `LeadTimelineEvent` [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:29-37 @11599729491].
+- The LeadBundle events the PointBundle listens to are now keyed by class: `PointsChangeEvent`, `LeadPostSaveEvent`, `LeadPostMergeEvent` and `LeadTimelineEvent` [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:32-35,43-44,57-58,103-104 @8.x].
 - The constants `POINT_ON_BUILD`, `TRIGGER_ON_BUILD` and `STAGE_ON_BUILD` remain, which makes this a trap: a listener on the string loads but never fires [code: app/bundles/PointBundle/PointEvents.php:45,87 @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/points.html].
 
 Still dispatched by string:
 - The CRUD pre/post save and delete events of `PointModel`, `TriggerModel`, `PointGroupModel` and `StageModel` [code: app/bundles/PointBundle/Model/TriggerModel.php:228 @8.x].
 - Trigger events registered with `eventName`, such as `TRIGGER_ON_EVENT_EXECUTE` and `TRIGGER_ON_LEAD_SEGMENTS_CHANGE` [code: app/bundles/PointBundle/Model/TriggerModel.php:343 @8.x].
-- `LEAD_POINTS_CHANGE` stays as a webhook type id, but listeners must key on `PointsChangeEvent` [code: UPGRADE-8.0.md:200 @8.x]. UPGRADE-8.0.md:728 contradicts this ("unchanged"); the 8.x subscriber code follows line 130 [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:32 @11599729491].
+- `LEAD_POINTS_CHANGE` stays as a webhook type id, but listeners must key on `PointsChangeEvent` [code: UPGRADE-8.0.md:200 @8.x]. UPGRADE-8.0.md:728 contradicts this ("unchanged"); the 8.x subscriber code follows line 130 [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:32-35 @8.x].
 
 Removed:
 - `StageEvents::ON_CAMPAIGN_TRIGGER_ACTION`; use `ON_CAMPAIGN_BATCH_ACTION` with a `PendingEvent` listener [code: app/bundles/StageBundle/StageEvents.php:17-59 @8.x] [PR #17059].

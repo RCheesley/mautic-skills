@@ -2,7 +2,7 @@
 
 ## How to read this file
 Source: merged pull requests on github.com/mautic/mautic for PointBundle and StageBundle, harvested 2026-10-15.
-Versions are inferred from each PR's base branch and merge date; `~` marks an inference, and "7.x head" means merged after 7.2.1.
+Versions are inferred from each PR's base branch and merge date; `~` marks an inference, and "unreleased on 7.x (7.3.0-rc)" means merged into 7.x and in no release yet (7.2.2 shipped on 2026-10-26).
 Current behaviour lives in behaviour.md (code-verified); this file explains why and when it came to be.
 
 ## Decisions that shaped current behaviour
@@ -23,6 +23,9 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - `PointActionEvent` is dispatched when a Point Action is processed, so listeners can react [PR #1684] (v2.0.0). Behaviour item 13 records the current dispatch point.
 - Core maintainers want point handling moved from static callbacks to events; this was deferred out of the `MauticFactory` removal [PR #14611] (v6.0).
 
+- The Point Actions list filters by point change: `type:gain` (positive delta) and `type:loss` (negative delta) form a "Point change" quick-filter group, and `is:repeatable` sits under Others. A reviewer asked for the new commands to be pinned in `PointSearchScopeProvider`, which the merged code does [PR #18078] (unreleased on 7.x, 7.3.0-rc).
+- A form submission by a visitor Mautic does not track records no IP on the points log, and point actions and the points form action are skipped when the submission has no Contact, instead of using the Contact from the device cookie [PR #17847] [PR #17868] (unreleased on 7.x, 7.3.0-rc).
+
 ### Point Triggers: firing and execution
 - 0-point triggers fire for newly created Contacts. Triggers originally ran only on a points change, so a 0-point trigger meant "every new Contact" never ran [PR #238] (v1.0.x). Behaviour items 27-28 give the current rule.
 - Triggers fire only once the Contact reaches the threshold; an early query fired them prematurely, and a stale tracking cookie looped anonymous-contact creation [PR #119] (v1.0.0).
@@ -42,14 +45,14 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - Trigger event rows show their edit and delete buttons on hover [PR #14617] (v5.2.3). Hover styling uses the theme variable `--layer-hover` so text stays readable in dark themes [PR #15254] (v7.0.0).
 - The "Add an event" button has a visible background and outline for accessibility [PR #15546] (v7.0.0).
 - The trigger list can be sorted by category [PR #11968] (v5.0.0), and the Point Action list sorts by category without an SQL error [PR #2006] (v2.0.1).
-- Deleting a trigger, single or batch, warns that its event configuration and trigger history are permanently deleted [PR #17442] (7.x head, ~7.3).
+- Deleting a trigger, single or batch, warns that its event configuration and trigger history are permanently deleted [PR #17442] (unreleased on 7.x, 7.3.0-rc).
 - Users with view-only permission see point, trigger and stage names as plain text, not as links to edit pages that would fail [PR #6928] (v2.15.1).
 
 ### Point Groups
 - Point Groups (proposed as "Point Leagues") give a Contact separate named scores. A Point Action or a trigger can target a group; Contact details show group points; campaigns get a group-points condition and action; segments get a group-points filter; there is a "Group points" report [PR #11891] (v5.0.0). Rejected: the name "League", because it implied a ranking; a forum vote chose "Groups" over Types, Families, Sections and Tiers.
 - Point Groups have a REST API: CRUD under `/api/points/groups`, reads under `/api/contacts/{id}/points/groups`, and `POST /api/contacts/{contactId}/points/groups/{groupId}/{operator}/{value}` to adjust a score [PR #13517] (v5.1.0).
 - A group score is keyed by `(contact_id, group_id)` in that order. Moving only `$group` to Doctrine attributes reversed the key and caused schema drift; mapping `$contact` first fixed it [PR #17454] (v8.0). An earlier mapping error on `GroupContactScore` was fixed in [PR #13231] (v5.0.2).
-- Deleting a Point Group, single or batch, warns that its Contact scores are permanently deleted [PR #17447] (7.x head, ~7.3). Behaviour item 20 adds that the group's Point Actions and triggers are deleted too, which the dialog does not mention.
+- Deleting a Point Group, single or batch, warns that its Contact scores are permanently deleted [PR #17447] (unreleased on 7.x, 7.3.0-rc). Behaviour item 20 adds that the group's Point Actions and triggers are deleted too, which the dialog does not mention.
 
 ### Point Insights
 - Point Insights compare chosen Point Groups and write the winner to a custom field as `ID (GroupName)`. Every published insight runs whenever a group score changes, through `GroupScoreChangeEvent` [PR #15359] (v7.2.0). Contested: two core maintainers asked for a plugin to keep core lean; others argued interest-based scoring belongs in core, and it was merged after product-team discussion.
@@ -67,6 +70,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - Stages can be merged from the list (edit and delete permission). Contacts and stage history move to the target stage and the source stage is permanently deleted [PR #15399] (v7.2.0).
 - Stage weights are unique. The form checks as the user types, lists existing weights, and the server rejects a conflict with `mautic.stage.weight.unique`. The first version validated only in the browser; a tester submitted a duplicate, so server-side validation was added [PR #15404] (v7.2.0).
 - The campaign detail page shows a translated label for the stage change action [PR #2172] (v2.1.0).
+- The Stages list shows each stage's Contact count, linked to the Contacts list filtered by the new `stage_id:` search command, plus a **View Contacts** action. The count is a subquery so the paginated list query stays safe for sorting; the column needs `lead:leads:viewother`, the action `viewown` or `viewother`. The same PR moves count labels on the Forms, Pages, Companies, Projects, Roles and Tags lists to the shared tag style without a link when the count is 0, and fixes Stages pagination, which counted only the current page [PR #15403] (unreleased on 7.x, 7.3.0-rc).
 
 ### Projects, plugins, API and refactors
 - Point Actions, Point Triggers and Stages can be assigned to Projects and searched by project in the UI and API [PR #15409] (v7.0.0).
@@ -106,6 +110,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | `GroupContactScore` mapping error | Valid mapping | #13231 | 5.0.2 |
 | Group score primary key reversed to `(group_id, contact_id)` | Key stays `(contact_id, group_id)` | #17454 | 8.0 |
 | **Stages** | | | |
+| Stages list paginated by the row count of the current page | Pagination uses the total number of stages | #15403 | unreleased 7.x |
 | Import with a stage column errored | Stage matched by name or created; assigned to new and existing Contacts | #2076 | 2.1.1 |
 | Stage API add/remove returned success without saving | Change persisted | #3437 | 2.6.1 |
 | Stage change via campaign threw an undefined-method error | Change works | #8907 | 3.0.0 |
@@ -137,7 +142,7 @@ Rows from 1.x that describe removed mechanisms ([PR #119], [PR #700], [PR #754],
 | 6.0.3 | No error saving a Contact without a points log | #14714 |
 | 7.0.0 | Projects; trigger event Apply fixes; dark-theme hover; visible "Add an event" button | #15409, #15186, #15254, #15546 |
 | 7.2.0 | Point Insights and onboarding; stage merge; unique stage weights; trigger "change stage"; central stage path; split publish-date expressions; typed model injection | #15359, #16465, #15399, #15404, #17041, #16970, #16597, #16622, #16635, #16648 |
-| 7.x head (~7.3) | Permanent-deletion warnings for triggers and groups | #17442, #17447 |
+| Unreleased on 7.x (7.3.0-rc) | Permanent-deletion warnings for triggers and groups; Stages list Contacts column and `stage_id:` search; Point Action gain/loss/repeatable quick filters; no IP for untracked form submitters | #17442, #17447, #15403, #18078, #17847, #17868 |
 | 8.0 | Group score key order preserved under attribute mapping | #17454 |
 
 ## Removed, deprecated, replaced
