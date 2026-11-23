@@ -110,12 +110,12 @@ U4. The session `cookie_secure` is decided at compile time: true when `site_url`
 U5. Trailing-slash redirects are built as `rtrim(site_url,'/') . '/' . ltrim(path,'/')`. [code: app/bundles/CoreBundle/Helper/TrailingSlashHelper.php:14-20 @7.x]
 U6. The ElFinder URL is `rtrim(site_url,'/') . '/' . trim(image_path,'/')`. The path is `<local_root or project dir>/<image_path>`. [code: app/bundles/CoreBundle/Loader/EnvVars/ElFinderEnvVars.php:13-20 @7.x]
 U7. The SAML entity id falls back to `scheme://host` of `site_url`. When `site_url` has no host or is malformed, it is the literal `mautic`. [code: app/bundles/CoreBundle/Loader/EnvVars/SAMLEnvVars.php:11-29 @7.x]
-U8. In the form, `site_url` is a required `UrlType` with default protocol https. No trailing-slash normalisation is applied on save. [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:51-68 @7.x]
+U8. In the form, `site_url` is a required `UrlType` with default protocol https. No trailing-slash normalisation is applied on save. [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:51-68 @419a08a9b35]
 
 ## 4. Timezone and locale
 L1. On login, the session gets `_timezone` (the User's timezone, else `default_timezone`, else UTC) and `_locale` (the User's locale, else the system `locale`). [code: app/bundles/CoreBundle/EventListener/CoreSubscriber.php:60-84 @7.x]
-L2. On each request with a session, PHP's timezone is set from `_timezone` (priority 128). The request locale is set from `_locale` or `locale` (priority 101). [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:21-61 @7.x]
-L3. Saving the configuration sets session `_locale` to the User's locale, else the saved `locale`. A User-level locale always beats the system locale. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:299-310 @7.x] [code: app/bundles/ConfigBundle/Tests/Controller/ConfigControllerFunctionalTest.php:344-400 @7.x]
+L2. On each request with a session, PHP's timezone is set from `_timezone` (priority 128). The request locale is set from `_locale` or `locale` (priority 101). [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:21-61 @419a08a9b35]
+L3. Saving the configuration sets session `_locale` to the User's locale, else the saved `locale`. A User-level locale always beats the system locale. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:299-310 @7.x] [code: app/bundles/ConfigBundle/Tests/Controller/ConfigControllerFunctionalTest.php:360-416 @7.x]
 L4. Saving a `locale` whose language pack is not installed downloads the pack. If the download fails, the value resets to `en_US` and a form error is added. [code: app/bundles/CoreBundle/EventListener/ConfigSubscriber.php:49-76 @7.x] [docs: https://docs.mautic.org/en/7.2/translations/translations.html#how-to-update-a-language]
 
 ## 5. Security headers and trust
@@ -133,7 +133,7 @@ C2. The form is built from every `CONFIG_ON_GENERATE` listener's `addForm()`. `a
 C3. Tabs are the aliases with non-empty `parameters`. `/s/config/edit` redirects to the legacy `?tab=` value or to `coreconfig`. An unknown tab is a 404. Only the active tab's sub-form is built, and a POST without a tab saves nothing. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:55-71 @7.x] [code: app/bundles/ConfigBundle/Tests/Controller/ConfigControllerFunctionalTest.php:79-136 @7.x]
 C4. Values shown in the form are the container-resolved values overlaid by raw local.php values. Restricted keys are removed from the form data entirely. [code: app/bundles/ConfigBundle/Mapper/ConfigMapper.php:43-72 @7.x] [code: app/bundles/ConfigBundle/Controller/ConfigController.php:270-294 @7.x]
 C5. A contributed form with no `parameters` key throws `BadFormConfigException`. [code: app/bundles/ConfigBundle/Mapper/ConfigMapper.php:30-32 @7.x]
-C6. The restricted list is `db_driver, db_host, db_table_prefix, db_name, db_user, db_password, db_path, db_port, secret_key`, plus `transifex_username` and `transifex_password` in prod. The default display mode is `remove`. [code: app/config/security.php:182-200 @7.x]
+C6. The restricted list is `db_driver, db_host, db_table_prefix, db_name, db_user, db_password, db_path, db_port, secret_key`, plus `transifex_username` and `transifex_password` in prod. The default display mode is `remove`. [code: app/config/security.php:200-218 @7.x]
 C7. `MODE_REMOVE` removes restricted fields. `MODE_MASK` re-adds them disabled and unmapped with placeholder `mautic.config.restricted`. Nested restrictions such as `monitored_email => [EmailBundle_bounces]` apply to sub-forms. [code: app/bundles/ConfigBundle/Form/Helper/RestrictionHelper.php:32-82 @7.x] [code: app/bundles/ConfigBundle/Mapper/Helper/RestrictionHelper.php:10-54 @7.x]
 C8. Every leaf value is escaped on save (`%` → `%%`). The exceptions are the allowed container parameters in `config_allowed_parameters`, which are written unescaped. Values are unescaped for display. [code: app/bundles/ConfigBundle/Form/Type/EscapeTransformer.php:29-92 @7.x] [code: app/bundles/ConfigBundle/Tests/Controller/ConfigControllerFunctionalTest.php:51-77 @7.x]
 C9. Saving requires a writable local.php, or a writable directory for it. Otherwise the form shows `mautic.config.notwritable` and nothing is written. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:86-92 @7.x] [code: app/bundles/CoreBundle/Configurator/Configurator.php:50-59 @7.x]
@@ -146,7 +146,7 @@ C11. The core `CONFIG_PRE_SAVE` listeners:
 - User preserves `saml_idp_own_password` and validates and base64-encodes the uploaded SAML files.
 - Social escapes `twitter_handle_field`.
 
-[code: app/bundles/ApiBundle/EventListener/ConfigSubscriber.php:36-38 @7.x] [code: app/bundles/CampaignBundle/EventListener/ConfigSubscriber.php:17 @7.x] [code: app/bundles/CoreBundle/EventListener/ConfigSubscriber.php:42-77 @7.x] [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:70-72 @7.x] [code: app/bundles/EmailBundle/EventListener/ConfigSubscriber.php:38-66 @7.x] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:45-93 @7.x] [code: plugins/MauticSocialBundle/EventListener/ConfigSubscriber.php:23 @7.x]
+[code: app/bundles/ApiBundle/EventListener/ConfigSubscriber.php:36-38 @7.x] [code: app/bundles/CampaignBundle/EventListener/ConfigSubscriber.php:17 @7.x] [code: app/bundles/CoreBundle/EventListener/ConfigSubscriber.php:42-77 @7.x] [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:71-73 @7.x] [code: app/bundles/EmailBundle/EventListener/ConfigSubscriber.php:38-66 @7.x] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:45-93 @419a08a9b35] [code: plugins/MauticSocialBundle/EventListener/ConfigSubscriber.php:23 @7.x]
 C12. Fields registered through `unsetIfEmpty()`, and all file fields, are dropped from the submitted data when empty, so stored secrets survive an empty submission. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:127-137 @7.x] [code: app/bundles/ConfigBundle/Event/ConfigEvent.php:88-104 @7.x]
 C13. Saving one tab merges only that tab's array into local.php. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:131-140 @7.x] [code: app/bundles/ConfigBundle/Tests/Controller/ConfigControllerFunctionalTest.php:138 @7.x]
 C14. If local.php has no `secret_key` after merging, a new key is generated before writing: `sha256(uniqid(mt_rand(), true))`. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:144-147 @7.x] [code: app/bundles/CoreBundle/Helper/EncryptionHelper.php:45-48 @7.x]
@@ -195,7 +195,7 @@ N11. The installer loads the `group_install` fixtures, appending in DELETE purge
 - `RoleData`: the admin Role;
 - `LeadFieldData`: the core Contact and Company fields;
 - `LoadReportData`: the sample Reports.
-N12. Admin User creation [code: app/bundles/InstallBundle/Install/InstallService.php:416-509 @7.x] [code: app/bundles/InstallBundle/Form/Type/UserStepType.php:117-124 @7.x]:
+N12. Admin User creation [code: app/bundles/InstallBundle/Install/InstallService.php:416-509 @7.x] [code: app/bundles/InstallBundle/Configurator/Form/UserStepType.php:117-124 @7.x]:
 - User id 1 is reused if it exists.
 - First name, last name, username, email and password are required.
 - The email is validated, and the password must be at least 6 characters; the web form adds `NotWeak`.

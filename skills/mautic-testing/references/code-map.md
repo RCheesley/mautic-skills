@@ -15,7 +15,7 @@ Contents
 
 ## 1. Composer packages and scripts
 
-Dev tooling is in the root `composer.json` `require-dev`; runtime dependencies in `app/composer.json` [code: composer.json:28-54 @7.x] [code: app/composer.json:15-105 @7.x].
+Dev tooling is in the root `composer.json` `require-dev`; runtime dependencies in `app/composer.json` [code: composer.json:28-54 @419a08a9b35] [code: app/composer.json:15-105 @419a08a9b35].
 
 | Package | Constraint | Locked |
 |---|---|---|
@@ -31,11 +31,11 @@ Dev tooling is in the root `composer.json` `require-dev`; runtime dependencies i
 | friendsofphp/php-cs-fixer | ^v3.95.11 | v3.95.27 |
 | symplify/easy-coding-standard | ^13.2.17 | 13.3.2 |
 | symfony/browser-kit, dom-crawler, phpunit-bridge | ~7.4.0 | |
-[code: composer.json:28-54 @7.x]
+[code: composer.json:28-54 @419a08a9b35]
 
-Composer `bin-dir` is `bin`, so tools are `bin/phpunit`, `bin/phpstan`, `bin/rector`, `bin/ecs`, `bin/php-cs-fixer`, `bin/codecept`; only `bin/console` is in git [code: composer.json:215-230 @7.x] [code: .gitignore:62-64 @7.x].
+Composer `bin-dir` is `bin`, so tools are `bin/phpunit`, `bin/phpstan`, `bin/rector`, `bin/ecs`, `bin/php-cs-fixer`, `bin/codecept`; only `bin/console` is in git [code: composer.json:213-228 @7.x] [code: .gitignore:62-64 @7.x].
 
-Scripts [code: composer.json:166-214 @7.x]:
+Scripts [code: composer.json:164-212 @7.x]:
 
 | Script | Runs |
 |---|---|
@@ -48,7 +48,7 @@ Scripts [code: composer.json:166-214 @7.x]:
 | `rector` | `bin/rector process --ansi` |
 | `githooks` | copies `build/hooks/pre-commit` and `post-checkout` into `.git/hooks/` |
 
-`extra.patches` patches `twig/twig` to make `IntegrationTestCase` data providers static for PHPUnit 11 [code: composer.json:254-258 @7.x].
+`extra.patches` patches `twig/twig` to make `IntegrationTestCase` data providers static for PHPUnit 11 [code: composer.json:252-256 @7.x].
 
 ## 2. PHPUnit configuration and extensions
 
@@ -188,9 +188,9 @@ Counts at 7.x (`419a08a9b35`): 1296 `*Test.php` files, 445 extend `MauticMysqlTe
 
 ## 8. PHPStan rules
 
-Config: `phpstan.neon` (includes `phpstan-baseline.neon` first, about 2040 entries), bootstrap `phpstan-bootstrap.php` defines `MAUTIC_ENV`, `MAUTIC_VERSION`, `MAUTIC_TABLE_PREFIX` as `''` and `MAUTIC_DB_SERVER_VERSION='8.0.0'`; `dynamicConstantNames` covers the first three [code: phpstan.neon:1-39 @7.x] [code: phpstan-bootstrap.php @7.x].
+Config: `phpstan.neon` (includes `phpstan-baseline.neon` first, about 2040 entries), bootstrap `phpstan-bootstrap.php` defines `MAUTIC_ENV`, `MAUTIC_VERSION`, `MAUTIC_TABLE_PREFIX` as `''` and `MAUTIC_DB_SERVER_VERSION='8.0.0'`; `dynamicConstantNames` covers the first three [code: phpstan.neon:1-39 @419a08a9b35] [code: phpstan-bootstrap.php @7.x].
 
-Registered custom rules in `utils/phpstan/src/Rule/`, tests in `utils/phpstan/tests/Rule/` [code: phpstan.neon:257-277 @7.x]:
+Registered custom rules in `utils/phpstan/src/Rule/`, tests in `utils/phpstan/tests/Rule/` [code: phpstan.neon:279-299 @7.x]:
 
 | Rule | Message (abridged) |
 |---|---|
@@ -210,14 +210,14 @@ Registered custom rules in `utils/phpstan/src/Rule/`, tests in `utils/phpstan/te
 | NoServicesInBundleConfigRule | Config file must not define services |
 | NoParentConstructorForwardingRule | Constructor forwards parameters to `parent::__construct()` |
 | NoServiceJugglingRule | Service passed as an argument instead of injected |
-Symplify `NoJustPropertyAssignRule` is also on. Present but not registered: `NoObjectPropertyAssignToVariableInTestsRule`, `NoServiceInMethodParameterRule`, `NoUnusedServiceAliasRule` [code: phpstan.neon:257-277 @7.x].
+Symplify `NoJustPropertyAssignRule` is also on. Present but not registered: `NoObjectPropertyAssignToVariableInTestsRule`, `NoServiceInMethodParameterRule`, `NoUnusedServiceAliasRule` [code: phpstan.neon:279-299 @7.x].
 
-Project-wide `ignoreErrors` (`phpstan.neon:42-239`) tolerate, among others, `missingType.generics`, `missingType.iterableValue`, deprecated `Request::get()`, and use of Mautic's own deprecated classes [code: phpstan.neon:42-239 @7.x].
+Project-wide `ignoreErrors` (`phpstan.neon:42-239`) tolerate, among others, `missingType.generics`, `missingType.iterableValue`, deprecated `Request::get()`, and use of Mautic's own deprecated classes [code: phpstan.neon:42-239 @419a08a9b35].
 
 ## 9. Rector and coding standard
 
-- `rector.php`: paths `app/bundles`, `plugins`; sets listed in behaviour.md 6.9; extra rules `AssertClassToThisAssertRector`, `MergePhpstanDocTagIntoNativeRector`, `FlipNegatedTernaryInstanceofRector`, `NarrowArrayCollectionUnionReturnDocblockRector`, `Utils\Rector\UnserializeToSerializerDecodeRector`, `Utils\Rector\ModelGetRepositoryToRepositoryServiceRector`; `withTypeGuardedClasses` protects common controllers, `CommonRepository`, `AbstractPermissions`, `AbstractIntegration`, `CrmAbstractIntegration`; cache `var/cache/rector` [code: rector.php:10-122 @7.x].
-- Custom rectors: `utils/rector/src/`, fixture tests in `utils/rector/tests/` (`*.php.inc`) [code: rector.php:41-53 @7.x].
+- `rector.php`: paths `app/bundles`, `plugins`; sets listed in behaviour.md 6.9; extra rules `AssertClassToThisAssertRector`, `MergePhpstanDocTagIntoNativeRector`, `FlipNegatedTernaryInstanceofRector`, `NarrowArrayCollectionUnionReturnDocblockRector`, `Utils\Rector\UnserializeToSerializerDecodeRector`, `Utils\Rector\ModelGetRepositoryToRepositoryServiceRector`; `withTypeGuardedClasses` protects common controllers, `CommonRepository`, `AbstractPermissions`, `AbstractIntegration`, `CrmAbstractIntegration`; cache `var/cache/rector` [code: rector.php:10-122 @419a08a9b35].
+- Custom rectors: `utils/rector/src/`, fixture tests in `utils/rector/tests/` (`*.php.inc`) [code: rector.php:42-54 @7.x].
 - `.php-cs-fixer.php`: finder over `app/bundles`, `app/config`, `app/middlewares`, `app/migrations`, `plugins`, `tests`, `utils` and root PHP files [code: .php-cs-fixer.php:5-57 @7.x].
 - `ecs.php`: sets `comments`, `docblocks`, `namespaces`, `cleanup`, `controlStructures`, `standaloneLine`, with skips; run only by `composer fixcs` [code: ecs.php:7-43 @7.x].
 - Hooks: `build/hooks/pre-commit` (php-cs-fixer on staged files), `build/hooks/post-checkout` (deletes `var/cache`) [code: build/hooks/pre-commit:17-20 @7.x] [code: build/hooks/post-checkout:4-12 @7.x].
@@ -235,7 +235,7 @@ Project-wide `ignoreErrors` (`phpstan.neon:42-239`) tolerate, among others, `mis
 | `build-grapesjs-assets.yml` | `plugins/GrapesJsBuilderBundle/**` | npm build |
 | `validate-json.yml` | changed JSON | `jq empty` |
 | `release.yml` | tags | package, install and update tests |
-[code: .github/workflows/tests.yml:3-316 @7.x] [code: .github/workflows/e2e-tests.yml:25-28 @7.x] [code: .github/workflows/coverage-check.yml:7-88 @7.x] [code: .github/workflows/api-library-tests.yml:20-125 @7.x]
+[code: .github/workflows/tests.yml:3-316 @419a08a9b35] [code: .github/workflows/e2e-tests.yml:25-28 @7.x] [code: .github/workflows/coverage-check.yml:7-88 @7.x] [code: .github/workflows/api-library-tests.yml:20-125 @7.x]
 
 CI support files: `.github/ci-files/.my.cnf` (`column-statistics=0` for mysqldump), `.github/ci-files/local.php`, `.github/ci-files/composer.json` [code: .github/workflows/tests.yml:94-101 @7.x].
 

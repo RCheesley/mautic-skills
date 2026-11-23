@@ -35,10 +35,10 @@ Events (dispatch by class)
 - Legacy campaign actions registered with `eventName`/`callback` no longer run at all; only `batchEventName` actions execute [PR #17097].
 
 Removed routes and APIs
-- `/sms/receive` (`mautic_receive_sms`) returns 404; Twilio must use `/sms/twilio/callback` [code: UPGRADE-8.0.md:277 @8.x] [PR #17231].
-- `mautic_receive_notification` (`/notification/receive`) is removed; it pointed at a missing controller action [code: UPGRADE-8.0.md:331 @8.x].
-- `NotificationHelper::unsubscribe()` is removed, with `LeadRepository` and `DoNotContact` constructor args [code: UPGRADE-8.0.md:232 @8.x].
-- Service id `mautic.sms.callback_handler_container` is removed; use the FQCN [code: UPGRADE-8.0.md:177 @8.x].
+- `/sms/receive` (`mautic_receive_sms`) returns 404; Twilio must use `/sms/twilio/callback` [code: UPGRADE-8.0.md:368 @8.x] [PR #17231].
+- `mautic_receive_notification` (`/notification/receive`) is removed; it pointed at a missing controller action [code: UPGRADE-8.0.md:422 @8.x].
+- `NotificationHelper::unsubscribe()` is removed, with `LeadRepository` and `DoNotContact` constructor args [code: UPGRADE-8.0.md:323 @8.x].
+- Service id `mautic.sms.callback_handler_container` is removed; use the FQCN [code: UPGRADE-8.0.md:267 @8.x].
 
 Signatures
 - `MessageModel::getMessageChannels(int)`, `MessageQueueModel::processMessageQueue(array|MessageQueue)`, `Channel::getProperties(): array`, `MessageQueue::getMetadata(): array` [PR #17201].

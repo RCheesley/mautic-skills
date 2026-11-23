@@ -5,12 +5,12 @@ Paths are relative to the repo root. None of the three bundles defines console c
 ## 1. Entities and tables
 
 ### Asset — `assets` (`app/bundles/AssetBundle/Entity/Asset.php`)
-- Base classes: extends `FormEntity` and uses `UuidTrait` and `ProjectTrait`. [code: app/bundles/AssetBundle/Entity/Asset.php:51-55 @7.x]
-- Index: `asset_alias_search(alias)`. [code: app/bundles/AssetBundle/Entity/Asset.php:228-230 @7.x]
-- Columns: `id`, `title`, `description`, `alias`, `storage_location`, `path`, `remote_path` (TEXT), `original_file_name`, `lang`, `publish_up`, `publish_down`, `download_count`, `unique_download_count`, `revision`, `category_id` (FK SET NULL), `extension`, `mime`, `size`, `disallow`, `uuid`, plus the FormEntity columns. [code: app/bundles/AssetBundle/Entity/Asset.php:232-293 @7.x]
-- Project xref: `asset_projects_xref(asset_id, project_id)`. [code: app/bundles/AssetBundle/Entity/Asset.php:293 @7.x]
-- Transient fields: `file`, `uploadDir`, `maxSize`, `temp`, `tempId`, `tempName`, `downloadUrl`. [code: app/bundles/AssetBundle/Entity/Asset.php:105-139,211 @7.x]
-- API: API Platform operations are gated on `asset:assets:*`. Serializer groups are `assetDetails` and `assetList`. [code: app/bundles/AssetBundle/Entity/Asset.php:32-50,304-335 @7.x]
+- Base classes: extends `FormEntity` and uses `UuidTrait` and `ProjectTrait`. [code: app/bundles/AssetBundle/Entity/Asset.php:52-56 @7.x]
+- Index: `asset_alias_search(alias)`. [code: app/bundles/AssetBundle/Entity/Asset.php:229-231 @7.x]
+- Columns: `id`, `title`, `description`, `alias`, `storage_location`, `path`, `remote_path` (TEXT), `original_file_name`, `lang`, `publish_up`, `publish_down`, `download_count`, `unique_download_count`, `revision`, `category_id` (FK SET NULL), `extension`, `mime`, `size`, `disallow`, `uuid`, plus the FormEntity columns. [code: app/bundles/AssetBundle/Entity/Asset.php:233-294 @7.x]
+- Project xref: `asset_projects_xref(asset_id, project_id)`. [code: app/bundles/AssetBundle/Entity/Asset.php:294 @7.x]
+- Transient fields: `file`, `uploadDir`, `maxSize`, `temp`, `tempId`, `tempName`, `downloadUrl`. [code: app/bundles/AssetBundle/Entity/Asset.php:106-140,212 @7.x]
+- API: API Platform operations are gated on `asset:assets:*`. Serializer groups are `assetDetails` and `assetList`. [code: app/bundles/AssetBundle/Entity/Asset.php:33-51,305-336 @7.x]
 
 ### Download — `asset_downloads` (`app/bundles/AssetBundle/Entity/Download.php`)
 - Id: bigint. [code: app/bundles/AssetBundle/Entity/Download.php:115 @7.x]
@@ -115,7 +115,7 @@ Category types are registered under `config['categories']`; the `global` type co
   [code: app/bundles/CategoryBundle/Model/CategoryModel.php:23-223 @7.x]
 - `CategoryBundle/Model/ContactActionModel.php`. [code: app/bundles/CategoryBundle/Model/ContactActionModel.php:14-40 @7.x]
 - `CategoryBundle/Entity/CategoryRepository.php`: `getCategoryList` (`:37-77`) and `checkUniqueCategoryAlias` (`:152-169`). [code: app/bundles/CategoryBundle/Entity/CategoryRepository.php:37-169 @7.x]
-- Form types: `Form/Type/CategoryListType.php` (the picker), `CategoryType.php`, `CategoryBundlesType.php`. [code: app/bundles/CategoryBundle/Form/Type/CategoryListType.php:30-84 @7.x]
+- Form types: `Form/Type/CategoryListType.php` (the picker), `CategoryType.php`, `CategoryBundlesType.php`. [code: app/bundles/CategoryBundle/Form/Type/CategoryListType.php:30-84 @419a08a9b35]
 
 ### Projects
 - `app/bundles/ProjectBundle/Model/ProjectModel.php` is final, with permission base `project:project`. [code: app/bundles/ProjectBundle/Model/ProjectModel.php:18,82-85 @7.x]
@@ -188,7 +188,7 @@ AJAX endpoints:
 | `default_assetlimit` | falls back to `default_pagelimit` | marked for removal in 8 |
 | `validate_remote_domains` | false (per docs) | `local.php`; see docs digest |
 
-[code: app/bundles/AssetBundle/Config/config.php:59-64 @7.x] [code: app/bundles/AssetBundle/Form/Type/ConfigType.php:18-65 @7.x] [code: app/bundles/AssetBundle/Controller/AssetController.php:59-63 @7.x] [docs: https://docs.mautic.org/en/7.2/components/assets.html#using-remote-assets]
+[code: app/bundles/AssetBundle/Config/config.php:59-64 @7.x] [code: app/bundles/AssetBundle/Form/Type/ConfigType.php:18-65 @419a08a9b35] [code: app/bundles/AssetBundle/Controller/AssetController.php:59-63 @7.x] [docs: https://docs.mautic.org/en/7.2/components/assets.html#using-remote-assets]
 
 ## 6. Permissions
 

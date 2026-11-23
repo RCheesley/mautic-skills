@@ -31,8 +31,8 @@ Enabling and authentication
 - Access tokens last `api_oauth2_access_token_lifetime` minutes (60) and refresh tokens `api_oauth2_refresh_token_lifetime`
   days (14). [code: app/bundles/CoreBundle/Loader/EnvVars/ApiEnvVars.php:13-17 @7.x]
 - The v1 firewall is stateless. The v2 firewall shares the UI session, so a logged-in browser can call `/api/v2`.
-  [code: app/config/security.php:51-67 @7.x]
-- No rate limiting exists in 7.x; `api_rate_limiter_cache` is gone. [code: app/config/security.php:105-108 @7.x]
+  [code: app/config/security.php:51-67 @419a08a9b35]
+- No rate limiting exists in 7.x; `api_rate_limiter_cache` is gone. [code: app/config/security.php:118-121 @7.x]
   [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/getting_started.html#api-rate-limiter-cache]
 
 v1 conventions
@@ -198,7 +198,7 @@ For 8.x compatibility, subscribe by event class where 8.x provides one (see Vers
 - `client_credentials` is added only when an admin creates the client; the client then carries that admin's role.
   [code: app/bundles/ApiBundle/Controller/ClientController.php:207-211 @7.x]
 - v2 accepts the UI session cookie because its firewall is not stateless. Consider CSRF when exposing it (open question).
-  [code: app/config/security.php:51-59 @7.x]
+  [code: app/config/security.php:62-70 @7.x]
 - `GET /api/v2/categories` has no security expression. [code: app/bundles/CategoryBundle/Entity/Category.php:23-26 @7.x]
 - `MauticDenyAccessListener` is not registered, so only the voter path dispatches the permission-context event.
   The devdocs say both paths do. [code: app/bundles/ApiBundle/ApiPlatform/EventListener/MauticDenyAccessListener.php:35-80 @7.x]

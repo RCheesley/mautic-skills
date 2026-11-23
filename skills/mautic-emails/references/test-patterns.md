@@ -3,7 +3,7 @@
 ## Base classes and defaults
 - Unit tests extend `PHPUnit\Framework\TestCase`; functional tests extend `Mautic\CoreBundle\Test\MauticMysqlTestCase`, often with `Mautic\CoreBundle\Tests\Functional\CreateTestEntitiesTrait` and `Mautic\CoreBundle\Tests\Traits\ControllerTrait`. [code: app/bundles/CoreBundle/Test/MauticMysqlTestCase.php:17-51 @7.x]
 - Default functional config: `mailer_dsn = null://null`, `messenger_dsn_email = in-memory://default`, `messenger_dsn_hit = sync://`, `messenger_dsn_failed = in-memory://default`, API basic auth on (`admin` / `Maut1cR0cks!`), `site_url = https://localhost`. [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:41-61 @7.x]
-- Override per test class by setting `$this->configParams[...]` before `parent::setUp()` (e.g. `disable_trackable_urls`, `mailer_from_email`, `mailer_custom_headers`). [code: app/bundles/EmailBundle/Tests/Controller/EmailControllerFunctionalTest.php:54-63 @7.x]
+- Override per test class by setting `$this->configParams[...]` before `parent::setUp()` (e.g. `disable_trackable_urls`, `mailer_from_email`, `mailer_custom_headers`). [code: app/bundles/EmailBundle/Tests/Controller/EmailControllerFunctionalTest.php:55-64 @7.x]
 - Read sent messages with `self::getMailerMessages()`, `self::getMailerMessage($i)` or `self::getMailerMessagesByToAddress('x@y.z')`. [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:70-93 @7.x]
 - Run commands with `$this->testSymfonyCommand($name, $params)` (returns a `CommandTester`). [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:200 @7.x]
 - To exercise the real transport path set `messenger_dsn_email = 'sync://'`; to assert queueing keep `in-memory://default`. [code: app/bundles/EmailBundle/Tests/Controller/Api/SMimeFunctionalTest.php:27-28 @7.x]
@@ -36,7 +36,7 @@ Line references from [code: app/bundles/EmailBundle/Tests/ @7.x] as recorded in 
 ## What a good regression test asserts
 - Rows, not UI text: `email_stats` (count per Contact/email, `is_failed`, `is_read`, `list_id`, `source`), `lead_donotcontact` (reason, `channel`, `channel_id`, comment), `emails.sent_count`/`read_count`, `message_queue`, `email_stat_replies`.
 - The number and recipients of messages in the mailer (`getMailerMessagesByToAddress`), and headers (`List-Unsubscribe`, `X-EMAIL-ID`, `Reply-To`).
-- Both sides of a guard: e.g. one Contact added before `publishUp` (sent) and one after (not sent) when Continue sending is off. [code: app/bundles/EmailBundle/Tests/Controller/EmailControllerFunctionalTest.php:1217-1264 @7.x]
+- Both sides of a guard: e.g. one Contact added before `publishUp` (sent) and one after (not sent) when Continue sending is off. [code: app/bundles/EmailBundle/Tests/Controller/EmailControllerFunctionalTest.php:1277-1324 @7.x]
 - For pending-count bugs, call the AJAX endpoint after the change that should invalidate the cache.
 
 ## Skeleton: Segment Email eligibility
@@ -117,13 +117,13 @@ final class SegmentEmailEligibilityFunctionalTest extends MauticMysqlTestCase
 The entity setup mirrors
 `app/bundles/EmailBundle/Tests/Functional/PendingCountTest.php` and the broadcast test in
 `EmailControllerFunctionalTest.php`, which runs `mautic:broadcast:send` (singular alias) with `--channel` and `--id`.
-[code: app/bundles/EmailBundle/Tests/Controller/EmailControllerFunctionalTest.php:1256 @7.x]
+[code: app/bundles/EmailBundle/Tests/Controller/EmailControllerFunctionalTest.php:1316 @7.x]
 
 ## Skeleton: unsubscribe endpoint
 Create a Contact, an email and a `Stat` with a `tracking_hash`, compute `secretHash` with `MailHashHelper` (HMAC-SHA256 of
 the address with `secret_key`), then `POST /email/unsubscribe/{hash}/{email}/{secretHash}` with body
 `List-Unsubscribe=One-Click` and assert one `lead_donotcontact` row with reason 1 and channel `email`. Copy the request
-setup from `PublicControllerFunctionalTest.php:205`. [code: app/bundles/EmailBundle/Helper/MailHashHelper.php:16-26 @7.x] [code: app/bundles/EmailBundle/Controller/PublicController.php:970-995 @7.x]
+setup from `PublicControllerFunctionalTest.php:205`. [code: app/bundles/EmailBundle/Helper/MailHashHelper.php:16-26 @7.x] [code: app/bundles/EmailBundle/Controller/PublicController.php:1088-1113 @7.x]
 
 ## Testing async paths
 - Keep `messenger_dsn_email = in-memory://default` and assert the message is in the in-memory transport rather than the mailer. [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:52-61 @7.x]

@@ -1,4 +1,4 @@
-# Plugin development — code map (7.x, commit 419a08a9b35)
+# Plugin development — code map (7.x, the 7.x snapshot pinned in SOURCES.md)
 
 All paths relative to the Mautic repository root. 8.x notes marked `@8.x`.
 
@@ -51,7 +51,7 @@ All paths relative to the Mautic repository root. 8.x notes marked `@8.x`.
 | Facade | `app/bundles/PluginBundle/Facade/ReloadFacade.php:24-49` | order of operations [code: app/bundles/PluginBundle/Facade/ReloadFacade.php:24-49 @7.x] |
 | Helper | `app/bundles/PluginBundle/Helper/ReloadHelper.php` — disable 26-39, update 67-95, install 102-126, config mapping 128-153 | [code: app/bundles/PluginBundle/Helper/ReloadHelper.php:26-153 @7.x] |
 | Core install/update subscriber | `app/bundles/PluginBundle/EventListener/PluginSubscriber.php:20-37` | [code: app/bundles/PluginBundle/EventListener/PluginSubscriber.php:20-37 @7.x] |
-| Schema helper | `app/bundles/PluginBundle/Bundle/PluginDatabase.php` — `installPluginSchema()` 35-65, `onPluginUpdate()` 70-80, `dropPluginSchema()` (no caller) | [code: app/bundles/PluginBundle/Bundle/PluginDatabase.php:35-80 @7.x] |
+| Schema helper | `app/bundles/PluginBundle/Bundle/PluginDatabase.php` — `installPluginSchema()` 35-65, `onPluginUpdate()` 70-80, `dropPluginSchema()` (no caller) | [code: app/bundles/PluginBundle/Bundle/PluginDatabase.php:35-80 @419a08a9b35] |
 | Migration engine | `app/bundles/IntegrationsBundle/Migration/Engine.php:26-95` | [code: app/bundles/IntegrationsBundle/Migration/Engine.php:26-95 @7.x] |
 | Migration base | `app/bundles/IntegrationsBundle/Migration/AbstractMigration.php:17-127` | [code: app/bundles/IntegrationsBundle/Migration/AbstractMigration.php:17-127 @7.x] |
 | Events | `app/bundles/PluginBundle/PluginEvents.php` — `ON_PLUGIN_UPDATE` :128, `ON_PLUGIN_INSTALL` :137, `PLUGIN_IS_PUBLISHED_STATE_CHANGING` :146 | [code: integrations-plugins-marketplace §4.1 @7.x] |
@@ -63,7 +63,7 @@ All paths relative to the Mautic repository root. 8.x notes marked `@8.x`.
 |---|---|---|
 | `plugins` | `Mautic\PluginBundle\Entity\Plugin` | `id`, `name`, `description`, `is_missing`, `bundle` (unique `unique_bundle`, string 50), `version`, `author` [code: app/bundles/PluginBundle/Entity/Plugin.php:72-103 @7.x] |
 | `plugin_integration_settings` | `Mautic\PluginBundle\Entity\Integration` | `plugin_id` (nullable, cascade), `name`, `is_published`, `supported_features`, `api_keys` (encrypted), `feature_settings` [code: app/bundles/PluginBundle/Entity/Integration.php:49-85 @7.x] |
-| Plugin-owned tables | your `Entity/` classes | created on install from metadata; prefixed with `MAUTIC_TABLE_PREFIX` [code: app/bundles/PluginBundle/Bundle/PluginDatabase.php:35-65 @7.x] |
+| Plugin-owned tables | your `Entity/` classes | created on install from metadata; prefixed with `MAUTIC_TABLE_PREFIX` [code: app/bundles/PluginBundle/Bundle/PluginDatabase.php:35-65 @419a08a9b35] |
 
 ## 7. Commands relevant to plugin work
 | Command | Purpose | Source |

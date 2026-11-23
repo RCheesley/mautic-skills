@@ -24,7 +24,7 @@ Paths are relative to the repository root. B = `app/bundles/`, P = `plugins/` in
 | `SmsBundle\Entity\Stat` | `sms_message_stats` | sms/lead/list SET NULL; `tracking_hash`, `source`, `source_id`, `tokens`, `details`, `is_failed` | [code: app/bundles/SmsBundle/Entity/Stat.php:17,85-132 @7.x] |
 | `NotificationBundle\Entity\Notification` | `push_notifications` (+ `push_notification_list_xref`) | `url`, `heading`, `message`, `button`, `utm_tags`, `notification_type`, `read_count`, `sent_count`, `mobile`, `mobileSettings`; no `#[ApiResource]` | [code: app/bundles/NotificationBundle/Entity/Notification.php:186-299 @7.x] |
 | `NotificationBundle\Entity\Stat` | `push_notification_stats` | `date_read`, `is_clicked`, `retry_count` never written | [code: app/bundles/NotificationBundle/Entity/Stat.php:16,106-166 @7.x] |
-| `NotificationBundle\Entity\PushID` | `push_ids` | `push_id`, `lead_id` SET NULL, `enabled`, `mobile`; owned by `Lead::pushIds` | [code: app/bundles/NotificationBundle/Entity/PushID.php:42-61 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:355-360 @7.x] |
+| `NotificationBundle\Entity\PushID` | `push_ids` | `push_id`, `lead_id` SET NULL, `enabled`, `mobile`; owned by `Lead::pushIds` | [code: app/bundles/NotificationBundle/Entity/PushID.php:42-61 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:360-365 @7.x] |
 | `MauticFocusBundle\Entity\Focus` | `focus` (+ `focus_projects_xref`) | `focus_type`, `style`, `website`, `properties`, `utm_tags`, `form_id` (plain int), `cache`, `html_mode`, `editor`, `html`; API Platform `/focus_items` | [code: plugins/MauticFocusBundle/Entity/Focus.php:26-43,180-220 @7.x] |
 | `MauticFocusBundle\Entity\Stat` | `focus_stats` | types `view`, `click`, `submission`; focus CASCADE, lead SET NULL | [code: plugins/MauticFocusBundle/Entity/Stat.php:14-18,54-72 @7.x] |
 | `MauticSocialBundle\Entity\Monitoring` | `monitoring` | `title`, `network_type`, `lists`, `revision`, `stats`, `properties`; API Platform `mauticSocial:monitoring:*` | [code: plugins/MauticSocialBundle/Entity/Monitoring.php:21-39,114-149 @7.x] |
@@ -138,14 +138,14 @@ Menu gating: SMS needs Twilio [code: app/bundles/SmsBundle/Config/config.php:51-
 ## 6. Configuration parameters
 | Parameter | Default | Live? | Source |
 |---|---|---|---|
-| `sms_transport` | `mautic.sms.twilio.transport` | yes (Configuration → SMS Settings) | [code: app/bundles/SmsBundle/Config/config.php:70-79 @7.x] [code: app/bundles/SmsBundle/Form/Type/ConfigType.php:39-47 @7.x] |
+| `sms_transport` | `mautic.sms.twilio.transport` | yes (Configuration → SMS Settings) | [code: app/bundles/SmsBundle/Config/config.php:70-79 @7.x] [code: app/bundles/SmsBundle/Form/Type/ConfigType.php:39-47 @419a08a9b35] |
 | `sms_disable_trackable_urls` | false | yes | [code: app/bundles/SmsBundle/Helper/SmsHelper.php:66-69 @7.x] |
 | `sms_frequency_number` / `sms_frequency_time` | 0 / DAY | yes (not in UI) | [code: app/bundles/SmsBundle/Config/config.php:75-76 @7.x] |
 | `sms_enabled`, `sms_username`, `sms_password`, `sms_messaging_service_sid` | — | no | [code: app/bundles/SmsBundle/Config/config.php:70-79 @7.x] |
 | `shortener_sms_enable` (Core) | — | yes | [code: app/bundles/SmsBundle/EventListener/SmsSubscriber.php:95 @7.x] |
 | `notification_*`, `welcomenotification_enabled` | — | no | [code: app/bundles/NotificationBundle/Config/config.php:112-125 @7.x] |
 | `gcm_sender_id` | `482941778795` (inline fallback `446150739532`) | yes, `/manifest.json` | [code: app/bundles/NotificationBundle/Controller/JsController.php:16 @7.x] |
-| `campaign_send_notification_to_author`, `campaign_notification_email_addresses`, `webhook_send_notification_to_author`, `webhook_notification_email_addresses` | true/null | yes, but about emailing users, not push | [code: app/bundles/NotificationBundle/Form/Type/NotificationConfigType.php:23-83 @7.x] |
+| `campaign_send_notification_to_author`, `campaign_notification_email_addresses`, `webhook_send_notification_to_author`, `webhook_notification_email_addresses` | true/null | yes, but about emailing users, not push | [code: app/bundles/NotificationBundle/Form/Type/NotificationConfigType.php:23-83 @419a08a9b35] |
 | `website_snapshot_url`, `website_snapshot_key` | — | no | [code: plugins/MauticFocusBundle/Config/config.php:65-68 @7.x] |
 | `cached_data_timeout` (Core) | — | focus counters | [code: plugins/MauticFocusBundle/Controller/AjaxController.php:53,97 @7.x] |
 | `twitter_handle_field` | `twitter` | monitoring only | [code: plugins/MauticSocialBundle/Config/config.php:87-93 @7.x] |

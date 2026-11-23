@@ -14,16 +14,16 @@ map lives in `mautic-architecture/references/bundle-map.md`.
 
 ### What Mautic is
 - Mautic is an open-source marketing automation platform built on Symfony and PHP, licensed GPL-3.0. [code: AGENTS.md:7 @7.x] [code: composer.json:3-5 @7.x]
-- Its central record is the Contact, a person known or anonymous (code name `Lead`, table `leads`), optionally linked to Companies. [code: app/bundles/LeadBundle/Entity/Lead.php:298 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#website-monitoring]
+- Its central record is the Contact, a person known or anonymous (code name `Lead`, table `leads`), optionally linked to Companies. [code: app/bundles/LeadBundle/Entity/Lead.php:303 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#website-monitoring]
 - Segments group Contacts by filters (rebuilt by cron) or by explicit adds, and feed Campaigns, Segment Emails, SMS and Reports. [code: app/bundles/LeadBundle/Model/ListModel.php:383-633 @7.x] [docs: https://docs.mautic.org/en/7.2/segments/manage_segments.html]
 - Campaigns are workflows: Contacts enter from Segments or Forms and flow through Actions, Decisions and Conditions. [code: app/bundles/CampaignBundle/Entity/Event.php:54-58 @7.x] [docs: https://docs.mautic.org/en/7.2/campaigns/creating_campaigns.html#create-your-first-campaign]
 - Channels deliver messages: Email, SMS, web push, Focus Items and Marketing Messages, which pick a channel per Contact. [code: app/bundles/ChannelBundle/ChannelEvents.php:16 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/marketing_messages.html#what-are-marketing-messages]
 - A tracking script and pixel on your website record page hits and identify returning visitors; Forms, Landing Pages and Assets capture and identify Contacts. [code: app/bundles/PageBundle/Model/PageModel.php:410-463 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#tracking-script-javascript]
-- Points score Contacts and Stages place them in a lifecycle phase; Reports, the Dashboard, Webhooks, the REST API and Integrations expose the data. [code: app/bundles/PointBundle/Model/PointModel.php:173-310 @7.x] [docs: https://docs.mautic.org/en/7.2/points/points.html] [docs: https://docs.mautic.org/en/7.2/stages/stages.html]
+- Points score Contacts and Stages place them in a lifecycle phase; Reports, the Dashboard, Webhooks, the REST API and Integrations expose the data. [code: app/bundles/PointBundle/Model/PointModel.php:173-310 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/points/points.html] [docs: https://docs.mautic.org/en/7.2/stages/stages.html]
 - Most automation runs outside the web request, in console commands driven by cron and in Symfony Messenger workers. [code: app/bundles/CoreBundle/Command/ModeratedCommand.php:56-224 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/cron_jobs.html]
 
 ### Version context
-- Authoritative: Mautic 7.x at commit `419a08a9b35`: the 7.2.1 release plus 87 merged but unreleased PRs (see [SOURCES.md](../../SOURCES.md) and [post-7.2.1-prs.md](../mautic-upgrades-and-versions/references/post-7.2.1-prs.md)). It runs on PHP 8.2–8.5, Symfony ~7.4, Doctrine ORM 2 and DBAL 3.7, with MySQL ≥ 8.4.0 or MariaDB ≥ 10.11.0. [code: app/composer.json:15-105 @7.x] [code: app/release_metadata.json:4-7 @7.x] [code: app/bundles/InstallBundle/Helper/SchemaHelper.php:177-201 @7.x]
+- Authoritative: Mautic 7.x at commit `419a08a9b35`: the 7.2.1 release plus 87 merged but unreleased PRs (see [SOURCES.md](../../SOURCES.md) and [post-7.2.1-prs.md](../mautic-upgrades-and-versions/references/post-7.2.1-prs.md)). It runs on PHP 8.2–8.5, Symfony ~7.4, Doctrine ORM 2 and DBAL 3.7, with MySQL ≥ 8.4.0 or MariaDB ≥ 10.11.0. [code: app/composer.json:15-105 @419a08a9b35] [code: app/release_metadata.json:4-7 @7.x] [code: app/bundles/InstallBundle/Helper/SchemaHelper.php:177-201 @7.x]
 - In development: 8.x moves to PHP 8.4, Symfony 8.1, Doctrine ORM 3.7 / DBAL 4.4 and PHPUnit 13. [PR #16993] [PR #17392] [PR #17361] [PR #17004]
 - 8.x dispatches almost every event by its event class name, and `CoreEvents` is gone. [PR #17157] [PR #17183] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/event_listeners.html#mautic-8-class-name-event-dispatch]
 - 8.x is unreleased: `app/release_metadata.json@8.x` still says 7.2.0. [code: app/release_metadata.json @8.x]
@@ -34,7 +34,7 @@ map lives in `mautic-architecture/references/bundle-map.md`.
 
 ### Cross-cutting rules (every agent)
 1. Cite every statement with the tags defined in [SOURCES.md](../../SOURCES.md): `[code: path:line @7.x]`, `[code: … @8.x]`, `[docs: URL]`, `[devdocs: URL]`, `[kb: URL]`, `[PR #N]`. Never cite from memory. → mautic-contributing
-2. When code and docs disagree about current behaviour, trust the code at the 7.x snapshot, then docs, then PR discussion, and record the discrepancy. Example: the docs say only Administrators are excluded from point scoring, but the code skips every logged-in User. [code: app/bundles/PointBundle/Model/PointModel.php:176-178 @7.x] [docs: https://docs.mautic.org/en/7.2/points/points_troubleshooting.html#page-visits-not-recognized]
+2. When code and docs disagree about current behaviour, trust the code at the 7.x snapshot, then docs, then PR discussion, and record the discrepancy. Example: the docs say only Administrators are excluded from point scoring, but the code skips every logged-in User. [code: app/bundles/PointBundle/Model/PointModel.php:177-179 @7.x] [docs: https://docs.mautic.org/en/7.2/points/points_troubleshooting.html#page-visits-not-recognized]
 3. Write "Contact", not "Lead", and "Segment", not "List", in prose; keep `Lead`/`LeadList` in code identifiers. [docs: https://github.com/mautic/user-documentation/blob/7.2/.github/styles/Mautic/FeatureList.yml] → mautic-contributing
 4. Logged-in Mautic Users are not tracked: no page hit, no asset download, no points. Test public behaviour in a private window or call `logoutUser()` in tests. [code: app/bundles/PageBundle/Model/PageModel.php:410-412 @7.x] [code: app/bundles/AssetBundle/Model/AssetModel.php:104-116 @7.x] → mautic-pages-and-tracking, mautic-testing
 5. Cron is required: Segments, Campaigns, scheduled emails, imports, exports and queued Webhooks only progress when their command runs. [docs: https://docs.mautic.org/en/7.2/configuration/cron_jobs.html] [kb: https://kb.mautic.org/article/getting-started-with-mautic.html] → mautic-cron-and-queues
@@ -130,7 +130,7 @@ To find the owner of a table, route, permission or event, follow "How to find th
 
 ## Pitfalls
 - Assuming a feature is real-time when it needs cron, or that email is queued when the DSN is `sync://`. [docs: https://docs.mautic.org/en/7.2/configuration/cron_jobs.html#campaign-cron-jobs] [code: app/bundles/MessengerBundle/Config/config.php:7-8 @7.x]
-- Testing tracking, points or downloads while logged in to the admin. [code: app/bundles/PointBundle/Model/PointModel.php:176-178 @7.x]
+- Testing tracking, points or downloads while logged in to the admin. [code: app/bundles/PointBundle/Model/PointModel.php:177-179 @7.x]
 - Searching for "list" or "lead" in docs: the UI says Segment and Contact. [docs: https://github.com/mautic/user-documentation/blob/7.2/.github/styles/Mautic/FeatureList.yml]
 - Using `mautic:emails:send` or `mautic:queue:process` advice from pre-5.x material; use `messenger:consume`. [code: UPGRADE-5.0.md:16,104-109 @7.x]
 - A plugin bundle with `MINIMUM_MAUTIC_VERSION` above the running version is silently not registered. [code: app/AppKernel.php:176-181 @7.x]

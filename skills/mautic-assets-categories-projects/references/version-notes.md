@@ -4,7 +4,7 @@
 - No Projects exist in 5.x or 6.x. `ProjectBundle` and the `*_projects_xref` tables arrive in 7.x; their migrations are dated April–June 2025. [code: app/migrations/Version20250409150440.php @7.x] [code: app/migrations/Version20250618122722.php @7.x]
 - Before Mautic 5, the API enablement config lived in `app/config/local.php` rather than `config/local.php`. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/getting_started.html]
 - Before 7, the API rate-limiter cache was configurable (`api_rate_limiter_cache`); 7.x no longer offers it. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/getting_started.html#api-rate-limiter-cache]
-- Old Asset URLs use the form `/asset/{id}:{alias}`. 7.x generates `/asset/{uuid}`, and it still resolves the old form for Assets that have an alias. [code: app/bundles/AssetBundle/Model/AssetModel.php:628-655 @7.x] [code: app/bundles/AssetBundle/Entity/Asset.php:1290-1297 @7.x]
+- Old Asset URLs use the form `/asset/{id}:{alias}`. 7.x generates `/asset/{uuid}`, and it still resolves the old form for Assets that have an alias. [code: app/bundles/AssetBundle/Model/AssetModel.php:628-655 @7.x] [code: app/bundles/AssetBundle/Entity/Asset.php:1303-1310 @7.x]
 - OpenStack and Rackspace cloud storage existed once. Only image and translation leftovers remain, and Amazon S3 is the only provider in 7.x. The version that removed them is not known. [code: plugins/MauticCloudStorageBundle/Config/services.php:20-21 @7.x]
 - 5.0: public links display inline, but only for extensions in `streamed_extensions`; other types download. [PR #11043] [PR #11474]
 - 5.0: UTM parameters on the download URL are stored on the download row and appear in the Asset Downloads report. [PR #12098]

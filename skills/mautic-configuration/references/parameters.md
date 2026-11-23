@@ -39,7 +39,7 @@ Owning bundle: CoreBundle. Declared in `app/bundles/CoreBundle/Config/config.php
 
 | Parameter | Default | Type | UI | Meaning | Bundle | Citation |
 |---|---|---|---|---|---|---|
-| `site_url` | `''` | string | coreconfig "Site URL" (required, https default) | Public base URL. Drives the router context, https forcing, the secure cookie, the SAML entity id, the ElFinder URL and the installed check. | Core | [C] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:51-68 @7.x] [code: app/AppKernel.php:272-283 @7.x] |
+| `site_url` | `''` | string | coreconfig "Site URL" (required, https default) | Public base URL. Drives the router context, https forcing, the secure cookie, the SAML entity id, the ElFinder URL and the installed check. | Core | [C] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:51-68 @419a08a9b35] [code: app/AppKernel.php:272-283 @7.x] |
 | `webroot` | `''` | string | coreconfig "Mautic's root URL Landing Page" | Landing Page id shown at `/` instead of the dashboard redirect. | Core | [C] [code: app/bundles/CoreBundle/Controller/DefaultController.php:33-40 @7.x] |
 | `404_page` | `''` | string | coreconfig "404 page" | Landing Page id rendered for not-found responses when published. | Core | [C] [code: app/bundles/CoreBundle/Controller/CommonController.php:571-580 @7.x] |
 | `cache_path` | `'%kernel.project_dir%/var/cache'` | string | coreconfig "Path to the cache directory" | Kernel cache root `<cache_path>/<env>`; read from local.php only. | Core | [C] [code: app/AppKernel.php:316-325 @7.x] |
@@ -66,15 +66,15 @@ Owning bundle: CoreBundle. Declared in `app/bundles/CoreBundle/Config/config.php
 | `locale` | `'en_US'` | string | coreconfig "Default language" | Default locale; saving downloads the language pack. | Core | [C] [code: app/config/config.php:84 @7.x] [code: app/bundles/CoreBundle/EventListener/ConfigSubscriber.php:54-74 @7.x] |
 | `secret_key` | `'temp'` | string | — (restricted) | `framework.secret`, encryption key, session-name salt, remember-me key, mail hash. Generated at install and on save if missing. | Core | [C] [code: app/config/config.php:74 @7.x] [code: app/bundles/CoreBundle/Helper/EncryptionHelper.php:39 @7.x] [code: app/bundles/InstallBundle/Install/InstallService.php:518 @7.x] |
 | `dev_hosts` | `[]` | array | — | Extra IPs allowed to use the dev front controller. | Core | [C] [code: app/middlewares/Dev/IpRestrictMiddleware.php:33-35 @7.x] |
-| `trusted_hosts` | `[]` | array | coreconfig "Trusted hosts" | Host allow-list (`Request::setTrustedHosts`); domains or regexps. | Core | [C] [code: app/middlewares/TrustMiddleware.php:38-40 @7.x] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:190-250 @7.x] |
+| `trusted_hosts` | `[]` | array | coreconfig "Trusted hosts" | Host allow-list (`Request::setTrustedHosts`); domains or regexps. | Core | [C] [code: app/middlewares/TrustMiddleware.php:38-40 @7.x] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:190-250 @419a08a9b35] |
 | `trusted_proxies` | `[]` | array | coreconfig "Trusted proxies" | Proxy IPs/CIDRs; mandatory behind an SSL-terminating proxy. | Core | [C] [code: app/middlewares/TrustMiddleware.php:34-36 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings] |
 | `validate_remote_domains` | `false` | bool | — | Validate the domains of remote URLs (`SafeRemoteUrlValidator`). | Core | [C] |
 | `allowed_remote_domains` | `[]` | array | coreconfig | Allow-list for remote URLs *(inferred)*. | Core | [C] |
-| `rememberme_key` | `'%mautic.secret_key%'` | string | — | Remember-me secret. | Core | [C] [code: app/config/security.php:95 @7.x] |
-| `rememberme_lifetime` | `7776000` (90 days) | int | — | Remember-me cookie lifetime in seconds (`int:` processor). | Core | [C] [code: app/config/security.php:96 @7.x] [code: app/config/parameters.php:30-33 @7.x] |
-| `rememberme_path` | `'/'` | string | — | Remember-me cookie path. | Core | [C] [code: app/config/security.php:97 @7.x] |
-| `rememberme_domain` | `''` | string | — | Remember-me cookie domain. | Core | [C] [code: app/config/security.php:98 @7.x] |
-| `default_pagelimit` | `30` | int | coreconfig "Default item limit per page" (choices 5–100) | Default list page size. The docs say 10. | Core | [C] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:305-329 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#system-defaults] |
+| `rememberme_key` | `'%mautic.secret_key%'` | string | — | Remember-me secret. | Core | [C] [code: app/config/security.php:108 @7.x] |
+| `rememberme_lifetime` | `7776000` (90 days) | int | — | Remember-me cookie lifetime in seconds (`int:` processor). | Core | [C] [code: app/config/security.php:109 @7.x] [code: app/config/parameters.php:30-33 @7.x] |
+| `rememberme_path` | `'/'` | string | — | Remember-me cookie path. | Core | [C] [code: app/config/security.php:110 @7.x] |
+| `rememberme_domain` | `''` | string | — | Remember-me cookie domain. | Core | [C] [code: app/config/security.php:111 @7.x] |
+| `default_pagelimit` | `30` | int | coreconfig "Default item limit per page" (choices 5–100) | Default list page size. The docs say 10. | Core | [C] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:305-329 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#system-defaults] |
 | `default_timezone` | `'UTC'` | string | coreconfig "Default timezone" | PHP timezone for sessions without a User timezone. | Core | [C] [code: app/bundles/CoreBundle/Helper/CoreParametersHelper.php:72-79 @7.x] |
 | `date_format_full` | `'F j, Y g:i a T'` | string | coreconfig "Default format for full dates" | PHP date format. | Core | [C] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#system-defaults] |
 | `date_format_short` | `'D, M d'` | string | coreconfig "short dates" | PHP date format. | Core | [C] |
@@ -157,7 +157,7 @@ Declared in `app/bundles/CacheBundle/Config/config.php:13-37`. There is no UI ta
 
 | Parameter | Default | Type | UI | Meaning | Bundle | Citation |
 |---|---|---|---|---|---|---|
-| `cache_adapter` | `'mautic.cache.adapter.filesystem'` | string | — | App cache adapter service id. The alternatives are memcached, redis and redis_tag_aware. In 8.x the value is a class name. | Cache | [code: app/bundles/CacheBundle/Config/services.php:20-45 @7.x] [code: UPGRADE-8.0.md:177 @8.x] |
+| `cache_adapter` | `'mautic.cache.adapter.filesystem'` | string | — | App cache adapter service id. The alternatives are memcached, redis and redis_tag_aware. In 8.x the value is a class name. | Cache | [code: app/bundles/CacheBundle/Config/services.php:20-45 @7.x] [code: UPGRADE-8.0.md:267 @8.x] |
 | `cache_adapter_tag_aware` | `'mautic.cache.adapter.filesystem'` | string | — | Tag-aware adapter service id. | Cache | [code: app/bundles/CacheBundle/Config/config.php:13-37 @7.x] |
 | `cache_prefix` | `''` | string | — | Cache key prefix. | Cache | same |
 | `cache_lifetime` | `86400` | int | — | Default TTL in seconds. | Cache | same |
@@ -316,7 +316,7 @@ Declared in `app/bundles/PageBundle/Config/config.php:94-106` = **[P]**. Behavio
 | Parameter | Default | Type | UI | Meaning | Bundle | Citation |
 |---|---|---|---|---|---|---|
 | `cat_in_page_url` | `false` | bool | pageconfig "Show Category in Page URL?" | Category slug in Landing Page URLs. | Page | [P] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#landing-page-settings] |
-| `google_analytics` | `null` | null | pageconfig "Analytics script" | Raw script; htmlspecialchars on save. | Page | [P] [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:70-72 @7.x] |
+| `google_analytics` | `null` | null | pageconfig "Analytics script" | Raw script; htmlspecialchars on save. | Page | [P] [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:71-73 @7.x] |
 | `track_contact_by_ip` | `false` | bool | trackingconfig "Identify visitors by IP" | IP-based identification. | Page | [P] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#mautic-tracking-settings] |
 | `google_analytics_id` | `null` | null | trackingconfig "Google Analytics ID" | GA id. | Page | [P] |
 | `google_analytics_trackingpage_enabled` / `_landingpage_enabled` / `_anonymize_ip` | `false` | bool | trackingconfig "Enabled on your tracking Landing Page" / "Mautic Landing Page" / "IP Anonymization" | GA placement. | Page | [P] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#google-analytics] |
@@ -349,11 +349,11 @@ Declared in `app/bundles/UserBundle/Config/config.php:133-142` = **[U]**. Behavi
 
 | Parameter | Default | Type | UI | Meaning | Bundle | Citation |
 |---|---|---|---|---|---|---|
-| `saml_idp_metadata` | `''` | string | userconfig "Identity provider metadata file" (file, base64) | Non-empty enables SAML; must be valid XML. | User | [U] [code: app/bundles/CoreBundle/Loader/EnvVars/SAMLEnvVars.php:31-32 @7.x] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:60-64 @7.x] |
+| `saml_idp_metadata` | `''` | string | userconfig "Identity provider metadata file" (file, base64) | Non-empty enables SAML; must be valid XML. | User | [U] [code: app/bundles/CoreBundle/Loader/EnvVars/SAMLEnvVars.php:31-32 @7.x] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:122-126 @7.x] |
 | `saml_idp_entity_id` | `''` | string | userconfig (choice of 3) | SP entity id; falls back to `scheme://host` of site_url. | User | [U] [code: app/bundles/CoreBundle/Loader/EnvVars/SAMLEnvVars.php:11-29 @7.x] |
-| `saml_idp_own_certificate` | `''` | string | userconfig "X.509 certificate" (file) | Must start with `-----BEGIN CERTIFICATE-----`. | User | [U] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:65-69 @7.x] |
-| `saml_idp_own_private_key` | `''` | string | userconfig "Private key file" (file) | Encrypted or RSA key. | User | [U] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:70-86 @7.x] |
-| `saml_idp_own_password` | `''` | string | userconfig "Private key encryption password" | Preserved if empty on save. | User | [U] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:48 @7.x] |
+| `saml_idp_own_certificate` | `''` | string | userconfig "X.509 certificate" (file) | Must start with `-----BEGIN CERTIFICATE-----`. | User | [U] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:127-131 @7.x] |
+| `saml_idp_own_private_key` | `''` | string | userconfig "Private key file" (file) | Encrypted or RSA key. | User | [U] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:132-148 @7.x] |
+| `saml_idp_own_password` | `''` | string | userconfig "Private key encryption password" | Preserved if empty on save. | User | [U] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:110 @7.x] |
 | `saml_idp_email_attribute` / `_username_attribute` / `_firstname_attribute` / `_lastname_attribute` | `''` | string | userconfig "Email / Username / First name / Last name attribute" | IdP attribute mapping. | User | [U] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#saml-sso-settings] |
 | `saml_idp_default_role` | `''` | string | userconfig "Default Role for created Users" | Empty means SSO creates no Users. | User | [U] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#turning-on-saml] |
 
@@ -394,18 +394,18 @@ These keys have no typed default, no `mautic.<key>` container parameter and no e
 
 | Key | Where | Meaning | Citation |
 |---|---|---|---|
-| `anonymize_ip` | trackingconfig "Anonymize IP" (form default false) | Stop storing full IPs; turning it on anonymises existing IPs. | [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:42-64 @7.x] [code: app/bundles/ConfigBundle/EventListener/ConfigSubscriber.php:43-49 @7.x] |
+| `anonymize_ip` | trackingconfig "Anonymize IP" (form default false) | Stop storing full IPs; turning it on anonymises existing IPs. | [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:42-64 @419a08a9b35] [code: app/bundles/ConfigBundle/EventListener/ConfigSubscriber.php:43-49 @7.x] |
 | `accent` | themeconfig | Theme accent colour *(inferred)*. | [code: app/bundles/CoreBundle/EventListener/ConfigThemeSubscriber.php:21-38 @7.x] |
 | `sysinfo_disabled` | local.php | Hides and denies `/s/sysinfo`. | [code: app/bundles/ConfigBundle/Controller/SysinfoController.php:23 @7.x] |
-| `transifex_username`, `transifex_password` | local.php | Restricted in prod; the password is excluded from the audit log. | [code: app/config/security.php:195-197 @7.x] |
+| `transifex_username`, `transifex_password` | local.php | Restricted in prod; the password is excluded from the audit log. | [code: app/config/security.php:213-215 @7.x] |
 | `db_backup_tables`, `db_backup_prefix`, `admin_*` | local.php before CLI install | Inputs to `mautic:install`. | [code: app/bundles/InstallBundle/Command/InstallCommand.php:183-220 @7.x] |
 
 ## 22. Non-parameter container settings
 | Setting | Default | Meaning | Citation |
 |---|---|---|---|
-| `mautic.security.restrictedConfigFields` | db_* + `secret_key` (+ transifex in prod) | Keys hidden from the UI. | [code: app/config/security.php:182-197 @7.x] |
-| `mautic.security.restrictedConfigFields.displayMode` | `remove` | `remove` or `mask`. | [code: app/config/security.php:200 @7.x] |
-| `mautic.security.disableUpdates` | `false` (`true` in test) | Disables the update check. | [code: app/config/security.php:207 @7.x] [code: app/config/config_test.php:129 @7.x] |
+| `mautic.security.restrictedConfigFields` | db_* + `secret_key` (+ transifex in prod) | Keys hidden from the UI. | [code: app/config/security.php:200-215 @7.x] |
+| `mautic.security.restrictedConfigFields.displayMode` | `remove` | `remove` or `mask`. | [code: app/config/security.php:218 @7.x] |
+| `mautic.security.disableUpdates` | `false` (`true` in test) | Disables the update check. | [code: app/config/security.php:225 @7.x] [code: app/config/config_test.php:129 @7.x] |
 | `mautic.famework.csrf_protection` (sic) | `true` | CSRF protection flag. | [code: app/config/config.php:146 @7.x] |
 
 ## 23. Legacy keys still in docs

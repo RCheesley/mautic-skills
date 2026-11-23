@@ -1,7 +1,7 @@
 # Update system and version policy — behaviour specification (Mautic 7.x)
 
 Numbered rules for how an installed Mautic finds, applies and recovers from updates, how schema changes reach existing
-installs, and how versions, branches and support are defined. Authoritative tree: 7.x at `419a08a9b35` (7.2.1 plus unreleased merged PRs). 8.x deltas are
+installs, and how versions, branches and support are defined. Authoritative tree: 7.x at the snapshot pinned in SOURCES.md. 8.x deltas are
 flagged inline; the full 8.x guide is [upgrade-to-8.md](upgrade-to-8.md).
 
 ## Contents
@@ -21,7 +21,7 @@ UB-A2. There are two supported update methods: the non-Composer CLI updater (`ma
 
 UB-A3. The Configuration setting "Update Mautic through Composer [BETA]" stores `composer_updates` (default `false`) [code: app/bundles/CoreBundle/Config/config.php:807 @7.x] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:160-171 @7.x].
 
-UB-A4. When `composer_updates` is `true`, `mautic:update:apply` prints "You have Composer updates enabled. This means that you can only update Mautic through the 'composer update' command…" and returns FAILURE. The check runs before the `--finish` branch, so `--finish` is refused too [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:84-88 @7.x] [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:132 @7.x].
+UB-A4. When `composer_updates` is `true`, `mautic:update:apply` prints "You have Composer updates enabled. This means that you can only update Mautic through the 'composer update' command…" and returns FAILURE. The check runs before the `--finish` branch, so `--finish` is refused too [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:84-88 @7.x] [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:136 @7.x].
 
 UB-A5. `composer_updates = true` is a prerequisite for installing and updating Plugins through the Marketplace; the Marketplace is not compatible with ZIP installs [code: messages.ini:231 @7.x] [docs: https://docs.mautic.org/en/7.2/getting_started/switching_composer.html].
 
@@ -31,9 +31,9 @@ UB-A6. Admin users get an in-app "update available" notification. It is checked 
 
 UB-B1. `mautic:update:apply` runs in two invocations. Without `--finish` it runs the initial steps (orders 0–30); with `--finish` it runs the final steps (orders 40–60) [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:90-108 @7.x] [code: app/bundles/CoreBundle/Update/StepProvider.php:33-60 @7.x].
 
-UB-B2. Phase 1 ends with `exit($returnCode)`, a hard process exit, so the old kernel never runs against the new files. It prints "IMPORTANT: Run the same command again with --finish. For example 'php bin/console mautic:update:apply --finish'" [code: ApplyUpdatesCommand.php:92-99 @7.x] [code: messages.ini:133 @7.x].
+UB-B2. Phase 1 ends with `exit($returnCode)`, a hard process exit, so the old kernel never runs against the new files. It prints "IMPORTANT: Run the same command again with --finish. For example 'php bin/console mautic:update:apply --finish'" [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:92-99 @7.x] [code: messages.ini:133 @7.x].
 
-UB-B3. Without `--force`, phase 1 asks for confirmation with default No; declining throws `mautic.core.update.aborted` [code: ApplyUpdatesCommand.php:117-125 @7.x].
+UB-B3. Without `--force`, phase 1 asks for confirmation with default No; declining throws `mautic.core.update.aborted` [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:117-125 @7.x].
 
 UB-B4. Step 0 `PreUpdateChecksStep` (initial) runs the pre-update checks and throws `UpdateFailedException` listing every failure. It is skipped when `--update-package` / `-p` is given [code: app/bundles/CoreBundle/Update/Step/PreUpdateChecksStep.php:38-66 @7.x].
 
@@ -49,9 +49,9 @@ UB-B9. Step 50 `UpdateSchemaStep` (final) runs `doctrine:migrations:migrate --qu
 
 UB-B10. Step 60 `FinalizeUpdateStep` (final) deletes `upgrade.php` and `lastUpdateCheck.txt` and prints "Success! You are now running version %version% of Mautic." [code: app/bundles/CoreBundle/Update/Step/FinalizeUpdateStep.php:34-56 @7.x] [code: messages.ini:666 @7.x].
 
-UB-B11. Any `UpdateFailedException` prints its message and the command returns FAILURE [code: ApplyUpdatesCommand.php:100-108 @7.x].
+UB-B11. Any `UpdateFailedException` prints its message and the command returns FAILURE [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:100-108 @7.x].
 
-UB-B12. `mautic:update:apply` takes no lock and is not a cron command; do not schedule it [code: ApplyUpdatesCommand.php @7.x].
+UB-B12. `mautic:update:apply` takes no lock and is not a cron command; do not schedule it [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php @7.x].
 
 ## C. Pre-update checks and release selection
 
@@ -61,19 +61,19 @@ UB-C2. The release list comes from `system_update_url` (default `https://api.git
 
 UB-C3. The chosen release is the first entry in API order whose `app/release_metadata.json` (fetched from `raw.githubusercontent.com/mautic/mautic/<tag>/app/release_metadata.json`) exists, has a `version`, matches the allowed stability, has `minimum_mautic_version` ≤ the running version, and has a version greater than the running one. Releases without metadata are skipped [code: app/bundles/CoreBundle/Helper/Update/Github/ReleaseParser.php:25-86 @7.x].
 
-UB-C4. Stability gating uses `update_stability` (default `stable`; choices `alpha`, `beta`, `rc`, `stable`). `stable` accepts only stable releases; otherwise a release is skipped when `version_compare($allowed, $release, 'gt')`, so `beta` accepts beta, rc and stable but not alpha [code: ReleaseParser.php:31-38 @7.x] [code: app/bundles/CoreBundle/Config/config.php:296 @7.x] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:553-558 @7.x].
+UB-C4. Stability gating uses `update_stability` (default `stable`; choices `alpha`, `beta`, `rc`, `stable`). `stable` accepts only stable releases; otherwise a release is skipped when `version_compare($allowed, $release, 'gt')`, so `beta` accepts beta, rc and stable but not alpha [code: app/bundles/CoreBundle/Helper/Update/Github/ReleaseParser.php:31-38 @7.x] [code: app/bundles/CoreBundle/Config/config.php:296 @7.x] [code: app/bundles/CoreBundle/Form/Type/ConfigType.php:553-558 @7.x].
 
 UB-C5. The download is the release asset whose name contains `update.zip`. A missing asset is reported as the generic "error fetching updates" message [code: app/bundles/CoreBundle/Helper/Update/Github/Release.php @7.x] [code: app/bundles/CoreBundle/Helper/UpdateHelper.php:130-136 @7.x].
 
-UB-C6. Update data is cached in `<cache>/lastUpdateCheck.txt` for 3 hours and invalidated when `update_stability` changes [code: UpdateHelper.php:83-95,263-278 @7.x].
+UB-C6. Update data is cached in `<cache>/lastUpdateCheck.txt` for 3 hours and invalidated when `update_stability` changes [code: app/bundles/CoreBundle/Helper/UpdateHelper.php:83-95,263-278 @7.x].
 
-UB-C7. An empty `system_update_url` disables checks and reports "running the latest version", not an error [code: UpdateHelper.php:288-291 @7.x].
+UB-C7. An empty `system_update_url` disables checks and reports "running the latest version", not an error [code: app/bundles/CoreBundle/Helper/UpdateHelper.php:288-291 @7.x].
 
-UB-C8. Each uncached check first POSTs anonymous stats (application, version, PHP version, DB driver, server OS, instanceId = sha1(secret_key + install_source + db_driver), installSource) to `stats_update_url` with a 10-second connect timeout. Failures are logged and ignored; an empty URL disables it [code: UpdateHelper.php:199-260 @7.x].
+UB-C8. Each uncached check first POSTs anonymous stats (application, version, PHP version, DB driver, server OS, instanceId = sha1(secret_key + install_source + db_driver), installSource) to `stats_update_url` with a 10-second connect timeout. Failures are logged and ignored; an empty URL disables it [code: app/bundles/CoreBundle/Helper/UpdateHelper.php:199-260 @7.x].
 
-UB-C9. Pre-update checks fail, before any file is touched, when: the update data has an error; the instance already runs the latest compatible version; release metadata is missing; PHP is below `minimum_php_version` or above `maximum_php_version`; the DB is MariaDB below `minimum_mariadb_version` or MySQL below `minimum_mysql_version`; or the platform is neither. All messages are collected and printed together [code: UpdateHelper.php:166-196 @7.x] [code: app/bundles/CoreBundle/Helper/Update/PreUpdateChecks/CheckPhpVersion.php @7.x] [code: …/CheckDatabaseDriverAndVersion.php @7.x].
+UB-C9. Pre-update checks fail, before any file is touched, when: the update data has an error; the instance already runs the latest compatible version; release metadata is missing; PHP is below `minimum_php_version` or above `maximum_php_version`; the DB is MariaDB below `minimum_mariadb_version` or MySQL below `minimum_mysql_version`; or the platform is neither. All messages are collected and printed together [code: app/bundles/CoreBundle/Helper/UpdateHelper.php:166-196 @7.x] [code: app/bundles/CoreBundle/Helper/Update/PreUpdateChecks/CheckPhpVersion.php @7.x] [code: …/CheckDatabaseDriverAndVersion.php @7.x].
 
-UB-C10. MariaDB is detected from the DBAL platform class or from `SELECT VERSION()` containing "mariadb"; the comparison is `version_compare` on the raw version string [code: CheckDatabaseDriverAndVersion.php @7.x].
+UB-C10. MariaDB is detected from the DBAL platform class or from `SELECT VERSION()` containing "mariadb"; the comparison is `version_compare` on the raw version string [code: app/bundles/CoreBundle/Helper/Update/PreUpdateChecks/CheckDatabaseDriverAndVersion.php @7.x].
 
 ## D. Migrations during an update
 
@@ -105,9 +105,9 @@ UB-D12. Removing a core migration is a BC note: 7.0 removed `Version202305221411
 
 UB-E1. There is no automatic rollback. Phase 1 overwrites files and nukes the cache before phase 2 touches the schema [code: StepProvider.php @7.2.1; steps 10–30].
 
-UB-E2. If phase 2 fails in `UpdateSchemaStep`, the files are new and the schema is old. Migration output is sent to a NullOutput, so re-run `php bin/console doctrine:migrations:migrate` by hand to see the error [code: UpdateSchemaStep.php:41-54 @7.x].
+UB-E2. If phase 2 fails in `UpdateSchemaStep`, the files are new and the schema is old. Migration output is sent to a NullOutput, so re-run `php bin/console doctrine:migrations:migrate` by hand to see the error [code: app/bundles/CoreBundle/Update/Step/UpdateSchemaStep.php:41-54 @7.x].
 
-UB-E3. If phase 1 succeeded but `--finish` was never run, translations, migrations and finalisation are pending; run `mautic:update:apply --finish` (non-Composer installs) or `doctrine:migrations:migrate` [code: StepProvider.php:33-60 @7.x].
+UB-E3. If phase 1 succeeded but `--finish` was never run, translations, migrations and finalisation are pending; run `mautic:update:apply --finish` (non-Composer installs) or `doctrine:migrations:migrate` [code: app/bundles/CoreBundle/Update/StepProvider.php:33-60 @7.x].
 
 UB-E4. The documented recovery order is: clear cache (`cache:clear` or `rm -rf var/cache`); `mautic:update:find` / `mautic:update:apply`; `doctrine:migration:status` then `doctrine:migration:migrate`; finally replace files by hand keeping `config/local.php`, `media/files`, `plugins`, `themes`, `translations` [docs: https://docs.mautic.org/en/7.2/troubleshooting/troubleshooting.html#ssh-access-is-available].
 
@@ -117,7 +117,7 @@ UB-E6. Run update commands as the web-server user, never root; Doctrine proxy "f
 
 UB-E7. Failed updates usually stem from under-resourced hosting; `Allowed memory size … exhausted` needs a higher `memory_limit`; `Class 'ZipArchive' not found` means the zip extension is missing [docs: https://docs.mautic.org/en/7.2/troubleshooting/troubleshooting.html].
 
-UB-E8. ZIP errors map to specific messages: `archive_zip_corrupt`, `archive_no_such_file`, `archive_not_valid_zip`, `archive_could_not_open`, `archive_file_exists` [code: InstallNewFilesStep.php:109-140 @7.x].
+UB-E8. ZIP errors map to specific messages: `archive_zip_corrupt`, `archive_no_such_file`, `archive_not_valid_zip`, `archive_could_not_open`, `archive_file_exists` [code: app/bundles/CoreBundle/Update/Step/InstallNewFilesStep.php:109-140 @7.x].
 
 UB-E9. Always take a tested backup (files and DB, restored in a test environment) before updating [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_update_mautic.html].
 

@@ -1,7 +1,7 @@
 # Forms code map (Mautic 7.x)
 
 All paths are relative to the repository root. `FB` below is shorthand only in prose; every citation spells out the full
-path. Line numbers are from upstream 7.x at commit 419a08a9b35 (7.2.1).
+path. Line numbers are from upstream 7.x at the 7.x snapshot pinned in SOURCES.md.
 
 ## Contents
 1. Entities and tables
@@ -51,10 +51,10 @@ The Form entity is also an API Platform resource gated by `form:forms:*`. [code:
 ## 2. Dynamic results tables
 
 - Name: `<prefix>form_results_<formId>_<formAlias>`. [code: app/bundles/FormBundle/Entity/SubmissionRepository.php:532-535 @7.x]
-- Created or extended by `FormModel::createTableSchema()`: `submission_id` (PK), `form_id`, unique `(submission_id, form_id)`, one nullable `text` column per non-view-only field; existing tables only get missing columns. [code: app/bundles/FormBundle/Model/FormModel.php:530-628 @7.x]
+- Created or extended by `FormModel::createTableSchema()`: `submission_id` (PK), `form_id`, unique `(submission_id, form_id)`, one nullable `text` column per non-view-only field; existing tables only get missing columns. [code: app/bundles/FormBundle/Model/FormModel.php:530-628 @419a08a9b35]
 - Column dropped on field delete through `FIELD_POST_DELETE`. [code: app/bundles/FormBundle/EventListener/FormFieldSubscriber.php:29-36 @7.x] [code: app/bundles/FormBundle/Model/FieldModel.php:170-179 @7.x]
 - Table dropped on form delete. [code: app/bundles/FormBundle/Model/FormModel.php:560-590 @7.x]
-- No FK to `form_submissions`; row deletes happen in code. [code: app/bundles/FormBundle/Model/SubmissionModel.php:436-467 @7.x]
+- No FK to `form_submissions`; row deletes happen in code. [code: app/bundles/FormBundle/Model/SubmissionModel.php:458-489 @7.x]
 - Low-level DDL helpers: `TableSchemaHelper`, `ColumnSchemaHelper` in `app/bundles/CoreBundle/Doctrine/Helper/`. [code: app/bundles/FormBundle/Model/FormModel.php:530-555 @7.x]
 
 ## 3. Models, helpers and services
@@ -111,9 +111,9 @@ Core types are the keys of `FormFieldHelper::$types` plus `button`. Templates li
 | `plugin.loginSocial` | Social login | plugin | – | plugin | – | Only when MauticSocialBundle is published |
 
 Sources: filters and constraints [code: app/bundles/FormBundle/Helper/FormFieldHelper.php:23-149 @7.x]; view-only list
-[code: app/bundles/FormBundle/Model/FormModel.php:649-655 @7.x]; per-type builder options [code: app/bundles/FormBundle/Form/Type/FieldType.php:104-169 @7.x];
+[code: app/bundles/FormBundle/Model/FormModel.php:651-657 @7.x]; per-type builder options [code: app/bundles/FormBundle/Form/Type/FieldType.php:104-169 @7.x];
 validators [code: app/bundles/FormBundle/EventListener/FormValidationSubscriber.php:35-179 @7.x]; companyLookup
-[code: app/bundles/FormBundle/Model/SubmissionModel.php:276-293 @7.x]; social login
+[code: app/bundles/FormBundle/Model/SubmissionModel.php:289-306 @7.x]; social login
 [code: plugins/MauticSocialBundle/EventListener/FormSubscriber.php:27-45 @7.x]; API property names
 [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/forms.html#form-field-types]; UI names
 [docs: https://docs.mautic.org/en/7.2/components/forms.html#fields].
@@ -121,35 +121,35 @@ validators [code: app/bundles/FormBundle/EventListener/FormValidationSubscriber.
 ## 5. Submit-action registry
 
 All core actions use `eventName = FormEvents::ON_EXECUTE_SUBMIT_ACTION` and guard with `$event->checkContext('<key>')`.
-[code: app/bundles/FormBundle/Model/SubmissionModel.php:915-925 @7.x] [code: app/bundles/FormBundle/Event/SubmissionEvent.php:181-210 @7.x]
+[code: app/bundles/FormBundle/Model/SubmissionModel.php:937-947 @7.x] [code: app/bundles/FormBundle/Event/SubmissionEvent.php:181-210 @7.x]
 
 | Key | UI label | Registered in | Properties (API) | Behaviour | Source |
 |---|---|---|---|---|---|
 | `form.email` | Send form results | FormBundle `EventListener/FormSubscriber` | `subject`, `immediately`, `set_replyto`, `message`, `email_to_owner`, `copy_lead`, `templates`, `to`, `cc`, `bcc` | Emails results; Reply-To = contact email unless off; optional copy to contact/owner | [code: app/bundles/FormBundle/EventListener/FormSubscriber.php:95-189 @7.x] |
-| `form.repost` | Post results to another form | FormBundle `EventListener/FormSubscriber` | `post_url`, `authorization_header`, `failure_email`, per-field key remap | POST with 15 s timeout; `redirect` in response → callback; `violations` → `ValidationException` deletes the submission | [code: app/bundles/FormBundle/EventListener/FormSubscriber.php:191-351 @7.x] |
-| `lead.pointschange` | Adjust contact's points | LeadBundle `EventListener/FormSubscriber` | `operator`, `points`, `group` | Logs `PointsChangeLog` type `form` | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:164-206 @7.x] |
-| `lead.changelist` | Modify contact's segments | LeadBundle | `addToLists`, `removeFromLists` | | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:208-229 @7.x] |
-| `lead.changetags` | Modify contact's tags | LeadBundle | `add_tags`, `remove_tags` | | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:231-246 @7.x] |
-| `lead.addutmtags` | Record UTM tags | LeadBundle | – | Reads submit-request query, else referer query | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:248-286 @7.x] |
-| `lead.scorecontactscompanies` | Add to company's score | LeadBundle | `score` | | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:288-303 @7.x] |
-| `lead.remove_do_not_contact` | Remove contact from DNC | LeadBundle | – | Email channel only; uses `$event->getLead()` | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:305-314 @7.x] |
-| `lead.updatelead` | Update contact | LeadBundle | contact field values | Tokens replaced, char limits enforced, `overwriteWithBlank=false` | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:333-373 @7.x] |
+| `form.repost` | Post results to another form | FormBundle `EventListener/FormSubscriber` | `post_url`, `authorization_header`, `failure_email`, per-field key remap | POST with 15 s timeout; `redirect` in response → callback; `violations` → `ValidationException` deletes the submission | [code: app/bundles/FormBundle/EventListener/FormSubscriber.php:191-351 @419a08a9b35] |
+| `lead.pointschange` | Adjust contact's points | LeadBundle `EventListener/FormSubscriber` | `operator`, `points`, `group` | Logs `PointsChangeLog` type `form` | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:164-206 @419a08a9b35] |
+| `lead.changelist` | Modify contact's segments | LeadBundle | `addToLists`, `removeFromLists` | | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:208-229 @419a08a9b35] |
+| `lead.changetags` | Modify contact's tags | LeadBundle | `add_tags`, `remove_tags` | | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:231-246 @419a08a9b35] |
+| `lead.addutmtags` | Record UTM tags | LeadBundle | – | Reads submit-request query, else referer query | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:248-286 @419a08a9b35] |
+| `lead.scorecontactscompanies` | Add to company's score | LeadBundle | `score` | | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:288-303 @419a08a9b35] |
+| `lead.remove_do_not_contact` | Remove contact from DNC | LeadBundle | – | Email channel only; uses `$event->getLead()` | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:304-313 @7.x] |
+| `lead.updatelead` | Update contact | LeadBundle | contact field values | Tokens replaced, char limits enforced, `overwriteWithBlank=false` | [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:333-373 @419a08a9b35] |
 | `email.send.lead` | Send email to contact | EmailBundle | `email` | Sends with `ignoreDNC => true`, source `['form', id]` | [code: app/bundles/EmailBundle/EventListener/FormSubscriber.php:64-89 @7.x] |
 | `email.send.user` | Send email to user | EmailBundle | `useremail`, `user_id` | Tokens resolve with contact data | [code: app/bundles/EmailBundle/EventListener/FormSubscriber.php:64-89 @7.x] |
 | `asset.download` | Download an asset | AssetBundle | `asset`, `category` | Registers post-submit callback `asset.download_file` | [code: app/bundles/AssetBundle/EventListener/FormSubscriber.php:50-150 @7.x] |
 | `plugin.leadpush` | Push contact to integration | PluginBundle | `integration` | Legacy `AbstractIntegration` plugins only | [code: app/bundles/PluginBundle/EventListener/FormSubscriber.php:23-43 @7.x] |
 
 API property names: [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/forms.html#form-action-types].
-No core action sets stage, adds to a campaign, redirects or shows a message. [code: app/bundles/FormBundle/Model/SubmissionModel.php:383-389 @7.x]
+No core action sets stage, adds to a campaign, redirects or shows a message. [code: app/bundles/FormBundle/Model/SubmissionModel.php:383-389 @419a08a9b35]
 
 ## 6. Validators (registered through `FORM_ON_BUILD`)
 
 | Key / field type | Option | Rule | Source |
 |---|---|---|---|
-| `tel` | `international` (+ `international_validationmsg`) | libphonenumber must parse | [code: app/bundles/FormBundle/EventListener/FormValidationSubscriber.php:35-67 @7.x] [code: app/bundles/FormBundle/Form/Type/FormFieldTelType.php:25-45 @7.x] |
+| `tel` | `international` (+ `international_validationmsg`) | libphonenumber must parse | [code: app/bundles/FormBundle/EventListener/FormValidationSubscriber.php:35-67 @7.x] [code: app/bundles/FormBundle/Form/Type/FormFieldTelType.php:25-45 @419a08a9b35] |
 | `email` | `donotsubmit` | rejects `do_not_submit_emails` fnmatch patterns | [code: app/bundles/FormBundle/EventListener/FormValidationSubscriber.php:93-101 @7.x] |
 | `email` | `blockfreeemail` | rejects domains in `blocked_free_email_providers` | [code: app/bundles/FormBundle/EventListener/FormValidationSubscriber.php:103-110 @7.x] |
-| `checkboxgrp` | `minimum`, `maximum`, `min_message`, `max_message` | selected-count bounds | [code: app/bundles/FormBundle/Form/Type/FormFieldCheckboxGroupType.php:29-95 @7.x] |
+| `checkboxgrp` | `minimum`, `maximum`, `min_message`, `max_message` | selected-count bounds | [code: app/bundles/FormBundle/Form/Type/FormFieldCheckboxGroupType.php:29-95 @419a08a9b35] |
 
 The email validator is only registered when one of the two email parameters is non-empty. [code: app/bundles/FormBundle/EventListener/FormValidationSubscriber.php:35-67 @7.x]
 
@@ -170,7 +170,7 @@ The email validator is only registered when one of the two email parameters is n
 
 All rows: [code: app/bundles/FormBundle/FormEvents.php @7.x] plus the dispatch sites listed, all under `app/bundles/FormBundle/`.
 Doctrine listener `EventListener/SubmissionSubscriber` maintains `forms.submission_count`. [code: app/bundles/FormBundle/EventListener/SubmissionSubscriber.php:30-46 @7.x]
-LeadBundle listener `app/bundles/LeadBundle/EventListener/FormSubscriber.php:68-162` registers lead actions and collectors. [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:68-162 @7.x]
+LeadBundle listener `app/bundles/LeadBundle/EventListener/FormSubscriber.php:68-162` registers lead actions and collectors. [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:67-161 @7.x]
 Other events FormBundle consumes: `LeadEvents::TIMELINE_ON_GENERATE`, `LEAD_POST_MERGE`, `FIELD_POST_SAVE`; `PageEvents::PAGE_ON_DISPLAY`/`PAGE_ON_BUILD`; `EmailEvents::EMAIL_ON_BUILD`; report, dashboard, global search, config and import/export events. [code: app/bundles/FormBundle/EventListener/LeadSubscriber.php:37-88 @7.x] [code: app/bundles/FormBundle/EventListener/CustomFieldSubscriber.php:35-61 @7.x] [code: app/bundles/FormBundle/EventListener/PageSubscriber.php:39-102 @7.x]
 
 ## 8. Routes and controllers (`app/bundles/FormBundle/Config/config.php:8-121`)
@@ -215,8 +215,8 @@ Menu item `mautic.form.forms` under Components; category bundle `form`. [code: a
 - SDK source `app/assets/js/mautic-form-src.js`, built to `media/js/mautic-form.js`; loader `Resources/views/Builder/_script.html.twig`. [code: app/bundles/FormBundle/Resources/views/Builder/_script.html.twig:1-35 @7.x]
 - Callback dispatcher `Form.customCallbackHandler(formId, event, data)` reads `MauticFormCallback[formId][event]`. [code: app/assets/js/mautic-form-src.js:200-213 @7.x]
 - Hooks in the source: `onValidate`, `onValidateStart`, `onValidateEnd`, `onValidateField`, `onErrorMark`, `onErrorClear`, `onResponse`, `onResponseStart`, `onResponseEnd`, `onSubmitButtonDisable`, `onSubmitButtonEnable`, `onShowNextPage`, `onShowPreviousPage`, `onMessageSet`. [code: app/assets/js/mautic-form-src.js:200-213 @7.x] [code: app/assets/js/mautic-form-src.js:443 @7.x] [code: app/assets/js/mautic-form-src.js:463 @7.x] [code: app/assets/js/mautic-form-src.js:842 @7.x]
-- Templates: `Builder/form.html.twig` (public renderer), `Builder/_style.html.twig`, `Field/*.html.twig`, `messenger.html.twig` (postMessage responder), `Form/details.html.twig` (embed modals), `form.html.twig` (standalone page), `Public/videoembed.html.twig`, `SubscribedEvents/Timeline/index.html.twig`. [code: app/bundles/FormBundle/Resources/views/Builder/form.html.twig:17-139 @7.x] [code: app/bundles/FormBundle/Resources/views/Form/details.html.twig:382-440 @7.x]
-- Theme overrides: `themes/<theme>/html/MauticFormBundle/Builder/form.html.twig`, `_style.html.twig`/`style.html.twig`, `Field/<type>.html.twig`; standalone page `@themes/<theme>/html/form.html.twig`. [code: app/bundles/FormBundle/Model/FormModel.php:422-431 @7.x] [code: app/bundles/FormBundle/Controller/PublicController.php:565 @7.x]
+- Templates: `Builder/form.html.twig` (public renderer), `Builder/_style.html.twig`, `Field/*.html.twig`, `messenger.html.twig` (postMessage responder), `Form/details.html.twig` (embed modals), `form.html.twig` (standalone page), `Public/videoembed.html.twig`, `SubscribedEvents/Timeline/index.html.twig`. [code: app/bundles/FormBundle/Resources/views/Builder/form.html.twig:17-139 @7.x] [code: app/bundles/FormBundle/Resources/views/Form/details.html.twig:382-440 @419a08a9b35]
+- Theme overrides: `themes/<theme>/html/MauticFormBundle/Builder/form.html.twig`, `_style.html.twig`/`style.html.twig`, `Field/<type>.html.twig`; standalone page `@themes/<theme>/html/form.html.twig`. [code: app/bundles/FormBundle/Model/FormModel.php:422-431 @7.x] [code: app/bundles/FormBundle/Controller/PublicController.php:637 @7.x]
 
 ## 10. Console commands
 
@@ -240,7 +240,7 @@ Neither is scheduled by anything in the repository. [code: app/bundles/FormBundl
 | `successful_submit_action` | `top` | Message/error div position |
 | `form_field_autofill` | `false` | Global gate for auto-fill |
 
-Also read: `allowed_extensions`, `max_size` (file-field defaults), `theme`, `site_url`. [code: app/bundles/FormBundle/Config/config.php:142-150 @7.x] [code: app/bundles/FormBundle/Form/Type/FormFieldFileType.php:36-41 @7.x] [code: app/bundles/FormBundle/Form/Type/ConfigFormType.php:32-95 @7.x]
+Also read: `allowed_extensions`, `max_size` (file-field defaults), `theme`, `site_url`. [code: app/bundles/FormBundle/Config/config.php:142-150 @7.x] [code: app/bundles/FormBundle/Form/Type/FormFieldFileType.php:36-41 @7.x] [code: app/bundles/FormBundle/Form/Type/ConfigFormType.php:32-95 @419a08a9b35]
 
 ## 12. Permissions (`app/bundles/FormBundle/Security/Permissions/FormPermissions.php:8-39`)
 
@@ -254,10 +254,10 @@ Where checked: new needs `create` [code: app/bundles/FormBundle/Controller/FormC
 
 | Area | Hook | Source |
 |---|---|---|
-| Campaign decision `form.submit` | real-time on `FORM_ON_SUBMIT` | [code: app/bundles/FormBundle/EventListener/CampaignSubscriber.php:45-100 @7.x] |
-| Campaign condition `form.field_value` | queries results table | [code: app/bundles/FormBundle/EventListener/CampaignSubscriber.php:102-139 @7.x] [code: app/bundles/FormBundle/Entity/SubmissionRepository.php:465-510 @7.x] |
-| Campaign form source | `MembershipManager::addContact` in `saveSubmission` | [code: app/bundles/FormBundle/Model/SubmissionModel.php:383-389 @7.x] |
-| Point action `form.submit` | `PointSubscriber::onFormSubmit` | [code: app/bundles/FormBundle/EventListener/PointSubscriber.php:47-50 @7.x] |
+| Campaign decision `form.submit` | real-time on `FORM_ON_SUBMIT` | [code: app/bundles/FormBundle/EventListener/CampaignSubscriber.php:45-100 @419a08a9b35] |
+| Campaign condition `form.field_value` | queries results table | [code: app/bundles/FormBundle/EventListener/CampaignSubscriber.php:102-139 @419a08a9b35] [code: app/bundles/FormBundle/Entity/SubmissionRepository.php:465-510 @7.x] |
+| Campaign form source | `MembershipManager::addContact` in `saveSubmission` | [code: app/bundles/FormBundle/Model/SubmissionModel.php:383-389 @419a08a9b35] |
+| Point action `form.submit` | `PointSubscriber::onFormSubmit` | [code: app/bundles/FormBundle/EventListener/PointSubscriber.php:47-50 @419a08a9b35] |
 | Webhook `mautic.form_on_submit` | payload sample `Assets/WebhookPayload/form_on_submit.json` | [code: app/bundles/FormBundle/EventListener/WebhookSubscriber.php:44-59 @7.x] |
 | Timeline `form.submitted` | `LeadSubscriber` | [code: app/bundles/FormBundle/EventListener/LeadSubscriber.php:37-83 @7.x] |
 | Reports `forms`, `form.submissions`, `form.results.*` | `ReportSubscriber` | [code: app/bundles/FormBundle/EventListener/ReportSubscriber.php:24-171 @7.x] |

@@ -34,7 +34,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 
 ### User list, profile and preferences
 - The User list shows "Last Login" and active/inactive columns, and the User view shows "Recent activity" built from the audit log. The publish switch is hidden for the logged-in User so admins cannot lock themselves out. Role changes were left out of the sidebar in favour of the user-activity report [PR #13074] (v5.1).
-- The "last login" column sorts by `u.lastLogin`. Why: the template sorted by role name by mistake [PR #14982] (v5.2.6). The 7.x template uses `u.lastLogin` [code: app/bundles/UserBundle/Resources/views/User/list.html.twig:152 @7.x].
+- The "last login" column sorts by `u.lastLogin`. Why: the template sorted by role name by mistake [PR #14982] (v5.2.6). The 7.x template uses `u.lastLogin` [code: app/bundles/UserBundle/Resources/views/User/list.html.twig:161 @7.x].
 - The User edit page renders even when a recent-activity entry points to a User whose details changed [PR #14884] (v5.2.5). The fix was widened so that entries that no longer resolve to a current User or Role are skipped [PR #17609] (7.2 branch, merged 2026-10-12; not found in the 7.x snapshot).
 - The User list has a "Never logged in" quick filter, search command `is:never_logged_in`. Why: find unused or invited accounts [PR #17452] (7.x after 7.2.1).
 - `name:` in User search matches first or last name [PR #11599] (v5.0).

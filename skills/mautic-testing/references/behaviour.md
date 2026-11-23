@@ -1,7 +1,7 @@
 # Mautic testing: behaviour and conventions (7.x)
 
 Numbered rules an agent must follow, and the behaviours of the test infrastructure it must rely on. Every item is
-cited. Code paths are relative to the Mautic repo root at 7.2.1 (commit 419a08a9b35).
+cited. Code paths are relative to the Mautic repo root at the 7.x snapshot pinned in SOURCES.md.
 
 Contents
 1. Running tests
@@ -18,7 +18,7 @@ Contents
 
 1.1 Run PHP, composer, console and PHPUnit inside DDEV: `ddev exec php bin/phpunit ...`, `ddev exec php bin/console ...`, `ddev composer ...` [code: AGENTS.md @7.x].
 1.2 Pass `-c app/phpunit.xml.dist` or use `composer test`; only that file sets `KERNEL_CLASS=AppTestKernel`, `IS_PHPUNIT`, `MAUTIC_ENV=test`, `APP_ENV=test`, `APP_DEBUG=0`, `date.timezone=UTC` [code: app/phpunit.xml.dist:65-76 @7.x].
-1.3 `composer test` is `bin/phpunit -d memory_limit=2G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist`; extra arguments are appended, so `ddev exec composer test app/bundles/X/Tests/YTest.php` runs one file [code: composer.json:166-214 @7.x] [code: .github/prompts/write-test.prompt.md:41 @7.x].
+1.3 `composer test` is `bin/phpunit -d memory_limit=2G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist`; extra arguments are appended, so `ddev exec composer test app/bundles/X/Tests/YTest.php` runs one file [code: composer.json:164-212 @7.x] [code: .github/prompts/write-test.prompt.md:41 @7.x].
 1.4 Single method: add `--filter testMethodName`; a whole bundle: pass its `Tests` directory [code: AGENTS.md @7.x].
 1.5 Suites: "Project Test Suite" (`bundles/*Bundle/Tests` minus smoke tests), "Container smoke tests" (`ControllerSmokeTest`, `CommandSmokeTest`, `EventSubscriberSmokeTest`), "Plugin tests" (`plugins/*Bundle/Tests`), "Middleware tests", "Static analysis rule tests" (`utils/rector/tests`, `utils/phpstan/tests`) [code: app/phpunit.xml.dist:40-64 @7.x].
 1.6 Only files ending in `Test.php` are discovered [code: app/phpunit.xml.dist:42 @7.x].
@@ -56,20 +56,20 @@ Contents
 
 3.1 `AppTestKernel` wires `test.service_container` to `TestContainer`, so `static::getContainer()->set($id, $service)` can replace private services [code: app/AppTestKernel.php:11-53 @7.x] [code: app/bundles/CoreBundle/Test/Container/TestContainer.php:17-29 @7.x].
 3.2 Mail: the mailer DSN is `null://null` and the `email` transport is `in-memory://default`, so nothing is delivered [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:57-58 @7.x].
-3.3 Use `assertQueuedEmailCount(n)` for sends routed through Messenger (Segment and Campaign emails) and `assertEmailCount(n)` for synchronous sends (test emails) [code: app/bundles/LeadBundle/Tests/Controller/LeadControllerTest.php:660 @7.x] [code: app/bundles/EmailBundle/Tests/Controller/AjaxControllerFunctionalTest.php:79-89 @7.x].
+3.3 Use `assertQueuedEmailCount(n)` for sends routed through Messenger (Segment and Campaign emails) and `assertEmailCount(n)` for synchronous sends (test emails) [code: app/bundles/LeadBundle/Tests/Controller/LeadControllerTest.php:657 @7.x] [code: app/bundles/EmailBundle/Tests/Controller/AjaxControllerFunctionalTest.php:79-89 @7.x].
 3.4 Read messages with `self::getMailerMessage($i)`, `self::getMailerMessages()` or `self::getMailerMessagesByToAddress('x@y')`; they return `MauticMessage` objects [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:70-93 @7.x] [code: app/bundles/EmailBundle/Tests/Controller/EmailSendFunctionalTest.php:47-60 @7.x].
 3.5 Set `$this->configParams['messenger_dsn_email'] = 'sync://'` to make queued sends immediate, then assert with `assertEmailCount()` [code: app/bundles/EmailBundle/Tests/Controller/Api/SMimeFunctionalTest.php:22-29, 105-113 @7.x].
 3.6 Symfony HttpClient is replaced by `MockHttpClient`, which answers every request with 200 and an empty body [code: app/config/config_test.php:150-154 @7.x] [code: .agents/skills/mautic-dev/SKILL.md @7.x].
 3.7 Guzzle clients use a public `GuzzleHttp\Handler\MockHandler`; `use ClientMockTrait;` and queue responses or callables with `$this->getClientMockHandler()->append(...)`. The method is `private` inside the trait [code: app/bundles/CoreBundle/Test/Guzzle/ClientMockTrait.php @7.x] [code: app/bundles/WebhookBundle/Tests/Functional/WebhookFunctionalTest.php:274-290 @7.x].
 3.8 CSRF on AJAX: `RequestSubscriber` validates `X-CSRF-Token` against intention `mautic_ajax_post` only for XHR `POST` requests whose path starts with `/s/`; on failure it returns HTTP 200 with JSON `{"flashes": ...}` [code: app/bundles/CoreBundle/EventListener/RequestSubscriber.php:34-63 @7.x].
-3.9 `createAjaxHeaders()` returns `HTTP_Content-Type`, `HTTP_X-Requested-With: XMLHttpRequest` and a valid `HTTP_X-CSRF-Token`; `setCsrfHeader($intention)` sets the header on the client; `getCsrfToken($intention)` returns a token for direct form POSTs [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:172-195 @7.x] [code: app/bundles/DashboardBundle/Tests/Controller/DashboardControllerFunctionalTest.php:245 @7.x].
+3.9 `createAjaxHeaders()` returns `HTTP_Content-Type`, `HTTP_X-Requested-With: XMLHttpRequest` and a valid `HTTP_X-CSRF-Token`; `setCsrfHeader($intention)` sets the header on the client; `getCsrfToken($intention)` returns a token for direct form POSTs [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:172-195 @7.x] [code: app/bundles/DashboardBundle/Tests/Controller/DashboardControllerFunctionalTest.php:297 @7.x].
 3.10 `InMemoryTokenStorage` replaces the CSRF token storage under PHPUnit, so one token stays valid across requests [code: app/config/config_test.php:139-141 @7.x] [code: app/bundles/CoreBundle/Test/Session/InMemoryTokenStorage.php:11-16 @7.x].
 3.11 API auth: `protected bool $authenticateApi = true;` sends `PHP_AUTH_USER=admin` and `PHP_AUTH_PW=Maut1cR0cks!`; the test firewall enables `http_basic` with plain md5 hashing [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:47-50, 117 @7.x] [code: app/config/security_test.php:5-26 @7.x].
 3.12 Alternatively rely on the admin session from `setUp()`, or create a user with `ApiTestUserTrait::createApiUserWithPermissions()` / `UserEntityTrait::createUserWithPermission()` and log it in [code: app/bundles/LeadBundle/Tests/Controller/Api/LeadApiControllerFunctionalTest.php:32-66 @7.x] [code: app/bundles/LeadBundle/Tests/Controller/Api/ApiTestUserTrait.php @7.x].
 3.13 JSON bodies: pass `CONTENT_TYPE` and `HTTP_ACCEPT` server params and `json_encode($data)` as raw content; there is no `jsonRequest()` helper in use [code: app/bundles/UserBundle/Tests/Controller/Api/UserApiControllerFunctionalTest.php:198-240 @7.x].
 3.14 `testSymfonyCommand($name, $params, $command = null)` builds an `Application` on the kernel, adds `--bypass-locking => true` when the command defines it, executes through `CommandTester` and returns it [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:200-223 @7.x].
 3.15 `loginUser(User $user)` logs into firewall `mautic`; `logoutUser()` GETs `/s/logout` and clears cookies [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:130-139 @7.x].
-3.16 Audit log assertions: query `AuditLog` by `bundle`, `object`, `objectId`, `action` and read `getDetails()` (`[old, new]` pairs) [code: app/bundles/LeadBundle/Tests/Functional/EventListener/CompanySubscriberFunctionalTest.php:38-44 @7.x] [code: app/bundles/LeadBundle/Tests/Controller/LeadControllerTest.php:406-418 @7.x].
+3.16 Audit log assertions: query `AuditLog` by `bundle`, `object`, `objectId`, `action` and read `getDetails()` (`[old, new]` pairs) [code: app/bundles/LeadBundle/Tests/Functional/EventListener/CompanySubscriberFunctionalTest.php:38-44 @7.x] [code: app/bundles/LeadBundle/Tests/Controller/LeadControllerTest.php:403-415 @7.x].
 3.17 Flash assertions: after `$this->client->submit($form)` read `//div[@id='flashes']//span`; AJAX responses carry flashes in the JSON `flashes` key [code: app/bundles/ConfigBundle/Tests/Controller/ConfigControllerFunctionalTest.php:170-186 @7.x].
 3.18 Logs: `LoggerTrait` swaps `monolog.logger.mautic` handlers for a `TestHandler`; it overrides `setUp()`/`beforeTearDown()`, so call the trait's methods if you redeclare them [code: app/bundles/CoreBundle/Tests/Traits/LoggerTrait.php @7.x].
 3.19 Raw DBAL fetches return strings for numbers because test config sets `PDO::ATTR_STRINGIFY_FETCHES => true` [code: app/config/config_test.php:62-77 @7.x].
@@ -85,9 +85,9 @@ Contents
 4.5 Only one `#[Group(...)]` exists (`time-sensitive`); CI never selects tests by group [code: .github/workflows/tests.yml:118-120 @7.x].
 4.6 Prefer the real entry point: route, then command, then event dispatch, then service [code: .github/prompts/write-test.prompt.md:17-18 @7.x].
 4.7 Do not mock entities or events; mock only services. CodeRabbit flags tests that only assert mocks were called, and order- or time-dependent tests [code: .github/prompts/write-test.prompt.md:17-18 @7.x] [code: .coderabbit.yaml @7.x].
-4.8 Use `assertResponseIsSuccessful()` for 2xx, `assertResponseStatusCodeSame()` for specific codes, `assertSame` over `assertEquals` [code: .github/prompts/write-test.prompt.md:24 @7.x] [code: utils/rector/src/ @7.x] [code: rector.php:10-25 @7.x].
-4.9 Fetch services as `static::getContainer()->get(Foo::class)`; a string id fails `NoContainerGetRule` in tests [code: utils/phpstan/src/Rule/NoContainerGetRule.php:42-47 @7.x] [code: phpstan.neon:47-57 @7.x].
-4.10 Type properties, parameters and returns in tests too; PHPStan, Rector and php-cs-fixer all cover test code [code: .github/prompts/write-test.prompt.md:20 @7.x] [code: phpstan.neon:21-35 @7.x].
+4.8 Use `assertResponseIsSuccessful()` for 2xx, `assertResponseStatusCodeSame()` for specific codes, `assertSame` over `assertEquals` [code: .github/prompts/write-test.prompt.md:24 @7.x] [code: utils/rector/src/ @7.x] [code: rector.php:10-25 @419a08a9b35].
+4.9 Fetch services as `static::getContainer()->get(Foo::class)`; a string id fails `NoContainerGetRule` in tests [code: utils/phpstan/src/Rule/NoContainerGetRule.php:42-47 @7.x] [code: phpstan.neon:71-81 @7.x].
+4.10 Type properties, parameters and returns in tests too; PHPStan, Rector and php-cs-fixer all cover test code [code: .github/prompts/write-test.prompt.md:20 @7.x] [code: phpstan.neon:45-59 @7.x].
 4.11 Keep the test minimal and do not change production code when asked only for a test [code: .github/prompts/write-test.prompt.md:29-31 @7.x].
 4.12 Do not depend on wall-clock time; tests run in UTC [code: app/phpunit.xml.dist:75 @7.x] [code: .coderabbit.yaml @7.x].
 4.13 Call `$this->em->clear()` before asserting on data written by a command or another request, so you read fresh rows [code: .github/prompts/write-test.prompt.md:33-37 @7.x].
@@ -97,28 +97,28 @@ Contents
 ## 5. Codeception end-to-end suite
 
 5.1 The suite uses Codeception with Selenium WebDriver to check that pull requests do not break features [docs: https://devdocs.mautic.org/en/7.2/testing/e2e_test_suite.html].
-5.2 Run it with `ddev composer run e2e-test` (`APP_ENV=test bin/codecept run acceptance`); it only runs inside DDEV because WebDriver points at `https://web:443` and host `selenium-chrome:4444` [code: composer.json:166-214 @7.x] [code: tests/acceptance.suite.yml @7.x].
+5.2 Run it with `ddev composer run e2e-test` (`APP_ENV=test bin/codecept run acceptance`); it only runs inside DDEV because WebDriver points at `https://web:443` and host `selenium-chrome:4444` [code: composer.json:164-212 @7.x] [code: tests/acceptance.suite.yml @7.x].
 5.3 `DbHelper::_beforeSuite()` re-imports `tests/_data/dump.sql` if it exists, otherwise drops and creates the database, runs `doctrine:schema:create` and `doctrine:fixtures:load`, and dumps it [code: tests/_support/Helper/DbHelper.php:15-100 @7.x].
 5.4 `EnvHelper` writes `APP_ENV=test` / `APP_DEBUG=1` to `.env.local` for the run and restores the original afterwards [code: tests/_support/Helper/EnvHelper.php:16-83 @7.x].
-5.5 Write `final class XCest` in `tests/acceptance/`; log in with `$I->login()` in `_before`; keep selectors in `tests/_support/Page/Acceptance/*Page.php` and flows in `tests/_support/Step/Acceptance/*Step.php` [code: tests/acceptance/ContactManagementCest.php:13-80 @7.x] [docs: https://devdocs.mautic.org/en/7.2/testing/e2e_test_suite.html#acceptance-tests-structure].
-5.6 `AcceptanceTester::TIMEOUT` is 30 s; `login()` defaults to `admin` / `Maut1cR0cks!` and reuses a session snapshot; `ensureNotificationAppears($text)` waits for `#flashes .alert` [code: tests/_support/AcceptanceTester.php:27-68 @7.x].
-5.7 Database assertions use the `test_` prefix, for example `$I->seeInDatabase('test_leads', [...])` [code: tests/acceptance/ContactManagementCest.php:13-80 @7.x].
+5.5 Write `final class XCest` in `tests/acceptance/`; log in with `$I->login()` in `_before`; keep selectors in `tests/_support/Page/Acceptance/*Page.php` and flows in `tests/_support/Step/Acceptance/*Step.php` [code: tests/acceptance/ContactManagementCest.php:13-80 @419a08a9b35] [docs: https://devdocs.mautic.org/en/7.2/testing/e2e_test_suite.html#acceptance-tests-structure].
+5.6 `AcceptanceTester::TIMEOUT` is 30 s; `login()` defaults to `admin` / `Maut1cR0cks!` and reuses a session snapshot; `ensureNotificationAppears($text)` waits for `#flashes .alert` [code: tests/_support/AcceptanceTester.php:27-68 @419a08a9b35].
+5.7 Database assertions use the `test_` prefix, for example `$I->seeInDatabase('test_leads', [...])` [code: tests/acceptance/ContactManagementCest.php:13-80 @419a08a9b35].
 5.8 Watch the browser via noVNC at `https://mautic.ddev.site:7900/` (password `secret`); failures write screenshots and HTML reports to `tests/_output` [docs: https://devdocs.mautic.org/en/7.2/testing/e2e_test_suite.html#view-tests-in-the-browser].
 5.9 Scaffold with `bin/codecept generate:cest|generate:pageobject|generate:stepobject acceptance <Name>`; add `--steps` or `-vvv` when running [docs: https://devdocs.mautic.org/en/7.2/testing/e2e_test_suite.html#writing-tests].
 5.10 Codeception `functional` and `unit` suites define only empty helpers; there are no such tests [code: tests/functional.suite.yml @7.x].
 
 ## 6. Static analysis, coding standard, Rector
 
-6.1 PHPStan: level 6, `tmpDir var/phpstan-cache`, `treatPhpDocTypesAsCertain: false`, paths `app/bundles`, `app/migrations`, `plugins`, `utils` [code: phpstan.neon:5-35 @7.x].
-6.2 Type-coverage floors: return 88.3 %, param 75.7 %, property 71.6 %, constant 3, declare 73; lowering them fails the run [code: phpstan.neon:14-20 @7.x].
-6.3 The Doctrine and Symfony extensions need `tests/object-manager.php` and `var/cache/test/AppKernelTestDebugContainer.xml`; `composer phpstan` builds the latter first [code: phpstan.neon:249-254 @7.x] [code: composer.json:166-214 @7.x].
-6.4 Custom rules (messages in references/code-map.md): no `MAUTIC_TABLE_PREFIX` in tests; `#[AsCommand]` on commands; `#[\Attribute]` on constraints; `#[Required]` methods named `autowire<ClassName>()`; no string `getModel()` in controllers; no `getRepository(Entity::class)` in repositories or on the entity manager; no `$container->get()`; typed non-nullable constructor services; interfaces over concrete classes; controller actions return `Response`; no services in `Config/config.php` [code: phpstan.neon:257-277 @7.x] [code: utils/phpstan/src/Rule/ @7.x].
-6.5 Suppress with an `ignoreErrors` entry carrying `identifier` and `path`, or regenerate the baseline (`composer phpstan-baseline`); unmatched ignores fail the run [code: phpstan.neon:8, 42-239 @7.x] [code: composer.json:184 @7.x].
+6.1 PHPStan: level 6, `tmpDir var/phpstan-cache`, `treatPhpDocTypesAsCertain: false`, paths `app/bundles`, `app/migrations`, `plugins`, `utils` [code: phpstan.neon:5-35 @419a08a9b35].
+6.2 Type-coverage floors: return 88.3 %, param 75.7 %, property 71.6 %, constant 3, declare 73; lowering them fails the run [code: phpstan.neon:14-20 @419a08a9b35].
+6.3 The Doctrine and Symfony extensions need `tests/object-manager.php` and `var/cache/test/AppKernelTestDebugContainer.xml`; `composer phpstan` builds the latter first [code: phpstan.neon:271-276 @7.x] [code: composer.json:164-212 @7.x].
+6.4 Custom rules (messages in references/code-map.md): no `MAUTIC_TABLE_PREFIX` in tests; `#[AsCommand]` on commands; `#[\Attribute]` on constraints; `#[Required]` methods named `autowire<ClassName>()`; no string `getModel()` in controllers; no `getRepository(Entity::class)` in repositories or on the entity manager; no `$container->get()`; typed non-nullable constructor services; interfaces over concrete classes; controller actions return `Response`; no services in `Config/config.php` [code: phpstan.neon:279-299 @7.x] [code: utils/phpstan/src/Rule/ @7.x].
+6.5 Suppress with an `ignoreErrors` entry carrying `identifier` and `path`, or regenerate the baseline (`composer phpstan-baseline`); unmatched ignores fail the run [code: phpstan.neon:8, 42-239 @419a08a9b35] [code: composer.json:182 @7.x].
 6.6 After adding a plugin entity, clear `var/cache/prod` and `var/phpstan-cache` if PHPStan reports it "not found in the chain configured namespaces" [code: .agents/skills/mautic-dev/SKILL.md @7.x].
 6.7 Coding standard: php-cs-fixer `@Symfony` plus ordered imports, short arrays, no unused imports, explicit nullable types for `= null`, aligned `=>`/`=` allowed [code: .php-cs-fixer.php:26-57 @7.x].
-6.8 `composer cs` is a php-cs-fixer dry run; `composer fixcs` runs php-cs-fixer and ECS with fixes; the git pre-commit hook (installed by `composer githooks`) fixes staged files [code: composer.json:166-214 @7.x] [code: build/hooks/pre-commit:17-20 @7.x].
-6.9 Rector: sets `deadCode`, `typeDeclarations`, `phpunitCodeQuality`, `phpunitMockToStub`, `phpunitNarrowAsserts`, `privatization`, `codeQuality`, PHP sets from composer (8.2); `reportUnusedSkips()` is on [code: rector.php:10-25, 55-122 @7.x].
-6.10 `ddev composer rector` rewrites files; commit the result. CI runs `bin/rector --dry-run` [code: composer.json:166-214 @7.x] [code: .github/workflows/tests.yml:250-253 @7.x].
+6.8 `composer cs` is a php-cs-fixer dry run; `composer fixcs` runs php-cs-fixer and ECS with fixes; the git pre-commit hook (installed by `composer githooks`) fixes staged files [code: composer.json:164-212 @7.x] [code: build/hooks/pre-commit:17-20 @7.x].
+6.9 Rector: sets `deadCode`, `typeDeclarations`, `phpunitCodeQuality`, `phpunitMockToStub`, `phpunitNarrowAsserts`, `privatization`, `codeQuality`, PHP sets from composer (8.2); `reportUnusedSkips()` is on [code: rector.php:10-25, 55-122 @419a08a9b35].
+6.10 `ddev composer rector` rewrites files; commit the result. CI runs `bin/rector --dry-run` [code: composer.json:164-212 @7.x] [code: .github/workflows/tests.yml:250-253 @7.x].
 
 ## 7. CI: what runs on a pull request
 
@@ -126,7 +126,7 @@ Contents
 7.2 PHPUnit matrix: PHP 8.2 + MySQL 8.4, PHP 8.2 + MariaDB 10.11, PHP 8.5 + MySQL 9.2, PHP 8.5 + MariaDB 11.4, plus a SimpleSAMLphp service for SAML tests; the whole suite runs in one process per cell after `rm -rf var/cache` [code: .github/workflows/tests.yml:22-68, 111-121 @7.x].
 7.3 CI runs with `zend.assertions=1` [code: .github/workflows/tests.yml:86-92, 111-121 @7.x].
 7.4 Coverage is collected only on push or schedule (PHP 8.2 + MariaDB 10.11), never on pull requests; Codecov's patch target is 0 % [code: .github/workflows/tests.yml:36-44, 117-130 @7.x] [code: codecov.yml:7-13 @7.x].
-7.5 The `misc` job runs PHPStan, php-cs-fixer on changed `*.php` files only, Rector dry-run, `lint:twig app plugins`, the scaffold-file diff, a `mautic/recommended-project` composer install check, and `composer validate` [code: .github/workflows/tests.yml:181-316 @7.x].
+7.5 The `misc` job runs PHPStan, php-cs-fixer on changed `*.php` files only, Rector dry-run, `lint:twig app plugins`, the scaffold-file diff, a `mautic/recommended-project` composer install check, and `composer validate` [code: .github/workflows/tests.yml:181-316 @419a08a9b35].
 7.6 The `e2e-tests` job runs Codeception inside DDEV and uploads `tests/_output` on failure [code: .github/workflows/tests.yml:155-179 @7.x].
 7.7 `api-library-tests.yml` installs the PR under Apache (PHP 8.3) and runs the `mautic/api-library` PHPUnit suite against it [code: .github/workflows/api-library-tests.yml:20-125 @7.x].
 7.8 `e2e-tests.yml` runs the e2e suite 10 times when `tests/**` changes [code: .github/workflows/e2e-tests.yml:25-28 @7.x].
@@ -139,7 +139,7 @@ A regression test must fail before the fix and pass after it, use the entry poin
 outcome [code: .github/prompts/write-test.prompt.md:17-31 @7.x] [code: .coderabbit.yaml @7.x]. Skeletons are in
 recipes.md.
 
-8.1 Controller or form bug: request the route as the affected user (create one with only the needed permission), submit the form, assert status, flash text and the persisted row after `em->clear()`; add a 403 case for permission bugs [code: app/bundles/CampaignBundle/Tests/Controller/Api/CampaignApiControllerFunctionalTest.php:490-505 @7.x].
+8.1 Controller or form bug: request the route as the affected user (create one with only the needed permission), submit the form, assert status, flash text and the persisted row after `em->clear()`; add a 403 case for permission bugs [code: app/bundles/CampaignBundle/Tests/Controller/Api/CampaignApiControllerFunctionalTest.php:511-526 @7.x].
 8.2 API bug: call the endpoint with the exact payload from the report; assert status code, the JSON keys and values, and the database row [code: app/bundles/LeadBundle/Tests/Controller/Api/LeadApiControllerFunctionalTest.php:685-710 @7.x].
 8.3 AJAX endpoint: send `createAjaxHeaders()`; remember a missing token yields 200 with `flashes`, so assert on content, not only status [code: app/bundles/CoreBundle/EventListener/RequestSubscriber.php:34-46 @7.x].
 8.4 Command or cron behaviour: persist the state, `em->clear()`, run `testSymfonyCommand()`, assert exit code, output text and the resulting rows [code: app/bundles/WebhookBundle/Tests/Functional/Command/DeleteWebhookLogsCommandTest.php:64-85 @7.x].

@@ -1,6 +1,6 @@
 # Users, roles, permissions — version notes
 
-Authoritative behaviour is 7.x (commit 419a08a9b35: release 7.2.1 plus unreleased merged PRs). 8.x is unreleased development.
+Authoritative behaviour is 7.x (the 7.x snapshot pinned in SOURCES.md). 8.x is unreleased development.
 
 ## 1. History that explains current behaviour (5.x / 6.x)
 
@@ -40,9 +40,9 @@ Full PR-derived history: pr-history.md.
 | 7.2.0 | `UserModel::checkNewPassword()`/`resetPassword()` drop the hasher argument (constructor injection, no deprecation step). | [PR #16980] [code: app/bundles/UserBundle/Model/UserModel.php:110,236 @7.x] |
 | 7.2.0 | Login and security pages skip CKEditor (`includeEditor`). | [PR #16987] |
 | 7.2.0 | `mautic:maintenance:cleanup --dry-run` reports the real expired-token count. | [PR #16772] |
-| 7.2 | Service aliases `mautic.security.logout_handler` and `mautic.security.user_token_setter` deprecated. | [code: app/bundles/UserBundle/Config/services.php:131-134 @7.x] |
+| 7.2 | Service aliases `mautic.security.logout_handler` and `mautic.security.user_token_setter` deprecated. | [code: app/bundles/UserBundle/Config/services.php:135-138 @7.x] |
 | 7.x head (after 7.2.1 tag) | Delete-User confirmation lists the consequences (translation strings only). | [PR #17444] |
-| 7.x head (after 7.2.1 tag) | `is:never_logged_in` search command and "Never logged in" quick filter. | [code: app/bundles/UserBundle/Entity/UserRepository.php:248-249,310 @7.x] [docs: https://docs.mautic.org/en/8.0/users_roles/managing_users.html#filtering-users-who-have-never-logged-in] |
+| 7.x head (after 7.2.1 tag) | `is:never_logged_in` search command and "Never logged in" quick filter. | [code: app/bundles/UserBundle/Entity/UserRepository.php:286-287,348 @7.x] [docs: https://docs.mautic.org/en/8.0/users_roles/managing_users.html#filtering-users-who-have-never-logged-in] |
 
 ## 3. 8.x delta
 

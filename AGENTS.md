@@ -8,7 +8,7 @@ an index and open the files it points to.
 
 A behaviour specification and code map of Mautic, the open-source marketing automation platform, written for agents
 that test Mautic, build on it, or change its core. Mautic 7.x is authoritative: the `7.x` branch head, which is
-release 7.2.1 plus 87 unreleased pull requests. Mautic 8.x is in development,
+release 7.2.2 plus 181 unreleased pull requests bound for 7.3. Mautic 8.x is in development,
 and every skill notes what changes there. Differences in 5.x and 6.x are called out where known.
 
 ## How to use it
@@ -27,7 +27,8 @@ and every skill notes what changes there. Differences in 5.x and 6.x are called 
 
 Every statement carries a source tag. SOURCES.md defines the tags and the pinned snapshots.
 
-- `[code: path:line @7.x]` points into mautic/mautic at commit `419a08a9b35`. `@8.x` points at the 8.x snapshot.
+- `[code: path:line @7.x]` and `@8.x` point into mautic/mautic at the snapshots pinned in SOURCES.md. A commit tag such
+  as `@419a08a9b35` means the claim was checked at that older commit and has not been re-checked since.
 - `[docs: …]`, `[devdocs: …]` and `[kb: …]` are docs.mautic.org, devdocs.mautic.org and kb.mautic.org URLs.
 - `[PR #N]` is a merged pull request on github.com/mautic/mautic.
 

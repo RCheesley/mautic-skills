@@ -42,7 +42,7 @@ class instead [code: UPGRADE-8.0.md @8.x "Changed code"; verified that no 8.x di
 | `ReportEvents::REPORT_ON_BUILD` / `REPORT_ON_GENERATE` / `REPORT_QUERY_PRE_EXECUTE` / `REPORT_ON_DISPLAY` / `REPORT_ON_GRAPH_GENERATE` / `REPORT_SCHEDULE_SEND` / `REPORT_ON_COLUMN_COLLECT` / `REPORT_PERMANENT_FILE_CREATED` | `mautic.report_on_build` … | `ReportBuilderEvent` / `ReportGeneratorEvent` / `ReportQueryEvent` / `ReportDataEvent` / `ReportGraphEvent` / `ReportScheduleSendEvent` / `ColumnCollectEvent` / `PermanentReportFileCreatedEvent` |
 | `EmailEvents::EMAIL_ON_OPEN` (also a webhook type id) | `mautic.email_on_open` | `EmailOpenEvent` |
 | `PointEvents::POINT_ON_ACTION`; `PointGroupEvents::SCORE_CHANGE` | | `PointActionEvent`; `GroupScoreChangeEvent` |
-| `PointEvents::POINT_ON_BUILD` / `TRIGGER_ON_BUILD` | `mautic.point_on_build` / `mautic.trigger_on_build` | `PointBuilderEvent` / `TriggerBuilderEvent` [code: app/bundles/PointBundle/PointEvents.php:45,87 @8.x] [code: app/bundles/EmailBundle/EventListener/PointSubscriber.php:32-33 @8.x] |
+| `PointEvents::POINT_ON_BUILD` / `TRIGGER_ON_BUILD` | `mautic.point_on_build` / `mautic.trigger_on_build` | `PointBuilderEvent` / `TriggerBuilderEvent` [code: app/bundles/PointBundle/PointEvents.php:45,87 @8.x] [code: app/bundles/EmailBundle/EventListener/PointSubscriber.php:32-33 @11599729491] |
 | `CategoryEvents::CATEGORY_ON_BUNDLE_LIST_BUILD` | | `CategoryTypesEvent` |
 | `NotificationEvents::NOTIFICATION_ON_SEND` | `mautic.notification_on_send` | `NotificationSendEvent` |
 | `StageEvents::STAGE_ON_BUILD` | `mautic.stage_on_build` | `StageBuilderEvent` |

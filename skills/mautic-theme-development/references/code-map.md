@@ -20,13 +20,13 @@ All paths relative to the repository root; all tags `@7.x` unless marked.
 | `Mautic\CoreBundle\Helper\ThemeHelper` (+ `ThemeHelperInterface`) | discovery, install, zip, copy, rename, delete, visibility, sandboxed render, template fallback | [code: app/bundles/CoreBundle/Helper/ThemeHelper.php:110-899 @7.x] |
 | `ThemeHelper::$defaultThemes` / `addDefaultThemes()` | undeletable themes (incl. reserved `system`); plugins can add | [code: app/bundles/CoreBundle/Helper/ThemeHelper.php:61-134 @7.x] |
 | `Mautic\CoreBundle\Twig\Helper\ThemeHelper` | per-theme value object (`getName`, `getTheme`, `getConfig`, `getThemePath`, `getErrorPageTemplate`) | [code: app/bundles/CoreBundle/Twig/Helper/ThemeHelper.php:58-106 @7.x] |
-| `Twig\Sandbox\ThemeSandboxPolicy` | deny-list | [code: app/bundles/CoreBundle/Twig/Sandbox/ThemeSandboxPolicy.php:27-83 @7.x] |
+| `Twig\Sandbox\ThemeSandboxPolicy` | deny-list | [code: app/bundles/CoreBundle/Twig/Sandbox/ThemeSandboxPolicy.php:27-83 @419a08a9b35] |
 | `Twig\Extension\ThemesExtension` | `getBrandPrimaryColor`, `getTextOnBrandColor`, `getTextOnBrandHelperColor`, `getRoundedCorners` | [code: app/bundles/CoreBundle/Twig/Extension/ThemesExtension.php:18-70 @7.x] |
-| `Twig\Extension\ThemeExtension` | `getThemeName` | [code: app/bundles/CoreBundle/Twig/Extension/ThemeExtension.php:30-40 @7.x] |
+| `Twig\Extension\ThemeExtension` | `getThemeName` | [code: app/bundles/CoreBundle/Twig/Extension/ThemeExtension.php:33-43 @7.x] |
 | `Twig\Helper\AssetsHelper` | `getOverridableUrl`; injects `Mautic.getActiveBuilderName()` | [code: app/bundles/CoreBundle/Twig/Helper/AssetsHelper.php:88-100,440-447 @7.x] |
 | `Helper\ThemeSearchFilter`, `ThemeSearchScopeProvider` | Theme Manager search (feature/builder commands; dir, name, author text) | [code: app/bundles/CoreBundle/Helper/ThemeSearchFilter.php:64-70 @7.x] |
 | `DependencyInjection\Compiler\SystemThemeTemplatePathPass` | registers `themes/system/<Bundle>/Resources/views` overrides | [code: app/bundles/CoreBundle/DependencyInjection/Compiler/SystemThemeTemplatePathPass.php:30-33,90-96 @7.x] |
-| `Form\Type\ThemeListType`, `ThemeUploadType`, `ConfigThemeType` | dropdown (adds Code Mode), upload, Theme Settings | [code: app/bundles/CoreBundle/Form/Type/ThemeListType.php:25-32 @7.x] [code: app/bundles/CoreBundle/Form/Type/ConfigThemeType.php:54-107 @7.x] |
+| `Form\Type\ThemeListType`, `ThemeUploadType`, `ConfigThemeType` | dropdown (adds Code Mode), upload, Theme Settings | [code: app/bundles/CoreBundle/Form/Type/ThemeListType.php:25-32 @7.x] [code: app/bundles/CoreBundle/Form/Type/ConfigThemeType.php:54-107 @419a08a9b35] |
 | `IntegrationsBundle\Integration\Interfaces\BuilderInterface`, `Helper\BuilderIntegrationsHelper` | builder plug-point (`mautic.builder_integration` tag, autoconfigured) | [code: app/bundles/IntegrationsBundle/Helper/BuilderIntegrationsHelper.php:37-59 @7.x] [code: app/bundles/IntegrationsBundle/DependencyInjection/IntegrationsExtension.php:32-33 @7.x] |
 | `CoreBundle\Event\BuilderEvent` (Email/PageBuilderEvent) | token registration | [code: app/bundles/CoreBundle/Event/BuilderEvent.php:73-260 @7.x] |
 | `CoreBundle\Model\BuilderModelTrait` | common builder components (tokens) | [code: app/bundles/CoreBundle/Model/BuilderModelTrait.php:18-42 @7.x] |
@@ -57,7 +57,7 @@ All paths relative to the repository root; all tags `@7.x` unless marked.
 | `mautic_page_preview` | `/page/preview/{id}/{objectType}` | `PageBundle\Controller\PublicController::previewAction` | same |
 | AJAX tokens | `/s/ajax?action=email:getBuilderTokens` / `page:getBuilderTokens` | `CoreBundle\Controller\AjaxController::getBuilderTokensAction` | — |
 
-Sources: [code: app/bundles/CoreBundle/Config/config.php:23-30,85-102,144-148 @7.x] [code: plugins/GrapesJsBuilderBundle/Config/config.php:21-24 @7.x] [code: app/bundles/CoreBundle/Security/Permissions/SystemPermissions.php:15,25 @7.x] [code: plugins/GrapesJsBuilderBundle/Controller/GrapesJsController.php:104-227 @7.x] [code: app/bundles/EmailBundle/Config/config.php:103-111 @7.x] [code: app/bundles/PageBundle/Config/config.php:49-51 @7.x].
+Sources: [code: app/bundles/CoreBundle/Config/config.php:23-30,85-102,144-148 @7.x] [code: plugins/GrapesJsBuilderBundle/Config/config.php:21-24 @7.x] [code: app/bundles/CoreBundle/Security/Permissions/SystemPermissions.php:16,27 @7.x] [code: plugins/GrapesJsBuilderBundle/Controller/GrapesJsController.php:104-227 @7.x] [code: app/bundles/EmailBundle/Config/config.php:103-111 @7.x] [code: app/bundles/PageBundle/Config/config.php:49-51 @7.x].
 
 ## Configuration parameters
 | Parameter | Default | Effect | Source |
@@ -70,7 +70,7 @@ Sources: [code: app/bundles/CoreBundle/Config/config.php:23-30,85-102,144-148 @7
 | `image_path_exclude` | `['flags','mejs']` | hidden from media listing | [code: plugins/GrapesJsBuilderBundle/Config/config.php:44 @7.x] |
 | `static_url` | `''` | CDN base for image URLs | [code: plugins/GrapesJsBuilderBundle/Config/config.php:45 @7.x] |
 | `editor_fonts` | list of name/font/url | builder fonts, JS `mauticEditorFonts` | [code: app/bundles/CoreBundle/Config/config.php:721 @7.x] |
-| `mailer_append_tracking_pixel`, `mailer_convert_embed_images`, `minify_email_html` | | post-builder HTML changes | [code: app/bundles/EmailBundle/Helper/MailHelper.php:383-385,808-814,1231-1233 @7.x] |
+| `mailer_append_tracking_pixel`, `mailer_convert_embed_images`, `minify_email_html` | | post-builder HTML changes | [code: app/bundles/EmailBundle/Helper/MailHelper.php:383-385,815-821,1238-1240 @7.x] |
 
 ## Events
 | Event | Listener | Effect | Source |
@@ -80,7 +80,7 @@ Sources: [code: app/bundles/CoreBundle/Config/config.php:23-30,85-102,144-148 @7
 | `EmailEvents::EMAIL_PRE_SAVE` / `EMAIL_POST_SAVE` / `EMAIL_POST_DELETE` / `ON_EMAIL_EDIT_SUBMIT` | `EmailSubscriber` | draft capture, sidecar persist, delete, draft apply | [code: plugins/GrapesJsBuilderBundle/EventSubscriber/EmailSubscriber.php:44-117 @7.x] |
 | `PageEvents::PAGE_POST_SAVE` | `PageSubscriber` | editor state | [code: plugins/GrapesJsBuilderBundle/EventSubscriber/PageSubscriber.php:21-35 @7.x] |
 | JMS `POST_SERIALIZE` | `SerializerSubscriber::addCustomMJML` | API `grapesjsbuilder.customMjml` | [code: plugins/GrapesJsBuilderBundle/EventSubscriber/SerializerSubscriber.php:27-62 @7.x] |
-| `EmailEvents::EMAIL_ON_BUILD`, `PageEvents::PAGE_ON_BUILD` | token providers | builder token lists | [code: app/bundles/EmailBundle/Model/EmailModel.php:566-567 @7.x] [code: app/bundles/PageBundle/Model/PageModel.php:770-771 @7.x] |
+| `EmailEvents::EMAIL_ON_BUILD`, `PageEvents::PAGE_ON_BUILD` | token providers | builder token lists | [code: app/bundles/EmailBundle/Model/EmailModel.php:575-576 @7.x] [code: app/bundles/PageBundle/Model/PageModel.php:770-771 @7.x] |
 | `EmailEvents::EMAIL_ON_SEND` / `EMAIL_ON_DISPLAY` | accessibility 10000, DC tokens 254, tokens 0, URL→tokens -9999 | render order | [code: app/bundles/EmailBundle/EventListener/BuilderSubscriber.php:49-60 @7.x] |
 | `PageEvents::PAGE_ON_DISPLAY` | Page `BuilderSubscriber::onPageDisplay` (0), DWC (254) | page tokens/slots | [code: app/bundles/PageBundle/EventListener/BuilderSubscriber.php:28-54 @7.x] |
 
@@ -90,10 +90,10 @@ No events are dispatched by the theme code or the GrapesJS plugin.
 - PHP: `Integration/GrapesJsBuilderIntegration.php` (`NAME = 'grapesjsbuilder'`), `Integration/Support/BuilderSupport.php`, `Integration/Config.php`, `Model/GrapesJsBuilderModel.php`, `Helper/FileManager.php`, `Controller/GrapesJsController.php`, `Controller/FileManagerController.php`, `InstallFixtures/ORM/GrapesJsData.php`, `Config/services.php`, `Config/config.php`, `Resources/views/{Builder/template,Setting/fields}.html.twig` [code: plugins/GrapesJsBuilderBundle/Config/services.php:24-39 @7.x].
 - JS (`Assets/library/js/`): `builder.js` (entry), `builder.service.js` (init per mode, plugin registry, CKEditor, asset manager), `editorState.service.js`, `storage.service.js`, `asset.service.js`, `mjmlStyles.service.js`, `codeMode/`, `commands/`, `preset-mautic/{blocks,buttons,dynamicContent,editorFonts,mjml,panels}/`, `preset-mautic/content.service.js`, `plugins/{grapesjs-ckeditor,grapesjs-mjmlThemeTokens,grapesjs-image-link}/`.
 - Build: `package.json` (grapesjs ^0.22.16, grapesjs-mjml ^1.0.6, Parcel ^2.16.4), `scripts/manifest-reporter.js` writes `dist/manifest.json`; root `composer gjs-build` / `gjs-build-safe`, `build/gjs_build.php` hook (non-fatal) [code: plugins/GrapesJsBuilderBundle/scripts/manifest-reporter.js:13-32 @7.x] [code: build/gjs_build.php:5-13 @7.x].
-- Root front-end build is separate: `npm run build` builds only CKEditor 5 into `media/libraries/ckeditor/`; `bin/console mautic:assets:generate` produces `media/css/app.css`, `libraries.css`, `media/js/app.js`, `libraries.js`; AssetMapper entry `app/bundles/CoreBundle/Assets/app.js` [code: webpack.config.js:30-40 @7.x] [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:24-27,106-110 @7.x].
+- Root front-end build is separate: `npm run build` builds only CKEditor 5 into `media/libraries/ckeditor/`; `bin/console mautic:assets:generate` produces `media/css/app.css`, `libraries.css`, `media/js/app.js`, `libraries.js`; AssetMapper entry `app/bundles/CoreBundle/Assets/app.js` [code: webpack.config.js:30-40 @7.x] [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:24-27,111-115 @7.x].
 
 ## Shared admin JS used by builders
-`app/bundles/CoreBundle/Assets/js/4.builder.js`: `Mautic.launchBuilder` stub, theme selection, `inBuilder` hidden input, `Mautic.sanitizeHtmlBeforeSave`, `openMediaManager` (elFinder), `getBuilderTokensMethod` [code: app/bundles/CoreBundle/Assets/js/4.builder.js:1-131 @7.x].
+`app/bundles/CoreBundle/Assets/js/4.builder.js`: `Mautic.launchBuilder` stub, theme selection, `inBuilder` hidden input, `Mautic.sanitizeHtmlBeforeSave`, `openMediaManager` (elFinder), `getBuilderTokensMethod` [code: app/bundles/CoreBundle/Assets/js/4.builder.js:1-131 @419a08a9b35].
 
 ## Bundled themes (44 dirs)
 | Group | Dirs | features / builder |

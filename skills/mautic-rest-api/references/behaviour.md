@@ -42,22 +42,22 @@ false gets 403 `{"errors":[{"message":"Basic Auth disabled. ...","code":403,"typ
 to bool when the configuration is saved. [code: app/bundles/ApiBundle/EventListener/ApiSubscriber.php:70-89 @7.x]
 [code: app/bundles/ApiBundle/EventListener/ConfigSubscriber.php:32-40 @7.x]
 
-R6. `/api/*` requires `IS_AUTHENTICATED_FULLY`. [code: app/config/security.php:153 @7.x]
+R6. `/api/*` requires `IS_AUTHENTICATED_FULLY`. [code: app/config/security.php:171 @7.x]
 
 ## 2. Authentication: Basic and OAuth2
 
 R7. The v1 `api` firewall (`^/api/`) is stateless and accepts, in order, an OAuth2 bearer token (`fos_oauth`), plugin
-authentication (`mautic_plugin_auth`), and HTTP Basic. [code: app/config/security.php:60-67 @7.x]
+authentication (`mautic_plugin_auth`), and HTTP Basic. [code: app/config/security.php:60-67 @419a08a9b35]
 
 R8. The v2 `v2api` firewall (`^/api/v2`) has the same authenticators but is not stateless and shares the `mautic` session
-context, so a logged-in UI session cookie authenticates v2 calls. [code: app/config/security.php:51-59 @7.x]
+context, so a logged-in UI session cookie authenticates v2 calls. [code: app/config/security.php:62-70 @7.x]
 
 R9. Basic Auth uses a Mautic User's own username and password, base64-encoded as `user:password`. Mautic recommends
 OAuth2 and Basic Auth only over HTTPS. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/authentication.html#basic-authentication]
 [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#api-settings]
 
 R10. The token endpoint is `/oauth/v2/token`, accepts GET or POST, and sits behind a firewall with `security: false`.
-[code: app/bundles/ApiBundle/Config/config.php:9-13 @7.x] [code: app/config/security.php:38-41 @7.x]
+[code: app/bundles/ApiBundle/Config/config.php:9-13 @7.x] [code: app/config/security.php:49-52 @7.x]
 
 R11. A client created in the UI allows the `authorization_code` and `refresh_token` grants. If the creating User's role
 is admin, `client_credentials` is added. The client stores the creator's role. The `password` grant is never enabled.
@@ -395,7 +395,7 @@ R86. Contacts (and every other non-opted-in entity) stay editable through the AP
 
 R87. No rate limiter exists in 7.2.1: no `RateLimiter` or `rate_limit` code in `app/` or `plugins/`. The only throttling
 is `login_throttling` on the UI firewall, which does not apply to `/api`.
-[code: app/config/security.php:105-108 @7.x]
+[code: app/config/security.php:118-121 @7.x]
 [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/getting_started.html#api-rate-limiter-cache]
 
 R88. The `api_rate_limiter_cache` setting used before Mautic 7 is gone.

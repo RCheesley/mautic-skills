@@ -22,7 +22,7 @@ Every item states one observable behaviour and its source. "Managed setup" means
 
 ## 1. Platform requirements
 1.1 7.2.1 supports PHP 8.2.0 to 8.5.99, MySQL 8.4.0 or later and MariaDB 10.11.0 or later. [code: app/release_metadata.json:4-7 @7.x]
-1.2 Composer resolves dependencies as if on PHP 8.2.0 (`config.platform.php`), whatever PHP runs Composer. [code: composer.json:195-198 @7.x]
+1.2 Composer resolves dependencies as if on PHP 8.2.0 (`config.platform.php`), whatever PHP runs Composer. [code: composer.json:193-196 @7.x]
 1.3 A web request on a PHP version outside the supported range gets an HTTP 500 text response before the kernel runs. [code: app/middlewares/VersionCheckMiddleware.php:46-59 @7.x]
 1.4 The installer stops on hard requirement failures. These are: `vendor/composer` missing, an unwritable config file, unwritable `cache_path` or `log_path`, an unrecognised default timezone, missing core functions (`json_encode`, `session_start`, `ctype_alpha`, `token_get_all`, `simplexml_import_dom`, `curl_init`, `finfo_open`, `mb_strtolower`), an unsupported OpenSSL cipher, the xdebug `show_exception_trace` or `scream` setting on, or no PDO MySQL driver. [code: app/bundles/InstallBundle/Configurator/Step/CheckStep.php:73-152 @7.x] [code: app/bundles/InstallBundle/Configurator/Step/DoctrineStep.php:95-108 @7.x]
 1.5 Recommendations only warn: `zip`, `date.timezone`, DOM, `iconv`, `xml`, `imap_open`, an https `site_url`, `memory_limit` of at least 512M, `intl`, a working `Collator`, and `zend.assertions = -1`. The CLI installer asks whether to continue unless you pass `--force`. [code: app/bundles/InstallBundle/Configurator/Step/CheckStep.php:154-224 @7.x] [code: app/bundles/InstallBundle/Command/InstallCommand.php:245-260 @7.x]
@@ -69,25 +69,25 @@ Every item states one observable behaviour and its source. "Managed setup" means
 4.6 For CLI work, including emulating a cron job, run `ddev ssh` in the Codespace and run the commands there. [code: .devcontainer/CODESPACES.md @7.x]
 
 ## 5. Composer and the two-package layout
-5.1 The root `composer.json` is the `mautic/mautic` distribution package. It requires `composer/installers`, `cweagans/composer-patches` and `mautic/core-lib ^7.0`, and holds all dev tooling in `require-dev`. [code: composer.json:23-56 @7.x]
-5.2 `mautic/core-lib` is the `app/` directory, loaded as a path repository (as version `7.0.0-dev`). All runtime dependencies and the `Mautic\` autoload are declared in `app/composer.json`. [code: composer.json:124-148 @7.x] [code: app/composer.json:7-16 @7.x]
-5.3 The root package declares that it replaces every `mautic/plugin-*`, `mautic/theme-*` and `mautic/grapes-js-builder-bundle` package. A monorepo split workflow publishes them. [code: composer.json:57-110 @7.x]
-5.4 Installer paths: `mautic-core` packages go to `app`, `mautic-plugin` to `plugins/{$name}` and `mautic-theme` to `themes/{$name}`. [code: composer.json:212-233 @7.x]
-5.5 With `bin-dir = bin`, `bin/phpunit`, `bin/phpstan`, `bin/rector`, `bin/ecs`, `bin/php-cs-fixer` and `bin/codecept` are generated and gitignored. Only `bin/console` and `bin/.htaccess` are tracked. [code: composer.json:195-211 @7.x] [code: .gitignore:62-64 @7.x]
-5.6 `post-install-cmd` and `post-update-cmd` each run `@githooks`, `@npm-ci`, `@npx-patch-package`, `@gjs-build-safe`, `@generate-assets` and `@motd`. A `composer install` therefore needs Node and npm to finish its asset steps. [code: composer.json:153-168 @7.x]
-5.7 `composer githooks` copies `build/hooks/pre-commit` (or `pre-commit.win`) and `post-checkout` into `.git/hooks/`. [code: composer.json:149-152 @7.x]
+5.1 The root `composer.json` is the `mautic/mautic` distribution package. It requires `composer/installers`, `cweagans/composer-patches` and `mautic/core-lib ^7.0`, and holds all dev tooling in `require-dev`. [code: composer.json:23-56 @419a08a9b35]
+5.2 `mautic/core-lib` is the `app/` directory, loaded as a path repository (as version `7.0.0-dev`). All runtime dependencies and the `Mautic\` autoload are declared in `app/composer.json`. [code: composer.json:122-146 @7.x] [code: app/composer.json:7-16 @7.x]
+5.3 The root package declares that it replaces every `mautic/plugin-*`, `mautic/theme-*` and `mautic/grapes-js-builder-bundle` package. A monorepo split workflow publishes them. [code: composer.json:55-108 @7.x]
+5.4 Installer paths: `mautic-core` packages go to `app`, `mautic-plugin` to `plugins/{$name}` and `mautic-theme` to `themes/{$name}`. [code: composer.json:210-231 @7.x]
+5.5 With `bin-dir = bin`, `bin/phpunit`, `bin/phpstan`, `bin/rector`, `bin/ecs`, `bin/php-cs-fixer` and `bin/codecept` are generated and gitignored. Only `bin/console` and `bin/.htaccess` are tracked. [code: composer.json:193-209 @7.x] [code: .gitignore:62-64 @7.x]
+5.6 `post-install-cmd` and `post-update-cmd` each run `@githooks`, `@npm-ci`, `@npx-patch-package`, `@gjs-build-safe`, `@generate-assets` and `@motd`. A `composer install` therefore needs Node and npm to finish its asset steps. [code: composer.json:151-166 @7.x]
+5.7 `composer githooks` copies `build/hooks/pre-commit` (or `pre-commit.win`) and `post-checkout` into `.git/hooks/`. [code: composer.json:147-150 @7.x]
 5.8 The `pre-commit` hook runs php-cs-fixer on staged PHP files and stages them again. [code: build/hooks/pre-commit:17-20 @7.x]
-5.9 `app/composer.json` maps root files to templates in `app/assets/scaffold/files/`. CI fails when a root file and its template differ. [code: app/composer.json:112-133 @7.x] [code: .github/workflows/tests.yml:265-277 @7.x]
+5.9 `app/composer.json` maps root files to templates in `app/assets/scaffold/files/`. CI fails when a root file and its template differ. [code: app/composer.json:116-137 @7.x] [code: .github/workflows/tests.yml:265-277 @7.x]
 5.10 For a production-style install, the docs recommend the Recommended Project (`composer create-project mautic/recommended-project`), which serves from `docroot/`. CI checks that this layout installs and resolves `docroot` as the webroot. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#using-the-recommended-project] [code: .github/workflows/tests.yml:278-303 @7.x]
 5.11 The project dir is the first ancestor of `app/` that contains `composer.json`. The webroot comes from `extra.mautic-scaffold.locations.web-root` or `extra.public-dir`. [code: app/AppKernel.php:290-311 @7.x] [code: app/bundles/CoreBundle/Loader/ParameterLoader.php:272-305 @7.x]
 
 ## 6. Front-end assets
 6.1 `npm ci` runs the `postinstall` script, which runs `npm run build` (`webpack --mode production`). [code: package.json:62-65 @7.x]
 6.2 Webpack builds only the CKEditor 5 bundle: entry `app/assets/libraries/ckeditor/src/ckeditor.ts`, output `media/libraries/ckeditor/ckeditor.js` (UMD `ClassicEditor`), with its cache in `var/cache/js/webpack`. It does not build Mautic's `app.js` or `app.css`. [code: webpack.config.js:22-37 @7.x]
-6.3 `npx patch-package` applies `patches/at.js+1.5.4.patch` and `patches/chosen-js+1.8.7.patch`. [code: composer.json:180 @7.x]
+6.3 `npx patch-package` applies `patches/at.js+1.5.4.patch` and `patches/chosen-js+1.8.7.patch`. [code: composer.json:178 @7.x]
 6.4 `importmap.php` registers one entrypoint, `app` → `app/bundles/CoreBundle/Assets/app.js`. That file only imports `./css/app.scss`. [code: importmap.php:3-12 @7.x]
 6.5 AssetMapper maps `app/bundles/CoreBundle/Assets` and Bootstrap's dist JS, publishes under `/assets/build/` and runs with `missing_import_mode: strict`. Sass compiles `app/bundles/CoreBundle/Assets/css/app.scss` into `var/sass/`. [code: app/config/config.php:50-73 @7.x] [code: app/config/config.php:134-144 @7.x]
-6.6 `composer sass:build` and `composer sass:watch` first delete `assets/build`, then run `bin/console sass:build` (with `--watch` for the second). [code: composer.json:183-191 @7.x]
+6.6 `composer sass:build` and `composer sass:watch` first delete `assets/build`, then run `bin/console sass:build` (with `--watch` for the second). [code: composer.json:181-189 @7.x]
 6.7 `mautic:assets:generate` fails with "…does not exist. Execute `npm install`…" when `node_modules/` or `media/libraries/ckeditor/ckeditor.js` is missing. [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:51-63 @7.x]
 6.8 Otherwise `mautic:assets:generate` takes these steps:
    1. Run `sass:build`, `importmap:install --no-interaction` and `asset-map:compile`.
@@ -96,12 +96,12 @@ Every item states one observable behaviour and its source. "Managed setup" means
    4. Copy libraries from `node_modules`, and minify `mautic-form-src.js` into `media/js/mautic-form.js`.
    5. Check that a fixed list of output files exists.
 
-   [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:65-120 @7.x]
-6.9 `composer generate-assets` runs `mautic:assets:generate`, then `assets:install --symlink --relative ./`. [code: composer.json:192 @7.x]
-6.10 `composer gjs-build` runs `npm ci` and then `npm run build` (a Parcel production build) in `plugins/GrapesJsBuilderBundle`. [code: composer.json:181 @7.x] [code: plugins/GrapesJsBuilderBundle/package.json:18 @7.x]
+   [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:65-120 @419a08a9b35]
+6.9 `composer generate-assets` runs `mautic:assets:generate`, then `assets:install --symlink --relative ./`. [code: composer.json:190 @7.x]
+6.10 `composer gjs-build` runs `npm ci` and then `npm run build` (a Parcel production build) in `plugins/GrapesJsBuilderBundle`. [code: composer.json:179 @7.x] [code: plugins/GrapesJsBuilderBundle/package.json:18 @7.x]
 6.11 During `composer install`, `gjs-build-safe` runs `build/gjs_build.php`. On failure it only prints "WARN: GrapesJS builder assets failed to build…" and exits 0. [code: build/gjs_build.php:5-13 @7.x]
 6.12 These generated files are gitignored: `media/libraries/ckeditor/*`, `media/css/app.css`, `media/js/app.js` and related files, `assets/build/` and `var/sass/`. GrapesJS dist files are not tracked either. [code: .gitignore:66-105 @7.x] [code: .github/workflows/build-grapesjs-assets.yml:28 @7.x]
-6.13 Release packages ship pre-built assets. The release workflow requires `assets/build/manifest.json` and `var/sass/app.output.css`. [code: .github/workflows/release.yml:71-72 @7.x]
+6.13 Release packages ship pre-built assets. The release workflow requires `assets/build/manifest.json` and `var/sass/app.output.css`. [code: .github/workflows/release.yml:72-73 @7.x]
 6.14 The devdocs list `composer sass:build`, `composer sass:watch`, `composer generate-assets` and `bin/console mautic:assets:generate`. They also say `composer install` compiles Sass automatically. [devdocs: https://devdocs.mautic.org/en/7.2/development-environment/building_assets.html]
 
 ## 7. Installing with mautic:install
@@ -152,7 +152,7 @@ Every item states one observable behaviour and its source. "Managed setup" means
 11.2 Codespaces: `admin` / `Maut1cR0cks!`. [code: .devcontainer/CODESPACES-READY.tpl.md @7.x]
 11.3 Sample-data fixtures: `admin` / `Maut1cR0cks!` (`admin@yoursite.com`) and `sales` / `Maut1cR0cks!` (`sales@yoursite.com`). [code: app/bundles/UserBundle/DataFixtures/ORM/LoadUserData.php:24-49 @7.x]
 11.4 PHPUnit functional tests authenticate as `admin` / `Maut1cR0cks!` through HTTP basic auth server variables. [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:48-49 @7.x]
-11.5 Codeception `login()` defaults to `admin` / `Maut1cR0cks!`. [code: tests/_support/AcceptanceTester.php:27 @7.x]
+11.5 Codeception `login()` defaults to `admin` / `Maut1cR0cks!`. [code: tests/_support/AcceptanceTester.php:27 @419a08a9b35]
 11.6 `.env.test` sets `MAUTIC_ADMIN_USERNAME=admin` and `MAUTIC_ADMIN_PASSWORD=mautic`. No PHP, YAML or workflow file in the tree reads either variable (checked with grep over `app`, `tests` and `.github`). [code: .env.test:10-11 @7.x]
 11.7 The docs give `Maut1cR0cks!` as the DDEV password and `mautic` for versions before 5.1. The KB PR-testing article still gives `admin` / `mautic`. The KB DDEV article gives `Maut1cR0cks!` for both DDEV and Gitpod. Resolution: in 7.x, use `admin` / `Maut1cR0cks!` for DDEV, Codespaces, fixtures and tests. `admin` / `mautic` applies only to pre-5.1 environments and to old Gitpod images. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#install-mautic-using-ddev] [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html] [kb: https://kb.mautic.org/article/how-to-set-up-a-mautic-instance-for-testing-locally-with-ddev.html]
 11.8 The DDEV database credentials are `db` / `db`, database `db`, host `db`. [code: .ddev/local.config.php.dist @7.x]
@@ -161,9 +161,9 @@ Every item states one observable behaviour and its source. "Managed setup" means
 12.1 Under DDEV, `.env.test.local` points PHPUnit at host `db`, user `db`, password `db`, database `test`. [code: .ddev/.env.test.local @7.x]
 12.2 Without it, `.env.test` uses `127.0.0.1:3306`, user `root` with an empty password, and database `mautictest`, as CI does. [code: .env.test:2-6 @7.x]
 12.3 Test tables are prefixed `test_` (`MAUTIC_DB_PREFIX`). [code: .env.test:7-8 @7.x] [code: app/bundles/CoreBundle/Test/Extensions/DbPrefix/DbPrefix.php:21-27 @7.x]
-12.4 `composer test` runs `bin/phpunit -d memory_limit=2G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist` and accepts a path argument. [code: composer.json:169 @7.x] [code: .github/prompts/write-test.prompt.md:41 @7.x]
-12.5 `composer e2e-test` runs `APP_ENV=test bin/codecept run acceptance` and needs the DDEV Selenium service. [code: composer.json:170 @7.x]
-12.6 `composer phpstan` first boots the test kernel so that `var/cache/test/AppKernelTestDebugContainer.xml` exists. [code: composer.json:171 @7.x]
+12.4 `composer test` runs `bin/phpunit -d memory_limit=2G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist` and accepts a path argument. [code: composer.json:167 @7.x] [code: .github/prompts/write-test.prompt.md:41 @7.x]
+12.5 `composer e2e-test` runs `APP_ENV=test bin/codecept run acceptance` and needs the DDEV Selenium service. [code: composer.json:168 @7.x]
+12.6 `composer phpstan` first boots the test kernel so that `var/cache/test/AppKernelTestDebugContainer.xml` exists. [code: composer.json:169 @7.x]
 
 ## 13. Testing a pull request
 13.1 The PR template asks testers to open the PR in GitHub Codespaces or pull it down to test locally. It links to the community handbook's tester page. [code: .github/PULL_REQUEST_TEMPLATE.md:54-59 @7.x]
@@ -181,7 +181,7 @@ Every item states one observable behaviour and its source. "Managed setup" means
    3. Run `ddev exec bin/console doctrine:migrations:migrate -n` if the PR adds migrations.
    4. Run `ddev gjs-build` if it touches the builder.
 
-   [code: build/hooks/post-checkout:3-12 @7.x] [code: composer.json:153-160 @7.x]
+   [code: build/hooks/post-checkout:3-12 @7.x] [code: composer.json:151-158 @7.x]
 13.5 Release cadence that shapes what you test: bug fixes monthly, features quarterly, breaking changes about once a year. [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html]
 
 ## 14. Staging server for release testing
@@ -204,7 +204,7 @@ Every item states one observable behaviour and its source. "Managed setup" means
 15.1 "`node_modules` … does not exist" or "`…/ckeditor.js` does not exist. Execute `npm install`": run `npm ci` (or `ddev exec npm ci`), then `composer generate-assets`. [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:51-63 @7.x]
 15.2 The builder does not load after `composer install`, and the output showed "WARN: GrapesJS builder assets failed to build": run `composer gjs-build` or `ddev gjs-build`. [code: build/gjs_build.php:7-10 @7.x]
 15.3 PHPUnit reports a missing `KERNEL_CLASS`: pass `-c app/phpunit.xml.dist` or use `composer test`. [code: app/phpunit.xml.dist:65-76 @7.x]
-15.4 PHPStan reports "Container var/cache/test/AppKernelTestDebugContainer.xml does not exist": use `composer phpstan`, which warms the test container. [code: composer.json:171 @7.x]
+15.4 PHPStan reports "Container var/cache/test/AppKernelTestDebugContainer.xml does not exist": use `composer phpstan`, which warms the test container. [code: composer.json:169 @7.x]
 15.5 Functional tests fail with "Base table or view not found" or "Unknown column" after entity changes: `rm -rf var/cache`. [code: app/bundles/CoreBundle/Test/MauticMysqlTestCase.php:194-213 @7.x]
 15.6 `mautic:install` prints "Mautic already installed" and does nothing: `site_url` and `db_driver` are already in local.php. Remove `site_url`, or the file, to reinstall. [code: app/bundles/InstallBundle/Install/InstallService.php:125-139 @7.x]
 15.7 A database connection error on every page after install: when not in installer mode, the kernel connects to the database before it handles the request and throws `DatabaseConnectionException`. Check the `db_*` values in local.php. [code: app/AppKernel.php:90-99 @7.x]

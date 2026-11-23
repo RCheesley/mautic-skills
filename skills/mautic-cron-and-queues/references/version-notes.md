@@ -73,14 +73,14 @@
 
 - Symfony `~7.4` → `~8.1`, PHP minimum 8.2 → 8.4; Messenger and Lock follow Symfony 8.1 [code: app/composer.json @8.x].
 - `ModeratedCommand::MODE_LOCK` removed: `--lock_mode=file_lock` now fails with `Unknown locking method specified.`;
-  use `flock` [code: UPGRADE-8.0.md:267 @8.x].
+  use `flock` [code: UPGRADE-8.0.md:358 @8.x].
 - `CacheStorageHelper`, `mautic.helper.cache_storage` and `Entity\Cache` removed; the `cache_items` table is no longer
   mapped or written; use CacheBundle (#17033, #17155) [code: UPGRADE-8.0.md @8.x] [PR #17033] [PR #17155].
 - Legacy filesystem dashboard-widget cache removed; widgets use the tag-aware CacheBundle pool only [PR #17033] [PR #17034].
 - A cache miss returns `null`, not `false`; integration and widget data live in `cache_adapter` and are dropped by a
   cache clear [PR #17033] [PR #17155].
 - Service ids `mautic.cache.adapter.*` removed: a custom `cache_adapter` parameter must be a class name
-  [code: UPGRADE-8.0.md:177 @8.x].
+  [code: UPGRADE-8.0.md:267 @8.x].
 - `ResultCacheHelper::getCache()` returns a PSR-6 pool; `doctrine/cache` and `doctrine/common` removed [PR #17361].
 - `AbstractIntegration` takes `CacheProviderInterface` as its second constructor argument and `getCache()` returns a
   PSR-16 cache [code: UPGRADE-8.0.md @8.x].

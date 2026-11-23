@@ -49,7 +49,7 @@ Branch note: 7.2.1 work is not yet merged forward into 8.x, so a two-dot diff mi
 - Typed signatures: `CampaignExecutionEvent`, `AbstractEventAccessor`, `Event::getProperties()`, `LeadEventLog::getMetadata()` return `array`; `CampaignModel::getLeadSources(Campaign|int|string)`, `getCampaignsByForm(Form|int)`, `getCampaignIdsWithDependenciesOnSegment(int)`; `DTO\PublishState::getPublished(): ?bool` [code: UPGRADE-8.0.md @8.x].
 - Route `mautic_campaign_import_index` removed as dead [PR #17231].
 - Dev docs 8.0 drop the `mautic.campaign.executioner.realtime` service id; inject `RealTimeExecutioner` by class [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/campaigns.html#evaluating-a-campaign-decision].
-- `--lock_mode=file_lock` fails on 8.x ("Unknown locking method specified."); use `flock` [code: UPGRADE-8.0.md:267 @8.x].
+- `--lock_mode=file_lock` fails on 8.x ("Unknown locking method specified."); use `flock` [code: UPGRADE-8.0.md:358 @8.x].
 - User docs for campaigns are identical between 7.2 and 8.0 [docs: https://docs.mautic.org/en/7.2/campaigns/campaign_builder.html].
 
 ## Writing plugin code for both 7.x and 8.x

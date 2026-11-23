@@ -10,16 +10,16 @@ An Asset is a downloadable file that Mautic hosts locally or references by URL; 
 ## Expected behaviour (essentials)
 
 ### Assets
-- A new Asset defaults to `storageLocation=local`, language `en`, `revision=1`, zero download counters and `disallow=true` (send `X-Robots-Tag`). [code: app/bundles/AssetBundle/Entity/Asset.php:81,151,169,175,181,217 @7.x]
-- A local upload is two-step: Dropzone posts the file to the OneupUploader `asset` endpoint, which validates it and parks it in `<upload_dir>/tmp/<tempId>/`; saving the Asset form moves it to `<upload_dir>/<sha1>.<ext>`. [code: app/bundles/AssetBundle/EventListener/UploadSubscriber.php:37-53 @7.x] [code: app/bundles/AssetBundle/Entity/Asset.php:667-721 @7.x]
+- A new Asset defaults to `storageLocation=local`, language `en`, `revision=1`, zero download counters and `disallow=true` (send `X-Robots-Tag`). [code: app/bundles/AssetBundle/Entity/Asset.php:82,152,170,176,182,218 @7.x]
+- A local upload is two-step: Dropzone posts the file to the OneupUploader `asset` endpoint, which validates it and parks it in `<upload_dir>/tmp/<tempId>/`; saving the Asset form moves it to `<upload_dir>/<sha1>.<ext>`. [code: app/bundles/AssetBundle/EventListener/UploadSubscriber.php:37-53 @7.x] [code: app/bundles/AssetBundle/Entity/Asset.php:668-722 @7.x]
 - The upload endpoint rejects, in order: files over the effective size limit, extensions not in `allowed_extensions`, and files whose client or detected MIME type does not match the extension. [code: app/bundles/AssetBundle/EventListener/UploadSubscriber.php:60-92 @7.x]
 - The effective upload limit is the minimum of `max_size` (MB, default `6`), PHP `post_max_size`, `upload_max_filesize` and `memory_limit`; `-1` or `0` means unlimited. [code: app/bundles/AssetBundle/Model/AssetModel.php:448-464 @7.x] [code: app/bundles/AssetBundle/Config/config.php:59-64 @7.x]
 - The size limit is enforced only at the Dropzone endpoint; the legacy API path that references a file already in `upload_dir` gets no size check. [code: app/bundles/AssetBundle/Controller/Api/AssetApiController.php:82-89 @7.x]
-- A remote Asset must have a valid URL that passes the `SafeRemoteUrl` (SSRF) constraint, and its MIME type must map to an allowed extension. [code: app/bundles/AssetBundle/Entity/Asset.php:93-97 @7.x] [code: app/bundles/AssetBundle/Validator/Constraints/UploadValidator.php:87-141 @7.x]
-- The public URL is `/asset/{uuid}`; the legacy form `/asset/{id}:{alias}` still resolves when the Asset has a non-null alias, and the alias text is not checked. [code: app/bundles/AssetBundle/Entity/Asset.php:1290-1297 @7.x] [code: app/bundles/AssetBundle/Model/AssetModel.php:637-655 @7.x]
-- An unpublished Asset is tracked with `code=401` and the visitor gets 403 Access Denied; a logged-in User with view access can still download it. [code: app/bundles/AssetBundle/Controller/PublicController.php:78-101 @7.x]
-- A remote Asset download is tracked and answered with a 302 redirect to `remotePath`; Mautic does not proxy it. [code: app/bundles/AssetBundle/Controller/PublicController.php:108-113 @7.x]
-- Extensions in `streamed_extensions` (gif, jpg, jpeg, mpg, mpeg, mp3, pdf, png, wav) display inline unless `?stream=0`; other files are sent as attachments named after `originalFileName`. [code: app/bundles/AssetBundle/Controller/PublicController.php:148-158 @7.x]
+- A remote Asset must have a valid URL that passes the `SafeRemoteUrl` (SSRF) constraint, and its MIME type must map to an allowed extension. [code: app/bundles/AssetBundle/Entity/Asset.php:94-98 @7.x] [code: app/bundles/AssetBundle/Validator/Constraints/UploadValidator.php:87-141 @7.x]
+- The public URL is `/asset/{uuid}`; the legacy form `/asset/{id}:{alias}` still resolves when the Asset has a non-null alias, and the alias text is not checked. [code: app/bundles/AssetBundle/Entity/Asset.php:1303-1310 @7.x] [code: app/bundles/AssetBundle/Model/AssetModel.php:637-655 @7.x]
+- An unpublished Asset is tracked with `code=401` and the visitor gets 403 Access Denied; a logged-in User with view access can still download it. [code: app/bundles/AssetBundle/Controller/PublicController.php:80-103 @7.x]
+- A remote Asset download is tracked and answered with a 302 redirect to `remotePath`; Mautic does not proxy it. [code: app/bundles/AssetBundle/Controller/PublicController.php:110-115 @7.x]
+- Extensions in `streamed_extensions` (gif, jpg, jpeg, mpg, mpeg, mp3, pdf, png, wav) display inline unless `?stream=0`; other files are sent as attachments named after `originalFileName`. [code: app/bundles/AssetBundle/Controller/PublicController.php:148-158 @419a08a9b35]
 - Downloads by logged-in Mautic Users are not tracked, and neither are untrackable requests (HEAD, prefetch, DNT, `Sec-GPC: 1`). [code: app/bundles/AssetBundle/Model/AssetModel.php:104-129 @7.x]
 - A visitor with no tracking id adds to `download_count` but writes no `asset_downloads` row. [code: app/bundles/AssetBundle/Model/AssetModel.php:177-189,234-251 @7.x]
 - A download is unique (and increments `unique_download_count`) when no earlier row exists for the same asset and tracking id, or the tracking cookie was just created. [code: app/bundles/AssetBundle/Model/AssetModel.php:234-257 @7.x]
@@ -30,8 +30,8 @@ An Asset is a downloadable file that Mautic hosts locally or references by URL; 
 - Batch ZIP download (7.x after 7.2.1, unreleased; [PR #15609]): up to 100 local Assets and 500 MiB in total, view permission and a CSRF token are required, and any failure aborts the whole ZIP. [code: app/bundles/AssetBundle/Service/BatchDownloadRequestValidator.php:15-87 @7.x] [code: app/bundles/AssetBundle/Service/ArchiveBuilder.php:13 @7.x]
 
 ### Categories
-- A Category has a `title` and a `bundle` (type). You choose the type only on the Categories admin screen, and it cannot be changed after creation. [code: app/bundles/CategoryBundle/Form/Type/CategoryType.php:33-59 @7.x]
-- Category pickers list only published Categories of the requested bundle plus `global` ones, plus a "Create new category" choice that opens an inline modal. [code: app/bundles/CategoryBundle/Entity/CategoryRepository.php:37-77 @7.x] [code: app/bundles/CategoryBundle/Form/Type/CategoryListType.php:30-84 @7.x]
+- A Category has a `title` and a `bundle` (type). You choose the type only on the Categories admin screen, and it cannot be changed after creation. [code: app/bundles/CategoryBundle/Form/Type/CategoryType.php:33-59 @419a08a9b35]
+- Category pickers list only published Categories of the requested bundle plus `global` ones, plus a "Create new category" choice that opens an inline modal. [code: app/bundles/CategoryBundle/Entity/CategoryRepository.php:37-77 @7.x] [code: app/bundles/CategoryBundle/Form/Type/CategoryListType.php:30-84 @419a08a9b35]
 - Aliases are unique within a bundle only (`alias`, `alias1`, …); the same alias may exist in another bundle. [code: app/bundles/CategoryBundle/Model/CategoryModel.php:67-92 @7.x]
 - Deleting a Category that a registered entity class still uses is refused with a flash naming the users (e.g. "Stage Id: 3"); a batch delete skips those Categories and deletes the rest. [code: app/bundles/CategoryBundle/EventListener/CategorySubscriber.php:90-102 @7.x]
 - The guard ignores Triggers, Webhooks, Notifications, PointInsights, Tweets and contact memberships. When a Category is deleted, their `category_id` becomes NULL and the `lead_categories` rows are removed. [code: app/bundles/CategoryBundle/Event/CategoryTypeEntityEvent.php:21-28 @7.x] [code: app/bundles/LeadBundle/Entity/LeadCategory.php:84-86 @7.x]
@@ -81,7 +81,7 @@ Full detail: references/code-map.md. [code: app/bundles/AssetBundle/Config/confi
   - add a migration that creates the xref table.
 
   `ProjectEntityLoaderService` discovers the new type automatically. [code: app/bundles/ProjectBundle/Service/ProjectEntityLoaderService.php:181-316 @7.x] [code: app/bundles/ProjectBundle/EventListener/ApiSubscriber.php:34-57 @7.x]
-- Change entity, migration, API serializer groups (`assetDetails`/`assetList`, `projectList`), translations and docs together. [code: app/bundles/AssetBundle/Entity/Asset.php:304-335 @7.x]
+- Change entity, migration, API serializer groups (`assetDetails`/`assetList`, `projectList`), translations and docs together. [code: app/bundles/AssetBundle/Entity/Asset.php:305-336 @7.x]
 - On 8.x, subscribe to event classes (`AssetPreSaveEvent::class`, …), not string constants. [PR #17196] [PR #17215]
 
 ## How to test it
@@ -93,8 +93,8 @@ Full detail: references/code-map.md. [code: app/bundles/AssetBundle/Config/confi
   - `CategoryBundle/Tests/Controller/CategoryControllerFunctionalTest.php` (inline modal, in-use guard);
   - `ProjectBundle/Tests/Functional/Controller/ProjectControllerTest.php`.
 
-  [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:12-155 @7.x]
-- A good regression test asserts the HTTP status and headers (`Content-Disposition`, `X-Robots-Tag`) and the persisted `asset_downloads` row with its `code`, `lead_id` and utm fields. For permissions, log in as a non-admin User whose Role is limited to `viewown`. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:71-97 @7.x]
+  [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:12-155 @419a08a9b35]
+- A good regression test asserts the HTTP status and headers (`Content-Disposition`, `X-Robots-Tag`) and the persisted `asset_downloads` row with its `code`, `lead_id` and utm fields. For permissions, log in as a non-admin User whose Role is limited to `viewown`. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:71-97 @419a08a9b35]
 - Call `$this->logoutUser()` before testing public downloads: downloads by logged-in Users are not tracked. [code: app/bundles/AssetBundle/Model/AssetModel.php:104-116 @7.x]
 
 Full detail: references/test-patterns.md.
@@ -116,9 +116,9 @@ Full detail: references/test-patterns.md.
 Full detail: references/version-notes.md.
 
 ## Pitfalls
-- The unpublished-download test asserts 403, but the stored download row has `code=401`. Do not "fix" either one to match the other. [code: app/bundles/AssetBundle/Controller/PublicController.php:78-82 @7.x] [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:105-113 @7.x]
-- Email-attachment download entries (`MailHelper::createAssetDownloadEntries`) are written without `asset_id`, so reports that join on the asset miss them. This may be a long-standing bug. [code: app/bundles/AssetBundle/Model/AssetModel.php:253-257 @7.x] [code: app/bundles/EmailBundle/Helper/MailHelper.php:1581-1613 @7.x]
-- The whole local file is read into memory on download (`file_get_contents`), so `memory_limit` caps the practical Asset size. [code: app/bundles/AssetBundle/Controller/PublicController.php:131-142 @7.x]
+- The unpublished-download test asserts 403, but the stored download row has `code=401`. Do not "fix" either one to match the other. [code: app/bundles/AssetBundle/Controller/PublicController.php:80-84 @7.x] [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:153-161 @7.x]
+- Email-attachment download entries (`MailHelper::createAssetDownloadEntries`) are written without `asset_id`, so reports that join on the asset miss them. This may be a long-standing bug. [code: app/bundles/AssetBundle/Model/AssetModel.php:253-257 @7.x] [code: app/bundles/EmailBundle/Helper/MailHelper.php:1588-1620 @7.x]
+- The whole local file is read into memory on download (`file_get_contents`), so `memory_limit` caps the practical Asset size. [code: app/bundles/AssetBundle/Controller/PublicController.php:133-144 @7.x]
 - Docs list an "Alias" field on the Asset form, but `AssetType` has none and nothing sets `alias` on new Assets. [code: app/bundles/AssetBundle/Form/Type/AssetType.php @7.x] [docs: https://docs.mautic.org/en/7.2/components/assets.html#uploading-an-asset]
 - Docs (and the confirm dialog text) say a deleted Category's items "will be assigned as uncategorized", but core refuses to delete a Category that a registered entity uses. [code: app/bundles/CategoryBundle/EventListener/CategorySubscriber.php:90-102 @7.x] [docs: https://docs.mautic.org/en/7.2/categories/categories-overview.html#deleting-categories]
 - Docs show `utm_id` on asset URLs, but only `utm_campaign`, `utm_content`, `utm_medium`, `utm_source` and `utm_term` are stored on the download. [code: app/bundles/AssetBundle/Model/AssetModel.php:120-124 @7.x] [docs: https://docs.mautic.org/en/7.2/components/assets.html#add-utm-codes-to-asset]

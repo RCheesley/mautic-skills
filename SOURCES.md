@@ -17,12 +17,15 @@ exact snapshots the content was derived from, so the repository can be regenerat
 
 ### What "7.x" means in these skills
 
-The 7.x snapshot is the head of the `7.x` development branch, not the 7.2.1 release tag. It contains every change in
-7.2.1 plus 87 pull requests merged after it, for example the Projects API, unsubscribe email validation, batch
-contact-to-company assignment and "any associated company" Segment filters. Skills mark such behaviour as
-"7.x after 7.2.1 (unreleased)". The 8.0 docs branch already documents several of these features, and the 7.3 user-docs
-branch exists upstream. The list of those pull requests is in `references/post-7.2.1-prs.md` of the
-mautic-upgrades-and-versions skill.
+The 7.x snapshot is the head of the `7.x` development branch, not a release tag. It contains every change in the
+latest release, 7.2.2 (merged into `7.x`), plus 181 merged pull requests that are in no release yet and are bound
+for 7.3, for example the Projects API, unsubscribe email validation, batch contact-to-company assignment and
+"any associated company" Segment filters. Skills mark such behaviour as "unreleased on 7.x (7.3.0-rc)". Both docs
+repositories have a `7.3` branch. The list of those pull requests is in the mautic-upgrades-and-versions skill.
+
+A citation tagged with a commit instead of `@7.x` or `@8.x` (for example `@419a08a9b35`) points at the code that was
+checked at that commit. It is left that way when the cited lines changed in a later snapshot and the claim has not
+been re-checked yet; `scripts/remap-code-citations.py` produces these and moves every unchanged citation forward.
 
 Where sources disagree about *current* behaviour, the order of authority used was: code at the 7.x snapshot, then
 docs, then PR discussion. The disagreement is recorded where it occurs.
@@ -31,18 +34,21 @@ docs, then PR discussion. The disagreement is recorded where it occurs.
 
 | Source | Snapshot | Date |
 |---|---|---|
-| mautic/mautic branch `7.x` (authoritative): release 7.2.1 plus 87 merged, unreleased pull requests (671 commits) bound for the next 7.x minor. `app/release_metadata.json` still says 7.2.1. | commit `419a08a9b35` | 2026-10-14 |
-| mautic/mautic branch `8.x` (in development) | commit `11599729491` | 2026-10-15 |
+| mautic/mautic branch `7.x` (authoritative): release 7.2.2 plus 181 merged, unreleased pull requests bound for 7.3. `app/release_metadata.json` says 7.2.2. | commit `838c9c772ec` | 2026-11-19 |
+| mautic/mautic branch `8.x` (in development; `release_metadata.json` says 7.2.2, minimum PHP 8.4) | commit `c79cf37a57b` | 2026-11-22 |
 | mautic/user-documentation branch `7.2` (docs.mautic.org/en/7.2) | commit `4ad1d85` | 2026-10-15 |
 | mautic/user-documentation branch `8.0` (docs.mautic.org/en/8.0) | commit `5565491` | 2026-10-15 |
 | mautic/developer-documentation-new branch `7.2` (devdocs.mautic.org/en/7.2) | commit `bb8818f` | 2026-10-12 |
 | mautic/developer-documentation-new branch `8.0` (devdocs.mautic.org/en/8.0) | commit `4e37690` | 2026-10-12 |
 | kb.mautic.org, English categories (How-to guides, Troubleshooting, Tutorials) | 42 articles crawled | 2026-10-15 |
 | github.com/mautic/mautic merged pull requests (all base branches, #1 to #17840) | 7,422 PRs with descriptions, labels, files, review and issue comments | harvested 2026-10-15 |
+| github.com/mautic/mautic merged pull requests, delta (merged 2026-10-15 to 2026-11-23: 94 to `7.x`, 152 to `8.x`, 38 to `7.2`, 7 to other branches) | 291 PRs | harvested 2026-11-23 |
+
+Previous code snapshots: 7.x `419a08a9b35` (2026-10-14, 7.2.1 plus 87 PRs) and 8.x `11599729491` (2026-10-15).
 
 Release dates used to place PRs in versions: 1.0.0 2015-03-10 · 2.0.0 2016-07-05 · 3.0.0 2020-06-15 ·
 4.0.0 2021-08-30 · 5.0.0 2024-01-09 · 5.1.0 2024-06-12 · 5.2.0 2024-12-02 · 6.0.0 2025-03-25 · 7.0.0 2026-01-20 ·
-7.1.0 2026-04-14 · 7.2.0 2026-09-02 · 7.2.1 2026-09-23 (from git tags in mautic/mautic).
+7.1.0 2026-04-14 · 7.2.0 2026-09-02 · 7.2.1 2026-09-23 · 7.2.2 2026-10-26 (from git tags in mautic/mautic).
 
 ## How the content was produced
 

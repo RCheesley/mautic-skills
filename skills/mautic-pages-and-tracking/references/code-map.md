@@ -36,7 +36,7 @@ Owned by LeadBundle but central here: `lead_devices` (device `tracking_id`), `le
 |---|---|---|
 | `PageBundle/Model/PageModel.php` | page CRUD (alias, revision, variants), URL/slug, hit pipeline `hitPage`/`processPageHit`/`getHitQuery`, `setUtmTags`, builder tokens, `convertWinnerVariant`; service `mautic.page.model.page` | [code: app/bundles/PageBundle/Model/PageModel.php:72-76,151-154 @7.x] |
 | `PageBundle/Model/RedirectModel.php` | `getRedirectById`, `generateRedirectUrl`, `getRedirectByUrl(s)`, `applyUtmTags`, `shortenUrl` | [code: app/bundles/PageBundle/Model/RedirectModel.php:40-206 @7.x] |
-| `PageBundle/Model/TrackableModel.php` | link rewriting for all channels: `parseContentForTrackables`, `generateTrackableUrl`, `getTrackableByUrl`, `getDoNotTrackList` | [code: app/bundles/PageBundle/Model/TrackableModel.php:90-264 @7.x] |
+| `PageBundle/Model/TrackableModel.php` | link rewriting for all channels: `parseContentForTrackables`, `generateTrackableUrl`, `getTrackableByUrl`, `getDoNotTrackList` | [code: app/bundles/PageBundle/Model/TrackableModel.php:90-264 @419a08a9b35] |
 | `PageBundle/Model/VideoModel.php` | `hitVideo` | [code: app/bundles/PageBundle/Model/VideoModel.php:70-150 @7.x] |
 | `PageBundle/Model/Tracking404Model.php` | 404 hit recording, `do_not_track_404_anonymous` | [code: app/bundles/PageBundle/Model/Tracking404Model.php:25-43 @7.x] |
 | `PageBundle/Model/PageDraftModel.php` | draft create/save/delete | [code: app/bundles/PageBundle/Model/PageDraftModel.php:24-56 @7.x] |
@@ -60,10 +60,10 @@ Service aliases: `mautic.page.model.{page,redirect,trackable,video,tracking.404}
 | `PageBundle/EventListener/BuildJsSubscriber.php` | pageview API `mt()`, delivery, GA/FB pixels | [code: app/bundles/PageBundle/EventListener/BuildJsSubscriber.php:24-318 @7.x] |
 | `DWC/EventListener/BuildJsSubscriber.php` | slot filling | [code: app/bundles/DynamicContentBundle/EventListener/BuildJsSubscriber.php:28-148 @7.x] |
 | `LeadBundle/Helper/ContactRequestHelper.php` | Contact from `ct` / query / tracker; merges | [code: app/bundles/LeadBundle/Helper/ContactRequestHelper.php:45-200 @7.x] |
-| `LeadBundle/Tracker/ContactTracker.php` | current tracked Contact; `LeadGetCurrentEvent`; `track_contact_by_ip` | [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-293 @7.x] |
+| `LeadBundle/Tracker/ContactTracker.php` | current tracked Contact; `LeadGetCurrentEvent`; `track_contact_by_ip` | [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-293 @419a08a9b35] |
 | `LeadBundle/Tracker/DeviceTracker.php`, `Service/DeviceTrackingService/DeviceTrackingService.php` | `lead_devices`, `mautic_device_id`/`mtc_id` cookies | [code: app/bundles/LeadBundle/Tracker/Service/DeviceTrackingService/DeviceTrackingService.php:38-136 @7.x] |
 | `LeadBundle/Tracker/Service/ContactTrackingService/ContactTrackingService.php` | legacy `mautic_session_id` reader | [code: app/bundles/LeadBundle/Tracker/Service/ContactTrackingService/ContactTrackingService.php:29-75 @7.x] |
-| `CoreBundle/Helper/IpLookupHelper.php` | client IP, anonymisation, DNT/bot/IP filters, `isRequestTrackable()` | [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:56-309 @7.x] |
+| `CoreBundle/Helper/IpLookupHelper.php` | client IP, anonymisation, DNT/bot/IP filters, `isRequestTrackable()` | [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:56-309 @419a08a9b35] |
 | `CoreBundle/Helper/ClickthroughHelper.php` | `ct` encode/decode | [code: app/bundles/CoreBundle/Helper/ClickthroughHelper.php:12-52 @7.x] |
 | `CoreBundle/Helper/CookieHelper.php` | queued cookies, defaults (1800 s, Lax) | [code: app/bundles/CoreBundle/Helper/CookieHelper.php:44-85 @7.x] |
 | `CoreBundle/Helper/TrackingPixelHelper.php` | 1×1 GIF | [code: app/bundles/CoreBundle/Helper/TrackingPixelHelper.php:16-59 @7.x] |
@@ -122,7 +122,7 @@ AJAX: `PageBundle/Controller/AjaxController.php` `getAbTestFormAction`, `pageLis
 
 | Parameter | Default | Effect | Source |
 |---|---|---|---|
-| `cat_in_page_url` | false | category in landing-page URL | [code: app/bundles/PageBundle/Config/config.php:93-107 @7.x] |
+| `cat_in_page_url` | false | category in landing-page URL | [code: app/bundles/PageBundle/Config/config.php:93-107 @419a08a9b35] |
 | `google_analytics` | null | raw GA snippet in landing pages (escaped on save) | same |
 | `track_contact_by_ip` | false | reuse newest Contact on same IP | same |
 | `google_analytics_id`, `google_analytics_trackingpage_enabled`, `google_analytics_landingpage_enabled`, `google_analytics_anonymize_ip` | null/false | gtag in `mtc.js` | same |
@@ -141,7 +141,7 @@ AJAX: `PageBundle/Controller/AjaxController.php` `getAbTestFormAction`, `pageLis
 | `bot_helper_bot_ratio_threshold` | 0.6 | email-click bot ratio | [code: app/bundles/EmailBundle/Config/config.php:214 @7.x] |
 | `messenger_dsn_hit` | `sync://` | hit transport | [code: app/bundles/MessengerBundle/Config/config.php:8 @7.x] |
 
-Config forms: `Form/Type/ConfigType.php` and `Form/Type/ConfigTrackingPageType.php`, registered by `ConfigSubscriber` (`pageconfig`, `trackingconfig`). [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:25-64 @7.x]
+Config forms: `Form/Type/ConfigType.php` and `Form/Type/ConfigTrackingPageType.php`, registered by `ConfigSubscriber` (`pageconfig`, `trackingconfig`). [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:25-64 @419a08a9b35]
 
 ## 7. Permissions
 
@@ -155,9 +155,9 @@ Neither bundle has commands. Related: `mautic:maintenance:cleanup` (purges anony
 ## 9. Front-end assets and templates
 
 - Tracking JS is in PHP heredocs in the `BuildJsSubscriber` classes, not in static files. [code: app/bundles/PageBundle/EventListener/BuildJsSubscriber.php @7.x]
-- Embed snippet: `PageBundle/Resources/views/FormTheme/Config/_config_trackingconfig_widget.html.twig`. [code: app/bundles/PageBundle/Resources/views/FormTheme/Config/_config_trackingconfig_widget.html.twig:32-85 @7.x]
+- Embed snippet: `PageBundle/Resources/views/FormTheme/Config/_config_trackingconfig_widget.html.twig`. [code: app/bundles/PageBundle/Resources/views/FormTheme/Config/_config_trackingconfig_widget.html.twig:32-85 @419a08a9b35]
 - `PageBundle/Assets/js/page.js` (admin), `prefcenter.js` (public preference-centre helpers), `WebhookPayload/page_on_hit.json`. [code: app/bundles/PageBundle/Assets @7.x]
-- DWC slot snippet generator: `DWC/Resources/views/DynamicContent/StandaloneSlotGenerator/dwc-generator.html.twig`, `DWC/Assets/js/dynamicContent.js:10-120`. [code: app/bundles/DynamicContentBundle/Assets/js/dynamicContent.js:10-120 @7.x]
+- DWC slot snippet generator: `DWC/Resources/views/DynamicContent/StandaloneSlotGenerator/dwc-generator.html.twig`, `DWC/Assets/js/dynamicContent.js:10-120`. [code: app/bundles/DynamicContentBundle/Assets/js/dynamicContent.js:10-120 @419a08a9b35]
 
 ## 10. Tests and fixtures
 

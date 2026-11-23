@@ -6,7 +6,7 @@
 - Third-party `mtc_id` was deprecated in 2.13 in favour of `mautic_device_id`; `mautic_session_id` was deprecated in 2 and removed in 3; 7.2.1 only reads the legacy scheme for migration. [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#cookies-used-by-mautic] [code: app/bundles/LeadBundle/Tracker/Service/ContactTrackingService/ContactTrackingService.php:29-75 @7.x]
 - The GrapesJS builder arrived in Mautic 3 and became default in Mautic 4. [docs: https://docs.mautic.org/en/7.2/builders/email_landing_page.html#email-landing-page-builder]
 - The v1 theme path (`content` array + theme `page.html.twig`) was marked "BC support to be removed in 3.0" but is still present in 7.2.1. [code: app/bundles/PageBundle/Controller/PublicController.php:250-274 @7.x]
-- Fingerprint-based tracking (`track_by_fingerprint`) no longer exists (7.2.1 still declares the unused key; the 7.x branch removes it after 7.2.1, unreleased [PR #17671]); only `timezone_offset`/`timezone` remain from that data. [code: app/bundles/PageBundle/Config/config.php:93-107 @7.x]
+- Fingerprint-based tracking (`track_by_fingerprint`) no longer exists (7.2.1 still declares the unused key; the 7.x branch removes it after 7.2.1, unreleased [PR #17671]); only `timezone_offset`/`timezone` remain from that data. [code: app/bundles/PageBundle/Config/config.php:93-107 @419a08a9b35]
 - Earlier majors: 3.0 removed fingerprint identification and fingerprintjs2 [PR #8428]; 3.2 stopped transliterating page titles by default (`transliterate_page_title`) [PR #9026]; 4.0 added the custom 404 page and UTM capture from every page hit [PR #9813] [PR #9265]; 4.1 added `do_not_track_404_anonymous` [PR #7614]. Full history: pr-history.md.
 
 ## 5.x
@@ -27,7 +27,7 @@
 - 6.0 refuses a redirect type without a redirect URL and no longer prepends `http://`; legacy invalid pages return 404. [PR #14551]
 - 6.0: the preference page language is contact locale, then page language, then user and system locale. [PR #14370]
 - 6.0 removed deprecated PageBundle parts (`PagePublishDatesType`, `TrackingHelper`/`PageModel` methods, `MauticFactory::getTheme`). [PR #14244] [PR #14443]
-- 6.0: gated video was removed (present in 5.2.9, absent from 6.0.0-alpha); the removing PR is not in this area's inputs. [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:113,189 @7.x]
+- 6.0: gated video was removed (present in 5.2.9, absent from 6.0.0-alpha); the removing PR is not in this area's inputs. [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:118,194 @7.x]
 - 6.0: the filter-based DWC default was added and reverted before release; new DWC stays campaign-based. [PR #14678] [PR #14790]
 - 6.0.3: a `Blocked-Tracking` cookie no longer causes a 500. [PR #15102]
 
@@ -39,7 +39,7 @@
 - 7.2 applied `UrlMatcher` substring matching to every URL filter, added `validate_page_hit_required_data` (default false), `UrlTokenReplaceEvent` and `PAGE_ON_TOGGLE_PUBLISH`, and logs an undecodable `ct` at WARNING. [PR #15979] [PR #16130] [PR #16199] [PR #16244] [PR #16893]
 - 7.2.0 shipped the split scripts: the `/mautic-essential.js` and `/mautic-tracking.js` routes exist in 7.2.0 but not in 7.1.0. [PR #16660] [code: app/bundles/CoreBundle/Config/config.php:36-48 @7.x]
 - In 7.2.1 page hits are processed through the Messenger `hit` transport (`PageHitNotification`, default `sync://`). [code: app/config/config.php:111-124 @7.x] [code: app/bundles/MessengerBundle/Config/config.php:8 @7.x]
-- 7.x deprecated the `mautic:disable-tracking` attribute (removal in 8.0) in favour of `data-mautic-disable-tracking="true"`. [code: app/bundles/PageBundle/Model/TrackableModel.php:740 @7.x]
+- 7.x deprecated the `mautic:disable-tracking` attribute (removal in 8.0) in favour of `data-mautic-disable-tracking="true"`. [code: app/bundles/PageBundle/Model/TrackableModel.php:763 @7.x]
 - 7.x deprecated positional `$shortenUrl`/`$utmTags` in `RedirectModel::generateRedirectUrl`. [code: app/bundles/PageBundle/Model/RedirectModel.php:60-68 @7.x]
 - 7.2: split scripts `/mautic-essential.js` + `/mautic-tracking.js`, `BuildJsScope`, `appendJsForScope`, `acceptsScope`, consent snippet; `/mtc.js` unchanged. [devdocs: https://devdocs.mautic.org/en/7.2/mauticjs_api/tracking_script.html#generated-scripts-and-endpoints] Which 7.x minor first shipped the split is not stated beyond the 7.2 docs branch. [devdocs: https://devdocs.mautic.org/en/7.2/mauticjs_api/tracking_script.html#script-scopes-and-split-scripts]
 - 7.2: preference-centre slot labels customisable via `PAGE_ON_DISPLAY` params. [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/landing_pages.html#customizing-preference-center]

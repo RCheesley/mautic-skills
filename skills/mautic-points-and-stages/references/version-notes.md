@@ -24,17 +24,17 @@
 
 ## 8.x delta (from 7.x to 8.x @11599729491)
 Event dispatch by class. Subscribers must use the class as the key; the string constants still exist but are never dispatched:
-- `PointBuilderEvent` is dispatched by class [code: app/bundles/PointBundle/Model/PointModel.php:158 @8.x].
-- `TriggerBuilderEvent` is dispatched by class [code: app/bundles/PointBundle/Model/TriggerModel.php:275 @8.x].
-- `PointActionEvent` (formerly `POINT_ON_ACTION`) and `GroupScoreChangeEvent` (formerly `SCORE_CHANGE`) are dispatched by class [code: app/bundles/PointBundle/Model/PointGroupModel.php:159 @8.x].
+- `PointBuilderEvent` is dispatched by class [code: app/bundles/PointBundle/Model/PointModel.php:163 @8.x].
+- `TriggerBuilderEvent` is dispatched by class [code: app/bundles/PointBundle/Model/TriggerModel.php:276 @8.x].
+- `PointActionEvent` (formerly `POINT_ON_ACTION`) and `GroupScoreChangeEvent` (formerly `SCORE_CHANGE`) are dispatched by class [code: app/bundles/PointBundle/Model/PointGroupModel.php:162 @8.x].
 - `StageBuilderEvent` (formerly `STAGE_ON_BUILD`) is dispatched by class.
-- The LeadBundle events the PointBundle listens to are now keyed by class: `PointsChangeEvent`, `LeadPostSaveEvent`, `LeadPostMergeEvent` and `LeadTimelineEvent` [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:29-37 @8.x].
+- The LeadBundle events the PointBundle listens to are now keyed by class: `PointsChangeEvent`, `LeadPostSaveEvent`, `LeadPostMergeEvent` and `LeadTimelineEvent` [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:29-37 @11599729491].
 - The constants `POINT_ON_BUILD`, `TRIGGER_ON_BUILD` and `STAGE_ON_BUILD` remain, which makes this a trap: a listener on the string loads but never fires [code: app/bundles/PointBundle/PointEvents.php:45,87 @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/points.html].
 
 Still dispatched by string:
-- The CRUD pre/post save and delete events of `PointModel`, `TriggerModel`, `PointGroupModel` and `StageModel` [code: app/bundles/PointBundle/Model/TriggerModel.php:224 @8.x].
-- Trigger events registered with `eventName`, such as `TRIGGER_ON_EVENT_EXECUTE` and `TRIGGER_ON_LEAD_SEGMENTS_CHANGE` [code: app/bundles/PointBundle/Model/TriggerModel.php:342 @8.x].
-- `LEAD_POINTS_CHANGE` stays as a webhook type id, but listeners must key on `PointsChangeEvent` [code: UPGRADE-8.0.md:130 @8.x]. UPGRADE-8.0.md:728 contradicts this ("unchanged"); the 8.x subscriber code follows line 130 [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:32 @8.x].
+- The CRUD pre/post save and delete events of `PointModel`, `TriggerModel`, `PointGroupModel` and `StageModel` [code: app/bundles/PointBundle/Model/TriggerModel.php:228 @8.x].
+- Trigger events registered with `eventName`, such as `TRIGGER_ON_EVENT_EXECUTE` and `TRIGGER_ON_LEAD_SEGMENTS_CHANGE` [code: app/bundles/PointBundle/Model/TriggerModel.php:343 @8.x].
+- `LEAD_POINTS_CHANGE` stays as a webhook type id, but listeners must key on `PointsChangeEvent` [code: UPGRADE-8.0.md:200 @8.x]. UPGRADE-8.0.md:728 contradicts this ("unchanged"); the 8.x subscriber code follows line 130 [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:32 @11599729491].
 
 Removed:
 - `StageEvents::ON_CAMPAIGN_TRIGGER_ACTION`; use `ON_CAMPAIGN_BATCH_ACTION` with a `PendingEvent` listener [code: app/bundles/StageBundle/StageEvents.php:17-59 @8.x] [PR #17059].
@@ -42,13 +42,13 @@ Removed:
 - PluginBundle's `ON_CAMPAIGN_TRIGGER_ACTION`, replaced by `ON_CAMPAIGN_BATCH_ACTION`. This concerns the campaign `plugin.leadpush` action, not the trigger event [code: app/bundles/PluginBundle/PluginEvents.php:36 @8.x].
 
 Typing:
-- `Point::getProperties(): array` and `TriggerEvent::getProperties(): array` [code: app/bundles/PointBundle/Entity/Point.php:219 @8.x] [code: app/bundles/PointBundle/Entity/TriggerEvent.php:200 @8.x].
-- `TriggerModel::getColorForLeadPoints(int $points)` [code: app/bundles/PointBundle/Model/TriggerModel.php:426 @8.x].
+- `Point::getProperties(): array` and `TriggerEvent::getProperties(): array` [code: app/bundles/PointBundle/Entity/Point.php:207 @8.x] [code: app/bundles/PointBundle/Entity/TriggerEvent.php:188 @8.x].
+- `TriggerModel::getColorForLeadPoints(int $points)` [code: app/bundles/PointBundle/Model/TriggerModel.php:428 @8.x].
 - `PointBuilderEvent` and `TriggerExecutedEvent` are `final` [code: app/bundles/PointBundle/Event/PointBuilderEvent.php:9 @8.x] [code: app/bundles/PointBundle/Event/TriggerExecutedEvent.php:9 @8.x]. Custom code that extended them breaks.
 - The point-group score primary-key order is preserved under the attribute mapping driver [PR #17454].
 
 Unchanged:
-- `campaign.changecampaign` still registers the missing `CampaignEventHelper::addRemoveLead` [code: app/bundles/CampaignBundle/EventListener/PointSubscriber.php:26 @8.x].
+- `campaign.changecampaign` still registers the missing `CampaignEventHelper::addRemoveLead` [code: app/bundles/CampaignBundle/EventListener/PointSubscriber.php:22 @8.x].
 - The user docs for points and stages and the REST pages are identical in 8.0 [docs: https://docs.mautic.org/en/8.0/stages/stages.html] [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/].
 
 Branch topology: the last forward merge into 8.x was 7.2.0 [PR #17253]. 7.2.1-only fixes may be missing from 8.x until the next forward merge.

@@ -47,10 +47,10 @@ Start with the first check; the full cause list for each symptom is in reference
 - Messenger `email` and `hit` default to `sync://`; any other DSN needs `messenger:consume <transport>`, and without a
   worker Emails are not sent, opens are not recorded and page-visit decisions never fire, with no alert.
   [code: app/bundles/MessengerBundle/Config/config.php:7-8 @7.x] [code: app/bundles/PageBundle/Model/PageModel.php:468-529 @7.x]
-- With a queue DSN "sent" means "queued"; nothing marks those stats failed later. [code: app/bundles/EmailBundle/Helper/MailHelper.php:402-414 @7.x]
+- With a queue DSN "sent" means "queued"; nothing marks those stats failed later. [code: app/bundles/EmailBundle/Helper/MailHelper.php:409-421 @7.x]
 - Logged-in Mautic Users, `Blocked-Tracking` cookies, bots and console contexts are never tracked; test public
   behaviour in a private window. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-60 @7.x]
-- `DNT: 1` and `Sec-GPC: 1` requests are never tracked. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:276-309 @7.x]
+- `DNT: 1` and `Sec-GPC: 1` requests are never tracked. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:276-309 @419a08a9b35]
 - Anonymous Contacts never fire Campaign decisions. [code: app/bundles/CampaignBundle/Executioner/RealTimeExecutioner.php:168-176 @7.x]
 - A manually removed Contact is never re-added by a Segment rebuild or a Campaign rebuild. [code: app/bundles/LeadBundle/Segment/Query/ContactSegmentQueryBuilder.php:137-156 @7.x] [code: app/bundles/CampaignBundle/Membership/Action/Adder.php:66-82 @7.x]
 - The Mautic log is `var/logs/mautic_<env>.php`, rotated daily, 7 files, `notice` and above unless `debug`. [code: app/bundles/CoreBundle/Monolog/Handler/FileLogHandler.php:12-25 @7.x]
@@ -105,7 +105,7 @@ Start with the first check; the full cause list for each symptom is in reference
 - 7.x: `index_dev.php` is gone; dev mode is `APP_ENV=dev`. [code: .ddev/.env.local.dist @7.x]
 - 8.x: core events dispatch by class; listeners on constants go silent. [code: 8x-changes §3.1-3.2 @8.x]
 - 8.x: the `services` array in `config.php` is no longer read. [code: 8x-changes §4 Core "services group ... no longer read" @8.x]
-- 8.x: `--lock_mode=file_lock` is an error (7.x maps it to `flock`). [code: UPGRADE-8.0.md:267 @8.x]
+- 8.x: `--lock_mode=file_lock` is an error (7.x maps it to `flock`). [code: UPGRADE-8.0.md:358 @8.x]
 
 ## Pitfalls
 - "Locked" and "ran" both exit 0, so cron monitoring never alerts on a stuck lock. [code: app/bundles/CoreBundle/Command/ModeratedCommand.php:113-117,171-179 @7.x]
@@ -113,12 +113,12 @@ Start with the first check; the full cause list for each symptom is in reference
 - `--timeout` does nothing in the default `pid` lock mode. [code: app/bundles/CoreBundle/Command/ModeratedCommand.php:64,85-88,209 @7.x]
 - `mautic:install` exits 0 when the requirements step fails. [code: app/bundles/InstallBundle/Command/InstallCommand.php:243 @7.x]
 - An empty failure DSN discards exhausted Messenger messages, so `messenger:failed:show` is always empty. [code: app/bundles/MessengerBundle/DependencyInjection/EnvProcessor/MessengerNullableEnvVarProcessor.php:11-21 @7.x]
-- Retrying open or page-hit messages double-counts and re-fires Campaign listeners. [code: app/bundles/EmailBundle/Model/EmailModel.php:463-544 @7.x] [code: app/bundles/PageBundle/Model/PageModel.php:622-711 @7.x]
+- Retrying open or page-hit messages double-counts and re-fires Campaign listeners. [code: app/bundles/EmailBundle/Model/EmailModel.php:472-553 @7.x] [code: app/bundles/PageBundle/Model/PageModel.php:622-711 @7.x]
 - A Webhook edited in the last 2 days is never auto-killed, which hides a broken endpoint during testing. [code: app/bundles/WebhookBundle/Entity/Webhook.php:507-516 @7.x]
 - A UI AJAX CSRF failure is HTTP 200 with a `flashes` error, not 403. [code: app/bundles/CoreBundle/EventListener/RequestSubscriber.php:34-63 @7.x]
-- The "pending" count of a Segment Email is cached and not refreshed on DNC changes. [code: app/bundles/EmailBundle/Model/EmailModel.php:2394-2431 @7.x]
+- The "pending" count of a Segment Email is cached and not refreshed on DNC changes. [code: app/bundles/EmailBundle/Model/EmailModel.php:2421-2458 @7.x]
 - Many KB fixes predate 5.0 (spool, `mautic:emails:send`, `app/config/local.php`, a `messenger` array in local.php); check references/docs-digest.md before following one. [kb: https://kb.mautic.org/article/email-sending-doesn-039%3bt-work-here-are-10-things-to-check.html] [code: app/bundles/MessengerBundle/Config/config.php:6-14 @7.x]
-- The docs say only "Administrators" are ignored when testing tracking; code ignores every logged-in User. [code: app/bundles/PointBundle/Model/PointModel.php:176-178 @7.x] [docs: https://docs.mautic.org/en/7.2/campaigns/troubleshooting_campaigns.html#page-visits-aren-t-recognized]
+- The docs say only "Administrators" are ignored when testing tracking; code ignores every logged-in User. [code: app/bundles/PointBundle/Model/PointModel.php:177-179 @7.x] [docs: https://docs.mautic.org/en/7.2/campaigns/troubleshooting_campaigns.html#page-visits-aren-t-recognized]
 - Maintenance cleanup deletes anonymous Contacts with raw SQL: no delete events, webhooks or audit entries. [code: app/bundles/LeadBundle/EventListener/MaintenanceSubscriber.php:26-83 @7.x]
 - Open question: the `messenger_messages` table name and columns come from Symfony's Doctrine transport and were not verified in the analysed tree. [unverified] [code: app/migrations @7.x]
 - Open question: the KB says logs moved to `var/logs` in 3.0 and config to `config/local.php` in 4.0, while code analysis says the loader reads `config/local.php` since 5.x. [kb: https://kb.mautic.org/article/troubleshooting-the-site-is-currently-offline-due-to-encountering-an-error-in-mautic.html] [code: app/bundles/CoreBundle/Loader/ParameterLoader.php:195-216 @7.x]

@@ -198,7 +198,7 @@ unserialise. [code: app/bundles/MessengerBundle/Message/Traits/MessageRequestTra
 ## D. Messenger: email sending, sync vs async
 
 D1. There is no spool in 7.x. `MailHelper::send()` hands the message to Symfony Mailer; Mailer wraps it in
-`SendEmailMessage` and Mautic routes it to `email` (wrapping inferred). [code: app/bundles/EmailBundle/Helper/MailHelper.php:402-414 @7.x]
+`SendEmailMessage` and Mautic routes it to `email` (wrapping inferred). [code: app/bundles/EmailBundle/Helper/MailHelper.php:409-421 @7.x]
 [code: app/config/config.php:120 @7.x]
 
 D2. `mailer_dsn` decides how an Email leaves (SMTP/API); `messenger_dsn_email` decides when and in which process.
@@ -206,11 +206,11 @@ D2. `mailer_dsn` decides how an Email leaves (SMTP/API); `messenger_dsn_email` d
 
 D3. With `sync://`, the SMTP/API call runs inside the web request or the cron command (`mautic:broadcasts:send`,
 `mautic:campaigns:trigger`); transport errors are caught there and recipients are marked failed.
-[code: app/bundles/EmailBundle/Helper/MailHelper.php:405-414 @7.x]
+[code: app/bundles/EmailBundle/Helper/MailHelper.php:412-421 @7.x]
 
 D4. With a queue DSN the request returns once the message is stored; `messenger:consume email` makes the real call.
 Transport failures then happen in the worker, are retried (F1) and then parked in `failed` or discarded.
-[code: app/bundles/EmailBundle/Helper/MailHelper.php:409-414 @7.x]
+[code: app/bundles/EmailBundle/Helper/MailHelper.php:416-421 @7.x]
 [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#queued-delivery]
 
 D5. Emails are counted as sent as soon as they are written to the queue; with a browser-initiated send the progress
@@ -229,25 +229,25 @@ lock-file-guarded script (540 s stale-lock timeout), and warns that `messenger_m
 ## E. Messenger: email-open and page-hit processing
 
 E1. The tracking pixel dispatches `EmailHitNotification($idHash, $request)` and always returns the pixel; `eventTime`
-is captured at dispatch. [code: app/bundles/EmailBundle/Controller/PublicController.php:131-145 @7.x]
+is captured at dispatch. [code: app/bundles/EmailBundle/Controller/PublicController.php:131-145 @419a08a9b35]
 
 E2. If the dispatch throws (queue unreachable), the error is logged and the open is processed synchronously.
-[code: app/bundles/EmailBundle/Controller/PublicController.php:139-142 @7.x]
+[code: app/bundles/EmailBundle/Controller/PublicController.php:150-153 @7.x]
 
 E3. "View in browser" opens are always processed synchronously and never queued.
-[code: app/bundles/EmailBundle/Controller/PublicController.php:85-91 @7.x]
+[code: app/bundles/EmailBundle/Controller/PublicController.php:92-98 @7.x]
 
 E4. With a `sync://` hit DSN the handler passes `activeRequest=true` (the cookie-tracked Contact is used); with a queue DSN
 it passes `false` and `hitEmail` sets the system Contact instead.
 [code: app/bundles/MessengerBundle/MessageHandler/EmailHitNotificationHandler.php:24,30-37 @7.x]
-[code: app/bundles/EmailBundle/Model/EmailModel.php:465-473 @7.x]
+[code: app/bundles/EmailBundle/Model/EmailModel.php:474-482 @7.x]
 
 E5. Doctrine `RetryableException` (deadlock, lock-wait timeout) during an open becomes
 `RecoverableMessageHandlingException` and is retried; other exceptions propagate unchanged.
 [code: app/bundles/MessengerBundle/MessageHandler/EmailHitNotificationHandler.php:36-40 @7.x]
 
 E6. Email-open processing is not idempotent: each run appends to `open_details`, inserts an `email_stats_devices` row
-and dispatches `EMAIL_ON_OPEN` again. [code: app/bundles/EmailBundle/Model/EmailModel.php:463-544 @7.x]
+and dispatches `EMAIL_ON_OPEN` again. [code: app/bundles/EmailBundle/Model/EmailModel.php:472-553 @7.x]
 
 E7. `hitPage()` returns without dispatching for logged-in sessions, the `Blocked-Tracking` cookie, untrackable IPs,
 bot-classified click-throughs, or when no Contact can be identified. [code: app/bundles/PageBundle/Model/PageModel.php:409-466 @7.x]
@@ -274,13 +274,13 @@ E14. Final page-hit persistence errors are logged and swallowed in `prod` (the m
 rethrown in `dev`; unlike opens, page-hit deadlocks are not retried. [code: app/bundles/PageBundle/Model/PageModel.php:690-706 @7.x]
 
 E15. `lead.last_active` only moves forward (message `eventTime` newer than stored), so out-of-order consumption cannot
-move it back. [code: app/bundles/EmailBundle/Model/EmailModel.php:546-548 @7.x] [code: app/bundles/PageBundle/Model/PageModel.php:713-732 @7.x]
+move it back. [code: app/bundles/EmailBundle/Model/EmailModel.php:555-557 @7.x] [code: app/bundles/PageBundle/Model/PageModel.php:713-732 @7.x]
 
 E16. `/mtc/event` returns `success:1` immediately after `hitPage()`; `ON_CONTACT_TRACKED` fires before the queued hit
-is processed. [code: app/bundles/PageBundle/Controller/PublicController.php:400-443 @7.x]
+is processed. [code: app/bundles/PageBundle/Controller/PublicController.php:400-443 @419a08a9b35]
 
 E17. Because the open and page-hit listeners (Campaign "opens email"/"visits page" decisions, Points) run inside the
-handler, with a queue DSN they run in the `messenger:consume hit` process. [code: app/bundles/EmailBundle/Model/EmailModel.php:496-499 @7.x]
+handler, with a queue DSN they run in the `messenger:consume hit` process. [code: app/bundles/EmailBundle/Model/EmailModel.php:505-508 @7.x]
 [code: app/bundles/PageBundle/Model/PageModel.php:708-711 @7.x]
 
 ## F. Messenger: retry, failure, ordering, no consumer
@@ -293,7 +293,7 @@ F2. Retry decisions ignore the exception type except Symfony's markers: `Unrecov
 `RecoverableMessageHandlingException` forces one (inferred Symfony semantics). [code: app/bundles/MessengerBundle/Retry/RetryStrategy.php:21-29 @7.x]
 
 F3. The form rejects a multiplier below 1 and negative values for the other three fields (worker crash mautic/mautic#16017).
-[code: app/bundles/MessengerBundle/Form/Type/ConfigType.php:57-124 @7.x]
+[code: app/bundles/MessengerBundle/Form/Type/ConfigType.php:57-124 @419a08a9b35]
 
 F4. Max retries `0` disables retries. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#retry-strategy]
 
@@ -308,7 +308,7 @@ F7. Handlers take no application lock; several workers per transport may run in 
 
 F8. With a queue DSN and no running consumer: tracking endpoints keep answering, page hits exist as bare rows, email
 opens are not recorded, Emails are not sent, messages accumulate in the transport, and nothing in Mautic alerts about the
-backlog. Symfony Messenger worker events have no Mautic listeners. [code: app/bundles/EmailBundle/Controller/PublicController.php:131-145 @7.x]
+backlog. Symfony Messenger worker events have no Mautic listeners. [code: app/bundles/EmailBundle/Controller/PublicController.php:131-145 @419a08a9b35]
 [code: app/bundles/PageBundle/Model/PageModel.php:468-506 @7.x]
 
 F9. If `messenger:consume` runs from cron it needs at least one of `--memory-limit`, `--limit`, `--time-limit`, or each

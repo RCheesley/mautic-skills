@@ -20,14 +20,14 @@ Environment facts that shape tests:
 
 ## 2. Representative tests to copy from
 
-1. `app/bundles/UserBundle/Tests/Security/UserLoginTest.php` — real form login through `/s/login`, including login by email. [code: app/bundles/UserBundle/Tests/Security/UserLoginTest.php:27-50 @7.x]
+1. `app/bundles/UserBundle/Tests/Security/UserLoginTest.php` — real form login through `/s/login`, including login by email. [code: app/bundles/UserBundle/Tests/Security/UserLoginTest.php:30-53 @7.x]
 2. `app/bundles/UserBundle/Tests/Controller/Api/UserApiControllerFunctionalTest.php` — non-admin Role with a hand-built permission row, weak password → 401, password policy data provider (400/201), API Platform creation. [code: app/bundles/UserBundle/Tests/Controller/Api/UserApiControllerFunctionalTest.php:100-260 @7.x]
 3. `app/bundles/UserBundle/Tests/Functional/Controller/RoleControllerFunctionalTest.php` — new/edit/clone/delete/batch delete with and without permission; sort by user count. [code: app/bundles/UserBundle/Tests/Functional/Controller/RoleControllerFunctionalTest.php:62-192 @7.x]
 4. `app/bundles/UserBundle/Tests/Functional/Controller/PublicControllerTest.php` — reset page (XSS), reset flow, invite registration. [code: app/bundles/UserBundle/Tests/Functional/Controller/PublicControllerTest.php:49-116 @7.x]
 5. `app/bundles/UserBundle/Tests/Model/UserModelTest.php` — reset token persistence and errors, invite token lifecycle (unit). [code: app/bundles/UserBundle/Tests/Model/UserModelTest.php:123-398 @7.x]
 6. `app/bundles/CoreBundle/Tests/Functional/Security/Permissions/CorePermissionsTest.php` — virtual permissions with the `sales` User. [code: app/bundles/CoreBundle/Tests/Functional/Security/Permissions/CorePermissionsTest.php:27-40 @7.x]
 
-Also useful: `Tests/Security/Authenticator/TimingSafeFormLoginAuthenticatorTest.php`, `Tests/EventListener/PasswordSubscriberTest.php`, `Tests/Security/Authenticator/PluginAuthenticatorTest.php`, `SsoAuthenticatorTest.php`, `Tests/Security/SAML/**`, `Tests/Functional/Entity/UserTokenRepositoryTest.php`, `Tests/Functional/UserLogoutFunctionalTest.php`, `Tests/Controller/ProfileControllerTest.php`, `Tests/Controller/UserControllerTest.php` (SAML password hiding), `Tests/Functional/Controller/UserControllerFunctionalTest.php` (password field rules, `is:never_logged_in`). [code: app/bundles/UserBundle/Tests/Functional/Controller/UserControllerFunctionalTest.php:80-240 @7.x]
+Also useful: `Tests/Security/Authenticator/TimingSafeFormLoginAuthenticatorTest.php`, `Tests/EventListener/PasswordSubscriberTest.php`, `Tests/Security/Authenticator/PluginAuthenticatorTest.php`, `SsoAuthenticatorTest.php`, `Tests/Security/SAML/**`, `Tests/Functional/Entity/UserTokenRepositoryTest.php`, `Tests/Functional/UserLogoutFunctionalTest.php`, `Tests/Controller/ProfileControllerTest.php`, `Tests/Controller/UserControllerTest.php` (SAML password hiding), `Tests/Functional/Controller/UserControllerFunctionalTest.php` (password field rules, `is:never_logged_in`). [code: app/bundles/UserBundle/Tests/Functional/Controller/UserControllerFunctionalTest.php:160-320 @7.x]
 
 There is no Codeception coverage specific to users or roles; acceptance tests only use login as a step. [code: app/bundles/UserBundle/Tests/Security/UserLoginTest.php @7.x]
 

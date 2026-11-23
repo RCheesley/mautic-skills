@@ -28,12 +28,12 @@ FormBundle has about 75 test files: 24 functional tests on `MauticMysqlTestCase`
 ## Rules specific to forms tests
 
 - Functional tests that create forms set `protected $useCleanupRollback = false;` because creating the results table is DDL, which commits the open transaction in MySQL. That is why rollback cleanup cannot be used (inferred from the pattern). [code: app/bundles/FormBundle/Tests/Controller/SubmissionFunctionalTest.php:33 @7.x]
-- Drop the results tables you create in `beforeTearDown()` (or call `deleteAllFormResultsTable()`); otherwise later tests that reuse form id 1 hit an existing `form_results_1_<alias>`. [code: app/bundles/FormBundle/Tests/Controller/SubmissionFunctionalTest.php:1557-1564 @7.x]
+- Drop the results tables you create in `beforeTearDown()` (or call `deleteAllFormResultsTable()`); otherwise later tests that reuse form id 1 hit an existing `form_results_1_<alias>`. [code: app/bundles/FormBundle/Tests/Controller/SubmissionFunctionalTest.php:1776-1783 @7.x]
 - Use `protected bool $authenticateApi = true;` when creating forms through `/api/forms/new`. [code: app/bundles/FormBundle/Tests/Controller/SubmissionFunctionalTest.php:35 @7.x]
 - Toggle parameters before `parent::setUp()` with `$this->configParams['form_field_autofill'] = true;`. [code: app/bundles/FormBundle/Tests/Controller/AutoFillReadOnlyFormSubmissionTest.php:17-21 @7.x]
 - The functional client is logged in as an admin. `ContactTracker` returns null for a logged-in user, so submissions without mapped fields get `lead_id` NULL. Map an email field when the test needs a contact. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:51-60 @7.x]
 - The crawler selector is `form[id=mauticform_<formName>]`, where `<formName>` is the lowercase alphanumeric form name. [code: app/bundles/FormBundle/Tests/Controller/SubmissionFunctionalTest.php:79-80 @7.x] [code: app/bundles/FormBundle/Entity/Form.php:867-884 @7.x]
-- Submitting the crawler form exercises the standard (non-JS) path, which ends in a redirect. To test the messenger or AJAX JSON, POST to `/form/submit?formId=ID&ajax=1` or to `/form/submit/ajax` yourself. [code: app/bundles/FormBundle/Controller/PublicController.php:334-426 @7.x]
+- Submitting the crawler form exercises the standard (non-JS) path, which ends in a redirect. To test the messenger or AJAX JSON, POST to `/form/submit?formId=ID&ajax=1` or to `/form/submit/ajax` yourself. [code: app/bundles/FormBundle/Controller/PublicController.php:334-426 @419a08a9b35]
 - The fixtures and helpers still send `formType => 'standalone'`. It is deprecated, and 8.x ignores it. [code: app/bundles/FormBundle/Tests/FormTestHelperTrait.php:22 @7.x]
 
 ## Representative tests to copy
@@ -112,10 +112,10 @@ The skeleton follows the pattern in [code: app/bundles/FormBundle/Tests/Controll
 
 ## What a good regression test asserts
 
-- The visitor-facing outcome: redirect target, message or JSON keys (`success`, `validationErrors`, `redirect`). [code: app/bundles/FormBundle/Controller/PublicController.php:334-514 @7.x]
+- The visitor-facing outcome: redirect target, message or JSON keys (`success`, `validationErrors`, `redirect`). [code: app/bundles/FormBundle/Controller/PublicController.php:334-514 @419a08a9b35]
 - The `form_submissions` row and the `form_results_<id>_<alias>` row, including which columns are empty for `saveResult=false` or view-only fields. [code: app/bundles/FormBundle/Entity/SubmissionRepository.php:24-47 @7.x]
-- The contact outcome: created, merged or new because of a conflict, and which field values changed or stayed. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1027-1110 @7.x]
-- On validation failure, that nothing was persisted and `submission_count` did not change. [code: app/bundles/FormBundle/Model/SubmissionModel.php:322-324 @7.x]
+- The contact outcome: created, merged or new because of a conflict, and which field values changed or stayed. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1027-1110 @419a08a9b35]
+- On validation failure, that nothing was persisted and `submission_count` did not change. [code: app/bundles/FormBundle/Model/SubmissionModel.php:336-338 @7.x]
 - For builder changes, that the results table schema changed as expected (column added or dropped). [code: app/bundles/FormBundle/Tests/Model/FieldModelFunctionalTest.php @7.x]
 
 ## Regression tests worth adding

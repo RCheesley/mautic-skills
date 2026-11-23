@@ -36,7 +36,7 @@ All paths are relative to the repository root. Neither ConfigBundle nor InstallB
 
 The `ConfigEvents.php:16` docblock names a non-existent `ConfigGenerateEvent`. [code: app/bundles/ConfigBundle/ConfigEvents.php:16 @7.x]
 
-`ConfigBuilderEvent` API: `addForm()`, `removeForm()`, `getForms()`, `getFormThemes()`, `getParametersFromConfig($bundle)`, `addFileFields()`, `getFileFields()`. [code: app/bundles/ConfigBundle/Event/ConfigBuilderEvent.php:20-111 @7.x]
+`ConfigBuilderEvent` API: `addForm()`, `removeForm()`, `getForms()`, `getFormThemes()`, `getParametersFromConfig($bundle)`, `addFileFields()`, `getFileFields()`. [code: app/bundles/ConfigBundle/Event/ConfigBuilderEvent.php:20-111 @419a08a9b35]
 
 `ConfigEvent` API: `getConfig($key)`, `setConfig($array, $key)`, `getPost()`, `unsetIfEmpty($fields)`, `setError($msg, $vars, $key, $field)`, `getFileContent(UploadedFile)`, `encodeFileContents()`, `get/setOriginalNormData`, `get/setNormData`. [code: app/bundles/ConfigBundle/Event/ConfigEvent.php:88-159 @7.x]
 
@@ -102,7 +102,7 @@ There is no `mautic:config:*` command and no API for the Configuration UI. [code
 | `MAUTIC_<KEY>` | Per-key override. [code: app/bundles/CoreBundle/Loader/EnvVars/ConfigEnvVars.php:26 @7.x] |
 | `MAUTIC_TABLE_PREFIX` | Constant/env table prefix. [code: app/AppKernel.php:222-232 @7.x] |
 | `MAUTIC_CUSTOM_DEV_HOSTS`, `DDEV_TLD` | Dev front-controller access. [code: app/middlewares/Dev/IpRestrictMiddleware.php:37-51 @7.x] |
-| `app/release_metadata.json` | Version and PHP/DB minimums. [code: app/release_metadata.json:2-7 @7.x] |
+| `app/release_metadata.json` | Version and PHP/DB minimums. [code: app/release_metadata.json:2-7 @419a08a9b35] |
 
 ## Permissions
 There is no Permissions class. Access is admin-only via `isAdmin()` checks, and `/installer` sits outside the firewall. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:41 @7.x] [code: app/config/security.php:6-11 @7.x]

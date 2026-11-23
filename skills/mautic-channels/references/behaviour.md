@@ -1,6 +1,6 @@
 # Channels: behaviour specification (Mautic 7.x)
 
-Authoritative for 7.x at commit 419a08a9b35. Each item is an observable rule with its source. Code wins over docs for
+Authoritative for 7.x at the snapshot pinned in SOURCES.md. Each item is an observable rule with its source. Code wins over docs for
 current behaviour; doc discrepancies are flagged with **Docs differ**.
 
 ## Contents
@@ -83,7 +83,7 @@ M6. `message.send` can follow only decisions that some channel supports: email a
 
 M7. Per-Contact order: `PreferenceBuilder` walks `Lead::getChannelRules()` and assigns priorities 1, 2, …, then appends the message's remaining channels at lower priorities. Channels where the Contact has DNC are skipped and `{channel: {failed: 1, dnc: reason}}` is added to the log metadata [code: app/bundles/ChannelBundle/PreferenceBuilder/PreferenceBuilder.php:45-104 @7.x] [code: app/bundles/ChannelBundle/Tests/PreferenceBuilder/PreferenceBuilderTest.php:18-101 @7.x].
 
-M8. `Lead::getChannelRules()` sorts paused rules (now between pause dates) last, then `preferred_channel` first. Among equals, the channel allowing more sends per month comes first (DAY×30, WEEK×4, MONTH×1). DNC channels are appended after all contactable ones [code: app/bundles/LeadBundle/Entity/Lead.php:1754-1872 @7.x].
+M8. `Lead::getChannelRules()` sorts paused rules (now between pause dates) last, then `preferred_channel` first. Among equals, the channel allowing more sends per month comes first (DAY×30, WEEK×4, MONTH×1). DNC channels are appended after all contactable ones [code: app/bundles/LeadBundle/Entity/Lead.php:1778-1896 @7.x].
 
 M9. **Docs differ:** the docs say that with no preference the default channel is Email, and that an exceeded frequency limit moves the send to another channel [docs: https://docs.mautic.org/en/7.2/channels/marketing_messages.html#what-are-marketing-messages]. In code, the order comes from M7/M8. Fallback happens only when a channel's action marks the log with `metadata['failed']`, which `PendingEvent::passWithError()` does [code: app/bundles/CampaignBundle/Event/PendingEvent.php:146-156 @7.x] [code: app/bundles/ChannelBundle/EventListener/CampaignSubscriber.php:178-212 @7.x]. The SMS action uses plain `pass()` for every Contact in the send result. An SMS that is DNC-filtered, frequency-queued or missing a number therefore counts as a success, and the Marketing Message does **not** fall back to the next channel [code: app/bundles/SmsBundle/EventListener/CampaignSendSubscriber.php:84-93 @7.x]. Push errors (DNC, not subscribed) use pass-with-error, so they do fall back (N8, N9).
 
@@ -138,11 +138,11 @@ S12. A batch with media goes through `sendMMS()`, otherwise through `sendBatchSm
 S13. A result of exactly `true` is a send: `sent_count` is incremented and the stat persisted. Any other result (false or an error string) becomes the status and **no stat row is written** [code: app/bundles/SmsBundle/Model/SmsModel.php:348-378 @7.x].
 
 Twilio
-S14. The number is `mobile ?: phone`, parsed with region `US` and formatted E.164. The payload is `messagingServiceSid`, `body` and optional `mediaUrl`. Parse, configuration and API errors are logged and returned as strings; a null number returns `false` [code: app/bundles/SmsBundle/Integration/Twilio/TwilioTransport.php:49-120 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:1573-1576 @7.x].
+S14. The number is `mobile ?: phone`, parsed with region `US` and formatted E.164. The payload is `messagingServiceSid`, `body` and optional `mediaUrl`. Parse, configuration and API errors are logged and returned as strings; a null number returns `false` [code: app/bundles/SmsBundle/Integration/Twilio/TwilioTransport.php:49-120 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:1597-1600 @7.x].
 
 S15. Configuration needs the integration published, the `username` (Account SID) and `password` (Auth Token) keys, and the feature setting `messaging_service_sid`; otherwise `ConfigurationException` [code: app/bundles/SmsBundle/Integration/Twilio/Configuration.php:71-95 @7.x] [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#mautic-twilio-plugin].
 
-S16. The Twilio integration form shows `frequency_number`/`frequency_time` fields that no code reads. The docs tell users to "configure global frequency rules for the SMS channel" there [code: app/bundles/SmsBundle/Integration/TwilioIntegration.php:68-92 @7.x] [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#mautic-twilio-plugin].
+S16. The Twilio integration form shows `frequency_number`/`frequency_time` fields that no code reads. The docs tell users to "configure global frequency rules for the SMS channel" there [code: app/bundles/SmsBundle/Integration/TwilioIntegration.php:68-92 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#mautic-twilio-plugin].
 
 S17. MMS limits: media hosted on Mautic must total ≤ 5,000,000 bytes (external URLs are not counted), with at most 10 entries. Docs: `.gif/.png/.jpg/.jpeg`, MMS only to US/CA/AU numbers, elsewhere the image is sent as a link (Twilio behaviour) [code: app/bundles/SmsBundle/Form/Validator/Constraints/MediaMaxAllowedSizeValidator.php:16,38-66 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/sms.html#sending-multimedia-messages-mms] [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#enabling-multimedia-messaging-mms].
 
@@ -184,7 +184,7 @@ N3. The OneSignal JS is added to `mtc.js` only in the tracking build scope and w
 
 N4. The script is skipped when cookie `mtc_osid` exists, on landing pages without `landing_page_enabled`, and on tracked external pages without `tracking_page_enabled` [code: app/bundles/NotificationBundle/Helper/NotificationHelper.php:167-196 @7.x] [code: app/bundles/NotificationBundle/EventListener/PageSubscriber.php:26-38 @7.x].
 
-N5. Web subscription: the browser calls `GET /notification/subscribe?osid=…` (CORS `*`). The id is stored as a web `PushID` (enabled, mobile=false) on the currently tracked Contact. Without a tracked Contact it is acknowledged but not stored. A duplicate with the same `enabled` flag is a no-op [code: app/bundles/NotificationBundle/Controller/Api/NotificationApiController.php:58-71 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:1016-1041 @7.x].
+N5. Web subscription: the browser calls `GET /notification/subscribe?osid=…` (CORS `*`). The id is stored as a web `PushID` (enabled, mobile=false) on the currently tracked Contact. Without a tracked Contact it is acknowledged but not stored. A duplicate with the same `enabled` flag is a no-op [code: app/bundles/NotificationBundle/Controller/Api/NotificationApiController.php:58-71 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:1040-1065 @7.x].
 
 N6. Mobile apps `POST /notification/appcallback` with `{email, push_id, enabled, stat?}`. The Contact is found or created by email, the push id stored with `mobile = true`, and a stat optionally recorded. The route has no authentication [code: app/bundles/NotificationBundle/Controller/AppCallbackController.php:33-74 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/push_notifications.html#notification-statistics].
 
@@ -214,11 +214,11 @@ N17. The menu shows web notifications when OneSignal is enabled, and mobile noti
 
 F1. Types: `form` (Collect Data; conversion = submission), `notice` (Display a Notice; no conversion) and `link` (Emphasize a link; conversion = click). Styles: `bar`, `modal`, `notification`, `page`. Type and style are required [code: plugins/MauticFocusBundle/Entity/Focus.php:145-166 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#types-of-focus-item].
 
-F2. Bar options: `allow_hide`, `push_page`, `sticky`, placement, and size `large`/`regular` only. Modal, notification and page have placement options [code: plugins/MauticFocusBundle/Form/Type/FocusPropertiesType.php:25-120 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#styles].
+F2. Bar options: `allow_hide`, `push_page`, `sticky`, placement, and size `large`/`regular` only. Modal, notification and page have placement options [code: plugins/MauticFocusBundle/Form/Type/FocusPropertiesType.php:25-120 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#styles].
 
-F3. Engagement properties: `when` ∈ immediately, scroll_slight, scroll_middle, scroll_bottom, leave; `timeout` in seconds; `frequency` ∈ everypage, once, q2min, q15min, hourly, daily; `stop_after_conversion` (default on), `stop_after_close` (default off), `animate` (default on) [code: plugins/MauticFocusBundle/Form/Type/PropertiesType.php:57-175 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#engagement-options].
+F3. Engagement properties: `when` ∈ immediately, scroll_slight, scroll_middle, scroll_bottom, leave; `timeout` in seconds; `frequency` ∈ everypage, once, q2min, q15min, hourly, daily; `stop_after_conversion` (default on), `stop_after_close` (default off), `animate` (default on) [code: plugins/MauticFocusBundle/Form/Type/PropertiesType.php:57-175 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#engagement-options].
 
-F4. Content modes `basic`, `editor` and `html`. In basic mode a form renders only for type `form` [code: plugins/MauticFocusBundle/Form/Type/FocusType.php:76-124 @7.x] [code: plugins/MauticFocusBundle/Model/FocusModel.php:186 @7.x].
+F4. Content modes `basic`, `editor` and `html`. In basic mode a form renders only for type `form` [code: plugins/MauticFocusBundle/Form/Type/FocusType.php:76-124 @419a08a9b35] [code: plugins/MauticFocusBundle/Model/FocusModel.php:186 @7.x].
 
 F5. `GET /focus/{id}.js` returns minified `application/javascript` for a published item, generated per request for the tracked Contact. Unpublished or missing items get an empty 404. The request is not tracked [code: plugins/MauticFocusBundle/Controller/PublicController.php:27-44 @7.x] [code: plugins/MauticFocusBundle/Model/FocusModel.php:134-176 @7.x].
 
@@ -238,11 +238,11 @@ F12. Campaign action `focus.show` attaches only to the inaction branch of `page.
 
 F13. Stats chart: views always, clicks for `link`, submissions otherwise. Counts are cached (tag `focus.{id}`) for `cached_data_timeout` minutes [code: plugins/MauticFocusBundle/Model/FocusModel.php:361-417 @7.x] [code: plugins/MauticFocusBundle/Controller/AjaxController.php:42-121 @7.x].
 
-F14. Known defect: the notice type is stored as `notice`, but the stats and JS compare against `notification`, so notice items get a submissions series and conversion logic [code: plugins/MauticFocusBundle/Resources/views/Focus/form.html.twig:153 @7.x] [code: plugins/MauticFocusBundle/Model/FocusModel.php:373 @7.x].
+F14. Known defect: the notice type is stored as `notice`, but the stats and JS compare against `notification`, so notice items get a submissions series and conversion logic [code: plugins/MauticFocusBundle/Resources/views/Focus/form.html.twig:153 @419a08a9b35] [code: plugins/MauticFocusBundle/Model/FocusModel.php:373 @7.x].
 
 F15. Deleting a form nulls `form_id` on the items that use it (`form_id` is not a foreign key). Form fields are pre-filled from the tracked Contact. UTM tags are appended to links and submissions [code: plugins/MauticFocusBundle/EventListener/FormSubscriber.php:29-46 @7.x] [code: plugins/MauticFocusBundle/Tests/Functional/Model/FocusFormAutoFillTest.php:28 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#measuring-success].
 
-F16. `website_snapshot_url`/`_key` are unused; the builder loads the site in an iframe [code: plugins/MauticFocusBundle/Assets/js/focus.js:238-245 @7.x].
+F16. `website_snapshot_url`/`_key` are unused; the builder loads the site in an iframe [code: plugins/MauticFocusBundle/Assets/js/focus.js:238-245 @419a08a9b35].
 
 ## 8. Expected behaviour: Social Monitoring and Tweets
 

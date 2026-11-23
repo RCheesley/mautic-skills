@@ -86,7 +86,7 @@ All six developer pages under `plugin_integrations/` carry the banner "requires 
 - The sync order is documented as Mautic → Integration first; the code pulls first. [code: app/bundles/IntegrationsBundle/Sync/SyncProcess/SyncProcess.php:63-70 @7.x]
 - The three-legged example returns a `Response` and imports two-legged classes; the interface returns `string`. [code: app/bundles/IntegrationsBundle/Integration/Interfaces/AuthenticationInterface.php:21 @7.x]
 - Several dev pages say `app/config.php`; plugins use `Config/config.php` / `Config/services.php`. [devdocs: https://devdocs.mautic.org/en/7.2/plugin_integrations/integrations_configuration.html]
-- The Marketplace docs say "Packagist API". The code uses the `marketplace.mautic.org` registry API. [code: app/bundles/MarketplaceBundle/Api/Connection.php:26-50 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/marketplace/getting_started.html#marketplace-under-the-hood]
+- The Marketplace docs say "Packagist API". The code uses the `marketplace.mautic.org` registry API. [code: app/bundles/MarketplaceBundle/Api/Connection.php:26-50 @419a08a9b35] [devdocs: https://devdocs.mautic.org/en/7.2/marketplace/getting_started.html#marketplace-under-the-hood]
 - The listing example pins `mautic/core-lib ^5.0` and PHP `>=8.0 <8.1`, which is stale for 7.x. [devdocs: https://devdocs.mautic.org/en/7.2/marketplace/listing.html]
 
 ## Gaps in the docs

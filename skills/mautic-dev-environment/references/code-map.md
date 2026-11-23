@@ -1,6 +1,6 @@
 # Code map: Mautic development and test environment (7.x)
 
-All paths are relative to the repository root of `mautic/mautic` 7.x (commit 419a08a9b35).
+All paths are relative to the repository root of `mautic/mautic` 7.x (the snapshot pinned in SOURCES.md).
 
 ## 1. DDEV (`.ddev/`)
 | File | Role | Source |
@@ -32,42 +32,42 @@ All paths are relative to the repository root of `mautic/mautic` 7.x (commit 419
 | Item | Location | Source |
 |---|---|---|
 | Root package `mautic/mautic` `require` | `composer.json:23-27` | [code: composer.json:23-27 @7.x] |
-| `require-dev` (PHPUnit 11.5, PHPStan 2, Rector dev-main, php-cs-fixer, ECS, Codeception 5, liip test bundles) | `composer.json:28-56` | [code: composer.json:28-56 @7.x] |
-| `replace` (plugins, themes, GrapesJS bundle) | `composer.json:57-110` | [code: composer.json:57-110 @7.x] |
-| Path repo `app` = `mautic/core-lib` | `composer.json:124-148` | [code: composer.json:124-148 @7.x] |
-| Scripts | `composer.json:149-193` | [code: composer.json:149-193 @7.x] |
-| `config` (platform php 8.2.0, `bin-dir bin`, `component-dir media/assets`, `process-timeout 5000`) | `composer.json:195-211` | [code: composer.json:195-211 @7.x] |
-| `extra.installer-paths`, `extra.patches` | `composer.json:212-240` | [code: composer.json:212-240 @7.x] |
-| Core-lib manifest (runtime deps, `Mautic\` autoload, scaffold file map, `pre-autoload-dump`) | `app/composer.json` | [code: app/composer.json:7-136 @7.x] |
-| Scaffold templates | `app/assets/scaffold/files/` | [code: app/composer.json:112-133 @7.x] |
+| `require-dev` (PHPUnit 11.5, PHPStan 2, Rector dev-main, php-cs-fixer, ECS, Codeception 5, liip test bundles) | `composer.json:28-56` | [code: composer.json:28-56 @419a08a9b35] |
+| `replace` (plugins, themes, GrapesJS bundle) | `composer.json:57-110` | [code: composer.json:55-108 @7.x] |
+| Path repo `app` = `mautic/core-lib` | `composer.json:124-148` | [code: composer.json:122-146 @7.x] |
+| Scripts | `composer.json:149-193` | [code: composer.json:147-191 @7.x] |
+| `config` (platform php 8.2.0, `bin-dir bin`, `component-dir media/assets`, `process-timeout 5000`) | `composer.json:195-211` | [code: composer.json:193-209 @7.x] |
+| `extra.installer-paths`, `extra.patches` | `composer.json:212-240` | [code: composer.json:210-238 @7.x] |
+| Core-lib manifest (runtime deps, `Mautic\` autoload, scaffold file map, `pre-autoload-dump`) | `app/composer.json` | [code: app/composer.json:7-136 @419a08a9b35] |
+| Scaffold templates | `app/assets/scaffold/files/` | [code: app/composer.json:116-137 @7.x] |
 
 ### Composer scripts
 | Script | Runs | Source |
 |---|---|---|
-| `githooks` | Copy `build/hooks/pre-commit[.win]` and `post-checkout` into `.git/hooks`, chmod 0755 | [code: composer.json:149-152 @7.x] |
-| `post-install-cmd`, `post-update-cmd` | `@githooks @npm-ci @npx-patch-package @gjs-build-safe @generate-assets @motd` | [code: composer.json:153-168 @7.x] |
-| `test` | `bin/phpunit -d memory_limit=2G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist` | [code: composer.json:169 @7.x] |
-| `e2e-test` | `APP_ENV=test bin/codecept run acceptance` | [code: composer.json:170 @7.x] |
-| `phpstan`, `phpstan-baseline` | Warm the test container, then `bin/phpstan analyse` | [code: composer.json:171-172 @7.x] |
-| `cs`, `fixcs`, `rector` | php-cs-fixer dry run; php-cs-fixer fix + `ecs --fix`; `rector process` | [code: composer.json:173-178 @7.x] |
-| `npm-ci`, `npx-patch-package` | `npm ci --prefer-offline --no-audit`; `npx patch-package` | [code: composer.json:179-180 @7.x] |
-| `gjs-build`, `gjs-build-safe` | Full GrapesJS build; non-fatal wrapper `build/gjs_build.php` | [code: composer.json:181-182 @7.x] |
-| `asset-map:clean`, `sass:build`, `sass:watch` | Delete `assets/build`; `bin/console sass:build [--watch]` | [code: composer.json:183-191 @7.x] |
-| `generate-assets` | `bin/console mautic:assets:generate && bin/console assets:install --symlink --relative ./` | [code: composer.json:192 @7.x] |
-| `motd` | `bin/console mautic:motd` | [code: composer.json:193 @7.x] |
+| `githooks` | Copy `build/hooks/pre-commit[.win]` and `post-checkout` into `.git/hooks`, chmod 0755 | [code: composer.json:147-150 @7.x] |
+| `post-install-cmd`, `post-update-cmd` | `@githooks @npm-ci @npx-patch-package @gjs-build-safe @generate-assets @motd` | [code: composer.json:151-166 @7.x] |
+| `test` | `bin/phpunit -d memory_limit=2G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist` | [code: composer.json:167 @7.x] |
+| `e2e-test` | `APP_ENV=test bin/codecept run acceptance` | [code: composer.json:168 @7.x] |
+| `phpstan`, `phpstan-baseline` | Warm the test container, then `bin/phpstan analyse` | [code: composer.json:169-170 @7.x] |
+| `cs`, `fixcs`, `rector` | php-cs-fixer dry run; php-cs-fixer fix + `ecs --fix`; `rector process` | [code: composer.json:171-176 @7.x] |
+| `npm-ci`, `npx-patch-package` | `npm ci --prefer-offline --no-audit`; `npx patch-package` | [code: composer.json:177-178 @7.x] |
+| `gjs-build`, `gjs-build-safe` | Full GrapesJS build; non-fatal wrapper `build/gjs_build.php` | [code: composer.json:179-180 @7.x] |
+| `asset-map:clean`, `sass:build`, `sass:watch` | Delete `assets/build`; `bin/console sass:build [--watch]` | [code: composer.json:181-189 @7.x] |
+| `generate-assets` | `bin/console mautic:assets:generate && bin/console assets:install --symlink --relative ./` | [code: composer.json:190 @7.x] |
+| `motd` | `bin/console mautic:motd` | [code: composer.json:191 @7.x] |
 
 ## 4. Front-end build
 | Item | Location | Source |
 |---|---|---|
-| npm manifest (`build`, `postinstall`, CKEditor 5, jQuery, Chart.js and others) | `package.json` | [code: package.json:5-65 @7.x] |
+| npm manifest (`build`, `postinstall`, CKEditor 5, jQuery, Chart.js and others) | `package.json` | [code: package.json:5-65 @419a08a9b35] |
 | CKEditor webpack build | `webpack.config.js` → `media/libraries/ckeditor/ckeditor.js` | [code: webpack.config.js:14-37 @7.x] |
-| npm patches | `patches/at.js+1.5.4.patch`, `patches/chosen-js+1.8.7.patch` | [code: composer.json:180 @7.x] |
+| npm patches | `patches/at.js+1.5.4.patch`, `patches/chosen-js+1.8.7.patch` | [code: composer.json:178 @7.x] |
 | Importmap entry | `importmap.php` → `app/bundles/CoreBundle/Assets/app.js` | [code: importmap.php:3-12 @7.x] |
 | AssetMapper and Sass config | `app/config/config.php:50-73`, `:134-144` | [code: app/config/config.php:50-73 @7.x] |
 | Sass source | `app/bundles/CoreBundle/Assets/css/app.scss` | [code: app/config/config.php:134-144 @7.x] |
 | TypeScript config | `tsconfig.json` (strict, es2019, `include: []`) | [code: tsconfig.json:7-21 @7.x] |
-| Asset generation command `mautic:assets:generate` | `app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php` | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:32-120 @7.x] |
-| Bundle asset combiner | `app/bundles/CoreBundle/Helper/AssetGenerationHelper.php` | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:81 @7.x] |
+| Asset generation command `mautic:assets:generate` | `app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php` | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:32-120 @419a08a9b35] |
+| Bundle asset combiner | `app/bundles/CoreBundle/Helper/AssetGenerationHelper.php` | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:86 @7.x] |
 | GrapesJS plugin build (`build`, `build-dev`, `rebuild-dev`, Parcel) | `plugins/GrapesJsBuilderBundle/package.json` | [code: plugins/GrapesJsBuilderBundle/package.json:18-22 @7.x] |
 | Non-fatal GrapesJS wrapper | `build/gjs_build.php` | [code: build/gjs_build.php:1-13 @7.x] |
 
@@ -76,7 +76,7 @@ All paths are relative to the repository root of `mautic/mautic` 7.x (commit 419
 |---|---|---|
 | `node_modules/` | `npm ci` | [code: .gitignore:66-105 @7.x] |
 | `media/libraries/ckeditor/*` | webpack (`npm run build`) | [code: webpack.config.js:28-37 @7.x] |
-| `media/css/app.css`, `media/css/libraries.css`, `media/js/app.js`, `media/js/libraries.js`, `media/js/mautic-form.js` | `mautic:assets:generate` | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:80-96 @7.x] |
+| `media/css/app.css`, `media/css/libraries.css`, `media/js/app.js`, `media/js/libraries.js`, `media/js/mautic-form.js` | `mautic:assets:generate` | [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:80-96 @419a08a9b35] |
 | `var/sass/` | `sass:build` | [code: .gitignore:68-69 @7.x] |
 | `assets/build/` (incl. `manifest.json`) | `asset-map:compile` | [code: .gitignore:67 @7.x] |
 | `plugins/GrapesJsBuilderBundle/Assets/library/js/dist/` | Parcel build | [code: plugins/GrapesJsBuilderBundle/package.json:18-19 @7.x] |
@@ -103,7 +103,7 @@ All paths are relative to the repository root of `mautic/mautic` 7.x (commit 419
 | "Installed" check | `app/AppKernel.php:272-283` | [code: app/AppKernel.php:272-283 @7.x] |
 | `.env` loading, `APP_ENV`/`APP_DEBUG` defaults | `app/config/bootstrap.php:14-32` | [code: app/config/bootstrap.php:14-32 @7.x] |
 | Console bootstrap | `bin/console`, `app/console-application.php` | [code: app/console-application.php:26-51 @7.x] |
-| Platform versions | `app/release_metadata.json` | [code: app/release_metadata.json:4-10 @7.x] |
+| Platform versions | `app/release_metadata.json` | [code: app/release_metadata.json:4-10 @419a08a9b35] |
 | PHP version gate | `app/middlewares/VersionCheckMiddleware.php` | [code: app/middlewares/VersionCheckMiddleware.php:46-59 @7.x] |
 | Dev IP restriction (DDEV allowed) | `app/middlewares/Dev/IpRestrictMiddleware.php` | [code: app/middlewares/Dev/IpRestrictMiddleware.php:27-56 @7.x] |
 
@@ -133,7 +133,7 @@ All paths are relative to the repository root of `mautic/mautic` 7.x (commit 419
 | `.env.test` | `DB_HOST=127.0.0.1`, `DB_PORT=3306`, `DB_NAME=mautictest`, `DB_USER=root`, empty password, prefix `test_`, `MAUTIC_ENV=test`, unused admin vars, SAML host/port | [code: .env.test:1-13 @7.x] |
 | `.env.test.local` (DDEV copy) | `DB_HOST=db`, `DB_USER=db`, `DB_PASSWD=db`, `DB_NAME=test` | [code: .ddev/.env.test.local @7.x] |
 | `app/phpunit.xml.dist` | `KERNEL_CLASS=AppTestKernel`, `APP_ENV=test`, extensions | [code: app/phpunit.xml.dist:65-82 @7.x] |
-| `codeception.yml`, `tests/` | E2E suite; `AcceptanceTester::login('admin','Maut1cR0cks!')` | [code: tests/_support/AcceptanceTester.php:27 @7.x] |
+| `codeception.yml`, `tests/` | E2E suite; `AcceptanceTester::login('admin','Maut1cR0cks!')` | [code: tests/_support/AcceptanceTester.php:27 @419a08a9b35] |
 | `AGENTS.md`, `.agents/skills/mautic-dev/SKILL.md` | In-repo agent guidance (run via DDEV, PR checklist) | [code: AGENTS.md @7.x] |
 
 ## 10. CI jobs that exercise the environment
@@ -144,5 +144,5 @@ All paths are relative to the repository root of `mautic/mautic` 7.x (commit 419
 | `tests.yml` `misc` scaffold diff | Root files equal their scaffold templates | [code: .github/workflows/tests.yml:265-277 @7.x] |
 | `tests.yml` `misc` composer install | Recommended-project layout installs, `docroot` webroot | [code: .github/workflows/tests.yml:278-303 @7.x] |
 | `build-grapesjs-assets.yml` | GrapesJS builds on Node 24 | [code: .github/workflows/build-grapesjs-assets.yml:28 @7.x] |
-| `release.yml` | Fresh-install and update-install tests of the release ZIPs | [code: .github/workflows/release.yml:184-250 @7.x] |
+| `release.yml` | Fresh-install and update-install tests of the release ZIPs | [code: .github/workflows/release.yml:185-251 @7.x] |
 | `api-library-tests.yml` | Apache + PHP 8.3 install with `mautic:install http://localhost/ --force --env=test` | [code: .github/workflows/api-library-tests.yml:61-66 @7.x] |

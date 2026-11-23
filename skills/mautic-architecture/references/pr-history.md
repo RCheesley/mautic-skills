@@ -84,7 +84,7 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 - The URL generator always uses `site_url`, so cached forms carry the right action URL. [PR #7193] (v2.15.2) That broke `index_dev.php` and subdirectory installs, fixed in [PR #7457] and [PR #7572] (v2.15.2). Originally CLI only: [PR #151] (v1.0).
 - Links generated in subrequests use `site_url` because `RouterSubscriber` reapplies it after Symfony restores the parent context. [PR #17168] (v7.2.0)
 - A kernel-request subscriber applies the user's locale and timezone [PR #2352]; its priority was fixed after timestamps showed in UTC [PR #2397] (v2.2). The user preference overrides the system locale. [PR #11119] (v4.4.1)
-- `EnvironmentSubscriber` sets PHP's default timezone from the session user and pushes it into `DateTimeHelper::setLocalTimezone()` on each authenticated request. [PR #17627] (v7.2.2) [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:20-40 @7.x]
+- `EnvironmentSubscriber` sets PHP's default timezone from the session user and pushes it into `DateTimeHelper::setLocalTimezone()` on each authenticated request. [PR #17627] (v7.2.2) [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:20-40 @419a08a9b35]
 - API and OAuth routes are always registered and a disabled API returns 403 at runtime [PR #1025] (v1.2.1); enabling the API needs no cache clear [PR #11420] (v4.4.2).
 - Core helpers that run on every page must not touch the database before install. [PR #10372] (v4.0)
 - Errors go to Mautic's Monolog log with daily rotation [PR #721] (v1.2); 40x responses are not logged [PR #2881] [PR #3421] (v2.3, v2.6.1).
@@ -199,7 +199,7 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 - JS dependency policy is same versions first, then max-minor updates, then majors. [PR #12373] Script order matters: touch-punch loads after jQuery UI. [PR #13216] (v5.0.2)
 - Minification stays on `mrclay/minify`. [PR #12461] (v5.0)
 - Styling moved from LESS and Grunt [PR #12942] [PR #14687] to SCSS through the SymfonyCasts Sass Bundle plus AssetMapper, with Bootstrap 3.4.1 from `twbs/bootstrap-sass`; this was judged not a BC break because plugins ship compiled CSS. [PR #16143] (v7.2.0)
-- Bootstrap 5.3.8 replaces 3.4.1 with a generated BS3 compatibility layer and a JS shim for the BS3 jQuery API, to be removed in Mautic 8; targeting 8.x directly was rejected. [PR #17767] (unreleased 7.x) [code: app/composer.json:109 @7.x]
+- Bootstrap 5.3.8 replaces 3.4.1 with a generated BS3 compatibility layer and a JS shim for the BS3 jQuery API, to be removed in Mautic 8; targeting 8.x directly was rejected. [PR #17767] (unreleased 7.x) [code: app/composer.json:113 @7.x]
 - Update ZIPs must contain `assets/build/` and `var/sass/`, and release CI checks it. [PR #17300] (v7.2.1)
 - Remix Icon was installed from npm [PR #13318] (v5.1), vendored into CoreBundle because release packages lack `node_modules` [PR #13758] (v5.1), and hand-patched at 4.6.0 [PR #14520] (v6.0). See section 8 for the 7.x state.
 - Third-party licences go in `LICENSE.txt`. [PR #14868]
@@ -392,7 +392,7 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 | unreleased 7.x | — | — | — | Bootstrap 5.3.8 plus BS3 layer | [PR #17767] |
 | 8.0 only | — | 8.1 | ORM 3, DBAL 4 | — | [PR #17392] [PR #17359] |
 
-The 4.4, 5.0, 6.0 and 7.0 PHP and Symfony constraints were read from `app/composer.json` and `app/release_metadata.json` at those git tags; the 5.0 row corrects the inputs, which said PHP 8.1. The current values are in the 7.x snapshot. [code: app/composer.json:19-82 @7.x] [code: app/release_metadata.json:4-7 @7.x]
+The 4.4, 5.0, 6.0 and 7.0 PHP and Symfony constraints were read from `app/composer.json` and `app/release_metadata.json` at those git tags; the 5.0 row corrects the inputs, which said PHP 8.1. The current values are in the 7.x snapshot. [code: app/composer.json:19-82 @419a08a9b35] [code: app/release_metadata.json:4-7 @7.x]
 
 ## 7. Maintainer norms for this area
 

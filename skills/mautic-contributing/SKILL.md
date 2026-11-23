@@ -50,13 +50,13 @@ Checks
 - Run tools through DDEV, not on the host. [code: AGENTS.md:11-14 @7.x]
 - CI runs PHPUnit on PHP 8.2 and 8.5 against MySQL and MariaDB, plus PHPStan, CS Fixer (changed files), Rector dry-run,
   Twig lint, scaffold diff, `composer validate`, Codeception e2e and the api-library suite.
-  [code: .github/workflows/tests.yml:22-316 @7.x] [code: .github/workflows/api-library-tests.yml:20-125 @7.x]
+  [code: .github/workflows/tests.yml:22-316 @419a08a9b35] [code: .github/workflows/api-library-tests.yml:20-125 @7.x]
 - PHPStan is level 6 with type-coverage floors (return 88.3 %, param 75.7 %, property 71.6 %); lowering coverage fails.
-  [code: phpstan.neon:5-20 @7.x]
+  [code: phpstan.neon:5-20 @419a08a9b35]
 - Custom PHPStan rules forbid `$container->get()`, models fetched by string, repositories fetched by entity class,
   services in `Config/config.php`, nullable constructor services, commands without `#[AsCommand]`, and `Abstract*`
-  classes that are not abstract. [code: phpstan.neon:257-277 @7.x]
-- Rector and PHPStan fail on stale skips or unmatched suppressions. [code: rector.php:56-122 @7.x] [code: phpstan.neon:8 @7.x]
+  classes that are not abstract. [code: phpstan.neon:279-299 @7.x]
+- Rector and PHPStan fail on stale skips or unmatched suppressions. [code: rector.php:56-122 @419a08a9b35] [code: phpstan.neon:8 @7.x]
 
 Schema, translations, security, style
 - Every schema change exists twice: entity `loadMetadata()` (fresh installs and tests build schema from it) AND an
@@ -107,21 +107,21 @@ ddev exec bin/rector --dry-run                       # apply with: ddev composer
 ddev exec php bin/console lint:twig app plugins
 ddev composer run e2e-test                           # for UI changes
 ```
-[code: AGENTS.md:45-52,110-119 @7.x] [code: .github/workflows/tests.yml:245-264 @7.x]
+[code: AGENTS.md:45-52,119-128 @7.x] [code: .github/workflows/tests.yml:245-264 @7.x]
 
 1. Classify the change with the table in behaviour.md A.8, then branch from `7.2`, `7.x` or `8.x`.
    [code: .github/PULL_REQUEST_TEMPLATE.md:1-11 @7.x]
 2. Keep BC on `7.x` and `7.2`: do not change public signatures of classes plugins extend (common controllers,
    `CommonRepository`, `AbstractPermissions`, `AbstractIntegration`, `CrmAbstractIntegration`); Rector guards them.
-   Deprecate with an alternative instead of removing. [code: rector.php:26-40 @7.x]
+   Deprecate with an alternative instead of removing. [code: rector.php:27-41 @7.x]
 3. Wire services by autowiring in `Config/services.php` with typed constructor dependencies (interfaces preferred).
    [code: app/bundles/CoreBundle/DependencyInjection/MauticCoreExtension.php:14-28 @7.x]
 4. Schema change: update the entity mapping, add a migration from the template, then verify on a database without the
    change: `doctrine:migrations:execute --up 'Mautic\Migrations\VersionX'` and `doctrine:schema:update --dump-sql`
-   must print nothing. Clear `var/cache` before running tests. [code: .agents/skills/mautic-dev/SKILL.md:27,46 @7.x]
+   must print nothing. Clear `var/cache` before running tests. [code: .agents/skills/mautic-dev/SKILL.md:27,45 @7.x]
 5. Update together: entity + migration + API serializer + en_US translations + docs PR + `UPGRADE-*.md` for BC notes.
    [code: .github/PULL_REQUEST_TEMPLATE.md:26-27 @7.x]
-6. Scaffolded root files change with their twin in `app/assets/scaffold/files/`. [code: app/composer.json:112-133 @7.x]
+6. Scaffolded root files change with their twin in `app/assets/scaffold/files/`. [code: app/composer.json:116-137 @7.x]
 7. On 7.x, already avoid what 8.x removes (`*Events::CONST` subscriber keys, string service ids, `Request::get()`,
    `CacheStorageHelper`). [code: UPGRADE-8.0.md @8.x]
 8. Fill every template section and label the PR for release notes. [code: .github/release.yml @7.x]
@@ -131,8 +131,8 @@ Full PR-derived norms, with history and exceptions: references/pr-history.md.
 - Two testers must approve after following your test steps. [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html]
 - Applying `ready-to-commit` triggers a full coverage run. [code: .github/workflows/coverage-check.yml:7-88 @7.x]
 - CodeRabbit flags mock-only assertions, order- or time-dependent tests, and reviews migrations specifically.
-  [code: .coderabbit.yaml:2-13 @7.x]
-- SonarCloud fails duplicated new code; extract helpers. [code: .agents/skills/mautic-dev/SKILL.md:30 @7.x]
+  [code: .coderabbit.yaml:3-14 @7.x]
+- SonarCloud fails duplicated new code; extract helpers. [code: .agents/skills/mautic-dev/SKILL.md:30 @419a08a9b35]
 - Stale PRs close after 365 + 30 days of inactivity. [code: .github/workflows/stale.yml @7.x]
 - Lower branches are merged upward regularly, so one PR against the lowest applicable branch carries the fix upward.
   [code: .github/PULL_REQUEST_TEMPLATE.md:33-34 @7.x]
@@ -145,7 +145,7 @@ Test classes are `final`, `declare(strict_types=1)`, use `#[DataProvider]` attri
 service dependencies. [code: .github/prompts/write-test.prompt.md:17-23 @7.x]
 Migrations are not exercised by functional tests; unit-test them like
 `app/bundles/CoreBundle/Tests/Unit/Doctrine/CampaignLeadEventLogIndexMigrationTest.php`. [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:159 @7.x]
-Custom PHPStan rules have their own tests in `utils/phpstan/tests/Rule/`. [code: phpstan.neon:257-277 @7.x]
+Custom PHPStan rules have their own tests in `utils/phpstan/tests/Rule/`. [code: phpstan.neon:279-299 @7.x]
 A good contribution test fails before the change and passes after it, through the real route or command.
 [code: .github/prompts/write-test.prompt.md:17-18 @7.x]
 
@@ -171,7 +171,7 @@ Details: references/version-notes.md.
 - The PR template's hidden comment says features go to "4.x" and gives "(e.g. 7.x)" as the c.x example; both are stale.
   Features go to 7.x, BC breaks to 8.x. [code: .github/PULL_REQUEST_TEMPLATE.md:11,35 @7.x]
 - `AGENTS.md` says bundle services live in `config.php`; PHPStan `NoServicesInBundleConfigRule` rejects that. Use
-  `Config/services.php`. [code: AGENTS.md:70 @7.x] [code: phpstan.neon:257-277 @7.x]
+  `Config/services.php`. [code: AGENTS.md:70 @7.x] [code: phpstan.neon:279-299 @7.x]
 - CI's CS check covers only changed files and never runs ECS, so `composer cs` locally can report old violations; fix
   only what you touched. [code: .github/workflows/tests.yml:256-264 @7.x]
 - A green functional test suite does not prove a migration works: tests build schema from metadata and mark migrations
@@ -179,8 +179,8 @@ Details: references/version-notes.md.
 - `preUp()` skips only when every assertion is true; one false assertion runs all of `up()`. [code: app/bundles/CoreBundle/Doctrine/PreUpAssertionMigration.php:26-45 @7.x]
 - Raw-SQL index names without the table prefix diverge from fresh installs. [code: app/migrations/Version20250415142826.php:24 @7.x]
 - PHPStan tolerates uses of Mautic's own deprecated classes; a clean run does not mean no deprecated API.
-  [code: phpstan.neon:42-239 @7.x]
-- `rector/rector` is `dev-main`: new findings can appear after a rebase. [code: composer.json:28-54 @7.x]
+  [code: phpstan.neon:42-239 @419a08a9b35]
+- `rector/rector` is `dev-main`: new findings can appear after a rebase. [code: composer.json:28-54 @419a08a9b35]
 - Coverage is not measured on PRs; Codecov's patch target is 0 %. [code: .github/workflows/tests.yml:36-44 @7.x] [code: codecov.yml:7-13 @7.x]
 - Testing environment and credentials disagree: the template says GitHub Codespaces; the KB says Gitpod with admin/mautic;
   fixtures use `Maut1cR0cks!`. [code: .github/PULL_REQUEST_TEMPLATE.md:59 @7.x]

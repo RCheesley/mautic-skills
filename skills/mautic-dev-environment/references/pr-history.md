@@ -91,7 +91,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - `config.platform.php` is set to the lowest supported PHP [PR #5718] (~v2.13). 7.x pins 8.2.0 (behaviour 1.2).
 - Security releases raise the floor in `composer.json`, not only the lock [PR #8417] [PR #9025].
 - Test-only packages belong in `require-dev`, so `--no-dev` builds stay small; moving a production dependency there is a BC break [PR #8404] (~v3.0).
-- A runtime library must be in `require` in both `app/composer.json` and the root `composer.json`, because production installs use `--no-dev` [PR #17265] (v7.2.1) [PR #17592] (7.2.2). The 7.x snapshot has DomCrawler in core-lib `require` but still in the root `require-dev`; the root fix is in 7.2.2 on the 7.2 branch [code: app/composer.json:75 @7.x] [code: composer.json:48 @7.x].
+- A runtime library must be in `require` in both `app/composer.json` and the root `composer.json`, because production installs use `--no-dev` [PR #17265] (v7.2.1) [PR #17592] (7.2.2). The 7.x snapshot has DomCrawler in core-lib `require` but still in the root `require-dev`; the root fix is in 7.2.2 on the 7.2 branch [code: app/composer.json:79 @7.x] [code: composer.json:48 @419a08a9b35].
 - A PR must not update unrelated packages in `composer.lock`, and lock changes go in the same PR as the constraint change [PR #11563] [PR #12473] (~v5.0).
 - Dependency updates use targeted `composer update <pkg> -W` and paste the command and lock output; `composer why-not` justifies blockers [PR #14262] [PR #15814] [PR #17342].
 - Security updates are backported to every maintained line in parallel PRs [PR #15637] [PR #15656] [PR #16141] [PR #16142]. Old lines get lock-only updates validated by `composer audit --locked` [PR #16141].
@@ -126,7 +126,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - Update packages include renamed files, use a higher rename limit and run Composer scripts explicitly [PR #12519] [PR #12521] (~v5.0).
 - Update packages include generated Carbon pictograms and `media/bundles`; missing pictograms caused HTTP 500 on emails after 7.0.0 [PR #15841] (7.0.1).
 - The release zip is uploaded to m.mautic.org only for stable releases, comparing `is-prerelease` as the string `'false'` [PR #10882] [PR #15938] (v7.1.0). It is registered as a remote asset pointing at the GitHub download [PR #15704] (v7.1.0).
-- `build/exclude_files.txt` must not list vendor packages, because the build already uses `--no-dev`; a vendor exclusion stripped DomCrawler from the 7.2.1 package. The release workflow now checks `Crawler.php` is present, and `build/package_devhead.php` was deleted [PR #17616] [PR #17832] (7.2.2). These are fixed in 7.2.2 on the 7.2 branch; the 7.x snapshot still has the exclusion and the script [code: build/exclude_files.txt:37 @7.x] [code: build/package_devhead.php @7.x].
+- `build/exclude_files.txt` must not list vendor packages, because the build already uses `--no-dev`; a vendor exclusion stripped DomCrawler from the 7.2.1 package. The release workflow now checks `Crawler.php` is present, and `build/package_devhead.php` was deleted [PR #17616] [PR #17832] (7.2.2). These are fixed in 7.2.2 on the 7.2 branch; the 7.x snapshot still has the exclusion and the script [code: build/exclude_files.txt:37 @419a08a9b35] [code: build/package_devhead.php @419a08a9b35].
 
 ## Regression catalogue
 | Symptom | Expected behaviour | PR | Version |

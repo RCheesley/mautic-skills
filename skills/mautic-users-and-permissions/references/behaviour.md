@@ -21,37 +21,37 @@ User whose Role has Full System Access (`is_admin = 1`).
 
 ## 1. Login and sessions
 
-B1. A User logs in with either the username or the email address; the provider query matches `username = :x OR email = :x` and only published Users. [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:39-56 @7.x] [code: app/bundles/UserBundle/Tests/Security/UserLoginTest.php:27-50 @7.x]
+B1. A User logs in with either the username or the email address; the provider query matches `username = :x OR email = :x` and only published Users. [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:39-56 @7.x] [code: app/bundles/UserBundle/Tests/Security/UserLoginTest.php:30-53 @7.x]
 
 B2. The provider lookup is result-cached for 5 minutes; saving a User or Role invalidates the cache, direct DBAL writes (for example `last_login`) do not. [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:50 @7.x] [code: app/bundles/UserBundle/Entity/Role.php:302-308 @7.x]
 
-B3. An unpublished ("inactive") User cannot authenticate; the login page shows "Invalid login". [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:46-55 @7.x] [code: app/bundles/UserBundle/Controller/SecurityController.php:67-69 @7.x]
+B3. An unpublished ("inactive") User cannot authenticate; the login page shows "Invalid login". [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:46-55 @7.x] [code: app/bundles/UserBundle/Controller/SecurityController.php:80-82 @7.x]
 
 B4. An existing session of a User who is then unpublished ends on the next token refresh, because `refreshUser()` reloads through the same published-only query. [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:66-74 @7.x]
 
 B5. Changing a User's password invalidates that User's other sessions on refresh: session serialisation keeps id, username, password hash and `isPublished`, and `isEqualTo` compares id, identifier and hash. [code: app/bundles/UserBundle/Entity/User.php:400-425 @7.x] [code: app/bundles/UserBundle/Entity/User.php:709-719 @7.x]
 
-B6. The login form is CSRF-protected (`enable_csrf: true`, token id `authenticate`, field `_csrf_token`). [code: app/config/security.php:83-89 @7.x] [code: app/bundles/UserBundle/Resources/views/Security/login.html.twig:43 @7.x]
+B6. The login form is CSRF-protected (`enable_csrf: true`, token id `authenticate`, field `_csrf_token`). [code: app/config/security.php:96-102 @7.x] [code: app/bundles/UserBundle/Resources/views/Security/login.html.twig:53 @7.x]
 
-B7. Login attempts are throttled to 3 attempts per 30 minutes (Symfony `login_throttling`). Whether Symfony's default limiter also limits per IP is inferred from Symfony defaults, not Mautic code. [code: app/config/security.php:105-108 @7.x] [unverified: per-IP limit]
+B7. Login attempts are throttled to 3 attempts per 30 minutes (Symfony `login_throttling`). Whether Symfony's default limiter also limits per IP is inferred from Symfony defaults, not Mautic code. [code: app/config/security.php:118-121 @7.x] [unverified: per-IP limit]
 
-B8. Login timing does not reveal whether a username exists: for an unknown identifier the authenticator verifies the submitted password against a fixed bcrypt hash before rethrowing `UserNotFoundException`. [code: app/bundles/UserBundle/Security/TimingSafeFormLoginAuthenticator.php:69-84 @7.x] [code: app/bundles/UserBundle/Config/services.php:138-147 @7.x]
+B8. Login timing does not reveal whether a username exists: for an unknown identifier the authenticator verifies the submitted password against a fixed bcrypt hash before rethrowing `UserNotFoundException`. [code: app/bundles/UserBundle/Security/TimingSafeFormLoginAuthenticator.php:69-84 @7.x] [code: app/bundles/UserBundle/Config/services.php:142-151 @7.x]
 
-B9. A correct login whose presented password scores below zxcvbn 3 is rejected with `WeakPasswordException`; the login page flashes "Your password is too weak. Please reset it." and forwards to the password-reset form. [code: app/bundles/UserBundle/EventListener/PasswordSubscriber.php:28-47 @7.x] [code: app/bundles/UserBundle/Controller/SecurityController.php:62-66 @7.x] [code: app/bundles/UserBundle/Tests/EventListener/PasswordSubscriberTest.php @7.x]
+B9. A correct login whose presented password scores below zxcvbn 3 is rejected with `WeakPasswordException`; the login page flashes "Your password is too weak. Please reset it." and forwards to the password-reset form. [code: app/bundles/UserBundle/EventListener/PasswordSubscriber.php:28-47 @7.x] [code: app/bundles/UserBundle/Controller/SecurityController.php:75-79 @7.x] [code: app/bundles/UserBundle/Tests/EventListener/PasswordSubscriberTest.php @7.x]
 
 B10. An empty presented password is rejected with `BadCredentialsException`. [code: app/bundles/UserBundle/EventListener/PasswordSubscriber.php:21-47 @7.x]
 
-B11. On every interactive login Mautic writes `last_login` and `last_active` (UTC) with DBAL, stores the User id in session key `mautic.user`, and sets session `_timezone` and `_locale` from the User, falling back to `default_timezone` and `locale`. Then it dispatches `mautic.user_login`. [code: app/bundles/CoreBundle/EventListener/CoreSubscriber.php:53-95 @7.x] [code: app/bundles/UserBundle/Entity/UserRepository.php:29-38 @7.x]
+B11. On every interactive login Mautic writes `last_login` and `last_active` (UTC) with DBAL, stores the User id in session key `mautic.user`, and sets session `_timezone` and `_locale` from the User, falling back to `default_timezone` and `locale`. Then it dispatches `mautic.user_login`. [code: app/bundles/CoreBundle/EventListener/CoreSubscriber.php:53-95 @7.x] [code: app/bundles/UserBundle/Entity/UserRepository.php:67-76 @7.x]
 
-B12. For Users, `last_active` is written only at login, so it always equals `last_login`; `UserRepository::setLastActive()` has no caller. [code: app/bundles/UserBundle/Entity/UserRepository.php:29-38 @7.x]
+B12. For Users, `last_active` is written only at login, so it always equals `last_login`; `UserRepository::setLastActive()` has no caller. [code: app/bundles/UserBundle/Entity/UserRepository.php:67-76 @7.x]
 
 B13. After login the User is redirected to the saved `_security.main.target_path` or the dashboard; a request with `format=json` gets `{"success":true}` instead. Failure stores the exception in session and redirects to `login`. [code: app/bundles/UserBundle/Security/Authentication/AuthenticationHandler.php:22-58 @7.x]
 
-B14. Opening the login page while already authenticated (fully or via remember-me) redirects to the dashboard. [code: app/bundles/UserBundle/Controller/SecurityController.php:36-53 @7.x]
+B14. Opening the login page while already authenticated (fully or via remember-me) redirects to the dashboard. [code: app/bundles/UserBundle/Controller/SecurityController.php:36-53 @419a08a9b35]
 
-B15. Remember-me uses the `_remember_me` checkbox, secret `rememberme_key` (default `%mautic.secret_key%`), lifetime `rememberme_lifetime` (default 7776000 s = 90 days), path `rememberme_path`, domain `rememberme_domain`, SameSite=Lax. [code: app/config/security.php:94-100 @7.x] [code: app/bundles/CoreBundle/Config/config.php:281-284 @7.x] [code: app/bundles/UserBundle/Resources/views/Security/login.html.twig:37 @7.x]
+B15. Remember-me uses the `_remember_me` checkbox, secret `rememberme_key` (default `%mautic.secret_key%`), lifetime `rememberme_lifetime` (default 7776000 s = 90 days), path `rememberme_path`, domain `rememberme_domain`, SameSite=Lax. [code: app/config/security.php:107-113 @7.x] [code: app/bundles/CoreBundle/Config/config.php:281-284 @7.x] [code: app/bundles/UserBundle/Resources/views/Security/login.html.twig:37 @419a08a9b35]
 
-B16. `/s/*` requires `IS_AUTHENTICATED` (remember-me suffices); `/api/*` requires `IS_AUTHENTICATED_FULLY`. [code: app/config/security.php:153-154 @7.x]
+B16. `/s/*` requires `IS_AUTHENTICATED` (remember-me suffices); `/api/*` requires `IS_AUTHENTICATED_FULLY`. [code: app/config/security.php:171-172 @7.x]
 
 B17. An unauthenticated request to `/s/*` is redirected to `/s/login`, or to `/saml/discovery` when env `MAUTIC_SAML_ENABLED` is true and the route is not login/login_check. [code: app/bundles/UserBundle/Security/EntryPoint/MainEntryPoint.php:21-34 @7.x]
 
@@ -65,7 +65,7 @@ B20. On the legacy API `aaa`, `qwerty` and `qwerty123` are rejected with 400 and
 
 B21. Plugins can override the strength verdict by listening to `mautic.user_password_strength_validation` and setting `$event->isValid`. There is no configuration parameter for the minimum score. [code: app/bundles/UserBundle/Model/PasswordStrengthEstimatorModel.php:40-41 @7.x] [code: app/bundles/UserBundle/Event/PasswordStrengthValidateEvent.php @7.x]
 
-B22. Passwords are hashed with bcrypt cost 12 (prod) and md5 in the `test` environment. [code: app/config/security.php:129-137 @7.x] [code: app/config/security_test.php:14-25 @7.x]
+B22. Passwords are hashed with bcrypt cost 12 (prod) and md5 in the `test` environment. [code: app/config/security.php:145-153 @7.x] [code: app/config/security_test.php:14-25 @7.x]
 
 B23. Leaving the password field empty on edit keeps the existing hash: `checkNewPassword()` returns the existing hash when nothing is submitted and throws for fewer than 6 characters when validating. [code: app/bundles/UserBundle/Model/UserModel.php:110-124 @7.x] [code: app/bundles/UserBundle/Controller/UserController.php:376-385 @7.x]
 
@@ -83,27 +83,27 @@ B29. Mautic never emails a generated password; the translation `mautic.user.user
 
 ## 3. User records and CRUD
 
-B30. Username and email must each be unique across both the `username` and the `email` columns, so a username cannot equal another User's email. [code: app/bundles/UserBundle/Entity/UserRepository.php:52-67 @7.x] [code: app/bundles/UserBundle/Entity/User.php:236,252 @7.x]
+B30. Username and email must each be unique across both the `username` and the `email` columns, so a username cannot equal another User's email. [code: app/bundles/UserBundle/Entity/UserRepository.php:90-105 @7.x] [code: app/bundles/UserBundle/Entity/User.php:236,252 @7.x]
 
 B31. Required fields: username, first name, last name, email (valid format) and role. Position is optional (max 191). Timezone and locale are not validated as required. [code: app/bundles/UserBundle/Entity/User.php:230-267 @7.x]
 
-B32. A new User needs a password; an existing User needs one only when changing it (validation groups `CheckPasswordNotBlank` / `CheckPassword`). [code: app/bundles/UserBundle/Entity/User.php:269-285 @7.x] [code: app/bundles/UserBundle/Tests/Functional/Controller/UserControllerFunctionalTest.php:141-240 @7.x]
+B32. A new User needs a password; an existing User needs one only when changing it (validation groups `CheckPasswordNotBlank` / `CheckPassword`). [code: app/bundles/UserBundle/Entity/User.php:269-285 @7.x] [code: app/bundles/UserBundle/Tests/Functional/Controller/UserControllerFunctionalTest.php:221-320 @7.x]
 
-B33. Only published Roles are offered in the Role dropdown of the User form and invite form. The dropdown has no placeholder and is ordered by name. [code: app/bundles/UserBundle/Form/Type/UserType.php:209-224 @7.x] [code: app/bundles/UserBundle/Form/Type/UserInviteType.php:52-54 @7.x]
+B33. Only published Roles are offered in the Role dropdown of the User form and invite form. The dropdown has no placeholder and is ordered by name. [code: app/bundles/UserBundle/Form/Type/UserType.php:209-224 @419a08a9b35] [code: app/bundles/UserBundle/Form/Type/UserInviteType.php:52-54 @7.x]
 
 B34. The User edit form locks the record (checkout) while open; a locked User cannot be edited or deleted by someone else until cancel/save. [code: app/bundles/UserBundle/Controller/UserController.php:358-361,429-439,497-499 @7.x]
 
 B35. A User cannot delete their own account (single or batch); flash `mautic.user.user.error.cannotdeleteself`. [code: app/bundles/UserBundle/Controller/UserController.php:488-516,670-675 @7.x]
 
-B36. Deleting a User cascades its `user_tokens`. Content the User created keeps the plain `created_by` id (no FK) and `created_by_user` name. Contacts owned by the User become unowned (`owner_id` FK `SET NULL`). Audit-log rows are untouched. [code: app/bundles/UserBundle/Entity/UserToken.php:52 @7.x] [code: app/bundles/CoreBundle/Entity/FormEntity.php:146-153 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:312-314 @7.x]
+B36. Deleting a User cascades its `user_tokens`. Content the User created keeps the plain `created_by` id (no FK) and `created_by_user` name. Contacts owned by the User become unowned (`owner_id` FK `SET NULL`). Audit-log rows are untouched. [code: app/bundles/UserBundle/Entity/UserToken.php:52 @7.x] [code: app/bundles/CoreBundle/Entity/FormEntity.php:146-153 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:317-319 @7.x]
 
 B37. When the current session is a SAML session, the password fields are removed from the User edit form and from the profile. [code: app/bundles/UserBundle/Controller/UserController.php:366-369 @7.x] [code: app/bundles/UserBundle/Controller/ProfileController.php:235-238 @7.x] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#managing-passwords-for-saml-authenticated-users]
 
 B38. The "contact user" action emails the target User from the current User's address and writes an audit-log entry with action `communication`. [code: app/bundles/UserBundle/Controller/UserController.php:556-601 @7.x]
 
-B39. User list search commands: `is:admin`, `is:never_logged_in`, `is:published`/`is:unpublished`, `email:`, `name:`, `position:`, `role:`, `username:`, `ids:`. Default order is last name, first name, username. [code: app/bundles/UserBundle/Entity/UserRepository.php:223-327 @7.x] [code: app/bundles/UserBundle/Tests/Functional/Controller/UserControllerFunctionalTest.php:80-120 @7.x]
+B39. User list search commands: `is:admin`, `is:never_logged_in`, `is:published`/`is:unpublished`, `email:`, `name:`, `position:`, `role:`, `username:`, `ids:`. Default order is last name, first name, username. [code: app/bundles/UserBundle/Entity/UserRepository.php:261-365 @7.x] [code: app/bundles/UserBundle/Tests/Functional/Controller/UserControllerFunctionalTest.php:160-200 @7.x]
 
-B40. User pickers (owner lists, `UserListType`) return only published Users; `getUserList` can be limited to Users whose Role has a given `bundle:level` row or is admin. [code: app/bundles/UserBundle/Entity/UserRepository.php:124-144,157-175 @7.x] [code: app/bundles/UserBundle/Form/Type/UserListType.php:52-64 @7.x]
+B40. User pickers (owner lists, `UserListType`) return only published Users; `getUserList` can be limited to Users whose Role has a given `bundle:level` row or is admin. [code: app/bundles/UserBundle/Entity/UserRepository.php:162-182,195-213 @7.x] [code: app/bundles/UserBundle/Form/Type/UserListType.php:52-64 @7.x]
 
 B41. `UserModel::getSystemAdministrator()` returns the first published User of the first admin Role; other bundles use it as a default sender or owner. [code: app/bundles/UserBundle/Model/UserModel.php:159-169 @7.x]
 
@@ -125,23 +125,23 @@ B48. Deleting a Role deletes its pending invites (`user_invites.role_id` ON DELE
 
 ## 5. Profile, preferences, timezone and locale
 
-B49. On the profile page (`/s/account`) name, username, position and email are editable only with `user:profile:editname|editusername|editposition|editemail` (or `full`); other fields are rendered disabled and the stored values override what is submitted. Role and active status are never editable there. [code: app/bundles/UserBundle/Controller/ProfileController.php:40-152,165-168 @7.x] [code: app/bundles/UserBundle/Form/Type/UserType.php:209-241 @7.x]
+B49. On the profile page (`/s/account`) name, username, position and email are editable only with `user:profile:editname|editusername|editposition|editemail` (or `full`); other fields are rendered disabled and the stored values override what is submitted. Role and active status are never editable there. [code: app/bundles/UserBundle/Controller/ProfileController.php:40-152,165-168 @419a08a9b35] [code: app/bundles/UserBundle/Form/Type/UserType.php:209-241 @419a08a9b35]
 
 B50. The profile's API-credentials tab needs `api_enabled` and `api:access:full`. [code: app/bundles/UserBundle/Controller/ProfileController.php:42-43 @7.x]
 
 B51. The profile POST is guarded by a session flag `formProcessed` against double submission. [code: app/bundles/UserBundle/Controller/ProfileController.php:155-157,233 @7.x]
 
-B52. Timezone precedence per request is User → system: the request listener calls `date_default_timezone_set()` with session `_timezone` or `default_timezone` (default `UTC`). [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:30-40 @7.x] [code: app/bundles/CoreBundle/Config/config.php:286 @7.x]
+B52. Timezone precedence per request is User → system: the request listener calls `date_default_timezone_set()` with session `_timezone` or `default_timezone` (default `UTC`). [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:30-40 @419a08a9b35] [code: app/bundles/CoreBundle/Config/config.php:286 @7.x]
 
-B53. Locale precedence is User → system `locale` (default `en_US`); the Twig language helper also prefers the User locale. [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:45-61 @7.x] [code: app/bundles/CoreBundle/Twig/Extension/LanguageExtension.php:52-53 @7.x]
+B53. Locale precedence is User → system `locale` (default `en_US`); the Twig language helper also prefers the User locale. [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:47-63 @7.x] [code: app/bundles/CoreBundle/Twig/Extension/LanguageExtension.php:52-53 @7.x]
 
 B54. Saving the profile resets session `_timezone` and `_locale` at once; an admin editing another User's timezone/locale takes effect for that User at their next login. [code: app/bundles/UserBundle/Controller/ProfileController.php:198-209 @7.x] [code: app/bundles/CoreBundle/EventListener/CoreSubscriber.php:66-84 @7.x]
 
 B55. Choosing a locale whose language pack is missing triggers a download on save; on failure the User's locale is reset to `null` (system default) with a flash. [code: app/bundles/UserBundle/Controller/ProfileController.php:173-196 @7.x] [code: app/bundles/UserBundle/Controller/UserController.php:280-296,395-417 @7.x]
 
-B56. UI preferences (`theme`, `reduce_transparency`, `reduce_motion`, `contrast_borders`, `enable_underlines`) are stored per User in the serialized `preferences` column; dismissed onboarding elements are not — they live in browser `localStorage['dismissedElements']`. [code: app/bundles/UserBundle/Form/Type/UserPreferencesType.php @7.x] [code: app/bundles/UserBundle/Model/UserModel.php:376-401 @7.x] [code: app/bundles/CoreBundle/Assets/js/1.core.js:148-165 @7.x]
+B56. UI preferences (`theme`, `reduce_transparency`, `reduce_motion`, `contrast_borders`, `enable_underlines`) are stored per User in the serialized `preferences` column; dismissed onboarding elements are not — they live in browser `localStorage['dismissedElements']`. [code: app/bundles/UserBundle/Form/Type/UserPreferencesType.php @7.x] [code: app/bundles/UserBundle/Model/UserModel.php:376-401 @7.x] [code: app/bundles/CoreBundle/Assets/js/1.core.js:132-149 @7.x]
 
-B57. The User `signature` defaults to the translated default signature with `|FROM_NAME|`; when an email is sent as the Contact owner ("Mailer is owner"), `{signature}` is the owner's signature with `|FROM_NAME|` → "First Last" and `|USER_<COLUMN>|` → that User column. Signature HTML is purified on input. [code: app/bundles/UserBundle/Form/Type/UserType.php:42,187-207 @7.x] [code: app/bundles/EmailBundle/Helper/FromEmailHelper.php:115-137 @7.x] [code: app/bundles/EmailBundle/EventListener/BuilderSubscriber.php:213-222 @7.x]
+B57. The User `signature` defaults to the translated default signature with `|FROM_NAME|`; when an email is sent as the Contact owner ("Mailer is owner"), `{signature}` is the owner's signature with `|FROM_NAME|` → "First Last" and `|USER_<COLUMN>|` → that User column. Signature HTML is purified on input. [code: app/bundles/UserBundle/Form/Type/UserType.php:42,187-207 @419a08a9b35] [code: app/bundles/EmailBundle/Helper/FromEmailHelper.php:115-137 @7.x] [code: app/bundles/EmailBundle/EventListener/BuilderSubscriber.php:213-222 @7.x]
 
 ## 6. Roles
 
@@ -159,7 +159,7 @@ B63. A Role that still has Users cannot be deleted (single or batch); flash "%na
 
 B64. Cloning a Role opens the form pre-filled with "Clone of %name%", the description, the admin flag and the raw permissions; nothing is stored until saved. Cloning needs `user:roles:create` and `user:roles:view`. [code: app/bundles/UserBundle/Model/RoleModel.php:134-145 @7.x] [code: app/bundles/UserBundle/Controller/RoleController.php:20-26,213-341 @7.x] [docs: https://docs.mautic.org/en/7.2/users_roles/managing_roles.html#cloning-a-role]
 
-B65. In the Role form, ticking `full` unticks the other levels of that permission and ticking any other level unticks `full`; each tab shows `granted / total`, where `full` counts as all other levels. With Full System Access = Yes the matrix is hidden. [code: app/bundles/UserBundle/Assets/js/user.js:79-147 @7.x] [code: app/bundles/CoreBundle/Security/Permissions/AbstractPermissions.php:262-294 @7.x] [code: app/bundles/UserBundle/Resources/views/Role/form.html.twig:47-99 @7.x]
+B65. In the Role form, ticking `full` unticks the other levels of that permission and ticking any other level unticks `full`; each tab shows `granted / total`, where `full` counts as all other levels. With Full System Access = Yes the matrix is hidden. [code: app/bundles/UserBundle/Assets/js/user.js:79-147 @7.x] [code: app/bundles/CoreBundle/Security/Permissions/AbstractPermissions.php:262-294 @7.x] [code: app/bundles/UserBundle/Resources/views/Role/form.html.twig:47-99 @419a08a9b35]
 
 B66. The Role list shows a per-Role User count, sortable as `user_count`. [code: app/bundles/UserBundle/Entity/RoleRepository.php:20-35 @7.x] [docs: https://docs.mautic.org/en/7.2/users_roles/managing_roles.html#sorting-roles-by-the-number-of-users]
 
@@ -211,11 +211,11 @@ B88. The guest User returned by `UserHelper::getUser()` when no one is logged in
 
 B89. Configuration and System Info are admin-only (not permission-based). [code: app/bundles/ConfigBundle/Controller/ConfigController.php:41,207,242 @7.x] [code: app/bundles/ConfigBundle/Controller/SysinfoController.php:23 @7.x]
 
-B90. The audit-log stats table (`/api/stats/audit_log`) and the audit-log report are admin-only; the report excludes the `config` object because it may contain passwords. [code: app/bundles/CoreBundle/EventListener/CommonStatsSubscriber.php:56-93 @7.x] [code: app/bundles/CoreBundle/EventListener/ReportSubscriber.php:84,179-183 @7.x]
+B90. The audit-log stats table (`/api/stats/audit_log`) and the audit-log report are admin-only; the report excludes the `config` object because it may contain passwords. [code: app/bundles/CoreBundle/EventListener/CommonStatsSubscriber.php:60-97 @7.x] [code: app/bundles/CoreBundle/EventListener/ReportSubscriber.php:84,179-183 @7.x]
 
 ## 8. API authentication and the Users/Roles API
 
-B91. On the `api` firewall OAuth2 bearer, HTTP Basic and plugin authenticators all resolve to the same `User` entity, and the token's User gets `activePermissions` attached. API permissions are therefore the User's Role permissions. [code: app/config/security.php:51-67 @7.x] [code: app/bundles/UserBundle/Security/Authentication/Token/Permissions/TokenPermissions.php:30-63 @7.x]
+B91. On the `api` firewall OAuth2 bearer, HTTP Basic and plugin authenticators all resolve to the same `User` entity, and the token's User gets `activePermissions` attached. API permissions are therefore the User's Role permissions. [code: app/config/security.php:51-67 @419a08a9b35] [code: app/bundles/UserBundle/Security/Authentication/Token/Permissions/TokenPermissions.php:30-63 @7.x]
 
 B92. OAuth2 client-credentials tokens (no User) get a pseudo-User whose Role is the API client's Role, named `"<client name> [<client id>]"`; `MAUTIC_AUDITLOG_USER` is defined with that name so audit rows and `created_by_user` show the client. [code: app/bundles/UserBundle/Security/Authentication/Token/Permissions/TokenPermissions.php:68-95 @7.x] [code: app/bundles/UserBundle/EventListener/ApiUserSubscriber.php:50-71 @7.x]
 
@@ -245,25 +245,25 @@ B104. The API Platform voter maps any `…own`/`…other` attribute with an obje
 
 ## 9. Plugin, SSO and SAML authentication
 
-B105. A login POST that includes an `integration` field is handled by `SsoAuthenticator` (runs before form login) which dispatches `mautic.user_form_authentication`; listeners may call `setIsAuthenticated()` (optionally creating the User) or `setIsFailedAuthentication()` with a message to block local password login. [code: app/bundles/UserBundle/Security/Authenticator/SsoAuthenticator.php:71-164 @7.x] [code: app/bundles/UserBundle/Event/AuthenticationEvent.php:96-181 @7.x]
+B105. A login POST that includes an `integration` field is handled by `SsoAuthenticator` (runs before form login) which dispatches `mautic.user_form_authentication`; listeners may call `setIsAuthenticated()` (optionally creating the User) or `setIsFailedAuthentication()` with a message to block local password login. [code: app/bundles/UserBundle/Security/Authenticator/SsoAuthenticator.php:71-164 @7.x] [code: app/bundles/UserBundle/Event/AuthenticationEvent.php:96-181 @419a08a9b35]
 
-B106. Requests on the `sso_login`, `api` and `v2api` firewalls run `PluginAuthenticator`, which dispatches `mautic.user_pre_authentication` unless a bearer token is present. With no listener result on the API firewalls it returns `null` so the next authenticator runs. [code: app/bundles/UserBundle/Security/Authenticator/PluginAuthenticator.php:48-52,66-79,112-120,189-200 @7.x] [code: app/config/security.php:22-27,51-67 @7.x]
+B106. Requests on the `sso_login`, `api` and `v2api` firewalls run `PluginAuthenticator`, which dispatches `mautic.user_pre_authentication` unless a bearer token is present. With no listener result on the API firewalls it returns `null` so the next authenticator runs. [code: app/bundles/UserBundle/Security/Authenticator/PluginAuthenticator.php:48-52,66-79,112-120,189-200 @7.x] [code: app/config/security.php:22-27,51-67 @419a08a9b35]
 
-B107. `/s/sso_login/{integration}` is public; the login check sets `isLoginCheck()` on the event, and an empty JSON response is returned if nothing authenticated. The login page lists `sso_service` integrations as links. [code: app/bundles/UserBundle/Security/Authenticator/PluginAuthenticator.php:69-78,106-109 @7.x] [code: app/bundles/UserBundle/Controller/SecurityController.php:83-84,103-115 @7.x]
+B107. `/s/sso_login/{integration}` is public; the login check sets `isLoginCheck()` on the event, and an empty JSON response is returned if nothing authenticated. The login page lists `sso_service` integrations as links. [code: app/bundles/UserBundle/Security/Authenticator/PluginAuthenticator.php:69-78,106-109 @7.x] [code: app/bundles/UserBundle/Controller/SecurityController.php:96-97,116-128 @7.x]
 
-B108. Users created by SSO plugins (`UserProvider::saveUser`) must have role, username, email, first and last name; a missing password gets a random one; `USER_PRE_SAVE`/`USER_POST_SAVE` fire. [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:90-145 @7.x]
+B108. Users created by SSO plugins (`UserProvider::saveUser`) must have role, username, email, first and last name; a missing password gets a random one; `USER_PRE_SAVE`/`USER_POST_SAVE` fire. [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:90-145 @419a08a9b35]
 
 B109. SAML is "enabled" when `saml_idp_metadata` (base64 IdP XML) is non-empty. [code: app/bundles/UserBundle/Security/SAML/Helper.php:18-27 @7.x] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#turning-on-saml]
 
 B110. A SAML assertion is mapped to a User (email as username unless a username attribute is configured). A matching User (by username or email) is logged in; otherwise a User is created with `saml_idp_default_role`, or login fails "User does not exist." when no default Role is set. [code: app/bundles/UserBundle/Security/SAML/User/UserMapper.php:38-59 @7.x] [code: app/bundles/UserBundle/Security/SAML/User/UserCreator.php:34-67 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#saml-sso-settings]
 
-B111. The SP endpoints are `/saml/metadata.xml`, `/saml/discovery`, `/s/saml/login` and ACS `/s/saml/login_check`. [code: app/bundles/UserBundle/Config/config.php:28-131 @7.x] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#configuring-the-idp]
+B111. The SP endpoints are `/saml/metadata.xml`, `/saml/discovery`, `/s/saml/login` and ACS `/s/saml/login_check`. [code: app/bundles/UserBundle/Config/config.php:28-131 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#configuring-the-idp]
 
-B112. SAML request state lives in the cache for 2 minutes; `/saml/login_retry` invalidates the session and offers a retry link when SAML is enabled, else redirects to login. [code: app/bundles/UserBundle/Security/SAML/Store/RequestStateStore.php:23-34 @7.x] [code: app/bundles/UserBundle/Controller/SecurityController.php:118-138 @7.x] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#recovering-from-a-login-error]
+B112. SAML request state lives in the cache for 2 minutes; `/saml/login_retry` invalidates the session and offers a retry link when SAML is enabled, else redirects to login. [code: app/bundles/UserBundle/Security/SAML/Store/Request/RequestStateStore.php:23-34 @7.x] [code: app/bundles/UserBundle/Controller/SecurityController.php:131-151 @7.x] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#recovering-from-a-login-error]
 
 B113. With an own certificate configured, AuthnRequests and assertions are signed and encrypted; without one a self-signed dummy cert is generated in `cache_path` and nothing is signed. [code: app/bundles/UserBundle/Security/SAML/Store/TrustOptionsStore.php:39-54 @7.x] [code: app/bundles/UserBundle/Security/SAML/Store/CredentialsStore.php:36-87 @7.x]
 
-B114. Uploaded IdP metadata is validated as XML and the cert/key pair validated on config save; a blank key password keeps the stored one. [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:48,60-86 @7.x]
+B114. Uploaded IdP metadata is validated as XML and the cert/key pair validated on config save; a blank key password keeps the stored one. [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:110,122-148 @7.x]
 
 B115. When env `MAUTIC_SAML_ENABLED` is not true, `SAMLSubscriber` is removed from the container; when present it redirects any `/saml/*` or `lightsaml*` route to `login`. `/s/login` stays reachable directly. [code: app/bundles/UserBundle/EventListener/SAMLSubscriber.php:31-48 @7.x] [code: app/bundles/UserBundle/DependencyInjection/MauticUserExtension.php:23-26 @7.x] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#logging-in]
 
@@ -293,4 +293,4 @@ B125. Dev/test fixtures add Users `admin` and `sales` (password `Maut1cR0cks!`) 
 
 B126. CLI or background code that must act as a User calls `UserTokenSetter::setUser($id)`; otherwise `UserHelper::getUser()` returns a guest with no permissions. [code: app/bundles/UserBundle/Security/UserTokenSetter.php:18-25 @7.x] [code: app/bundles/CoreBundle/Helper/UserHelper.php:20-38 @7.x]
 
-B127. There is no two-factor authentication in core; `AuthenticationEvent::setIsFailedAuthentication()` is the hook a 2FA plugin would use. There are no `mautic:user:*` console commands. [code: app/bundles/UserBundle/Event/AuthenticationEvent.php:171-181 @7.x]
+B127. There is no two-factor authentication in core; `AuthenticationEvent::setIsFailedAuthentication()` is the hook a 2FA plugin would use. There are no `mautic:user:*` console commands. [code: app/bundles/UserBundle/Event/AuthenticationEvent.php:189-199 @7.x]

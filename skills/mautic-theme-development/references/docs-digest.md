@@ -52,7 +52,7 @@ Sources (7.2 branch unless marked):
 39. Flash messages: PHP `addFlashMessage($key, $params, $type)` with strings in `flashes.ini`; JS `Mautic.addFlashMessage` / `addInfoFlashMessage` / `addErrorFlashMessage` then `Mautic.setFlashes()` [devdocs: https://devdocs.mautic.org/en/7.2/design/flash_messages.html].
 40. Notifications: inline, toast (with close button; interactive toasts must not auto-dismiss), actionable; alert classes `.alert-success|info|warning|danger` [devdocs: https://devdocs.mautic.org/en/7.2/design/notifications.html].
 41. Quick filters via `quickFilters` passed to `@MauticCore/Helper/list_toolbar.html.twig`, handled by `Mautic.listQuickFilter` [devdocs: https://devdocs.mautic.org/en/7.2/design/quick_filters.html].
-42. `configGetParameter('name'[, default])` reads settings in admin Twig; it is denied inside the theme sandbox [devdocs: https://devdocs.mautic.org/en/7.2/design/retrieving_system_information.html] [code: app/bundles/CoreBundle/Twig/Sandbox/ThemeSandboxPolicy.php:27-51 @7.x].
+42. `configGetParameter('name'[, default])` reads settings in admin Twig; it is denied inside the theme sandbox [devdocs: https://devdocs.mautic.org/en/7.2/design/retrieving_system_information.html] [code: app/bundles/CoreBundle/Twig/Sandbox/ThemeSandboxPolicy.php:27-51 @419a08a9b35].
 43. Utility CSS: flex (`d-`, `fd-`, `jc-`, `ai-`, …), gap (`gap-20/lg` … `gap-0`), spacing (`pa-`, `mt-`, … sizes 0–20 px, variable `--spacing-03`..`--spacing-13`, named xs–xl), all `!important`, mobile-first `-sm/-md/-lg` [devdocs: https://devdocs.mautic.org/en/7.2/design/utilities.html].
 
 ## 5. Procedures

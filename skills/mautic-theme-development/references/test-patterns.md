@@ -9,7 +9,7 @@ For running PHPUnit, base classes and DB fixtures in general see the `mautic-tes
 | `ThemeHelper` rules (discovery, install, fallback, copy, delete, sandbox render) | `PHPUnit\Framework\TestCase` with mocked `PathsHelper`, Twig `Environment`, `TranslatorInterface`, `CoreParametersHelper`, `BuilderIntegrationsHelper`; real `Filesystem` and `Finder` | `ThemeHelperTest` (21 tests) | [code: app/bundles/CoreBundle/Tests/Unit/Helper/ThemeHelperTest.php:31-90 @7.x] |
 | Theme fixtures on disk | `app/bundles/CoreBundle/Tests/Unit/Helper/resource/themes/` (incl. `good.zip`, `theme-custom-builder-*`) | `testThemeIsInstalled` | [code: app/bundles/CoreBundle/Tests/Unit/Helper/ThemeHelperTest.php:152-166 @7.x] |
 | Theme Manager controller | `Mautic\CoreBundle\Test\MauticMysqlTestCase` | `ThemeControllerTest::testThemeVisibility`, `testDeleteTheme`, `testBatchDeleteActionWithNonCoreTheme` | [code: app/bundles/CoreBundle/Tests/Functional/Controller/ThemeControllerTest.php @7.x] |
-| Twig sandbox end-to-end | `MauticMysqlTestCase`, writes a theme into `themes/` and requests `/page/preview/{id}` | `ThemeHelperSandboxTest` (covers advisory GHSA-9fx4-7cmj-47vg) | [code: app/bundles/PageBundle/Tests/Functional/Controller/ThemeHelperSandboxTest.php:12-140 @7.x] |
+| Twig sandbox end-to-end | `MauticMysqlTestCase`, writes a theme into `themes/` and requests `/page/preview/{id}` | `ThemeHelperSandboxTest` (covers advisory GHSA-9fx4-7cmj-47vg) | [code: app/bundles/PageBundle/Tests/Functional/Controller/ThemeHelperSandboxTest.php:12-140 @419a08a9b35] |
 | `themes/system` overrides | functional, creates `themes/system` and rebuilds the container | `SystemThemeTemplatePathPassTest` | [code: app/bundles/CoreBundle/Tests/Functional/DependencyInjection/Compiler/SystemThemeTemplatePathPassTest.php @7.x] |
 | Builder selection | unit | `BuilderIntegrationsHelperTest::testBuilderNotFoundIfFeatureSupportedButNotEnabled` | [code: app/bundles/IntegrationsBundle/Tests/Unit/Helper/BuilderIntegrationsHelperTest.php @7.x] |
 | Email accessibility / render listeners | unit + functional | `EmailBundle/Tests/EventListener/BuilderSubscriberTest.php`, `BuilderSubscriberFunctionalTest.php` | [code: app/bundles/EmailBundle/Tests/EventListener/BuilderSubscriberTest.php @7.x] |
@@ -21,7 +21,7 @@ Codeception covers the GrapesJS builder in `tests/acceptance/GrapesJsBuilderPage
 
 ## 2. Tests to read first
 - `ThemeHelperTest::testThemeIsInstalled`, `::testThemeInstallRejectsZipSlipEntries` (data provider builds zips with `../` and absolute entries), `::testCustomThemesAreReturnedForFeatureIfCustomBuilderIsEnabled`, `::testThemeFallbackToDefaultIfTemplateIsMissing` [code: app/bundles/CoreBundle/Tests/Unit/Helper/ThemeHelperTest.php:152,202,281,537 @7.x].
-- `ThemeHelperSandboxTest::testHarmfulTwigPayloadsAreBlockedOnPagePreview` [code: app/bundles/PageBundle/Tests/Functional/Controller/ThemeHelperSandboxTest.php:64-77 @7.x].
+- `ThemeHelperSandboxTest::testHarmfulTwigPayloadsAreBlockedOnPagePreview` [code: app/bundles/PageBundle/Tests/Functional/Controller/ThemeHelperSandboxTest.php:137-150 @7.x].
 - `GrapesJsBuilderModelEditorStateTest::testAddOrEditEntityStoresDecodedEditorStateAndCustomHtmlFallback`, `testAddOrEditPageEntityPersistsOnlyWhenEditorStateProvided`.
 - `GrapesJsControllerTest::testEditorStateActionReturnsEditorStateFromSerializedContent`.
 - `EmailSubscriberTest::testManageEmailDraftHandlesSaveAsDraft`.
@@ -93,7 +93,7 @@ final class MySandboxTest extends MauticMysqlTestCase
     }
 }
 ```
-Pattern from [code: app/bundles/PageBundle/Tests/Functional/Controller/ThemeHelperSandboxTest.php:22-140 @7.x]. The page needs empty `customHtml` and non-empty `content`, otherwise the theme is not rendered [code: app/bundles/PageBundle/Controller/PublicController.php:330-379 @7.x]. On 8.x this Landing Page fallback is removed, so port such tests to an Email preview or message page [PR #17078].
+Pattern from [code: app/bundles/PageBundle/Tests/Functional/Controller/ThemeHelperSandboxTest.php:22-140 @419a08a9b35]. The page needs empty `customHtml` and non-empty `content`, otherwise the theme is not rendered [code: app/bundles/PageBundle/Controller/PublicController.php:330-379 @7.x]. On 8.x this Landing Page fallback is removed, so port such tests to an Email preview or message page [PR #17078].
 
 ### 4.4 Functional: GrapesJS email save persists MJML
 1. In `setUp`, create a `Plugin` (bundle `GrapesJsBuilderBundle`) and a published `Integration` named `GrapesJsBuilder` [code: plugins/GrapesJsBuilderBundle/Tests/Functional/Controller/AssertCustomMjmlTest.php:129-142 @7.x].

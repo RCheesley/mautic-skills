@@ -137,7 +137,7 @@ This mirrors the structure of `PutOperationTest`. [code: app/bundles/ApiBundle/T
 `composer test` runs `bin/phpunit -d memory_limit=2G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist`;
 append a file path to run one test, for example `composer test -- app/bundles/ApiBundle/Tests/Functional/Oauth2Test.php`.
 `bin/phpunit` exists only after `composer install`. Database setup and the test environment are described in
-mautic-testing. [code: composer.json:169 @7.x]
+mautic-testing. [code: composer.json:167 @7.x]
 
 ## 6. Regression tests worth adding
 

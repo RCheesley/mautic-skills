@@ -3,7 +3,7 @@
 ## History (why there are two frameworks)
 - IntegrationsBundle (interface-driven, with the sync engine) was introduced in the 2.15/3.x era next to the legacy PluginBundle framework, and both still ship in 7.2.1. [code: app/bundles/IntegrationsBundle/README.md:5-19 @7.x]
 - `AbstractIntegration` was marked for removal in 6.0 but survives in 7.2.1. All bundled CRMs still extend it. [code: app/bundles/PluginBundle/Integration/AbstractIntegration.php:54 @7.x]
-- Activity export defaults to `point.gained, form.submitted, email.read` for pre-2.11 BC. Salesforce segment-filter values stay unprefixed for the same reason. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:178-266 @7.x] [code: plugins/MauticCrmBundle/EventListener/LeadListSubscriber.php:32-81 @7.x]
+- Activity export defaults to `point.gained, form.submitted, email.read` for pre-2.11 BC. Salesforce segment-filter values stay unprefixed for the same reason. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:178-266 @419a08a9b35] [code: plugins/MauticCrmBundle/EventListener/LeadListSubscriber.php:32-81 @7.x]
 
 ## Marketplace and Composer (4.x → 7.x)
 - 4.0 introduced a read-only Marketplace. Since 4.2, install/update/remove requires the Composer setting. [docs: https://docs.mautic.org/en/7.2/marketplace/marketplace.html#using-the-mautic-marketplace]
@@ -45,7 +45,7 @@
 - 7.0: a `PLUGIN_IS_PUBLISHED_STATE_CHANGING` listener can veto publishing, and credential changes clear tokens. IntegrationsBundle ships a test `TestPass` for HTTP mocking. [PR #13696] [PR #15084]
 - 7.1: the plugin config modal shows the plugin version. [PR #15789]
 - 7.2: Clearbit, Gmail and Tag Manager move to `BasicIntegration`; IntegrationsBundle DAOs without children are `final`; IntegrationsBundle services are autowired in `services.php`; legacy mapping pagination reads POST. [PR #16586] [PR #16847] [PR #16795] [PR #16888] [PR #16781] [PR #16202]
-- 7.2.2: `pushleadactivity` pushes activity again. The 7.x snapshot (and 7.2.1) still contains the inverted check. [PR #17815] [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:245-254 @7.x]
+- 7.2.2: `pushleadactivity` pushes activity again. The 7.x snapshot (and 7.2.1) still contains the inverted check. [PR #17815] [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:245-254 @419a08a9b35]
 - Unreleased 7.x (7.3.0-rc): duplicate tag names are refused on create and rename. [PR #17341]
 - 7.2 deprecates the aliases `mautic.integrations.sync.service` and `mautic.integrations.subscriber.controller` in favour of FQCN services. [code: app/bundles/IntegrationsBundle/Config/services.php:91-94 @7.x]
 - 7.2 deprecates the Clearbit alias `mautic.plugin.clearbit.lookup_helper`. [code: plugins/MauticClearbitBundle/Config/services.php:24-25 @7.x]

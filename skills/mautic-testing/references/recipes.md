@@ -138,7 +138,7 @@ $this->client->request(
 self::assertResponseIsSuccessful();
 ```
 Permission check pattern: create a user without the permission, `loginUser()` it, expect 403
-[code: app/bundles/CampaignBundle/Tests/Controller/Api/CampaignApiControllerFunctionalTest.php:490-505 @7.x].
+[code: app/bundles/CampaignBundle/Tests/Controller/Api/CampaignApiControllerFunctionalTest.php:511-526 @7.x].
 Payload shapes and endpoints are in mautic-rest-api.
 
 ## 3. Console command test
@@ -293,7 +293,7 @@ final class SegmentSubscriberTest extends TestCase
     }
 }
 ```
-Use `createStub()` when you do not assert calls (Rector `phpunitMockToStub`) [code: rector.php:10-25 @7.x].
+Use `createStub()` when you do not assert calls (Rector `phpunitMockToStub`) [code: rector.php:10-25 @419a08a9b35].
 On 8.x, `final` classes can be mocked through `dg/bypass-finals`, but `Request`, `InputBag` and `Router` must not be
 doubled [code: composer.json @8.x] [PR #17366] [PR #17392].
 For repository unit tests, `RepositoryConfiguratorTrait::configureRepository()` exists but its docblock recommends a
@@ -335,7 +335,7 @@ public function testTestEmailIsSentSynchronously(): void
 Which count to use: `assertQueuedEmailCount()` for sends routed through the `email` Messenger transport (Segment and
 Campaign emails); `assertEmailCount()` for synchronous sends, or after setting
 `$this->configParams['messenger_dsn_email'] = 'sync://'` [code: app/bundles/EmailBundle/Tests/Controller/Api/SMimeFunctionalTest.php:22-29, 105-113 @7.x]
-[code: app/bundles/LeadBundle/Tests/Controller/LeadControllerTest.php:660 @7.x].
+[code: app/bundles/LeadBundle/Tests/Controller/LeadControllerTest.php:657 @7.x].
 
 ## 7. Config override per test or per method
 

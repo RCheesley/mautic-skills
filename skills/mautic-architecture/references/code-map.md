@@ -1,6 +1,6 @@
 # Mautic architecture - code map (7.x)
 
-Paths are repo-relative. `@7.x` = upstream 7.x at 419a08a9b35 (7.2.1 plus unreleased merged PRs).
+Paths are repo-relative. `@7.x` = the upstream 7.x snapshot pinned in SOURCES.md.
 
 ## Contents
 1. Repository layout
@@ -25,7 +25,7 @@ Paths are repo-relative. `@7.x` = upstream 7.x at 419a08a9b35 (7.2.1 plus unrele
 | `app/config/` | Kernel config (`config.php`, `config_prod.php`, `config_dev.php`, `config_test.php`, `security.php`, `paths_helper.php`) | [code: app/config/config.php:203-205 @7.x] |
 | `app/middlewares/` | Pre-Symfony middlewares (`Mautic\Middleware\`) | [code: app/composer.json:7-16 @7.x] |
 | `app/migrations/` | Core Doctrine migrations (`Mautic\Migrations\`) | [code: app/composer.json:7-16 @7.x] |
-| `plugins/` | Plugins, namespace `MauticPlugin\` | [code: composer.json:108-119 @7.x] |
+| `plugins/` | Plugins, namespace `MauticPlugin\` | [code: composer.json:106-117 @7.x] |
 | `themes/`, `themes/system/` | Themes; `system` overrides core bundle templates | [code: app/bundles/CoreBundle/DependencyInjection/Compiler/SystemThemeTemplatePathPass.php:20-68 @7.x] |
 | `translations/`, `translations/overrides/` | Downloaded language packs; site overrides | [code: app/bundles/CoreBundle/Loader/TranslationLoader.php:21-73 @7.x] |
 | `config/local.php` | Saved configuration values | [code: app/bundles/CoreBundle/Loader/ParameterLoader.php:195-216 @7.x] |
@@ -76,15 +76,15 @@ Deprecated string aliases (since 7.2): `mautic.helper.encryption`, `mautic.core.
 | `ClassMetadataBuilder` | `app/bundles/CoreBundle/Doctrine/Mapping/ClassMetadataBuilder.php` | `addId`, `addBigIntIdField`, `addUuid`, `addIdColumns`, `addCategory`, `addPublishDates`, `addDateAdded`, `addIndex`, length 191 rule [code: app/bundles/CoreBundle/Doctrine/Mapping/ClassMetadataBuilder.php:23-451 @7.x] |
 | DBAL types | `Doctrine/Type/{UTCDateTimeType,UTCDateTimeImmutableType,ArrayType}.php` | registered globally [code: app/config/config.php:203-205 @7.x] |
 | `CommonRepository` | `app/bundles/CoreBundle/Entity/CommonRepository.php` | `getEntities()` (354-406), `getSearchCommands()`/`getStandardSearchCommands()` (707-789), `getSimpleList()` (723-774), `upsert()` (868-951), `getPublishedByDate*Expression()` (527-630), `findOneBySlugs()` (239-297) [code: app/bundles/CoreBundle/Entity/CommonRepository.php:239-1883 @7.x] |
-| `SearchStringHelper` | `app/bundles/CoreBundle/Helper/SearchStringHelper.php` | search syntax parser [code: app/bundles/CoreBundle/Helper/SearchStringHelper.php:47-284 @7.x] |
+| `SearchStringHelper` | `app/bundles/CoreBundle/Helper/SearchStringHelper.php` | search syntax parser [code: app/bundles/CoreBundle/Helper/SearchStringHelper.php:47-284 @419a08a9b35] |
 | `AbstractCommonModel` | `app/bundles/CoreBundle/Model/AbstractCommonModel.php` | `getRepository()`, `getPermissionBase()`, `getEntities()`, `getEntity()`, `getEntityBySlugs()`, `canViewOwnEntity()` [code: app/bundles/CoreBundle/Model/AbstractCommonModel.php:27-297 @7.x] |
 | `FormModel` | `app/bundles/CoreBundle/Model/FormModel.php` | lock/unlock, `saveEntity(ies)`, `deleteEntity(ies)`, `togglePublishStatus()`, `setTimestamps()`, `createForm()`, `dispatchEvent()` (no-op), `cleanAlias()`, `flushAndCatch()` [code: app/bundles/CoreBundle/Model/FormModel.php:29-503 @7.x] |
 | `AuditLogModel` | `app/bundles/CoreBundle/Model/AuditLogModel.php` | `writeToLog()`, `getLogForObject()` [code: app/bundles/CoreBundle/Model/AuditLogModel.php:34-80 @7.x] |
 | `CommonController` | `app/bundles/CoreBundle/Controller/CommonController.php` | `delegateView()`, `postActionRedirect()`, `delegateRedirect()`, `executeAction()`, `notFound()`, `getModel()` [code: app/bundles/CoreBundle/Controller/CommonController.php:120-729 @7.x] |
 | `AbstractFormController` | `app/bundles/CoreBundle/Controller/AbstractFormController.php` | `unlockAction()`, `isLocked()`, `isFormCancelled()`, `isFormApplied()`, `canEdit()` [code: app/bundles/CoreBundle/Controller/AbstractFormController.php:22-204 @7.x] |
 | `AbstractStandardFormController` | `app/bundles/CoreBundle/Controller/AbstractStandardFormController.php` | `indexStandard`, `newStandard`, `editStandard`, `viewStandard`, `cloneStandard`, `deleteStandard`, `batchDeleteStandard`; hooks `beforeEntitySave`, `afterEntitySave`, `afterEntityClone`, `getViewArguments`, `getEntityFormOptions` [code: app/bundles/CoreBundle/Controller/AbstractStandardFormController.php:64-1215 @7.x] |
-| `AjaxController` | `app/bundles/CoreBundle/Controller/AjaxController.php` | `delegateAjaxAction()`, `executeAjaxAction()`, `sendJsonResponse()` [code: app/bundles/CoreBundle/Controller/AjaxController.php:44-136 @7.x] |
-| `AbstractFormStandardType` | `app/bundles/CoreBundle/Form/Type/AbstractFormStandardType.php` | name/description/category/isPublished/publish dates/buttons, `clean_masks` [code: app/bundles/CoreBundle/Form/Type/AbstractFormStandardType.php:40-133 @7.x] |
+| `AjaxController` | `app/bundles/CoreBundle/Controller/AjaxController.php` | `delegateAjaxAction()`, `executeAjaxAction()`, `sendJsonResponse()` [code: app/bundles/CoreBundle/Controller/AjaxController.php:45-137 @7.x] |
+| `AbstractFormStandardType` | `app/bundles/CoreBundle/Form/Type/AbstractFormStandardType.php` | name/description/category/isPublished/publish dates/buttons, `clean_masks` [code: app/bundles/CoreBundle/Form/Type/AbstractFormStandardType.php:40-133 @419a08a9b35] |
 | Controller traits | `Controller/{AjaxLookupControllerTrait,FormErrorMessagesTrait,FormThemeTrait,QuickFilterSearchTrait,CategoryListFiltersTrait,VariantAjaxControllerTrait}.php` | [code: app/bundles/CoreBundle/Controller/FormErrorMessagesTrait.php:79-94 @7.x] |
 
 ## 4. Core events (`app/bundles/CoreBundle/CoreEvents.php`)
@@ -93,7 +93,7 @@ Deprecated string aliases (since 7.2): `mautic.helper.encryption`, `mautic.core.
 |---|---|---|---|
 | `BUILD_MENU` (`mautic.build_menu`) | `MenuEvent` | `Menu/MenuBuilder.php:84` | `CoreSubscriber::onBuildMenu` prio 9999 [code: app/bundles/CoreBundle/EventListener/CoreSubscriber.php:43 @7.x] |
 | `BUILD_ROUTE` (`mautic.build_route`) | `RouteEvent` | `Loader/RouteLoader.php:31,48,59,77` | `CoreSubscriber::onBuildRoute` [code: app/bundles/CoreBundle/EventListener/CoreSubscriber.php:114-208 @7.x] |
-| `GLOBAL_SEARCH` (`mautic.global_search`) | `GlobalSearchEvent` | `Controller/DefaultController.php:58`, `Controller/AjaxController.php:145` | `SearchSubscriber` in 12 bundles [code: app/bundles/CoreBundle/Controller/AjaxController.php:144-145 @7.x] |
+| `GLOBAL_SEARCH` (`mautic.global_search`) | `GlobalSearchEvent` | `Controller/DefaultController.php:58`, `Controller/AjaxController.php:145` | `SearchSubscriber` in 12 bundles [code: app/bundles/CoreBundle/Controller/AjaxController.php:145-146 @7.x] |
 | `LIST_STATS` (`mautic.list_stats`) | `StatsEvent` | `Controller/Api/StatsApiController.php:39` | `CommonStatsSubscriber` subclasses [code: app/bundles/CoreBundle/EventListener/CommonStatsSubscriber.php:36-41 @7.x] |
 | `BUILD_COMMAND_LIST` (`mautic.build_command_list`) | `CommandListEvent` | `Service/SearchCommandList.php:30` | `SearchSubscriber`s [code: app/bundles/CoreBundle/Service/SearchCommandList.php:23-33 @7.x] |
 | `FETCH_ICONS` (`mautic.on_fetch_icons`) | `IconEvent` | never by this name (see behaviour Q) | `CoreSubscriber::onFetchIcons` [code: app/bundles/CoreBundle/EventListener/CoreSubscriber.php:210-246 @7.x] |
@@ -156,7 +156,7 @@ Route groups in `config.php`: `main` (`/s`, user login), `public` (no auth), `ap
 |---|---|---|
 | `site_url` | `''` | Router context, https forcing, trailing-slash redirects [code: app/bundles/CoreBundle/Loader/RouteLoader.php:34-41 @7.x] |
 | `secret_key` | `temp` | Encryption key, asset version salt, remember-me key [code: app/bundles/CoreBundle/Helper/EncryptionHelper.php:39 @7.x] |
-| `locale` / `default_timezone` | `en_US` / `UTC` | UI locale and local timezone fallbacks [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:38-56 @7.x] |
+| `locale` / `default_timezone` | `en_US` / `UTC` | UI locale and local timezone fallbacks [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:38-56 @419a08a9b35] |
 | `default_pagelimit` | `30` | List page size [code: app/bundles/CoreBundle/Helper/PageHelper.php:19-25 @7.x] |
 | `max_entity_lock_time` | `0` (never expires) | Entity checkout expiry seconds [code: app/bundles/CoreBundle/Config/config.php:708 @7.x] |
 | `date_format_full/_short/_dateonly/_timeonly` | `F j, Y g:i a T` / `D, M d` / `F j, Y` / `g:i a` | Twig date helpers [code: app/bundles/CoreBundle/Config/config.php:287-290 @7.x] |
@@ -164,7 +164,7 @@ Route groups in `config.php`: `main` (`/s`, user login), `public` (no auth), `ap
 | `cookie_path/_domain/_secure/_httponly` | `/`, `''`, `true`, `false` | `CookieHelper` defaults [code: app/bundles/CoreBundle/Config/config.php:297-300 @7.x] |
 | `404_page`, `webroot` | `''` | Landing page for 404 / for `/` [code: app/bundles/CoreBundle/Controller/CommonController.php:568-597 @7.x] |
 | `db_table_prefix` | `''` | Prefix for every Mautic table [code: app/bundles/CoreBundle/EventListener/DoctrineEventsSubscriber.php:30-109 @7.x] |
-| `track_private_ip_ranges`, `do_not_track_ips`, `do_not_track_internal_ips` | `false`, `[]`, `[]` | Client IP handling [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:53-56 @7.x] |
+| `track_private_ip_ranges`, `do_not_track_ips`, `do_not_track_internal_ips` | `false`, `[]`, `[]` | Client IP handling [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:55-58 @7.x] |
 
 Configuration UI and `local.php` writing: mautic-configuration.
 
@@ -233,7 +233,7 @@ and registered with `#[AsCommand]`. Scheduling and locking: mautic-cron-and-queu
 | Want to | Use |
 |---|---|
 | Add an entity type with CRUD | `FormEntity` + `CommonRepository` + `FormModel` + `AbstractStandardFormController` + `AbstractFormStandardType` [code: app/bundles/CoreBundle/Controller/AbstractStandardFormController.php:64 @7.x] |
-| Add an AJAX endpoint | `fooAction()` on your `AjaxController`, `action=bundle:foo` [code: app/bundles/CoreBundle/Controller/AjaxController.php:77-136 @7.x] |
+| Add an AJAX endpoint | `fooAction()` on your `AjaxController`, `action=bundle:foo` [code: app/bundles/CoreBundle/Controller/AjaxController.php:78-137 @7.x] |
 | Inject UI into core screens | `VIEW_INJECT_CUSTOM_TEMPLATE/CONTENT/BUTTONS/ASSETS` [code: app/bundles/CoreBundle/CoreEvents.php @7.x] |
 | Add menu items | `config.php` `menu` (`main`, `admin`, `profile`, `extra`) or `BUILD_MENU` [devdocs: https://devdocs.mautic.org/en/7.2/plugins/config.html#menu-config-items] |
 | Add routes | `config.php` `routes` or `BUILD_ROUTE` [devdocs: https://devdocs.mautic.org/en/7.2/plugins/config.html#advanced-routing] |

@@ -9,7 +9,7 @@
 ## Representative tests
 | Test | What it shows |
 |---|---|
-| `app/bundles/ConfigBundle/Tests/Controller/ConfigControllerFunctionalTest.php` | Escaping, tab redirect and 404, per-tab saving, restricted fields (swaps the `RestrictionHelper` service), user and system locale, SAML entity id. [code: app/bundles/ConfigBundle/Tests/Controller/ConfigControllerFunctionalTest.php:20-420 @7.x] |
+| `app/bundles/ConfigBundle/Tests/Controller/ConfigControllerFunctionalTest.php` | Escaping, tab redirect and 404, per-tab saving, restricted fields (swaps the `RestrictionHelper` service), user and system locale, SAML entity id. [code: app/bundles/ConfigBundle/Tests/Controller/ConfigControllerFunctionalTest.php:20-420 @419a08a9b35] |
 | `app/bundles/CoreBundle/Tests/Unit/Loader/ParameterLoaderTest.php` | Precedence and env not overwritten; fixture root `Tests/Unit/Loader/TestRoot`. [code: app/bundles/CoreBundle/Tests/Unit/Loader/ParameterLoaderTest.php:40-170 @7.x] |
 | `app/bundles/CoreBundle/Tests/Unit/Loader/EnvVars/*Test.php` | Each derived env var (API, SiteUrl, SAML, ElFinder, ...). [code: app/bundles/CoreBundle/Tests/Unit/Loader/EnvVars/ConfigEnvVarsTest.php:26-60 @7.x] |
 | `app/bundles/ConfigBundle/Tests/Mapper/ConfigMapperTest.php` | Value overlay and restriction. [code: app/bundles/ConfigBundle/Tests/Mapper/ConfigMapperTest.php:168-260 @7.x] |

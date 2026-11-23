@@ -81,7 +81,7 @@
 - Migrations may rewrite `config/local.php`: `db_server_version` [PR #9458] (v3.2.5), `%kernel.root_dir%` → `%kernel.project_dir%` [PR #12526] (v5.0), legacy mailer settings → `mailer_dsn` with URL-encoded parts and `%` doubled [PR #13256] (v5.0.3). The DSN migration never overwrites an existing `mailer_dsn` [PR #16925] (v7.2).
 - Migrations may move config between scopes (SMS "disable trackable URLs" from Twilio to global SMS settings) [PR #11683] (v5.0) and may create notification-centre messages (Pipedrive and Citrix deprecation) [PR #12364] [PR #12367] (v4.4.9).
 - Permission data migrations create the permission row before setting bitwise values [PR #15456] (v7.0).
-- No destructive data changes that third parties may rely on. The migration dropping `plugin_citrix_events` was removed rather than fixed, because forks of the GoTo bundle still use the table: "Losing data sucks"; wasted space is cheap [PR #15384] (v7.0) [PR #15385] (v6.0.5). `UPGRADE-7.0.md` tells admins to drop the table by hand if unused [code: UPGRADE-7.0.md:69 @7.x].
+- No destructive data changes that third parties may rely on. The migration dropping `plugin_citrix_events` was removed rather than fixed, because forks of the GoTo bundle still use the table: "Losing data sucks"; wasted space is cheap [PR #15384] (v7.0) [PR #15385] (v6.0.5). `UPGRADE-7.0.md` tells admins to drop the table by hand if unused [code: UPGRADE-7.0.md:73 @7.x].
 - No slow row-by-row cleanup over large tables. The null-byte cleanup of `ip_addresses` was reverted in favour of read-time handling [PR #8664] (v3.0), superseding [PR #8636].
 
 ### 2.8 Migration lifecycle per major (squashing)

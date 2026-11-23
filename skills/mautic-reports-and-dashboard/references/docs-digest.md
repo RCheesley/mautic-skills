@@ -55,7 +55,7 @@ Where the docs disagree with 7.x code, the disagreement is flagged with **Code d
   - For rolling windows, use Greater than or equal with `-7 days` or `first day of this month`.
 
   The code matches [code: app/bundles/ReportBundle/Helper/RelativeDateHelper.php:11-93 @7.x] [code: app/bundles/CoreBundle/Helper/DateTimeHelper.php:386-391 @7.x].
-- The **Has scheduled Reports** filter and the `is:scheduled` search [docs: https://docs.mautic.org/en/8.0/reports/reports.html#schedule] [code: app/bundles/ReportBundle/Entity/ReportRepository.php:46-68 @7.x].
+- The **Has scheduled Reports** filter and the `is:scheduled` search [docs: https://docs.mautic.org/en/8.0/reports/reports.html#schedule] [code: app/bundles/ReportBundle/Entity/ReportRepository.php:46-68 @419a08a9b35].
 
 ## 2. Dashboard (user docs)
 - Each User composes their own Dashboard [docs: https://docs.mautic.org/en/7.2/dashboard/dashboard.html].

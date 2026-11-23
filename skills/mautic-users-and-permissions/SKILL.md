@@ -19,12 +19,12 @@ e.g. `lead:leads:viewother`.
 
 Authentication
 - Users log in with username **or** email; only published Users can authenticate, and unpublishing a User ends their session on the next refresh. [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:39-74 @7.x]
-- Login is CSRF-protected and throttled to 3 attempts per 30 minutes; unknown usernames take the same time as wrong passwords. [code: app/config/security.php:83-89,105-108 @7.x] [code: app/bundles/UserBundle/Security/TimingSafeFormLoginAuthenticator.php:69-84 @7.x]
+- Login is CSRF-protected and throttled to 3 attempts per 30 minutes; unknown usernames take the same time as wrong passwords. [code: app/config/security.php:96-102,118-121 @7.x] [code: app/bundles/UserBundle/Security/TimingSafeFormLoginAuthenticator.php:69-84 @7.x]
 - A correct login with a password that scores below zxcvbn 3 is rejected and the User is sent to reset it; on HTTP Basic API calls this is a 401. [code: app/bundles/UserBundle/EventListener/PasswordSubscriber.php:28-47 @7.x] [code: app/bundles/UserBundle/Tests/Controller/Api/UserApiControllerFunctionalTest.php:109-128 @7.x]
 - Every interactive login writes `last_login`/`last_active`, sets session timezone and locale from the User (fallback: `default_timezone`, `locale`), and writes an audit row `user/security/login` with IP. [code: app/bundles/CoreBundle/EventListener/CoreSubscriber.php:53-95 @7.x] [code: app/bundles/UserBundle/EventListener/SecuritySubscriber.php:28-43 @7.x]
-- Remember-me lasts `rememberme_lifetime` (default 90 days) and satisfies `/s/*`; `/api/*` requires full authentication. [code: app/config/security.php:94-100,153-154 @7.x]
+- Remember-me lasts `rememberme_lifetime` (default 90 days) and satisfies `/s/*`; `/api/*` requires full authentication. [code: app/config/security.php:107-113,171-172 @7.x]
 - A password change invalidates the User's other sessions (session compares the password hash). [code: app/bundles/UserBundle/Entity/User.php:709-719 @7.x]
-- On the API firewall OAuth2, HTTP Basic and plugin authenticators all resolve to the same `User`, so API permissions are Role permissions; client-credentials tokens act as a pseudo-User with the API client's Role. [code: app/config/security.php:51-67 @7.x] [code: app/bundles/UserBundle/Security/Authentication/Token/Permissions/TokenPermissions.php:30-95 @7.x]
+- On the API firewall OAuth2, HTTP Basic and plugin authenticators all resolve to the same `User`, so API permissions are Role permissions; client-credentials tokens act as a pseudo-User with the API client's Role. [code: app/config/security.php:51-67 @419a08a9b35] [code: app/bundles/UserBundle/Security/Authentication/Token/Permissions/TokenPermissions.php:30-95 @7.x]
 - SAML is "on" when `saml_idp_metadata` is non-empty; a SAML User is matched by username or email, else created with `saml_idp_default_role`, else refused. Password fields are hidden in SAML sessions. [code: app/bundles/UserBundle/Security/SAML/Helper.php:18-27 @7.x] [code: app/bundles/UserBundle/Security/SAML/User/UserCreator.php:34-67 @7.x] [code: app/bundles/UserBundle/Controller/UserController.php:366-369 @7.x]
 - Redirecting every unauthenticated request to the IdP needs env `MAUTIC_SAML_ENABLED=true`; metadata alone does not do it. [code: app/bundles/UserBundle/Security/EntryPoint/MainEntryPoint.php:21-34 @7.x]
 
@@ -35,11 +35,11 @@ Passwords, reset, invites
 - On an existing User the legacy API silently ignores `plainPassword` and username changes. [code: app/bundles/UserBundle/Controller/Api/UserApiController.php:122-139 @7.x]
 
 Users and Roles
-- Username and email are unique across **both** columns. [code: app/bundles/UserBundle/Entity/UserRepository.php:52-67 @7.x]
+- Username and email are unique across **both** columns. [code: app/bundles/UserBundle/Entity/UserRepository.php:90-105 @7.x]
 - Users cannot delete themselves; a Role with Users cannot be deleted. [code: app/bundles/UserBundle/Controller/UserController.php:488-516 @7.x] [code: app/bundles/UserBundle/Model/RoleModel.php:98-110 @7.x]
-- Deleting a User leaves `created_by` ids dangling on content and makes their Contacts unowned. [code: app/bundles/CoreBundle/Entity/FormEntity.php:146-153 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:312-314 @7.x]
-- Profile fields are editable only with the matching `user:profile:*` level; Role and active status are never editable from the profile. [code: app/bundles/UserBundle/Controller/ProfileController.php:40-168 @7.x]
-- Timezone and locale precedence is User → system, applied per request from the session. [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:30-61 @7.x]
+- Deleting a User leaves `created_by` ids dangling on content and makes their Contacts unowned. [code: app/bundles/CoreBundle/Entity/FormEntity.php:146-153 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:317-319 @7.x]
+- Profile fields are editable only with the matching `user:profile:*` level; Role and active status are never editable from the profile. [code: app/bundles/UserBundle/Controller/ProfileController.php:40-168 @419a08a9b35]
+- Timezone and locale precedence is User → system, applied per request from the session. [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:30-61 @419a08a9b35]
 - User and Role create/update/delete are audit-logged with changed fields (Role changes include `rawPermissions` diffs). [code: app/bundles/UserBundle/EventListener/UserSubscriber.php:34-102 @7.x]
 
 Permission framework
@@ -51,7 +51,7 @@ Permission framework
 - Saving a Role adds implied levels (edit ⇒ view own+other; delete ⇒ editother + views; create/editown/… ⇒ viewown; any view ⇒ that bundle's `categories:view`) to the stored bits but **not** to `readable_permissions`/`rawPermissions`. [code: app/bundles/CoreBundle/Security/Permissions/AbstractPermissions.php:214-255 @7.x] [code: app/bundles/UserBundle/Model/RoleModel.php:92 @7.x]
 - A non-admin with no row for a bundle is denied everything in it; an unknown level throws `PermissionNotFoundException`; a malformed string throws `PermissionBadFormatException` (403). [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:215-245 @7.x]
 - `user:users` and `user:roles` are standard sets: anyone with `user:users:edit` can edit any User, including admins. [code: app/bundles/UserBundle/Security/Permissions/UserPermissions.php:26-27 @7.x]
-- Configuration, System Info, audit-log stats and the audit-log report are admin-only, not permission-based. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:41 @7.x] [code: app/bundles/CoreBundle/EventListener/CommonStatsSubscriber.php:56-93 @7.x]
+- Configuration, System Info, audit-log stats and the audit-log report are admin-only, not permission-based. [code: app/bundles/ConfigBundle/Controller/ConfigController.php:41 @7.x] [code: app/bundles/CoreBundle/EventListener/CommonStatsSubscriber.php:60-97 @7.x]
 
 Full list: references/behaviour.md (B1–B127).
 
@@ -81,7 +81,7 @@ Every registered permission and the bit table: references/code-map.md §7–§8.
 - Override `isEnabled()` to hide the tab when the plugin is off; override `analyzePermissions()` for cross-permission implications (return `true` for a second round); implement `VirtualPermissions` for computed grants. [code: app/bundles/CoreBundle/Security/Permissions/AbstractPermissions.php:63-66 @7.x] [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:137-146,239-240 @7.x]
 - Never renumber existing bits or rename levels: stored `permissions.bitwise` values and `readable_permissions` arrays would silently change meaning, and unknown names throw on Role save. A data migration is needed for any such change (the `lead:notes` backfill is the model). [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:149-171 @7.x] [code: app/migrations/Version20260501090000.php @7.x]
 - Enforce on the backend; Twig `securityIsGranted()` only hides UI. For record-level checks use `hasEntityAccess($ownPerm, $otherPerm, $ownerId)`. [devdocs: https://devdocs.mautic.org/en/7.2/design/displaying_elements_based_on_user_permissions.html] [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:335-379 @7.x]
-- **Custom login**: listen to `mautic.user_form_authentication` (login form with `integration` field) or `mautic.user_pre_authentication` (`/s/sso_login/*`, `/api/*`) and call `setIsAuthenticated()`, `setResponse()` or `setIsFailedAuthentication()`. Add login-page HTML with `mautic.user_authentication_content`. [code: app/bundles/UserBundle/Event/AuthenticationEvent.php:96-181 @7.x]
+- **Custom login**: listen to `mautic.user_form_authentication` (login form with `integration` field) or `mautic.user_pre_authentication` (`/s/sso_login/*`, `/api/*`) and call `setIsAuthenticated()`, `setResponse()` or `setIsFailedAuthentication()`. Add login-page HTML with `mautic.user_authentication_content`. [code: app/bundles/UserBundle/Event/AuthenticationEvent.php:96-181 @419a08a9b35]
 - **Act as a User from CLI** with `UserTokenSetter::setUser($id)`; otherwise code sees a guest with no permissions. [code: app/bundles/UserBundle/Security/UserTokenSetter.php:18-25 @7.x]
 - Adding a User column: update `User.php` metadata, a migration, the `user:read`/`user:write` API Platform groups and legacy serializer, `UserType`, translations, and check `UserSubscriber` audit output. [code: app/bundles/UserBundle/Entity/User.php:54-149 @7.x]
 - On 7.x, subscribe to both the constant and (on 8.x) the event class; never reference `UserEvents::*` unguarded in code meant for 8.x. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
@@ -99,7 +99,7 @@ Every registered permission and the bit table: references/code-map.md §7–§8.
 - 5.1.0: zxcvbn password strength introduced; complex admin password required at install. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#installing-with-command-line]
 - 7.0.0: timing-safe login; `project:project` permission. [code: app/bundles/UserBundle/Security/TimingSafeFormLoginAuthenticator.php @7.x]
 - 7.2.0: User invitations; `lead:notes` permission with a migration copying Contact levels to Notes. [code: app/bundles/UserBundle/Entity/UserInvite.php @7.x] [code: app/migrations/Version20260501090000.php @7.x]
-- 7.x head after 7.2.1: `is:never_logged_in`; not yet on 8.x. [code: app/bundles/UserBundle/Entity/UserRepository.php:248-249 @7.x]
+- 7.x head after 7.2.1: `is:never_logged_in`; not yet on 8.x. [code: app/bundles/UserBundle/Entity/UserRepository.php:286-287 @7.x]
 - 5.0: logout runs on Symfony's `LogoutEvent`; templates are Twig; each instance generates its own SAML key and certificate when none is configured. [PR #11867] [PR #11580] [PR #12212]
 - 5.1–5.2: the User toggle reads "Active"; the User list gains last login and recent activity; admins changing a User's email or password triggers an email to that User; full-access Roles disable the Permissions tab. [PR #13503] [PR #13074] [PR #13925] [PR #14004]
 - 6.0: form login, SAML, OAuth2 and plugin SSO move to Symfony's authenticator system (bc-break); User preferences are stored in the database; Roles and permission rows get UUIDs. [PR #14219] [PR #14398] [PR #14751]
@@ -114,9 +114,9 @@ Every registered permission and the bit table: references/code-map.md §7–§8.
 - Admins are granted even non-existent levels, so a typo in a permission string passes for admins and throws for everyone else — always test as a non-admin. [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:220-235 @7.x]
 - `marketplace:packages:remove` (`MarketplacePermissions::CAN_REMOVE_PACKAGES`) is checked by the Marketplace remove controllers, but `remove` is not a defined level of the standard set, so for non-admins `isGranted()` should throw `PermissionNotFoundException`. Treat package removal as admin-only in practice. [code: app/bundles/MarketplaceBundle/Security/Permissions/MarketplacePermissions.php:22,33 @7.x] [code: app/bundles/MarketplaceBundle/Controller/Package/RemoveController.php:40 @7.x] [code: app/bundles/CoreBundle/Security/Permissions/AbstractPermissions.php:47-58 @7.x]
 - `rawPermissions` in API responses omit implied levels; compare stored bits, not the raw array. [code: app/bundles/UserBundle/Model/RoleModel.php:92 @7.x]
-- `users.last_active` is only written at login, so for Users it equals `last_login`. [code: app/bundles/UserBundle/Entity/UserRepository.php:29-38 @7.x]
+- `users.last_active` is only written at login, so for Users it equals `last_login`. [code: app/bundles/UserBundle/Entity/UserRepository.php:67-76 @7.x]
 - Admin is a Role flag; there may be several admin Roles and `getSystemAdministrator()` picks the first published User of the first one. [code: app/bundles/UserBundle/Model/UserModel.php:159-169 @7.x]
-- `UserEvents::USER_FORM_POST_LOCAL_PASSWORD_AUTHENTICATION` is never dispatched, and `AuthenticationEvent::isFormLogin()` is always false. [code: app/bundles/UserBundle/Event/AuthenticationEvent.php:63 @7.x]
+- `UserEvents::USER_FORM_POST_LOCAL_PASSWORD_AUTHENTICATION` is never dispatched, and `AuthenticationEvent::isFormLogin()` is always false. [code: app/bundles/UserBundle/Event/AuthenticationEvent.php:65 @7.x]
 - `MAUTIC_SAML_ENABLED=true` without metadata sends every unauthenticated request to `/saml/discovery` while SAML reports "not configured". [code: app/bundles/UserBundle/Security/EntryPoint/MainEntryPoint.php:23-25 @7.x]
 - Docs describe a **Same Role** permission level; no such level exists in 7.2.1 or 8.x code — only own/other. [docs: https://docs.mautic.org/en/7.2/users_roles/managing_roles.html#where-same-role-permissions-apply] [code: app/bundles/CoreBundle/Security/Permissions/AbstractPermissions.php:455-477 @7.x]
 - Devdocs say plugin permissions use a `plugin:` prefix; the code treats the first segment as the permission class name, so use `<name>:<level>:<perm>`. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/permissions.html#using-permissions] [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:215-245 @7.x]

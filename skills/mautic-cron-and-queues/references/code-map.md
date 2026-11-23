@@ -47,11 +47,11 @@ Messenger [code: app/bundles/PointBundle, app/bundles/UserBundle, app/bundles/Pa
 | Parameter | Default | Command it needs | Source |
 |---|---|---|---|
 | `create_custom_field_in_background` | false (read with fallback) | `mautic:custom-field:create-column` / `update-column` / `delete-column` | [code: app/bundles/LeadBundle/Field/Settings/BackgroundSettings.php:18-21 @7.x] |
-| `update_segment_contact_count_in_background` | false | `lead:list:count-cache-update` | [code: app/bundles/LeadBundle/Config/config.php:371 @7.x] |
-| `delete_segment_in_background` | false | `mautic:segment:delete` | [code: app/bundles/LeadBundle/Config/config.php:340 @7.x] |
-| `update_company_mapping_data_in_background` | false | `mautic:company:delete_company_leads`, `mautic:company:update_lead_company` | [code: app/bundles/LeadBundle/Config/config.php:373 @7.x] |
-| `contact_export_in_background` | **true** | `mautic:contacts:scheduled_export` | [code: app/bundles/LeadBundle/Config/config.php:364 @7.x] |
-| `background_import_if_more_rows_than` | 0 (docs: 0 = always background) | `mautic:import` | [code: app/bundles/LeadBundle/Config/config.php:338 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#import-settings] |
+| `update_segment_contact_count_in_background` | false | `lead:list:count-cache-update` | [code: app/bundles/LeadBundle/Config/config.php:367 @7.x] |
+| `delete_segment_in_background` | false | `mautic:segment:delete` | [code: app/bundles/LeadBundle/Config/config.php:336 @7.x] |
+| `update_company_mapping_data_in_background` | false | `mautic:company:delete_company_leads`, `mautic:company:update_lead_company` | [code: app/bundles/LeadBundle/Config/config.php:369 @7.x] |
+| `contact_export_in_background` | **true** | `mautic:contacts:scheduled_export` | [code: app/bundles/LeadBundle/Config/config.php:360 @7.x] |
+| `background_import_if_more_rows_than` | 0 (docs: 0 = always background) | `mautic:import` | [code: app/bundles/LeadBundle/Config/config.php:334 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#import-settings] |
 | `delete_campaign_event_log_in_background` | false | `mautic:campaign:delete-event-logs` | [code: app/bundles/CampaignBundle/Config/config.php:164 @7.x] |
 | `clean_webhook_logs_in_background` | false | `mautic:webhooks:delete_logs` | [code: app/bundles/WebhookBundle/Config/config.php:51 @7.x] |
 | `queue_mode` | `immediate_process` | `mautic:webhooks:process` when `command_process` | [code: app/bundles/WebhookBundle/Config/config.php:54 @7.x] |
@@ -104,11 +104,11 @@ Tables: `messenger_messages` for `doctrine://` (created by Symfony, not by a Mau
 [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#how-to-enable-the-queuing].
 
 Events: no Mautic event constants; `EmailEvents::EMAIL_ON_OPEN` and `PageEvents::PAGE_ON_HIT` are dispatched inside the
-handlers; no listener for Symfony `WorkerMessageFailedEvent` exists [code: app/bundles/EmailBundle/Model/EmailModel.php:496-499 @7.x]
+handlers; no listener for Symfony `WorkerMessageFailedEvent` exists [code: app/bundles/EmailBundle/Model/EmailModel.php:505-508 @7.x]
 [code: app/bundles/PageBundle/Model/PageModel.php:708-711 @7.x].
 
 Permissions: none of its own; the config tab uses ConfigBundle permissions; the test AJAX needs only
-`IS_AUTHENTICATED_REMEMBERED` [code: app/bundles/CoreBundle/Controller/AjaxController.php:76 @7.x].
+`IS_AUTHENTICATED_REMEMBERED` [code: app/bundles/CoreBundle/Controller/AjaxController.php:77 @7.x].
 
 ## 5. CacheBundle and related
 
@@ -146,7 +146,7 @@ Cache parameters: `cache_adapter` and `cache_adapter_tag_aware` (`mautic.cache.a
 | Signals | `app/bundles/CoreBundle/Tests/Unit/ProcessSignal/ProcessSignalServiceTest.php` |
 | Messenger | `app/bundles/MessengerBundle/Tests/` (`Form/Type/ConfigTypeTest.php`, `Message/*Test.php`, `MessageHandler/*Test.php`) |
 | Cache | `app/bundles/CacheBundle/Tests/Cache/CacheProviderTest.php`, `Tests/EventListener/CacheClearSubscriberTest.php` |
-| Command examples | `app/bundles/WebhookBundle/Tests/Command/DeleteWebhookLogsCommandTest.php`, `app/bundles/ReportBundle/Tests/Scheduler/Command/ExportSchedulerCommandTest.php`, `app/bundles/LeadBundle/Tests/Command/ImportCommandTest.php`, `ContactScheduledExportCommandTest.php` |
+| Command examples | `app/bundles/WebhookBundle/Tests/Functional/Command/DeleteWebhookLogsCommandTest.php`, `app/bundles/ReportBundle/Tests/Scheduler/Command/ExportSchedulerCommandTest.php`, `app/bundles/LeadBundle/Tests/Command/ImportCommandTest.php`, `ContactScheduledExportCommandTest.php` |
 | Async email/report path | `app/bundles/ReportBundle/Tests/Controller/ReportControllerFunctionalTest.php:553-596` |
 | Sync hit path | `app/bundles/PageBundle/Tests/Functional/Model/PageHitCookieTest.php` |
 

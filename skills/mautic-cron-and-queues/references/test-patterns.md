@@ -24,7 +24,7 @@ Test-environment defaults: `mailer_dsn=null://null`, `messenger_dsn_email=in-mem
 - Call `$this->em->clear()` before running the command so it loads fresh entities
   [code: .github/prompts/write-test.prompt.md:33-37 @7.x].
 - Override settings before `parent::setUp()`: `$this->configParams['clean_webhook_logs_in_background'] = true;`
-  [code: app/bundles/WebhookBundle/Tests/Command/DeleteWebhookLogsCommandTest.php:18-22 @7.x].
+  [code: app/bundles/WebhookBundle/Tests/Functional/Command/DeleteWebhookLogsCommandTest.php:18-22 @7.x].
 - Commands that `define()` constants (e.g. `MAUTIC_INTEGRATION_SYNC_IN_PROGRESS`) need `#[RunInSeparateProcess]`
   [code: app/bundles/CoreBundle/Test/Extensions/SeparateProcess/SeparateProcess.php:29-31,76-87 @7.x].
 
@@ -59,7 +59,7 @@ final class DeleteWebhookLogsCommandSketchTest extends MauticMysqlTestCase
     }
 }
 ```
-Pattern taken from [code: app/bundles/WebhookBundle/Tests/Command/DeleteWebhookLogsCommandTest.php:18-85 @7.x].
+Pattern taken from [code: app/bundles/WebhookBundle/Tests/Functional/Command/DeleteWebhookLogsCommandTest.php:18-85 @7.x].
 
 ## 3. Testing ModeratedCommand locking
 
@@ -77,7 +77,7 @@ and prints "Script in progress"; (2) a run with a different key is not blocked; 
 
 - Email sends routed through Messenger: with the default `in-memory://default` use `assertQueuedEmailCount(n)`; for
   synchronous sends use `assertEmailCount(n)`; read messages with `getMailerMessages()` /
-  `getMailerMessagesByToAddress()` [code: app/bundles/CampaignBundle/Tests/Controller/Api/CampaignApiControllerFunctionalTest.php:254 @7.x]
+  `getMailerMessagesByToAddress()` [code: app/bundles/CampaignBundle/Tests/Controller/Api/CampaignApiControllerFunctionalTest.php:256 @7.x]
   [code: app/bundles/EmailBundle/Tests/Controller/Api/SMimeFunctionalTest.php:27-28,111-112 @7.x].
 - To make a queued send happen immediately set `$this->configParams['messenger_dsn_email'] = 'sync://';`
   [code: app/bundles/LeadBundle/Tests/Controller/LeadControllerTest.php:57 @7.x].
@@ -107,7 +107,7 @@ and prints "Script in progress"; (2) a run with a different key is not blocked; 
 ## 6. Representative tests to copy
 
 1. `app/bundles/CoreBundle/Tests/Unit/Command/ModeratedCommandTest.php` — locking.
-2. `app/bundles/WebhookBundle/Tests/Command/DeleteWebhookLogsCommandTest.php` — functional command with config override.
+2. `app/bundles/WebhookBundle/Tests/Functional/Command/DeleteWebhookLogsCommandTest.php` — functional command with config override.
 3. `app/bundles/ReportBundle/Tests/Scheduler/Command/ExportSchedulerCommandTest.php` — options and exit codes.
 4. `app/bundles/LeadBundle/Tests/Command/ImportCommandTest.php` — command with signal handling.
 5. `app/bundles/MessengerBundle/Tests/MessageHandler/EmailHitNotificationHandlerTest.php` — handler retry semantics.

@@ -27,12 +27,12 @@
 | `app/bundles/ProjectBundle/Tests/Functional/Controller/AjaxControllerTest.php`, `ProjectPopoverSecurityTest.php` | inline creation, duplicate names, XSS escaping |
 | `app/bundles/ProjectBundle/Tests/Functional/Controller/Api/ProjectApiControllerTest.php`, `ProjectApiV2ControllerTest.php` | legacy and API Platform CRUD and validation |
 
-[code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:17-155 @7.x] [code: app/bundles/CategoryBundle/Tests/Controller/CategoryControllerFunctionalTest.php:59-270 @7.x]
+[code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:17-155 @419a08a9b35] [code: app/bundles/CategoryBundle/Tests/Controller/CategoryControllerFunctionalTest.php:59-270 @7.x]
 
 ## Conventions observed
-- Log out before testing public downloads. Tracking ignores logged-in Users, so a download made while logged in writes no `asset_downloads` row. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:73 @7.x] [code: app/bundles/AssetBundle/Model/AssetModel.php:104-116 @7.x]
-- To read a streamed or binary body, call `$response->sendContent()` inside `ob_start()` / `ob_get_contents()`. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:77-81 @7.x]
-- For remote redirects, call `$this->client->followRedirects(false)` and then `assertResponseRedirects($remotePath)`. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:127-131 @7.x]
+- Log out before testing public downloads. Tracking ignores logged-in Users, so a download made while logged in writes no `asset_downloads` row. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:79 @7.x] [code: app/bundles/AssetBundle/Model/AssetModel.php:104-116 @7.x]
+- To read a streamed or binary body, call `$response->sendContent()` inside `ob_start()` / `ob_get_contents()`. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:83-87 @7.x]
+- For remote redirects, call `$this->client->followRedirects(false)` and then `assertResponseRedirects($remotePath)`. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:175-179 @7.x]
 - AJAX category actions post with `HTTP_X-Requested-With: XMLHttpRequest` and `HTTP_X-CSRF-Token` from `getCsrfToken('mautic_ajax_post')`, then assert on the JSON `flashes`. [code: app/bundles/CategoryBundle/Tests/Controller/CategoryControllerFunctionalTest.php:198-209 @7.x]
 - Each project-aware bundle has a `*ProjectSearchFunctionalTest` that extends `AbstractProjectSearchTestCase` with a data provider. Add one when making a new entity project-aware. [code: app/bundles/AssetBundle/Tests/Controller/AssetProjectSearchFunctionalTest.php:11-33 @7.x]
 
@@ -53,7 +53,7 @@ final class MyAssetDownloadTest extends \Mautic\AssetBundle\Tests\Asset\Abstract
     }
 }
 ```
-This skeleton follows the pattern of `PublicControllerFunctionalTest::testDownloadActionWithUTM`. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:71-97 @7.x]
+This skeleton follows the pattern of `PublicControllerFunctionalTest::testDownloadActionWithUTM`. [code: app/bundles/AssetBundle/Tests/Controller/PublicControllerFunctionalTest.php:71-97 @419a08a9b35]
 
 ## Skeleton: project search for a new project-aware entity
 ```php

@@ -1,6 +1,6 @@
 # Segments — behaviour specification (Mautic 7.x)
 
-All statements describe 7.2.1 (commit 419a08a9b35) unless marked. Code paths are repository-relative.
+All statements describe the 7.x snapshot pinned in SOURCES.md unless marked. Code paths are repository-relative.
 
 ## Contents
 1. Data model and terms
@@ -59,7 +59,7 @@ All statements describe 7.2.1 (commit 419a08a9b35) unless marked. Code paths are
 
 ## 3. Operators: key ↔ UI label ↔ SQL
 
-Keys and expressions come from `OperatorOptions` [code: app/bundles/LeadBundle/Segment/OperatorOptions.php:9-194 @7.x]. Labels come from en_US translations [code: app/bundles/LeadBundle/Translations/en_US/messages.ini:758-784 @7.x] [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:477-493 @7.x].
+Keys and expressions come from `OperatorOptions` [code: app/bundles/LeadBundle/Segment/OperatorOptions.php:9-194 @7.x]. Labels come from en_US translations [code: app/bundles/LeadBundle/Translations/en_US/messages.ini:774-800 @7.x] [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:482-498 @7.x].
 
 | Key | Segment UI label | Expression | Notes |
 |---|---|---|---|
@@ -247,7 +247,7 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 - A manual removal of a filter-added row keeps it with `manually_removed = 1`.
 - An automatic removal of a manually added row does nothing.
 
-9.4 All of these go through `LeadModel::addToLists/removeFromLists` with the manual flags set to true [code: app/bundles/LeadBundle/Model/LeadModel.php:960-973 @7.x] [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:329-334 @7.x] [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:223-227 @7.x] [code: app/bundles/LeadBundle/EventListener/PointSubscriber.php:153-157 @7.x]:
+9.4 All of these go through `LeadModel::addToLists/removeFromLists` with the manual flags set to true [code: app/bundles/LeadBundle/Model/LeadModel.php:960-973 @7.x] [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:330-335 @7.x] [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:222-226 @7.x] [code: app/bundles/LeadBundle/EventListener/PointSubscriber.php:153-157 @7.x]:
 - UI single toggle.
 - Contact-list batch action.
 - API add/remove.
@@ -334,7 +334,7 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 
 ## 12. Counts and caches
 
-12.1 Member count = rows with `manually_removed = 0` [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:286-338 @7.x].
+12.1 Member count = rows with `manually_removed = 0` [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:286-338 @419a08a9b35].
 
 12.2 The cached count lives in `segment.<id>.lead` with TTL `segment_api_count_cache_ttl` (43200). The list page returns 0 on a cache miss [code: app/bundles/LeadBundle/Model/ListModel.php:1430-1468 @7.x].
 
@@ -342,7 +342,7 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 
 12.4 The decrement floors at 0. Every removal decrements, even when the row is kept [code: app/bundles/LeadBundle/Helper/SegmentCountCacheHelper.php:95-106 @7.x] [code: app/bundles/LeadBundle/Model/ListModel.php:879-883 @7.x].
 
-12.5 "Active contacts" = members minus DNC, floored at 0 [code: app/bundles/LeadBundle/Model/ListModel.php:1470-1476 @7.x].
+12.5 "Active contacts" = members minus DNC, floored at 0 [code: app/bundles/LeadBundle/Model/ListModel.php:1470-1476 @419a08a9b35].
 
 ## 13. Lifecycle
 
@@ -350,7 +350,7 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 
 13.2 Saving writes an audit-log entry [code: app/bundles/LeadBundle/EventListener/SegmentSubscriber.php:54-68 @7.x].
 
-13.3 Delete runs in two steps [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:690-699 @7.x] [code: app/bundles/LeadBundle/Model/ListModel.php:194-215 @7.x]:
+13.3 Delete runs in two steps [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:788-797 @7.x] [code: app/bundles/LeadBundle/Model/ListModel.php:194-215 @7.x]:
 1. A soft delete sets `deleted = now` and `is_published = 0`.
 2. Unless `delete_segment_in_background` is set, memberships are removed in batches of 5 000 and the row is hard-deleted.
 
@@ -358,7 +358,7 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 
 13.5 Non-global Segments are visible only to their creator or to users with `viewother`. Preference-centre listing requires both published and `is_preference_center` [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:92-126 @7.x] [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:263-277 @7.x].
 
-13.6 Search commands on the Segment list: `is:global`, `is:published`, `is:unpublished`, `is:mine`, `name:`, `category:`, `filters_field:<alias>` and project [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:429-499 @7.x]. The docs list only `ids:`, `is:global`, `name:` and `category:` [docs: https://docs.mautic.org/en/7.2/search/search_operators.html#companies-search-filters].
+13.6 Search commands on the Segment list: `is:global`, `is:published`, `is:unpublished`, `is:mine`, `name:`, `category:`, `filters_field:<alias>` and project [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:429-499 @419a08a9b35]. The docs list only `ids:`, `is:global`, `name:` and `category:` [docs: https://docs.mautic.org/en/7.2/search/search_operators.html#companies-search-filters].
 
 13.7 Permissions are `lead:lists:{viewown,viewother,editown,editother,create,deleteown,deleteother,full}` [code: app/bundles/LeadBundle/Security/Permissions/LeadPermissions.php:11-45 @7.x].
 
@@ -376,7 +376,7 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 
 ## 15. REST API
 
-15.1 Endpoints under `/api/segments` [code: app/bundles/LeadBundle/Config/config.php:220-244 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/segments.html]:
+15.1 Endpoints under `/api/segments` [code: app/bundles/LeadBundle/Config/config.php:216-240 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/segments.html]:
 - `GET /segments` returns `total` plus `lists`, keyed by id.
 - `GET /segments/{id}` returns a `list` object.
 - `POST /segments/new`.
@@ -391,7 +391,7 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 - `POST /segments/{id}/contacts/add` takes body `ids[]`. It returns `success: 1` and a per-id `details[id].success`. Missing `ids` returns 400.
 - These endpoints add manually. They need edit access to the Contact, and the Segment must be in the user's lists.
 
-15.4 `GET /contacts/list/segments` returns the Segments available to the user. `GET /contacts/{id}/segments` returns one Contact's Segments [code: app/bundles/LeadBundle/Config/config.php:194-223 @7.x].
+15.4 `GET /contacts/list/segments` returns the Segments available to the user. `GET /contacts/{id}/segments` returns one Contact's Segments [code: app/bundles/LeadBundle/Config/config.php:190-219 @7.x].
 
 15.5 For `inLast`/`inNext`, `properties.filter` is `{interval, unit}` [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/segments.html#in-the-last-and-in-the-next-filter].
 
@@ -405,7 +405,7 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 
 16.3 The filter factory runs several times per rebuild, and each run dispatches `LIST_FILTERS_MERGE` [code: app/bundles/LeadBundle/Segment/ContactSegmentService.php:30 @7.x].
 
-16.4 The count query for a single id uses `USE INDEX (manually_removed)` [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:286-338 @7.x].
+16.4 The count query for a single id uses `USE INDEX (manually_removed)` [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:286-338 @419a08a9b35].
 
 16.5 SQL is logged at debug level, and query exceptions at error level [code: app/bundles/LeadBundle/Segment/ContactSegmentService.php:320-375 @7.x].
 

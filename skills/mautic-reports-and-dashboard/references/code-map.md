@@ -24,14 +24,14 @@ All paths are relative to the repo root at 7.2.1. `RB` = `app/bundles/ReportBund
 | `Mautic\DashboardBundle\Entity\Widget` (extends `FormEntity`) | `widgets` | `name`, `type`, `width`, `height`, `cache_timeout`, `ordering`, `params` (array). Runtime-only fields: `template`, `errorMessage`, `cached`, `loadTime`, `templateData`. `toArray()` defines the export JSON shape. | [code: app/bundles/DashboardBundle/Entity/Widget.php:53-104,331-342 @7.x] |
 | StatsBundle | none | In-memory DAOs: `StatsDAO`, `StatDAO`, `YearStat`…`HourStat`, `WeekStat` | [code: app/bundles/StatsBundle/Aggregate/Collection/DAO/StatsDAO.php:34-129 @7.x] |
 
-Repositories: `ReportRepository` handles search commands and the widget Report list [code: app/bundles/ReportBundle/Entity/ReportRepository.php:46-135 @7.x]. `SchedulerRepository::getScheduledReportsForExport()` returns due schedulers [code: app/bundles/ReportBundle/Entity/SchedulerRepository.php:16-40 @7.x]. `WidgetRepository::updateOrdering()` [code: app/bundles/DashboardBundle/Entity/WidgetRepository.php:17-41 @7.x].
+Repositories: `ReportRepository` handles search commands and the widget Report list [code: app/bundles/ReportBundle/Entity/ReportRepository.php:46-135 @419a08a9b35]. `SchedulerRepository::getScheduledReportsForExport()` returns due schedulers [code: app/bundles/ReportBundle/Entity/SchedulerRepository.php:16-40 @7.x]. `WidgetRepository::updateOrdering()` [code: app/bundles/DashboardBundle/Entity/WidgetRepository.php:17-41 @7.x].
 
 ## 2. Services and models
 | Class / service id | Path | Role |
 |---|---|---|
 | `ReportModel` (`mautic.report.model.report`) | `RB/Model/ReportModel.php:50` | CRUD and events, `buildAvailableReports` (`:187-224`), form lists (`:289-370`), `getReportData` (`:446-666`), `exportResults` (`:382-439`), dependency lookups (`:805-888`), read replica (`:893-901`) [code: app/bundles/ReportBundle/Model/ReportModel.php:50-901 @7.x] |
 | `ReportGenerator` (not a service) | `RB/Generator/ReportGenerator.php:52-83` | Instantiates `MauticReportBuilder` and builds the form [code: app/bundles/ReportBundle/Generator/ReportGenerator.php:52-83 @7.x] |
-| `MauticReportBuilder` (final, not a service) | `RB/Builder/MauticReportBuilder.php` | Report → DBAL QueryBuilder; `OPERATORS` at `:23-70` [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:23-133 @7.x] |
+| `MauticReportBuilder` (final, not a service) | `RB/Builder/MauticReportBuilder.php` | Report → DBAL QueryBuilder; `OPERATORS` at `:23-70` [code: app/bundles/ReportBundle/Builder/MauticReportBuilder.php:24-134 @7.x] |
 | `ReportDataResult` | `RB/Crate/ReportDataResult.php` | Headers, types, totals across batches [code: app/bundles/ReportBundle/Crate/ReportDataResult.php:42-245 @7.x] |
 | `ReportDataAdapter`, `ReportExportOptions`, `ReportExporter`, `ReportFileWriter`, `ExportHandler` | `RB/Adapter/`, `RB/Model/` | Scheduled export pipeline [code: app/bundles/ReportBundle/Model/ReportExporter.php:29-90 @7.x] |
 | `CsvExporter`, `ExcelExporter`, `ExportResponse` | `RB/Model/` | UI export formats [code: app/bundles/ReportBundle/Model/CsvExporter.php:24-83 @7.x] |
@@ -45,7 +45,7 @@ Repositories: `ReportRepository` handles search commands and the widget Report l
 | `Dashboard\Widget` (`mautic.dashboard.widget`) | `DB/Dashboard/Widget.php` | Owner-checked load; date range to session; `FORMAT_HUMAN = 'M j, Y'` [code: app/bundles/DashboardBundle/Dashboard/Widget.php:15-74 @7.x] |
 | `WidgetDetailEventFactory` | `DB/Factory/WidgetDetailEventFactory.php:28-35` | Creates `WidgetDetailEvent` with a tag-aware cache provider [code: app/bundles/DashboardBundle/Factory/WidgetDetailEventFactory.php:28-35 @7.x] |
 | `Collector` (`mautic.stats.aggregate.collector`), `StatCollection`, `Calculator`, `FetchOptions` | `SB/Aggregate/`, `SB/Event/Options/` | Stats aggregation [code: app/bundles/StatsBundle/Aggregate/Collector.php:21-32 @7.x] |
-| `ChartQuery`, `DateRangeUnitTrait` | `app/bundles/CoreBundle/Helper/Chart/` | Time-bucketed chart queries [code: app/bundles/CoreBundle/Helper/Chart/ChartQuery.php:300-380,575-589 @7.x] |
+| `ChartQuery`, `DateRangeUnitTrait` | `app/bundles/CoreBundle/Helper/Chart/` | Time-bucketed chart queries [code: app/bundles/CoreBundle/Helper/Chart/ChartQuery.php:324-404,599-613 @7.x] |
 
 Other ReportBundle service ids: `.csv_exporter`, `.excel_exporter`, `.report_exporter`, `.schedule_model`, `.report_export_options`, `.report_file_writer`, `.export_handler`, `.scheduler_builder`, `.scheduler_template_factory`, `.scheduler_date_builder`, `.scheduler_planner`, `.send_schedule`, `.file_handler`, `.message_schedule`, `.report_data_adapter` (all prefixed `mautic.report.`), plus `mautic.report.repository.scheduler` and `mautic.report.validator.schedule_is_valid_validator` [code: app/bundles/ReportBundle/Config/services.php:26-51 @7.x].
 
@@ -188,7 +188,7 @@ StatsBundle has no routes. `GET /api/stats` belongs to the API/Core area (see ma
 | `report_temp_dir` | `%mautic.application_dir%/media/files/temp` | Scheduled CSVs and `csv_reports/` permanent zips | [code: app/bundles/ReportBundle/Config/config.php:79-84 @7.x] |
 | `report_export_batch_size` | 1000 | Rows per batch (scheduled and UI CSV) | same |
 | `report_export_max_filesize_in_bytes` | 5000000 | Attach / zip / link threshold | same |
-| `csv_always_enclose` | false | Quote every CSV cell (Configuration → Report settings) | same; [code: app/bundles/ReportBundle/Form/Type/ConfigType.php:18-30 @7.x] |
+| `csv_always_enclose` | false | Quote every CSV cell (Configuration → Report settings) | same; [code: app/bundles/ReportBundle/Form/Type/ConfigType.php:18-30 @419a08a9b35] |
 | `dashboard_import_dir` | `%mautic.application_dir%/app/assets/dashboards` | Global dashboard files | [code: app/bundles/DashboardBundle/Config/config.php:44-47 @7.x] |
 | `dashboard_import_user_dir` | `%mautic.application_dir%/media/dashboards` | Per-User saved dashboards (`<dir>/<userId>/`) | same; [code: app/bundles/CoreBundle/Helper/PathsHelper.php:202-215 @7.x] |
 | `cached_data_timeout` | 10 (minutes) | Widget cache default | [code: app/bundles/CoreBundle/Config/config.php:698 @7.x] |
@@ -201,11 +201,11 @@ StatsBundle has no routes. `GET /api/stats` belongs to the API/Core area (see ma
 | Operation | Check | Citation |
 |---|---|---|
 | List | `viewown` or `viewother`; forced `createdBy = me` without `viewother`; audit-log hidden for non-admins | [code: app/bundles/ReportBundle/Controller/ReportController.php:54-74 @7.x] |
-| View / export / download / send now / widget | `hasEntityAccess(viewown, viewother, createdBy)` | [code: app/bundles/ReportBundle/Controller/ReportController.php:555,787,875 @7.x] |
-| Export | plus admin or `report:export:enable` | [code: app/bundles/ReportBundle/Controller/ReportController.php:695,789-791 @7.x] |
-| Create / clone | `report:reports:create` (+ view for clone) | [code: app/bundles/ReportBundle/Controller/ReportController.php:142-148,434-436 @7.x] |
-| Edit | only `viewown/viewother` checked | [code: app/bundles/ReportBundle/Controller/ReportController.php:310-316 @7.x] |
-| Delete | `deleteown/deleteother` | [code: app/bundles/ReportBundle/Controller/ReportController.php:179-185,246-251 @7.x] |
+| View / export / download / send now / widget | `hasEntityAccess(viewown, viewother, createdBy)` | [code: app/bundles/ReportBundle/Controller/ReportController.php:556,788,876 @7.x] |
+| Export | plus admin or `report:export:enable` | [code: app/bundles/ReportBundle/Controller/ReportController.php:696,790-792 @7.x] |
+| Create / clone | `report:reports:create` (+ view for clone) | [code: app/bundles/ReportBundle/Controller/ReportController.php:143-149,435-437 @7.x] |
+| Edit | only `viewown/viewother` checked | [code: app/bundles/ReportBundle/Controller/ReportController.php:311-317 @7.x] |
+| Delete | `deleteown/deleteother` | [code: app/bundles/ReportBundle/Controller/ReportController.php:180-186,247-252 @7.x] |
 | API GET by id | `report:reports:view`, then owner if no `viewother` | [code: app/bundles/ReportBundle/Controller/Api/ReportApiController.php:67-86 @7.x] |
 | Dashboard | none (per-owner isolation); widget types gated by bundle permissions | [code: app/bundles/DashboardBundle/Model/DashboardModel.php:60-63 @7.x] |
 

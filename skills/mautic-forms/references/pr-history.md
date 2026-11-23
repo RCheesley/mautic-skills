@@ -245,7 +245,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 
 ## 7. Open questions
 - Resolved: kiosk mode turns off progressive profiling and auto-fill in 7.x (behaviour.md B47, B51) [PR #2022] [code: app/bundles/FormBundle/Entity/Field.php:818-821 @7.x] [code: app/bundles/FormBundle/Model/FormModel.php:383 @7.x].
-- Resolved: [PR #15098] (preview URL panel) was said to be merged by accident. A revert commit (`cd1bbbd7a35`, 2025-07-04) exists only on a contributor branch, and its change did not survive the merge. The panel is in 7.0.0, 7.2.1 and the 7.x head [code: app/bundles/FormBundle/Resources/views/Form/details.html.twig:334-370 @7.x].
+- Resolved: [PR #15098] (preview URL panel) was said to be merged by accident. A revert commit (`cd1bbbd7a35`, 2025-07-04) exists only on a contributor branch, and its change did not survive the merge. The panel is in 7.0.0, 7.2.1 and the 7.x head [code: app/bundles/FormBundle/Resources/views/Form/details.html.twig:334-370 @419a08a9b35].
 - Resolved: the [PR #16123] commands are `mautic:forms:delete-results-table` and `mautic:forms:delete-orphan-form-submission-records-from-form-results-table`. They first ship in 7.2.0, so the "before 7.x" note in version-notes.md is wrong [code: app/bundles/FormBundle/Command/DeleteOrphanFormResultsTableCommand.php:24 @7.x].
 - Resolved: the [PR #17137] required To applies only where `addToBcBccFields($builder, true)` is called. In 7.x that is only `SubmitActionEmailType` [code: app/bundles/FormBundle/Form/Type/SubmitActionEmailType.php:128 @7.x].
 - Resolved: `noIndex` defaults to true for new forms since 7.0.0 [PR #15255] [code: app/bundles/FormBundle/Entity/Form.php:178 @7.x].

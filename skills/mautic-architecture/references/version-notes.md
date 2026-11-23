@@ -32,7 +32,7 @@
 - 7.0: `UuidTrait::isValidUuid()` deprecated in favour of `UuidHelper::isValidUuid()`. [code: app/bundles/CoreBundle/Entity/UuidTrait.php:33-43 @7.x]
 - 7.2: string service aliases `mautic.helper.encryption`, `mautic.core.service.flashbag`, `mautic.database.version.provider`, `mautic.doctrine.loader.mautic_fixtures_loader`, `mautic.generated.columns.provider`, `mautic.helper.twig.menu`, `mautic.route_loader` deprecated. [code: app/bundles/CoreBundle/Config/services.php:189-190 @7.x] [code: app/bundles/CoreBundle/Config/services.php:342-354 @7.x]
 - 7.2: menu items that define only a `uri` render. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/config.html#menu-item-definitions]
-- 7.x stack: PHP ~8.2, Symfony ~7.4, Doctrine ORM 2.20 / DBAL 3.7, PHPUnit 11.5, `twbs/bootstrap 5.3.8` (after 7.2.1, unreleased [PR #17767]; 7.2.1 ships `bootstrap-sass` 3.4.1), Symfony AssetMapper + Sass bundle for admin CSS. [code: app/composer.json:15-105 @7.x] [code: composer.json:28-54 @7.x] [code: app/config/config.php:50-73 @7.x]
+- 7.x stack: PHP ~8.2, Symfony ~7.4, Doctrine ORM 2.20 / DBAL 3.7, PHPUnit 11.5, `twbs/bootstrap 5.3.8` (after 7.2.1, unreleased [PR #17767]; 7.2.1 ships `bootstrap-sass` 3.4.1), Symfony AssetMapper + Sass bundle for admin CSS. [code: app/composer.json:15-105 @419a08a9b35] [code: composer.json:28-54 @419a08a9b35] [code: app/config/config.php:50-73 @7.x]
 
 ## 8.x delta (development branch, unreleased)
 Treat 8.x as unreleased: `app/release_metadata.json@8.x` still says 7.2.0, and 7.2.1 work has not been merged forward. [code: app/release_metadata.json @8.x]

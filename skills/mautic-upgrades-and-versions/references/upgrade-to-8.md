@@ -312,7 +312,7 @@ The goal is to catch the two failure modes that a 7.x-only test run misses: fata
 - Write one functional test per listener that performs the real action (save a Contact, submit a Form, run the campaign action) and asserts the listener's side effect. A unit test that calls the handler directly cannot detect the silent-failure trap [code: UPGRADE-8.0.md @8.x "Changed code"].
 
 **PHPUnit across versions.**
-- 7.x uses PHPUnit 11.5; 8.x uses PHPUnit 13 [code: composer.json @7.x] [code: composer.json @8.x]. Write tests that run on both: data providers must be `static` (core even patches Twig's `IntegrationTestCase` for this on PHPUnit 11) [code: composer.json:234-238 @7.x].
+- 7.x uses PHPUnit 11.5; 8.x uses PHPUnit 13 [code: composer.json @7.x] [code: composer.json @8.x]. Write tests that run on both: data providers must be `static` (core even patches Twig's `IntegrationTestCase` for this on PHPUnit 11) [code: composer.json:232-236 @7.x].
 - On 8.x more classes are `final`; mocking them needs the `DG\BypassFinals` bootstrap, which core enables in `app/tests/bootstrap.php@8.x`. Prefer interfaces or real objects so the same test runs on 7.x [PR #17366] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html#final-classes].
 - Do not create doubles of `Request`, `InputBag` or `Router` (final under Symfony 8) [PR #17392].
 - Functional tests build the schema from entity metadata and mark migrations executed; they do not exercise migrations. Test plugin migrations separately (see mautic-plugin-development) [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:159 @7.x].

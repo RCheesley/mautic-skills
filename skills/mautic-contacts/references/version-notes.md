@@ -32,7 +32,7 @@
 - 7.1: the unique-identifier flag is re-enabled for company fields; deleting a field used by a segment returns 409 through the API; `campaign:` search. [PR #15784] [PR #15882] [PR #15727]
 - 7.2.0: companies are soft-deleted with cron cleanup; merge moves company links; `lead:notes` permission; `viewown` API fallback to unowned contacts the user created; import "Create new Contacts?"; tag merge events; API keeps number fractions. [PR #16176] [PR #16247] [PR #16067] [PR #16022] [PR #17176] [PR #15331] [PR #16591]
 - 7.2.1: company names with `&` decoded once; "Import Another" follows the object type. [PR #17266] [PR #17221]
-- 7.2: `AjaxController::addLeadUtmTagsAction` deprecated. [code: app/bundles/LeadBundle/Controller/AjaxController.php:631 @7.x]
+- 7.2: `AjaxController::addLeadUtmTagsAction` deprecated. [code: app/bundles/LeadBundle/Controller/AjaxController.php:638 @7.x]
 - 7.x after 7.2.1, not yet released (documented in the 8.0 docs branch, not yet on the 8.x code branch): `POST /api/companies/batch/addcontacts` [PR #16512], "Any associated company" segment filters [PR #15800], Quick Add "Save & New" and "No owner" in batch Change Owner [PR #16849], custom-field quick filters [PR #16872], email confirmation before the Preference Center [PR #16870]. [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:121-153 @7.x] [docs: https://docs.mautic.org/en/8.0/contacts/manage_contacts.html#quick-add] [docs: https://docs.mautic.org/en/8.0/companies/companies_overview.html#company-segments]
 
 ## 8.x delta (unreleased, branch at 11599729491)

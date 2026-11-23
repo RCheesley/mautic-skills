@@ -52,7 +52,7 @@ The rebuild adds matching Contacts and removes non-matching ones. Manually added
 | Matches pattern / Does not match pattern | `regexp` / `!regexp` |
 | In the last / In the next | `inLast` / `inNext` |
 
-[code: app/bundles/LeadBundle/Translations/en_US/messages.ini:758-781 @7.x] [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:491 @7.x] [docs: https://docs.mautic.org/en/7.2/segments/manage_segments.html#operators]
+[code: app/bundles/LeadBundle/Translations/en_US/messages.ini:774-797 @7.x] [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:496 @7.x] [docs: https://docs.mautic.org/en/7.2/segments/manage_segments.html#operators]
 
 ## Documented text matching
 Documented behaviour [docs: https://docs.mautic.org/en/7.2/segments/manage_segments.html#matching-part-of-a-string]:
@@ -100,7 +100,7 @@ Behavioural date filters use the most recent occurrence [docs: https://docs.maut
 ## Search
 - Segment list docs: `ids:`, `is:global`, `name:`, `category:` [docs: https://docs.mautic.org/en/7.2/search/search_operators.html#companies-search-filters].
 - Contact list: `segment:{alias}` [docs: https://docs.mautic.org/en/7.2/search/search_operators.html#contacts-search-filters].
-- Code also supports `is:published`, `is:unpublished`, `is:mine` and `filters_field:` [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:429-499 @7.x].
+- Code also supports `is:published`, `is:unpublished`, `is:mine` and `filters_field:` [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:429-499 @419a08a9b35].
 
 ## REST (summary)
 - Envelope: `list` for one Segment, and `lists` keyed by id for many. List parameters: `search`, `start`, `limit` (30), `orderBy` (snake_case), `orderByDir`, `publishedOnly`, `minimal` [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/segments.html#list-segments].

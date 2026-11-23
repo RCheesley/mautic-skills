@@ -1,6 +1,6 @@
 # Webhooks — behaviour specification (Mautic 7.x)
 
-Authoritative for Mautic 7.x (commit 419a08a9b35: release 7.2.1 plus unreleased merged PRs). Paths are relative to the Mautic repo root; `WB` = `app/bundles/WebhookBundle`.
+Authoritative for Mautic 7.x (the 7.x snapshot pinned in SOURCES.md). Paths are relative to the Mautic repo root; `WB` = `app/bundles/WebhookBundle`.
 Every item ends with its source. Where docs and code disagree, the code wins and the discrepancy is listed in §10.
 
 ## Contents
@@ -36,11 +36,11 @@ Every item ends with its source. Where docs and code disagree, the code wins and
 
 2.3 `eventsOrderbyDir` must be null, `ASC` or `DESC`; null means "use the global `events_orderby_dir`". [code: app/bundles/WebhookBundle/Entity/Webhook.php:191-227 @7.x] [code: app/bundles/WebhookBundle/Model/WebhookModel.php:613-622 @7.x]
 
-2.4 The form pre-fills `secret` with `EncryptionHelper::generateKey()`; a Webhook saved without a secret (e.g. via API) gets one generated on save. [code: app/bundles/WebhookBundle/Form/Type/WebhookType.php:68-80 @7.x] [code: app/bundles/WebhookBundle/Model/WebhookModel.php:153-160 @7.x]
+2.4 The form pre-fills `secret` with `EncryptionHelper::generateKey()`; a Webhook saved without a secret (e.g. via API) gets one generated on save. [code: app/bundles/WebhookBundle/Form/Type/WebhookType.php:68-80 @419a08a9b35] [code: app/bundles/WebhookBundle/Model/WebhookModel.php:153-160 @7.x]
 
 2.5 Only published Webhooks receive events: event lookup filters `isPublished = 1`. Unpublish a Webhook to pause it. Events raised while it is unpublished are not queued for it. [code: app/bundles/WebhookBundle/Entity/EventRepository.php:15-30 @7.x]
 
-2.6 Global settings (Configuration → Webhook Settings) expose only `queue_mode`, `events_orderby_dir`, `webhook_email_details` and `webhook_allowed_private_addresses`. All limits and timeouts must be set in `config/local.php`. [code: app/bundles/WebhookBundle/Form/Type/ConfigType.php:19-81 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/webhooks/getting_started.html#configuring-webhooks]
+2.6 Global settings (Configuration → Webhook Settings) expose only `queue_mode`, `events_orderby_dir`, `webhook_email_details` and `webhook_allowed_private_addresses`. All limits and timeouts must be set in `config/local.php`. [code: app/bundles/WebhookBundle/Form/Type/ConfigType.php:19-81 @419a08a9b35] [devdocs: https://devdocs.mautic.org/en/7.2/webhooks/getting_started.html#configuring-webhooks]
 
 2.7 Docs recommend one Webhook per consuming app, to limit where each secret is exposed. [devdocs: https://devdocs.mautic.org/en/7.2/webhooks/getting_started.html#creating-a-webhook]
 
@@ -372,7 +372,7 @@ Docs say the payload equals `email_on_send`; the code sends only `stat` (§10). 
 
 11.1 The Campaign action `campaign.sendwebhook` is a separate feature: it does not use the `Webhook` entity, the queue, the signature header or the private-address check; it calls `mautic.http.client` directly. [code: app/bundles/WebhookBundle/Helper/CampaignHelper.php:24,79-112 @7.x] [code: app/bundles/WebhookBundle/Config/services.php:26-28 @7.x]
 
-11.2 Fields: `url`, `method`, `headers`, `additional_data`, `timeout` (default 10 s; this timeout is applied). URL, headers and values accept `{contactfield=...}` tokens. [code: app/bundles/WebhookBundle/Form/Type/CampaignEventSendWebhookType.php:26-101 @7.x] [code: app/bundles/WebhookBundle/EventListener/CampaignSubscriber.php:43-53 @7.x]
+11.2 Fields: `url`, `method`, `headers`, `additional_data`, `timeout` (default 10 s; this timeout is applied). URL, headers and values accept `{contactfield=...}` tokens. [code: app/bundles/WebhookBundle/Form/Type/CampaignEventSendWebhookType.php:26-101 @419a08a9b35] [code: app/bundles/WebhookBundle/EventListener/CampaignSubscriber.php:43-53 @7.x]
 
 11.3 `get` appends data as a query string; `post`/`put`/`patch` send form params, or JSON when a `Content-Type: application/json` header is configured; `delete` sends headers only. [code: app/bundles/WebhookBundle/Helper/CampaignHelper.php:79-112 @7.x]
 

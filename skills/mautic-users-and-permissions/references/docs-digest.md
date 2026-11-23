@@ -20,7 +20,7 @@ code wins; discrepancies are flagged with **Code differs** and repeated in SKILL
 - Contact permission areas: Contacts, Notes, Segments, Custom Fields (manage), Import. [docs: https://docs.mautic.org/en/7.2/users_roles/managing_roles.html#contact-permissions]
 - Notes permissions follow **Note ownership**, not Contact ownership; "Edit own" Notes allows editing own Notes on Contacts owned by others. On upgrade each non-admin Role receives the Notes access it had for Contacts. [docs: https://docs.mautic.org/en/7.2/users_roles/managing_roles.html#contact-permissions]
 - Cloning: the clone icon (only shown with Roles **Create**) opens the edit screen pre-filled with "Clone of [name]", description, Full System Access and permissions; nothing is created until saved. [docs: https://docs.mautic.org/en/7.2/users_roles/managing_roles.html#cloning-a-role]
-- "By default Mautic creates new Users with the Administrator Role." **Code differs (partly):** the Role field has no default value; it lists published Roles ordered by name, so on a fresh install the only option is "Administrators". [docs: https://docs.mautic.org/en/7.2/users_roles/managing_roles.html] [code: app/bundles/UserBundle/Form/Type/UserType.php:209-224 @7.x]
+- "By default Mautic creates new Users with the Administrator Role." **Code differs (partly):** the Role field has no default value; it lists published Roles ordered by name, so on a fresh install the only option is "Administrators". [docs: https://docs.mautic.org/en/7.2/users_roles/managing_roles.html] [code: app/bundles/UserBundle/Form/Type/UserType.php:209-224 @419a08a9b35]
 
 ## 2. Users (user docs)
 
@@ -31,7 +31,7 @@ code wins; discrepancies are flagged with **Code differs** and repeated in SKILL
 - A User's time zone is used for Email scheduling and other features. [docs: https://docs.mautic.org/en/7.2/users_roles/managing_users.html]
 - **Invite your team** (Users page or profile menu) needs Users **Create**; enter email and Role. The link expires after 48 hours; re-inviting invalidates earlier invitations; only addresses not belonging to an existing User can be invited. [docs: https://docs.mautic.org/en/7.2/users_roles/managing_users.html#inviting-a-user-by-email]
 - The registration form pre-fills email and Role; the invitee supplies username, names, password + confirmation and language; **Create Account** redirects to login. [docs: https://docs.mautic.org/en/7.2/users_roles/managing_users.html#completing-the-invitation]
-- (8.0 docs) "Never logged in" quick filter and `is:never_logged_in`. The code is on the 7.x branch head, not in the 7.2.1 tag, and not yet on 8.x. [docs: https://docs.mautic.org/en/8.0/users_roles/managing_users.html#filtering-users-who-have-never-logged-in] [code: app/bundles/UserBundle/Entity/UserRepository.php:248-249,310 @7.x]
+- (8.0 docs) "Never logged in" quick filter and `is:never_logged_in`. The code is on the 7.x branch head, not in the 7.2.1 tag, and not yet on 8.x. [docs: https://docs.mautic.org/en/8.0/users_roles/managing_users.html#filtering-users-who-have-never-logged-in] [code: app/bundles/UserBundle/Entity/UserRepository.php:286-287,348 @7.x]
 - Installer: "Mautic requires a complex admin password from version 5.1"; DDEV default login `admin` / `Maut1cR0cks!`. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#installing-with-command-line] [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#install-mautic-using-ddev]
 
 ## 3. SAML authentication (user docs)

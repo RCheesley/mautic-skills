@@ -9,8 +9,8 @@ indexes every skill.
 
 ## What the skills cover
 
-- **Authoritative version:** Mautic 7.x, the head of the upstream `7.x` branch at commit `419a08a9b35` (2026-10-14).
-  That is release 7.2.1 plus 87 merged pull requests not yet released. Skills mark behaviour from those pull requests.
+- **Authoritative version:** Mautic 7.x, the head of the upstream `7.x` branch at commit `838c9c772ec` (2026-11-19).
+  That is release 7.2.2 plus 181 merged pull requests bound for 7.3. Skills mark behaviour from those pull requests.
 - **Next major:** Mautic 8.x is in development. Every skill has version notes for what changes there, and
   `mautic-upgrades-and-versions` holds the full 7.x to 8.x guide.
 - **Older versions:** differences in 5.x and 6.x are called out where the sources show them. Earlier versions appear
@@ -95,10 +95,13 @@ project instead, copy `skills/*` into that project's skills directory, for examp
 
 | Script | Purpose |
 |---|---|
-| `scripts/harvest-prs.py` | Download every merged pull request on mautic/mautic, with comments, as JSONL |
+| `scripts/harvest-prs.py` | Download merged pull requests on mautic/mautic, with comments, as JSONL (`--since DATE` for a delta) |
 | `scripts/bucket-prs.py` | Filter noise and split the pull request corpus by product area into chunks |
 | `scripts/crawl-kb.py` | Crawl the English kb.mautic.org articles |
 | `scripts/check-citations.py` | Report statements in skills that carry no source tag |
+| `scripts/check-pr-tags.py` | Fail if any `[PR #N]` tag is not a merged pull request |
+| `scripts/remap-code-citations.py` | Move `[code: path:line]` citations to a new snapshot; pin the ones whose code changed |
+| `scripts/relabel-released.py` | List statements marked unreleased whose pull requests are now in a release tag |
 
 ### Pull request history
 
@@ -108,10 +111,16 @@ The corpus is every merged pull request on mautic/mautic up to 2026-10-15 (7,422
 mechanical pull requests. `mautic-contributing` collects the project-wide norms: branch and release policy,
 backward compatibility and deprecation, review and testing rules, and how those norms changed over time.
 
-## Updating for a new Mautic release
+## Updating to a new snapshot
 
-1. Move the code snapshot: create a worktree of the new tag and update the commit in `SOURCES.md`.
-2. Re-run the code checks that cite line numbers. A moved line is the most common kind of staleness.
-3. Diff the docs branches and add new behaviour to each `docs-digest.md` and `version-notes.md`.
-4. Harvest new pull requests, bucket them and append to each `pr-history.md`.
-5. Run `scripts/check-citations.py` before committing.
+1. Fetch upstream and create worktrees for the new `7.x` and `8.x` heads and the latest release tag.
+2. Run `scripts/remap-code-citations.py --apply --pin-changed` for `7.x` and for `8.x`. Unchanged citations move to
+   the new line numbers; citations whose code changed are pinned to the old commit and listed in the report.
+3. Update the commits and the release description in `SOURCES.md`, `README.md` and `AGENTS.md`. File headers point
+   at `SOURCES.md`, so they do not need editing.
+4. Run `scripts/relabel-released.py` against the new release tags and relabel what has shipped.
+5. Harvest the pull requests merged since the last harvest (`harvest-prs.py --since`), bucket them by area, and give
+   each area's new pull requests, pinned citations and docs diffs to one agent. It re-checks the pinned claims, moves
+   them back to `@7.x` or `@8.x`, and updates `behaviour.md`, `pr-history.md` and `version-notes.md`.
+6. Diff the docs branches and the KB crawl and update each `docs-digest.md`.
+7. Run `scripts/check-citations.py` and `scripts/check-pr-tags.py` before committing.

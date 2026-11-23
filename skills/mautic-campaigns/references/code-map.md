@@ -31,15 +31,15 @@ MySQL generated columns `generated_date_added_{hour,day,week,month,year}` are ad
 ## 2. Repositories
 | Repository | Notable methods | Source |
 |---|---|---|
-| `CampaignRepository` | `getEntities()` excludes deleted; `setCampaignAsDeleted()`; `getPendingContactIds()` (kickoff); `findStuckEventsToExecute()`; `getCampaignPublishAndVersionData()` (FOR UPDATE); `getPublishedCampaigns()` | [code: app/bundles/CampaignBundle/Entity/CampaignRepository.php:25-827 @7.x] |
+| `CampaignRepository` | `getEntities()` excludes deleted; `setCampaignAsDeleted()`; `getPendingContactIds()` (kickoff); `findStuckEventsToExecute()`; `getCampaignPublishAndVersionData()` (FOR UPDATE); `getPublishedCampaigns()` | [code: app/bundles/CampaignBundle/Entity/CampaignRepository.php:25-827 @419a08a9b35] |
 | `LeadRepository` | `getCampaignContactsBySegments`, `getOrphanedContacts`, `getInactiveContacts`, `getContactRotations`, `incrementCampaignRotationForContacts`, `updateLead` (merge) | [code: app/bundles/CampaignBundle/Entity/LeadRepository.php:92-660 @7.x] |
 | `LeadEventLogRepository` | `getScheduled`, `getScheduledByIds`, `getScheduledCounts`, `unscheduleEvents`, `getCampaignLogCounts`, `getLeadLogs`, `getUpcomingEvents`, `markEventLogsQueued` | [code: app/bundles/CampaignBundle/Entity/LeadEventLogRepository.php:67-742 @7.x] |
-| `EventRepository` | `getContactPendingEvents` (real time), `setEventsAsDeletedWithRedirect`, failed-count helpers | [code: app/bundles/CampaignBundle/Entity/EventRepository.php:56-533 @7.x] |
+| `EventRepository` | `getContactPendingEvents` (real time), `setEventsAsDeletedWithRedirect`, failed-count helpers | [code: app/bundles/CampaignBundle/Entity/EventRepository.php:56-533 @419a08a9b35] |
 
 ## 3. Services and models
 | Class | Responsibility | Source |
 |---|---|---|
-| `Model/CampaignModel` | CRUD + lifecycle events, `setEvents()`, `setCanvasSettings()`, `setLeadSources()`, `transactionalCampaignUnPublish()` | [code: app/bundles/CampaignBundle/Model/CampaignModel.php:101-936 @7.x] |
+| `Model/CampaignModel` | CRUD + lifecycle events, `setEvents()`, `setCanvasSettings()`, `setLeadSources()`, `transactionalCampaignUnPublish()` | [code: app/bundles/CampaignBundle/Model/CampaignModel.php:101-936 @419a08a9b35] |
 | `Model/EventModel` | soft delete with redirect, delete events | [code: app/bundles/CampaignBundle/Model/EventModel.php:74-142 @7.x] |
 | `Model/EventLogModel` | API log edits via `EventScheduler::rescheduleLogs()` | [code: app/bundles/CampaignBundle/Model/EventLogModel.php:82-213 @7.x] |
 | `Model/SummaryModel` | summary buffering/backfill | [code: app/bundles/CampaignBundle/Model/SummaryModel.php:41-169 @7.x] |
@@ -47,9 +47,9 @@ MySQL generated columns `generated_date_added_{hour,day,week,month,year}` are ad
 | `Executioner/*Executioner` | kickoff, scheduled, inactive, real-time, event | [code: app/bundles/CampaignBundle/Executioner/EventExecutioner.php:109-425 @7.x] |
 | `Executioner/Scheduler/EventScheduler` + `Mode/{Interval,DateTime,Optimized}` | dates, rescheduling, republish | [code: app/bundles/CampaignBundle/Executioner/Scheduler/EventScheduler.php:89-433 @7.x] |
 | `Executioner/Dispatcher/{Action,Condition,Decision,LegacyEvent}Dispatcher` | per-type dispatch | [code: app/bundles/CampaignBundle/Executioner/Dispatcher/ActionDispatcher.php:35-124 @7.x] |
-| `Executioner/Logger/EventLogger` | log creation/persistence | [code: app/bundles/CampaignBundle/Executioner/Logger/EventLogger.php:47-219 @7.x] |
+| `Executioner/Logger/EventLogger` | log creation/persistence | [code: app/bundles/CampaignBundle/Executioner/Logger/EventLogger.php:47-219 @419a08a9b35] |
 | `Executioner/ContactFinder/Limiter/ContactLimiter` | command option limits | [code: app/bundles/CampaignBundle/Executioner/ContactFinder/Limiter/ContactLimiter.php:41-121 @7.x] |
-| `Executioner/Helper/{Decision,Inactive,EventRedirection,Notification}Helper` | decision rules, inactivity, redirects, notifications | [code: app/bundles/CampaignBundle/Executioner/Helper/DecisionHelper.php:22-64 @7.x] |
+| `Executioner/Helper/{Decision,Inactive,EventRedirection,Notification}Helper` | decision rules, inactivity, redirects, notifications | [code: app/bundles/CampaignBundle/Executioner/Helper/DecisionHelper.php:22-64 @419a08a9b35] |
 | `EventCollector/EventCollector` | registry of event types | [code: app/bundles/CampaignBundle/EventCollector/EventCollector.php:26-84 @7.x] |
 | `Service/PublishStateService` | publish history for republish behaviour | [code: app/bundles/CampaignBundle/Service/PublishStateService.php:28-303 @7.x] |
 | `Service/CampaignShareService` | marketplace ZIP + token | [code: app/bundles/CampaignBundle/Service/CampaignShareService.php:20-61 @7.x] |
@@ -130,16 +130,16 @@ Source: [code: app/bundles/CampaignBundle/Config/config.php:8-74 @7.x]. AJAX: `u
 ## 7. REST API
 | Method | Path | Notes | Source |
 |---|---|---|---|
-| GET | `/api/campaigns` | params `search`, `start`, `limit`, `orderBy`, `orderByDir`, `published` (not `publishedOnly`), `minimal`, `withContactCounts` | [code: app/bundles/ApiBundle/Controller/FetchCommonApiController.php:167 @7.x] [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:89-90 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/campaigns.html#list-campaigns] |
+| GET | `/api/campaigns` | params `search`, `start`, `limit`, `orderBy`, `orderByDir`, `published` (not `publishedOnly`), `minimal`, `withContactCounts` | [code: app/bundles/ApiBundle/Controller/FetchCommonApiController.php:167 @7.x] [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:90-91 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/campaigns.html#list-campaigns] |
 | GET | `/api/campaigns/{id}` | campaign with events keyed by id | [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/campaigns.html#get-campaign] |
-| POST | `/api/campaigns/new` | needs `events` and `lists` or `forms` | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:179-193 @7.x] |
-| PUT/PATCH | `/api/campaigns/{id}/edit` | PUT deletes missing events/sources; events need `id` | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:194-218 @7.x] |
+| POST | `/api/campaigns/new` | needs `events` and `lists` or `forms` | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:180-194 @7.x] |
+| PUT/PATCH | `/api/campaigns/{id}/edit` | PUT deletes missing events/sources; events need `id` | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:195-219 @7.x] |
 | DELETE | `/api/campaigns/{id}/delete` | | [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/campaigns.html] |
-| GET | `/api/campaigns/{id}/contacts` | memberships | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:324 @7.x] |
-| POST | `/api/campaigns/{id}/contact/{leadId}/add` / `remove` | `{"success":1}`; needs Contact edit permission | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:123-171 @7.x] |
-| POST | `/api/campaigns/clone/{campaignId}` | | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:366-399 @7.x] |
+| GET | `/api/campaigns/{id}/contacts` | memberships | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:325 @7.x] |
+| POST | `/api/campaigns/{id}/contact/{leadId}/add` / `remove` | `{"success":1}`; needs Contact edit permission | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:124-172 @7.x] |
+| POST | `/api/campaigns/clone/{campaignId}` | | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:367-400 @7.x] |
 | GET | `/api/campaigns/export/{campaignId}` | JSON or ZIP | [code: app/bundles/CampaignBundle/Config/config.php:131-135 @7.x] |
-| POST | `/api/campaigns/import` | JSON or ZIP; 201 on success | [code: app/bundles/CampaignBundle/Config/config.php:136-140 @7.x] [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:487 @7.x] |
+| POST | `/api/campaigns/import` | JSON or ZIP; 201 on success | [code: app/bundles/CampaignBundle/Config/config.php:136-140 @7.x] [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:493 @7.x] |
 | GET | `/api/campaigns/events`, `/api/campaigns/events/{id}` | read only | [code: app/bundles/CampaignBundle/Config/config.php:75-141 @7.x] |
 | GET | `/api/campaigns/events/contact/{contactId}`, `/api/campaigns/{campaignId}/events/contact/{contactId}` | Contact logs | same |
 | PUT | `/api/campaigns/events/{eventId}/contact/{contactId}/edit`, `/api/campaigns/events/batch/edit` | edit logs | [code: app/bundles/CampaignBundle/Controller/Api/EventLogApiController.php:139-260 @7.x] |

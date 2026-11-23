@@ -85,7 +85,7 @@ Only the 7.2.x series is "supported" in the bug template [code: .github/ISSUE_TE
 ### 7.0 (`UPGRADE-7.0.md`)
 - PHP 8.1 → 8.2; MySQL 5.7.14 → 8.4.0; MariaDB 10.2.7 → 10.11.0 [code: UPGRADE-7.0.md:3-6 @7.x].
 - Browser updater removed: update from the command line [code: UPGRADE-7.0.md:9 @7.x].
-- API rate limiter removed "temporarily" (the note says it should return before 7 stable); it did not: 7.2.1 has no rate-limiting code [code: UPGRADE-7.0.md:10 @7.x] [code: app/config/security.php:105-108 @7.x].
+- API rate limiter removed "temporarily" (the note says it should return before 7 stable); it did not: 7.2.1 has no rate-limiting code [code: UPGRADE-7.0.md:10 @7.x] [code: app/config/security.php:118-121 @7.x].
 - `track_by_tracking_url` removed; `ct` identification was already the default [code: UPGRADE-7.0.md:11 @7.x].
 - Many deprecated classes removed: `MauticFactory`, `MauticSqliteTestCase`, `CustomFormEvent`, `UTF8Helper`, `EmojiExtension`, `TwilioApi`, Oauth2ThreeLegged interfaces (→ `AuthenticationInterface`/`AuthCredentialsInterface`), and more [code: UPGRADE-7.0.md:13-30 @7.x].
 - Composer deps removed (`symfony/yaml`, `symfony/templating`, `php-amqplib/rabbitmq-bundle`, `symfony/amqp-messenger`, `noxlogic/ratelimit-bundle`, …); JS `Mautic.insertTextInEditor` → `Mautic.insertHtmlInEditor` [code: app/bundles/*/*Events.php @7.x vs @8.x].

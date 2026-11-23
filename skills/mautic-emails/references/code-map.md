@@ -1,6 +1,6 @@
 # Mautic Emails - code map (7.x)
 
-All paths are repo-relative at commit 419a08a9b35 (7.2.1). EmailBundle root: `app/bundles/EmailBundle/`.
+All paths are repo-relative at the 7.x snapshot pinned in SOURCES.md. EmailBundle root: `app/bundles/EmailBundle/`.
 
 ## Contents
 1. Entities and tables
@@ -150,7 +150,7 @@ Messenger [code: app/bundles/MessengerBundle/Config/config.php:6-14 @7.x]: `mess
 
 ## 7. Permissions
 
-`email:categories:*` and `email:emails:{viewown,viewother,editown,editother,create,deleteown,deleteother,publishown,publishother,full}` plus `email:emails:sendtodnc` [code: app/bundles/EmailBundle/Security/Permissions/EmailPermissions.php:18-55 @7.x]. Without publish permission new emails are forced unpublished and publish fields are disabled [code: app/bundles/EmailBundle/Form/Type/EmailType.php:254-267 @7.x]. `sendToDnc` is read-only without `sendtodnc` [code: app/bundles/EmailBundle/Form/Type/EmailType.php:198-199 @7.x]. Contact data in previews needs `lead:leads:viewown|viewother` [code: app/bundles/EmailBundle/Controller/PublicController.php:579-590 @7.x].
+`email:categories:*` and `email:emails:{viewown,viewother,editown,editother,create,deleteown,deleteother,publishown,publishother,full}` plus `email:emails:sendtodnc` [code: app/bundles/EmailBundle/Security/Permissions/EmailPermissions.php:18-55 @7.x]. Without publish permission new emails are forced unpublished and publish fields are disabled [code: app/bundles/EmailBundle/Form/Type/EmailType.php:254-267 @7.x]. `sendToDnc` is read-only without `sendtodnc` [code: app/bundles/EmailBundle/Form/Type/EmailType.php:198-199 @7.x]. Contact data in previews needs `lead:leads:viewown|viewother` [code: app/bundles/EmailBundle/Controller/PublicController.php:652-663 @7.x].
 
 ## 8. Tests and fixtures
 
@@ -175,4 +175,4 @@ Messenger [code: app/bundles/MessengerBundle/Config/config.php:6-14 @7.x]: `mess
 | Search | `SearchQueryEvent` from `EmailRepository::addSearchCommandWhereClause` |
 | Hook after sending | Another `#[AsMessageHandler]` for `SendEmailMessage` (pattern: `RemoveReportAttachmentHandler`, priority -1000) |
 
-Sources: [code: app/bundles/EmailBundle/EventListener/BuilderSubscriber.php:66-80 @7.x] [code: app/bundles/EmailBundle/Entity/EmailRepository.php:1032-1038 @7.x] [code: app/bundles/MessengerBundle/MessageHandler/RemoveReportAttachmentHandler.php:13-22 @7.x].
+Sources: [code: app/bundles/EmailBundle/EventListener/BuilderSubscriber.php:66-80 @7.x] [code: app/bundles/EmailBundle/Entity/EmailRepository.php:1070-1076 @7.x] [code: app/bundles/MessengerBundle/MessageHandler/RemoveReportAttachmentHandler.php:13-22 @7.x].

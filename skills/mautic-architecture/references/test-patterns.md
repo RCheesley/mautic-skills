@@ -4,9 +4,9 @@ How to test framework-level behaviour (base model, repository search, controller
 The general harness (test DB, fixtures, Codeception, CI) is in mautic-testing.
 
 ## Running tests
-- `composer test` runs `bin/phpunit -d memory_limit=2G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist`; append a path to run one file, for example `ddev exec composer test app/bundles/CoreBundle/Tests/Unit/Model/FormModelTest.php`. [code: composer.json:166-214 @7.x]
+- `composer test` runs `bin/phpunit -d memory_limit=2G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist`; append a path to run one file, for example `ddev exec composer test app/bundles/CoreBundle/Tests/Unit/Model/FormModelTest.php`. [code: composer.json:164-212 @7.x]
 - Under DDEV the PHPUnit database is `test` (from `.ddev/.env.test.local`). [code: .ddev/.env.test.local @7.x]
-- PHPUnit ^11.5 (11.5.56 locked) on 7.x; PHPUnit 13 and `dg/bypass-finals` on 8.x. [code: composer.json:28-54 @7.x] [PR #17004] [PR #17366]
+- PHPUnit ^11.5 (11.5.56 locked) on 7.x; PHPUnit 13 and `dg/bypass-finals` on 8.x. [code: composer.json:28-54 @419a08a9b35] [PR #17004] [PR #17366]
 
 ## Base classes
 | Class | Use for | Notes |
@@ -28,7 +28,7 @@ The general harness (test DB, fixtures, Codeception, CI) is in mautic-testing.
 | `app/bundles/CoreBundle/Tests/Unit/EventListener/RequestSubscriberTest.php` | CSRF matrix: regular POST, AJAX GET, public route, missing/invalid/valid token [code: app/bundles/CoreBundle/Tests/Unit/EventListener/RequestSubscriberTest.php:59-123 @7.x] |
 | `app/bundles/CoreBundle/Tests/Functional/Controller/AjaxControllerTest.php` | `xmlHttpRequest()` to `/s/ajax?action=globalSearch`, admin vs non-admin results [code: app/bundles/CoreBundle/Tests/Functional/Controller/AjaxControllerTest.php:50-467 @7.x] |
 | `app/bundles/CoreBundle/Tests/Unit/EventListener/EnvironmentSubscriberTest.php` | Locale/timezone from session [code: app/bundles/CoreBundle/Tests/Unit/EventListener/EnvironmentSubscriberTest.php:41-86 @7.x] |
-| `app/bundles/CoreBundle/Tests/Unit/Helper/DateTimeHelperTest.php` | Mutating vs cloning helpers [code: app/bundles/CoreBundle/Tests/Unit/Helper/DateTimeHelperTest.php:131-355 @7.x] |
+| `app/bundles/CoreBundle/Tests/Unit/Helper/DateTimeHelperTest.php` | Mutating vs cloning helpers [code: app/bundles/CoreBundle/Tests/Unit/Helper/DateTimeHelperTest.php:153-377 @7.x] |
 | `app/bundles/CoreBundle/Tests/Unit/ErrorHandler/ErrorHandlerTest.php` | Offline template rendering [code: app/bundles/CoreBundle/Tests/Unit/ErrorHandler/ErrorHandlerTest.php:47 @7.x] |
 | `app/bundles/CoreBundle/Tests/Unit/Monolog/Handler/FileLogHandlerTest.php` | Log level selection [code: app/bundles/CoreBundle/Tests/Unit/Monolog/Handler/FileLogHandlerTest.php:26-56 @7.x] |
 | `app/bundles/CoreBundle/Tests/Translation/TranslatorTest.php` | EN fallback on bad syntax [code: app/bundles/CoreBundle/Tests/Translation/TranslatorTest.php:14 @7.x] |
@@ -95,7 +95,7 @@ final class MyAjaxActionTest extends \Mautic\CoreBundle\Test\MauticMysqlTestCase
     }
 }
 ```
-[code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:172-198 @7.x] [code: app/bundles/CoreBundle/Controller/AjaxController.php:219-299 @7.x]
+[code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:172-198 @7.x] [code: app/bundles/CoreBundle/Controller/AjaxController.php:220-300 @7.x]
 
 ### Functional: search command on a repository
 ```php

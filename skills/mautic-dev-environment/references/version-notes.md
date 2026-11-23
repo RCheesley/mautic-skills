@@ -19,15 +19,15 @@
 
 ## 2. 7.x (authoritative: 7.x snapshot, release 7.2.1 plus unreleased merged PRs)
 - The platform is PHP 8.2.0–8.5.99, MySQL 8.4.0 or later, or MariaDB 10.11.0 or later. The minimum version you can upgrade from is 5.0.0. [code: app/release_metadata.json:4-9 @7.x]
-- Symfony is `~7.4.0`, Doctrine ORM `^2.14` and DBAL `<3.8`. [code: app/composer.json:15-105 @7.x]
-- The UI uses `twbs/bootstrap` 5.3.8, compiled by `symfonycasts/sass-bundle` and served by Symfony AssetMapper through `importmap.php`. Webpack builds only CKEditor 5. [code: app/composer.json:15-105 @7.x] [code: importmap.php:3-12 @7.x] [code: webpack.config.js:28-37 @7.x]
+- Symfony is `~7.4.0`, Doctrine ORM `^2.14` and DBAL `<3.8`. [code: app/composer.json:15-105 @419a08a9b35]
+- The UI uses `twbs/bootstrap` 5.3.8, compiled by `symfonycasts/sass-bundle` and served by Symfony AssetMapper through `importmap.php`. Webpack builds only CKEditor 5. [code: app/composer.json:15-105 @419a08a9b35] [code: importmap.php:3-12 @7.x] [code: webpack.config.js:28-37 @7.x]
 - DDEV runs PHP 8.5, MariaDB 10.11 and Node 24. [code: .ddev/config.yaml:1-24 @7.x]
-- Dev tool binaries are in `bin/` (`bin/phpunit`, `bin/phpstan`, `bin/rector`, `bin/codecept`). Code style uses php-cs-fixer plus ECS. Tests run on PHPUnit 11.5. [code: composer.json:28-56 @7.x] [code: composer.json:173-178 @7.x]
+- Dev tool binaries are in `bin/` (`bin/phpunit`, `bin/phpstan`, `bin/rector`, `bin/codecept`). Code style uses php-cs-fixer plus ECS. Tests run on PHPUnit 11.5. [code: composer.json:28-56 @419a08a9b35] [code: composer.json:171-176 @7.x]
 - `composer install` builds the GrapesJS assets without failing on errors, through `build/gjs_build.php`. [code: build/gjs_build.php:1-13 @7.x]
 - 7.0: MySQL 8.4+ and MariaDB 10.11+ (DDEV moved to MariaDB 10.11), Symfony minor-locked to `~7.4.0`, Node 24 in DDEV from 7.0.1, and update zips carry generated pictograms from 7.0.1. [PR #14836] [PR #15705] [PR #15828] [PR #15841]
 - 7.1: DDEV runs in UTC, Guzzle is minor-locked, the release upload is stable-only and remote, and templates point to Codespaces from 7.1.1. Gitpod is still present at 7.1.0. [PR #15650] [PR #15737] [PR #15938] [PR #15704] [PR #16032] [code: .gitpod.yml @7.1.0]
 - 7.2.0: Gitpod removed, Codespaces prebuilds and a Codespaces `post-checkout` hook, grouped lock-only Dependabot with scaffold-lock sync, Actions pinned to SHAs, `js-cookie` and `doctrine/annotations` removed. [PR #16310] [PR #16309] [PR #16405] [PR #16219] [PR #16234] [PR #16227] [PR #16161] [PR #16178]
-- 7.2.1 and 7.2.2 (7.2 branch): runtime libraries such as DomCrawler moved to `require`, vendor exclusions dropped from `build/exclude_files.txt`, the release checks `Crawler.php`, and `package_devhead.php` was deleted. Only the core-lib part (7.2.1) is in this 7.x snapshot; the rest is fixed in 7.2.2 on the 7.2 branch. [PR #17265] [PR #17592] [PR #17616] [PR #17832] [code: build/exclude_files.txt:37 @7.x]
+- 7.2.1 and 7.2.2 (7.2 branch): runtime libraries such as DomCrawler moved to `require`, vendor exclusions dropped from `build/exclude_files.txt`, the release checks `Crawler.php`, and `package_devhead.php` was deleted. Only the core-lib part (7.2.1) is in this 7.x snapshot; the rest is fixed in 7.2.2 on the 7.2 branch. [PR #17265] [PR #17592] [PR #17616] [PR #17832] [code: build/exclude_files.txt:37 @419a08a9b35]
 
 ## 3. 8.x delta (unreleased; branch snapshot 2026-10-15)
 | Item | 7.x | 8.x | Source |

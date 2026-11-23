@@ -10,8 +10,8 @@
 - No Codeception coverage for these bundles was found (the search was not exhaustive).
 
 ## Rules that make or break a test
-1. Call `$this->logoutUser()` before driving a Point Action through HTTP. A logged-in test user gets no points, except for `email.send` [code: app/bundles/PointBundle/Model/PointModel.php:176-178 @7.x].
-2. Re-read the Contact after the action, with `$this->em->clear()` and then `LeadModel::getEntity()`. Main points are applied with SQL `UPDATE ... points = points + n`, so the in-memory entity can be stale [code: app/bundles/LeadBundle/Entity/LeadRepository.php:1370-1428 @7.x].
+1. Call `$this->logoutUser()` before driving a Point Action through HTTP. A logged-in test user gets no points, except for `email.send` [code: app/bundles/PointBundle/Model/PointModel.php:177-179 @7.x].
+2. Re-read the Contact after the action, with `$this->em->clear()` and then `LeadModel::getEntity()`. Main points are applied with SQL `UPDATE ... points = points + n`, so the in-memory entity can be stale [code: app/bundles/LeadBundle/Entity/LeadRepository.php:1482-1540 @7.x].
 3. To fire triggers on a new Contact, save it with points through `LeadModel::setFieldValues()` and `saveEntity()`; the new-contact `LEAD_POST_SAVE` path runs them. To fire them on an existing Contact, change points without the imported flag [code: app/bundles/PointBundle/Tests/Functional/PointTriggerFunctionalTest.php:19-41 @7.x] [code: app/bundles/LeadBundle/Helper/LeadChangeEventDispatcher.php:42-62 @7.x].
 4. Point Actions are synchronous. Assert straight after the request; there is no command to run [code: app/bundles/PageBundle/EventListener/PointSubscriber.php:55-64 @7.x].
 5. Group score changes flush immediately and run triggers and insights inside `adjustPoints()` [code: app/bundles/PointBundle/Model/PointGroupModel.php:100-130 @7.x].

@@ -21,8 +21,8 @@ https://devdocs.mautic.org/en/8.0/testing/e2e_test_suite.html).
 
 Discrepancies with code (code wins):
 - The page also shows `tests/Acceptance` and `/tests/Support/Page/Acceptance` with capitals; the tree uses `tests/acceptance/` and `tests/_support/` [docs: https://devdocs.mautic.org/en/7.2/testing/e2e_test_suite.html] [code: codeception.yml @7.x].
-- The page's login example uses undefined `$name`/`$password`; the real `AcceptanceTester::login()` defaults them to `admin` / `Maut1cR0cks!` [docs: https://devdocs.mautic.org/en/7.2/testing/e2e_test_suite.html] [code: tests/_support/AcceptanceTester.php:27-68 @7.x].
-- The composer script `e2e-test` sets `APP_ENV=test` and `EnvHelper` rewrites `.env.local` automatically, so the manual `.env.local` step is only needed when running `bin/codecept` directly [code: composer.json:166-214 @7.x] [code: tests/_support/Helper/EnvHelper.php:16-83 @7.x].
+- The page's login example uses undefined `$name`/`$password`; the real `AcceptanceTester::login()` defaults them to `admin` / `Maut1cR0cks!` [docs: https://devdocs.mautic.org/en/7.2/testing/e2e_test_suite.html] [code: tests/_support/AcceptanceTester.php:27-68 @419a08a9b35].
+- The composer script `e2e-test` sets `APP_ENV=test` and `EnvHelper` rewrites `.env.local` automatically, so the manual `.env.local` step is only needed when running `bin/codecept` directly [code: composer.json:164-212 @7.x] [code: tests/_support/Helper/EnvHelper.php:16-83 @7.x].
 
 ## 2. KB: test environments and PR testing
 

@@ -1,6 +1,6 @@
 # Behaviour specification: landing pages, tracking, dynamic web content (Mautic 7.x)
 
-All paths are relative to the Mautic repository root. Code tags refer to commit 419a08a9b35 (7.2.1).
+All paths are relative to the Mautic repository root. Code tags refer to the 7.x snapshot pinned in SOURCES.md.
 
 ## Contents
 - A. Tracking script (B1–B12)
@@ -45,9 +45,9 @@ B12. Third-party pixels: with `google_analytics_id` / `facebook_pixel_id` and th
 
 B13. `/mtracking.gif` calls `PageModel::hitPage(null, $request)` and returns a 43-byte transparent GIF with no-cache headers; in the `test` environment an empty 200 is returned. [code: app/bundles/PageBundle/Controller/PublicController.php:393-398 @7.x] [code: app/bundles/CoreBundle/Helper/TrackingPixelHelper.php:16-59 @7.x]
 
-B14. `/mtc/event` returns `{"success":0}` for logged-in users or an undecodable `ct`; otherwise `{"success":1,"id":<contact id|null>,"sid":<device tracking id>,"device_id":<same>,"events":{...}}`, where `events` is the per-contact cache from `TrackingHelper::getCacheItem(true)` (read once and deleted) plus whatever `ON_CONTACT_TRACKED` listeners set. [code: app/bundles/PageBundle/Controller/PublicController.php:400-441 @7.x] [code: app/bundles/PageBundle/Event/TrackingEvent.php:14-34 @7.x]
+B14. `/mtc/event` returns `{"success":0}` for logged-in users or an undecodable `ct`; otherwise `{"success":1,"id":<contact id|null>,"sid":<device tracking id>,"device_id":<same>,"events":{...}}`, where `events` is the per-contact cache from `TrackingHelper::getCacheItem(true)` (read once and deleted) plus whatever `ON_CONTACT_TRACKED` listeners set. [code: app/bundles/PageBundle/Controller/PublicController.php:400-441 @419a08a9b35] [code: app/bundles/PageBundle/Event/TrackingEvent.php:14-34 @7.x]
 
-B15. `/mtc` returns `{id, sid, device_id}` for the tracked Contact, or `{}` for logged-in Mautic users. [code: app/bundles/PageBundle/Controller/PublicController.php:566-581 @7.x]
+B15. `/mtc` returns `{id, sid, device_id}` for the tracked Contact, or `{}` for logged-in Mautic users. [code: app/bundles/PageBundle/Controller/PublicController.php:566-581 @419a08a9b35]
 
 B16. Public endpoints need no permission and refuse to track logged-in Mautic users. [code: app/bundles/PageBundle/Model/PageModel.php:410-412 @7.x] [code: app/bundles/LeadBundle/Tracker/Service/DeviceTrackingService/DeviceTrackingService.php:38-41 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#website-monitoring]
 
@@ -55,11 +55,11 @@ B16. Public endpoints need no permission and refuse to track logged-in Mautic us
 
 B17. `hitPage` returns without recording when: a Mautic user is logged in; the `Blocked-Tracking` cookie is present; `IpLookupHelper::isRequestTrackable()` is false; `ct` names an email stat flagged by `BotRatioHelper::isHitByBot`; or no Contact with an id resolves. [code: app/bundles/PageBundle/Model/PageModel.php:410-416,427-433,460-463 @7.x]
 
-B18. `isRequestTrackable()` is false for `HEAD`, `Purpose`/`Sec-Purpose` `prefetch|prerender`, `Sec-GPC: 1`, `DNT: 1`, and untrackable IPs/user agents. The JS `do_not_track` param is only stored in the hit query. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:276-309 @7.x]
+B18. `isRequestTrackable()` is false for `HEAD`, `Purpose`/`Sec-Purpose` `prefetch|prerender`, `Sec-GPC: 1`, `DNT: 1`, and untrackable IPs/user agents. The JS `do_not_track` param is only stored in the hit query. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:276-309 @419a08a9b35]
 
-B19. Untrackable IP/UA: exact, CIDR or partial match against `do_not_track_ips` + `do_not_track_internal_ips`; UA containing any `do_not_track_bots` substring; DeviceDetector `isBot()`. Client IP is read from `HTTP_CLIENT_IP`, `HTTP_X_FORWARDED_FOR`, `HTTP_X_FORWARDED`, `HTTP_X_CLUSTER_CLIENT_IP`, `HTTP_FORWARDED_FOR`, `HTTP_FORWARDED`, `REMOTE_ADDR` in that order, default `127.0.0.1`. Private ranges are skipped unless `track_private_ip_ranges`. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:56,65-98,134-167 @7.x] [code: app/bundles/CoreBundle/Entity/IpAddress.php:161-186 @7.x]
+B19. Untrackable IP/UA: exact, CIDR or partial match against `do_not_track_ips` + `do_not_track_internal_ips`; UA containing any `do_not_track_bots` substring; DeviceDetector `isBot()`. Client IP is read from `HTTP_CLIENT_IP`, `HTTP_X_FORWARDED_FOR`, `HTTP_X_FORWARDED`, `HTTP_X_CLUSTER_CLIENT_IP`, `HTTP_FORWARDED_FOR`, `HTTP_FORWARDED`, `REMOTE_ADDR` in that order, default `127.0.0.1`. Private ranges are skipped unless `track_private_ip_ranges`. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:56,65-98,134-167 @419a08a9b35] [code: app/bundles/CoreBundle/Entity/IpAddress.php:161-186 @7.x]
 
-B20. `anonymize_ip` stores the literal IP `*.*.*.*` (one shared `ip_addresses` row) and skips geo lookup. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:109-123,172 @7.x]
+B20. `anonymize_ip` stores the literal IP `*.*.*.*` (one shared `ip_addresses` row) and skips geo lookup. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:111-125,140 @7.x]
 
 B21. Bot-ratio filtering applies only when `ct['stat']` points to an email stat (email link scanners), not to generic pixel or script hits. [code: app/bundles/PageBundle/Model/PageModel.php:427-433 @7.x]
 
@@ -67,11 +67,11 @@ B21. Bot-ratio filtering applies only when `ct['stat']` points to an email stat 
 
 B22. `ContactRequestHelper::getContactFromQuery`: returns null on `Blocked-Tracking`, untrackable IP or bot ratio; then (a) `ct` → `ON_CLICKTHROUGH_IDENTIFICATION` listeners (email: `ct['stat']` tracking hash → `email_stats.lead`, refused if `ct['channel']['email']` differs from the stat's email; SMS analogous) and the anonymous tracked Contact is merged into the identified one; (b) else `checkForDuplicateContact` on publicly-updatable unique-identifier fields, an existing match wins and absorbs the tracked Contact; (c) else `ContactTracker::getContact()`. Then the IP is attached, publicly-updatable values applied, and `tags` applied via `modifyTags`. [code: app/bundles/LeadBundle/Helper/ContactRequestHelper.php:45-200 @7.x] [code: app/bundles/EmailBundle/EventListener/TrackingSubscriber.php:25-52 @7.x]
 
-B23. `ContactTracker::getContact()` order: `Blocked-Tracking` → null; system Contact; `LeadGetCurrentEvent` listener; device (`mautic_device_id` cookie or request param → `lead_devices.tracking_id`); legacy `mautic_session_id` scheme (read only); `track_contact_by_ip` (newest Contact on that IP); else a new anonymous Contact (persisted unless `MAUTIC_NON_TRACKABLE_REQUEST`). Cookies are generated and `last_active` updated once per request. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-78,191-293 @7.x] [code: app/bundles/LeadBundle/Tracker/Service/ContactTrackingService/ContactTrackingService.php:29-75 @7.x]
+B23. `ContactTracker::getContact()` order: `Blocked-Tracking` → null; system Contact; `LeadGetCurrentEvent` listener; device (`mautic_device_id` cookie or request param → `lead_devices.tracking_id`); legacy `mautic_session_id` scheme (read only); `track_contact_by_ip` (newest Contact on that IP); else a new anonymous Contact (persisted unless `MAUTIC_NON_TRACKABLE_REQUEST`). Cookies are generated and `last_active` updated once per request. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-78,191-293 @419a08a9b35] [code: app/bundles/LeadBundle/Tracker/Service/ContactTrackingService/ContactTrackingService.php:29-75 @7.x]
 
 B24. `mautic_device_id` = device `tracking_id` (23 random chars), 1 year, SameSite=None; `mtc_id` = Contact id, session cookie, SameSite=None; both use `cookie_path` (`/`), `cookie_domain` (''), `cookie_secure` (true), `cookie_httponly` (false). [code: app/bundles/LeadBundle/Tracker/Service/DeviceTrackingService/DeviceTrackingService.php:119-136 @7.x] [code: app/bundles/CoreBundle/Helper/CookieHelper.php:44-63 @7.x] [code: app/bundles/CoreBundle/Config/config.php:297-300 @7.x]
 
-B25. Other cookies: `mautic_referer_id` = last `page_hits.id`, 1800 s, SameSite=None; `mautic_page_{parentId}` = chosen A/B variant, 14 days, SameSite Lax; `Blocked-Tracking` = "1"/"" for 15 s from `/r/{id}`. `mautic_session_id` is never written. [code: app/bundles/PageBundle/Model/PageModel.php:482-488 @7.x] [code: app/bundles/PageBundle/Controller/PublicController.php:212-216,539 @7.x]
+B25. Other cookies: `mautic_referer_id` = last `page_hits.id`, 1800 s, SameSite=None; `mautic_page_{parentId}` = chosen A/B variant, 14 days, SameSite Lax; `Blocked-Tracking` = "1"/"" for 15 s from `/r/{id}`. `mautic_session_id` is never written. [code: app/bundles/PageBundle/Model/PageModel.php:482-488 @7.x] [code: app/bundles/PageBundle/Controller/PublicController.php:212-216,556 @7.x]
 
 B26. Tracking cookies are expired when a landing-page hit was not trackable or `Blocked-Tracking` is present, and when `setTrackedContact` receives an unsaved Contact. [code: app/bundles/PageBundle/Controller/PublicController.php:298-300 @7.x] [code: app/bundles/LeadBundle/Tracker/Service/DeviceTrackingService/DeviceTrackingService.php:87-91 @7.x] [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:111-116 @7.x]
 
@@ -79,7 +79,7 @@ B27. A device row is reused when signature and Contact match; otherwise a new or
 
 B28. Company identification runs on hits where the model resolved the Contact itself: `IdentifyCompanyHelper::identifyLeadsCompany` can add the Contact to a Company (writing a change log) and set it as primary. Docs: pass `company` or `companyname` plus optional Company fields. [code: app/bundles/PageBundle/Model/PageModel.php:439-457 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#tracking-of-custom-parameters]
 
-B29. On `CURRENT_LEAD_CHANGED` all hits with the old tracking id move to the new Contact; on `LEAD_POST_MERGE` page and video hits (and DWC stats) move to the winner. [code: app/bundles/PageBundle/EventListener/LeadSubscriber.php:182-202 @7.x] [code: app/bundles/PageBundle/Entity/HitRepository.php:523-549 @7.x] [code: app/bundles/DynamicContentBundle/EventListener/LeadSubscriber.php:83-89 @7.x]
+B29. On `CURRENT_LEAD_CHANGED` all hits with the old tracking id move to the new Contact; on `LEAD_POST_MERGE` page and video hits (and DWC stats) move to the winner. [code: app/bundles/PageBundle/EventListener/LeadSubscriber.php:183-203 @7.x] [code: app/bundles/PageBundle/Entity/HitRepository.php:523-549 @7.x] [code: app/bundles/DynamicContentBundle/EventListener/LeadSubscriber.php:83-89 @7.x]
 
 ## E. Hit pipeline
 
@@ -127,7 +127,7 @@ B48. Outbound: redirect URLs get `utm_*` from the entity's UTM tags via `Redirec
 
 B49. `ct` = `urlencode(base64_encode(serialize($array)))`; decoding optionally url-decodes, base64-decodes, requires the payload to start with `a` and unserialise to an array, else `InvalidDecodedStringException`. Typical email keys: `source => ['email', id]`, `email => id`, `stat => trackingHash`, `lead => id`, `channel => ['email' => id]`. [code: app/bundles/CoreBundle/Helper/ClickthroughHelper.php:12-52 @7.x] [code: app/bundles/PageBundle/Tests/Functional/Model/PageModelTest.php:111-120 @7.x]
 
-B50. `/r/{redirectId}` (alias `/redirect/{redirectId}`): 404 if missing or unpublished; `&amp;` decoded; every query param except `ct` appended to the destination; with `ct` and a trackable IP the Contact is identified from `ct` (invalid `ct` → warning, `ct` removed, cookie Contact used), a 200 hit is recorded on the Redirect, `UrlTokenReplaceEvent(url, lead, emailId)` replaces Contact tokens; Mautic asset-download destinations get `ct` re-appended; the final URL must pass `UrlHelper::isValidUrl` else 404; response 302 with `Blocked-Tracking` = `!isHitTrackable` for 15 s. [code: app/bundles/PageBundle/Controller/PublicController.php:446-542 @7.x]
+B50. `/r/{redirectId}` (alias `/redirect/{redirectId}`): 404 if missing or unpublished; `&amp;` decoded; every query param except `ct` appended to the destination; with `ct` and a trackable IP the Contact is identified from `ct` (invalid `ct` → warning, `ct` removed, cookie Contact used), a 200 hit is recorded on the Redirect, `UrlTokenReplaceEvent(url, lead, emailId)` replaces Contact tokens; Mautic asset-download destinations get `ct` re-appended; the final URL must pass `UrlHelper::isValidUrl` else 404; response 302 with `Blocked-Tracking` = `!isHitTrackable` for 15 s. [code: app/bundles/PageBundle/Controller/PublicController.php:463-559 @7.x]
 
 B51. With `append_segment_id_tracking_url`, `segment_ids=<comma list>` of the Contact's Segments is appended to the redirect destination. [code: app/bundles/PageBundle/EventListener/SegmentTrackingSubscriber.php:35-71 @7.x]
 
@@ -135,11 +135,11 @@ B52. `RedirectModel::generateRedirectUrl` builds the absolute `mautic_url_redire
 
 B53. `getRedirectByUrl` creates a Redirect when the URL is unknown; there is no DB unique constraint on `page_redirects.url`. [code: app/bundles/PageBundle/Model/RedirectModel.php:115-127 @7.x] [code: app/bundles/PageBundle/Entity/Redirect.php:45-71 @7.x]
 
-B54. `TrackableModel::generateTrackableUrl` sets `clickthrough['channel'] = [channel => channelId]` and delegates; lookups are by exact URL + channel + channelId, creating Redirect+Trackable when missing. With channel+id, `Trackable` rows (per-channel stats) are created; without, plain Redirects. [code: app/bundles/PageBundle/Model/TrackableModel.php:90-200,613-622 @7.x]
+B54. `TrackableModel::generateTrackableUrl` sets `clickthrough['channel'] = [channel => channelId]` and delegates; lookups are by exact URL + channel + channelId, creating Redirect+Trackable when missing. With channel+id, `Trackable` rows (per-channel stats) are created; without, plain Redirects. [code: app/bundles/PageBundle/Model/TrackableModel.php:97-207,636-645 @7.x]
 
-B55. `parseContentForTrackables($content, $tokens, $channel, $channelId, $usingClickthrough)` returns content with URLs replaced by `{trackable=REDIRECTID}` plus a token map. HTML (detected by `/<[^<]+>/`) is parsed for `<a href>` and `<area href>` only; plain text uses `UrlHelper::getUrlsFromPlaintext` plus Contact URL-type fields; longer URLs are replaced first; `&` and `&amp;` both match. [code: app/bundles/PageBundle/Model/TrackableModel.php:239-330,337-394,732-759 @7.x]
+B55. `parseContentForTrackables($content, $tokens, $channel, $channelId, $usingClickthrough)` returns content with URLs replaced by `{trackable=REDIRECTID}` plus a token map. HTML (detected by `/<[^<]+>/`) is parsed for `<a href>` and `<area href>` only; plain text uses `UrlHelper::getUrlsFromPlaintext` plus Contact URL-type fields; longer URLs are replaced first; `&` and `&amp;` both match. [code: app/bundles/PageBundle/Model/TrackableModel.php:239-330,337-394,732-759 @419a08a9b35]
 
-B56. A link is left untracked when it carries `data-mautic-disable-tracking="true"` (or deprecated `mautic:disable-tracking`); matches the do-not-track list (`{webview_url}`, `{resubscribe_url}`, `{unsubscribe_url}`, `{dnc_url}`, `{trackable=...}` plus `REDIRECT_DO_NOT_TRACK` additions); has a scheme other than http/https/ftp/ftps/mailto or no host/path; or has a tokenised host whose token has no value. Contact-field tokens as host are kept and tracked dynamically. [code: app/bundles/PageBundle/Model/TrackableModel.php:456-463,502-547,655-658,741-750 @7.x] [code: app/bundles/PageBundle/Event/UntrackableUrlsEvent.php:14-20 @7.x]
+B56. A link is left untracked when it carries `data-mautic-disable-tracking="true"` (or deprecated `mautic:disable-tracking`); matches the do-not-track list (`{webview_url}`, `{resubscribe_url}`, `{unsubscribe_url}`, `{dnc_url}`, `{trackable=...}` plus `REDIRECT_DO_NOT_TRACK` additions); has a scheme other than http/https/ftp/ftps/mailto or no host/path; or has a tokenised host whose token has no value. Contact-field tokens as host are kept and tracked dynamically. [code: app/bundles/PageBundle/Model/TrackableModel.php:456-463,502-547,655-658,741-750 @419a08a9b35] [code: app/bundles/PageBundle/Event/UntrackableUrlsEvent.php:14-20 @7.x]
 
 B57. `{pagelink=ID}` resolves to the absolute landing-page URL; in emails it carries the email clickthrough, on pages `source => ['page', id]`. [code: app/bundles/PageBundle/Helper/TokenHelper.php:16-41 @7.x] [code: app/bundles/PageBundle/EventListener/BuilderSubscriber.php:84-110 @7.x]
 
@@ -173,7 +173,7 @@ B70. `PAGE_ON_DISPLAY` chain: `TokenSubscriber` (254) decodes `%7B…%7D`; `Dyna
 
 B71. Page builder tokens (`PAGE_ON_BUILD`): `{pagelink=ID}`, filter-based `{dwc=slot}`, `{langbar}`, `{sharebuttons}`, `{pagetitle}`, `{brand=name}`, `{pagemetadescription}`, `{segmentlist}`, `{categorylist}`, `{preferredchannel}`, `{channelfrequency}`, `{saveprefsbutton}`, `{successmessage}`, `{leadidentifier}`, `{today}`; A/B criteria `page.bouncerate`, `page.dwelltime`. [code: app/bundles/PageBundle/EventListener/BuilderSubscriber.php:115-184 @7.x]
 
-B72. Preference centre: only on `isPreferenceCenter` pages, the slot tokens render from `@MauticCore/Slots/*.html.twig`; the form wraps the smallest ancestor containing both the first slot and `.prefs-saveprefs`; a missing save button throws `RuntimeException`. Pages are rendered and hit-tracked through the email unsubscribe flow, never via `/{slug}`. Viewing/editing them needs `page:preference_center:*` as well as `page:pages:*`. [code: app/bundles/PageBundle/EventListener/BuilderSubscriber.php:237-266,438-484 @7.x] [code: app/bundles/EmailBundle/Controller/PublicController.php:395-415 @7.x] [code: app/bundles/PageBundle/Controller/PageController.php:48-60,534-545 @7.x]
+B72. Preference centre: only on `isPreferenceCenter` pages, the slot tokens render from `@MauticCore/Slots/*.html.twig`; the form wraps the smallest ancestor containing both the first slot and `.prefs-saveprefs`; a missing save button throws `RuntimeException`. Pages are rendered and hit-tracked through the email unsubscribe flow, never via `/{slug}`. Viewing/editing them needs `page:preference_center:*` as well as `page:pages:*`. [code: app/bundles/PageBundle/EventListener/BuilderSubscriber.php:237-266,438-484 @7.x] [code: app/bundles/EmailBundle/Controller/PublicController.php:467-487 @7.x] [code: app/bundles/PageBundle/Controller/PageController.php:48-60,534-545 @7.x]
 
 B73. Since 7.2, preference-centre slot labels can be changed in a `PAGE_ON_DISPLAY` listener via `getParams()`/`setParams()` (keys `segmentlist.label-text`, `categorylist.label-text`, `preferredchannel.label-text`, `channelfrequency.label-text…label-text4`, `saveprefsbutton.btnText`). [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/landing_pages.html#available-slot-parameters]
 
@@ -197,7 +197,7 @@ B81. Webhook `mautic.page_on_hit` with serializer groups `hitDetails, emailDetai
 
 B82. Reports: contexts `pages`, `page.hits` (with `time_spent`, hits/time-on-site/new-vs-returning/devices/languages/referrers graphs), `video.hits`. [code: app/bundles/PageBundle/EventListener/ReportSubscriber.php:21-25,120-274,361-411 @7.x]
 
-B83. Timeline: `page.hit` entries (page title or `url_title`/URL; channel models may customise via `ChannelTimelineInterface`) and `page.videohit`. [code: app/bundles/PageBundle/EventListener/LeadSubscriber.php:50-180 @7.x]
+B83. Timeline: `page.hit` entries (page title or `url_title`/URL; channel models may customise via `ChannelTimelineInterface`) and `page.videohit`. [code: app/bundles/PageBundle/EventListener/LeadSubscriber.php:50-180 @419a08a9b35]
 
 B84. Video hits (`VideoModel::hitVideo`) update one row per Contact+`guid`, store duration/time watched, and dispatch `VIDEO_ON_HIT`; the "don't track users" check is commented out. [code: app/bundles/PageBundle/Model/VideoModel.php:70-150 @7.x]
 
@@ -235,11 +235,11 @@ B98. A/B `$totalHits += $variants[$id]['hits']` uses the last child's `$id`, dou
 
 B99. `strpos(';q=', $l)` has reversed arguments, so browser-language weights are stored. [code: app/bundles/PageBundle/Model/PageModel.php:687 @7.x] [code: app/bundles/PageBundle/Model/VideoModel.php:124 @7.x]
 
-B100. `getContactByIpAddress` builds a Contact object for untrackable requests (not persisted); `hitPage` then bails because it has no id. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:251-253 @7.x]
+B100. `getContactByIpAddress` builds a Contact object for untrackable requests (not persisted); `hitPage` then bails because it has no id. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:251-253 @419a08a9b35]
 
 B101. JS-written `mtc_id`/`mautic_device_id` are session cookies without SameSite, unlike the 1-year server `mautic_device_id`. [code: app/bundles/CoreBundle/EventListener/BuildJsSubscriber.php:42-231 @7.x]
 
-B102. `PageHitValidator` is off by default, so pixel hits without `page_url`/`page_title` are stored. [code: app/bundles/PageBundle/Config/config.php:93-107 @7.x]
+B102. `PageHitValidator` is off by default, so pixel hits without `page_url`/`page_title` are stored. [code: app/bundles/PageBundle/Config/config.php:93-107 @419a08a9b35]
 
 B103. `TrackingHelper::isLandingPage` uses whether `HTTP_REFERER` contains `site_url`, so GA/FB "landing page" mode applies to any page under the Mautic site URL. [code: app/bundles/PageBundle/Helper/TrackingHelper.php:120 @7.x]
 
@@ -247,11 +247,11 @@ B104. `DynamicContentRepository::getDynamicContentForSlotFromCampaign` has no ca
 
 B105. DynamicContentBundle depends on `MauticPlugin\MauticFocusBundle\Helper\TokenHelper`. [code: app/bundles/DynamicContentBundle/EventListener/DynamicContentSubscriber.php:26,38 @7.x]
 
-B106. `/mtc/event` returns `sid` and `device_id` with the same value (BC) [unverified intent]. [code: app/bundles/PageBundle/Controller/PublicController.php:400-441 @7.x]
+B106. `/mtc/event` returns `sid` and `device_id` with the same value (BC) [unverified intent]. [code: app/bundles/PageBundle/Controller/PublicController.php:400-441 @419a08a9b35]
 
 B107. A/B cookie is SameSite Lax while tracking cookies are SameSite None; landing pages in third-party iframes may lose the variant assignment [unverified]. [code: app/bundles/PageBundle/Controller/PublicController.php:212-216 @7.x]
 
-B108. `PublicController::hitVideoAction` exists but nothing in `app/` or `plugins/` routes to it or calls it, and `mtc.js` contains no video tracker; video hits are unreachable in core. [code: app/bundles/PageBundle/Controller/PublicController.php:547-561 @7.x]
+B108. `PublicController::hitVideoAction` exists but nothing in `app/` or `plugins/` routes to it or calls it, and `mtc.js` contains no video tracker; video hits are unreachable in core. [code: app/bundles/PageBundle/Controller/PublicController.php:564-578 @7.x]
 
 B109. Open: `anonymize_ip` has no `parameters` default in any bundle `config.php`; it is declared in the tracking config form only. [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:51 @7.x]
 

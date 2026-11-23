@@ -48,7 +48,7 @@ Repositories: `IntegrationRepository::getIntegrations()` (inner join plugin), `g
 | `Config` (`marketplace.service.config`), `Connection`, `PluginCollector`, `PackageModel`, `ResourceInstaller`, `RouteProvider` | `app/bundles/MarketplaceBundle/{Service,Api,Model}/` | Marketplace |
 
 ## 3. Interfaces (modern framework)
-Path: `app/bundles/IntegrationsBundle/Integration/Interfaces/`. [code: app/bundles/IntegrationsBundle/Form/Type/IntegrationConfigType.php:32-88 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_integrations/integrations_configuration.html]
+Path: `app/bundles/IntegrationsBundle/Integration/Interfaces/`. [code: app/bundles/IntegrationsBundle/Form/Type/IntegrationConfigType.php:32-88 @419a08a9b35] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_integrations/integrations_configuration.html]
 | Interface | Methods / purpose | Tag |
 |---|---|---|
 | `IntegrationInterface`, `BasicInterface` | `getName()`, `getDisplayName()`, `getIcon()` | `mautic.integration`, `mautic.basic_integration` (auto) |

@@ -9,11 +9,11 @@ are linked from the repo but were not digested; treat their content as unverifie
 | Topic | URL | Linked from |
 |---|---|---|
 | Community Handbook (how to contribute) | https://contribute.mautic.org/contributing-to-mautic | [code: .github/CONTRIBUTING.md:11 @7.x] |
-| Contributing code | https://contribute.mautic.org/contributing-to-mautic/developer | [code: README.md:412 @7.x] |
+| Contributing code | https://contribute.mautic.org/contributing-to-mautic/developer | [code: README.md:417 @7.x] |
 | Working on a pull request | https://contribute.mautic.org/contributing-to-mautic/developer/code/pull-requests#work-on-your-pull-request | [code: .github/PULL_REQUEST_TEMPLATE.md:31 @7.x] |
 | Testing PRs | https://contribute.mautic.org/contributing-to-mautic/tester | [code: .github/PULL_REQUEST_TEMPLATE.md:59 @7.x] |
 | Reviewing Promptless documentation PRs | https://contribute.mautic.org/en/latest/contributing/developer.html#reviewing-documentation-prs-from-promptless | [code: .github/PULL_REQUEST_TEMPLATE.md:17 @7.x] |
-| Backward-compatibility breaks | https://contribute.mautic.org/en/latest/contributing/developer.html#backward-compatibility-breaks | [code: .agents/skills/mautic-dev/SKILL.md:51 @7.x] |
+| Backward-compatibility breaks | https://contribute.mautic.org/en/latest/contributing/developer.html#backward-compatibility-breaks | [code: .agents/skills/mautic-dev/SKILL.md:50 @7.x] |
 | Maintainer duties (governance model) | https://contribute.mautic.org/governance/governance#6-2-1-expectations-and-duties-of-maintainers | [code: MAINTAINERS.md @7.x] |
 | Supported releases | https://www.mautic.org/mautic-releases | [code: SECURITY.md:19 @7.x] |
 | Security advisory policy | https://www.mautic.org/mautic-security-team/mautic-security-advisory-policy | [code: SECURITY.md:30 @7.x] |
@@ -39,7 +39,7 @@ are linked from the repo but were not digested; treat their content as unverifie
 **Open a core PR.**
 1. Pick the branch (features `7.x`, bug fixes `7.2`, BC breaks `8.x`). [code: .github/PULL_REQUEST_TEMPLATE.md:1-11 @7.x]
 2. Rebase on the upstream branch. [kb: https://kb.mautic.org/article/how-to-rebase-branch-and-sync-forked-repository-with-upstream-using-git.html]
-3. Run the checklist in SKILL.md. [code: AGENTS.md:110-119 @7.x]
+3. Run the checklist in SKILL.md. [code: AGENTS.md:119-128 @7.x]
 4. Fill the template (Q/A table, Description, Steps to test, deprecations/BC list). [code: .github/PULL_REQUEST_TEMPLATE.md:19-64 @7.x]
 5. Review the Promptless docs PR when it appears and after merge. [code: .github/PULL_REQUEST_TEMPLATE.md:13-17 @7.x]
 

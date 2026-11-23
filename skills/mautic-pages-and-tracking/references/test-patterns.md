@@ -33,8 +33,8 @@
 - `/mtracking.gif` returns an empty 200 in `test`; assert on DB rows. [code: app/bundles/PageBundle/Controller/PublicController.php:393-398 @7.x]
 - The default `hit` transport is `sync://`, so `processPageHit` runs inside the request; a test that configures an async transport must consume the message before asserting enrichment. [code: app/bundles/MessengerBundle/Config/config.php:8 @7.x]
 - Requests from a logged-in admin client are not tracked; use an anonymous client (or log out) for hit tests. [code: app/bundles/PageBundle/Model/PageModel.php:410-412 @7.x]
-- Loopback/private IPs are untrackable unless `track_private_ip_ranges` is true or a public `REMOTE_ADDR`/`HTTP_X_FORWARDED_FOR` is supplied in server params [unverified how the test env sets this]. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:56,65-98 @7.x]
-- `DNT: 1` or `Sec-GPC: 1` server headers make the request untrackable, which is the cheapest negative test. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:276-309 @7.x]
+- Loopback/private IPs are untrackable unless `track_private_ip_ranges` is true or a public `REMOTE_ADDR`/`HTTP_X_FORWARDED_FOR` is supplied in server params [unverified how the test env sets this]. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:58,67-100 @7.x]
+- `DNT: 1` or `Sec-GPC: 1` server headers make the request untrackable, which is the cheapest negative test. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:276-309 @419a08a9b35]
 
 ## Skeleton: functional hit test
 

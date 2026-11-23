@@ -23,7 +23,7 @@ Out of scope: contact fields and the contact search box (mautic-contacts); how C
 - Manually removing a manually added row deletes the row. Manually adding a filter-added or manually removed row flips it to `manually_added = 1, manually_removed = 0` [code: app/bundles/LeadBundle/Model/ListModel.php:727-741 @7.x].
 - Glue: the first filter's glue is always `and`. An `or` starts a new AND-group, so `A and B or C and D` means `(A AND B) OR (C AND D)` [code: app/bundles/LeadBundle/Entity/LeadList.php:511-519 @7.x] [code: app/bundles/LeadBundle/Segment/Query/QueryBuilder.php:386-426 @7.x].
 - Consecutive `or` filters with `=` on the same field are merged into one `in` filter. Date filters are never merged [code: app/bundles/LeadBundle/Segment/ContactSegmentFilterFactory.php:106-176 @7.x].
-- UI labels differ from operator keys. Label "contains" is operator `like`: the value is wrapped in `%…%` unless it already contains `%`. Label "in list" is operator `contains`: the value is always wrapped in `%…%` [code: app/bundles/LeadBundle/Translations/en_US/messages.ini:765 @7.x] [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:491 @7.x] [code: app/bundles/LeadBundle/Segment/Decorator/BaseDecorator.php:92-102 @7.x].
+- UI labels differ from operator keys. Label "contains" is operator `like`: the value is wrapped in `%…%` unless it already contains `%`. Label "in list" is operator `contains`: the value is always wrapped in `%…%` [code: app/bundles/LeadBundle/Translations/en_US/messages.ini:781 @7.x] [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:496 @7.x] [code: app/bundles/LeadBundle/Segment/Decorator/BaseDecorator.php:92-102 @7.x].
 - On contact fields, `!=`, `!like`, `!in` and `!between` also match NULL. `!regexp` deliberately does not match NULL [code: app/bundles/LeadBundle/EventListener/SegmentOperatorQuerySubscriber.php:29-112 @7.x] [code: app/bundles/LeadBundle/EventListener/SegmentOperatorQuerySubscriber.php:185 @7.x].
 - `empty` means `IS NULL OR = ''`. On date columns it means `IS NULL` only [code: app/bundles/LeadBundle/Segment/ContactSegmentFilter.php:218-221 @7.x].
 - On behaviour (foreign-table) filters, `!in` is `NOT EXISTS`. A Contact that has the excluded tag plus other tags is excluded [code: app/bundles/LeadBundle/Segment/Query/Filter/ForeignValueFilterQueryBuilder.php:19-181 @7.x].
@@ -61,7 +61,7 @@ Out of scope: contact fields and the contact search box (mautic-contacts); how C
 | Permissions | `Security/Permissions/LeadPermissions.php` (`lead:lists:*`) |
 | Tests | `app/bundles/LeadBundle/Tests/{Segment,Command,Model,Entity,Controller}` |
 
-Full detail: references/code-map.md [code: app/bundles/LeadBundle/Config/config.php:23-371 @7.x].
+Full detail: references/code-map.md [code: app/bundles/LeadBundle/Config/config.php:23-371 @419a08a9b35].
 
 ## How to change or extend it
 - Add a filter in two steps. First register the choice on `LIST_FILTERS_CHOICES_ON_GENERATE` (`addChoice($object, $alias, [...])`). Then map it to SQL on `SEGMENT_DICTIONARY_ON_GENERATE` (`addTranslation($alias, ['type' => <builder service id>, 'foreign_table', 'field', ...])`). Copy the Point Group pattern [code: app/bundles/PointBundle/EventListener/SegmentFilterSubscriber.php:38-80 @7.x].

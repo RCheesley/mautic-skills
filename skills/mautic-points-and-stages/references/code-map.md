@@ -30,14 +30,14 @@ All paths are relative to the Mautic root. The citation tag `@7.x` applies throu
 | `Stage` | `app/bundles/StageBundle/Entity/Stage.php` | `stages` | `weight` int, unique validation; publish dates; category; UUID; projects xref `stage_projects_xref` [code: app/bundles/StageBundle/Entity/Stage.php:60-117 @7.x] |
 | `LeadStageLog` | `app/bundles/StageBundle/Entity/LeadStageLog.php` | `stage_lead_action_log` | PK (stage_id, lead_id); never written by core [code: app/bundles/StageBundle/Entity/LeadStageLog.php:30-42 @7.x] |
 | `StagesChangeLog` | `app/bundles/LeadBundle/Entity/StagesChangeLog.php` | `lead_stages_change_log` | `event_name`, `action_name`, `stage_id`, `date_added` [code: app/bundles/LeadBundle/Entity/StagesChangeLog.php:29-45 @7.x] |
-| Contact columns | `app/bundles/LeadBundle/Entity/Lead.php` | `leads.points`, `leads.stage_id` | `stage_id` ON DELETE SET NULL; `stageChangeLog` ordered DESC; `groupScores` cascadeAll [code: app/bundles/LeadBundle/Entity/Lead.php:317-318,416-450 @7.x] |
+| Contact columns | `app/bundles/LeadBundle/Entity/Lead.php` | `leads.points`, `leads.stage_id` | `stage_id` ON DELETE SET NULL; `stageChangeLog` ordered DESC; `groupScores` cascadeAll [code: app/bundles/LeadBundle/Entity/Lead.php:322-323,421-455 @7.x] |
 
 ## 2. Services and models
 
 | Service (alias) | Path | Key methods |
 |---|---|---|
-| `PointModel` (`mautic.point.model.point`) | `app/bundles/PointBundle/Model/PointModel.php` | `getPointActions()` registry (:149-162); `triggerAction($type, $eventDetails, $typeId, ?Lead, $allowUserRequest)` (:173-310); `getPointLineChartData` (:320-336); `getPointActionIdsWithDependenciesOnEmail` (:341-362) [code: app/bundles/PointBundle/Model/PointModel.php:149-362 @7.x] |
-| `TriggerModel` (`mautic.point.model.trigger`) | `.../Model/TriggerModel.php` | `saveEntity` + existing contacts (:106-187); `setEvents` (:240-269); `getEvents` registry (:276-285); `triggerEvent` (:311-353); `invokeCallback` (:355-382); `triggerEvents(Lead)` (:387-423); `getColorForLeadPoints` (:430-443) [code: app/bundles/PointBundle/Model/TriggerModel.php:106-443 @7.x] |
+| `PointModel` (`mautic.point.model.point`) | `app/bundles/PointBundle/Model/PointModel.php` | `getPointActions()` registry (:149-162); `triggerAction($type, $eventDetails, $typeId, ?Lead, $allowUserRequest)` (:173-310); `getPointLineChartData` (:320-336); `getPointActionIdsWithDependenciesOnEmail` (:341-362) [code: app/bundles/PointBundle/Model/PointModel.php:149-362 @419a08a9b35] |
+| `TriggerModel` (`mautic.point.model.trigger`) | `.../Model/TriggerModel.php` | `saveEntity` + existing contacts (:106-187); `setEvents` (:240-269); `getEvents` registry (:276-285); `triggerEvent` (:311-353); `invokeCallback` (:355-382); `triggerEvents(Lead)` (:387-423); `getColorForLeadPoints` (:430-443) [code: app/bundles/PointBundle/Model/TriggerModel.php:106-443 @419a08a9b35] |
 | `TriggerEventModel` (`mautic.point.model.triggerevent`) | `.../Model/TriggerEventModel.php` | dependency finders for segment, email and tag (:57-131) [code: app/bundles/PointBundle/Model/TriggerEventModel.php:57-131 @7.x] |
 | `PointGroupModel` (`mautic.point.model.group`) | `.../Model/PointGroupModel.php` | `adjustPoints(Lead, Group, int, operator)` (:100-130); `isAllowedPointOperation` (:132-135) [code: app/bundles/PointBundle/Model/PointGroupModel.php:100-135 @7.x] |
 | `InsightModel` (`mautic.point.model.insight`) | `.../Model/InsightModel.php` | `executePointInsights(Lead, Group)` (:67-139) [code: app/bundles/PointBundle/Model/InsightModel.php:67-139 @7.x] |
@@ -46,10 +46,10 @@ All paths are relative to the Mautic root. The citation tag `@7.x` applies throu
 | `LeadChangeEventDispatcher` | `app/bundles/LeadBundle/Helper/LeadChangeEventDispatcher.php` | gates `LEAD_POINTS_CHANGE` (:42-62) [code: app/bundles/LeadBundle/Helper/LeadChangeEventDispatcher.php:42-62 @7.x] |
 
 Repositories of note:
-- `PointRepository::getPublishedByType`, `getCompletedLeadActions` [code: app/bundles/PointBundle/Entity/PointRepository.php:41-85 @7.x].
+- `PointRepository::getPublishedByType`, `getCompletedLeadActions` [code: app/bundles/PointBundle/Entity/PointRepository.php:45-89 @7.x].
 - `TriggerEventRepository::getPublishedByPointTotal`, `getPublishedByGroupScore`, `getLeadTriggeredEvents`, `getLeadsForEvent` [code: app/bundles/PointBundle/Entity/TriggerEventRepository.php:11-119 @7.x].
 - `GroupContactScoreRepository::compareScore` [code: app/bundles/PointBundle/Entity/GroupContactScoreRepository.php:11-29 @7.x].
-- `StageRepository::getStageWeights`, `getStages`, `getStageByName`, `findByIdOrName` [code: app/bundles/StageBundle/Entity/StageRepository.php:28-177 @7.x].
+- `StageRepository::getStageWeights`, `getStages`, `getStageByName`, `findByIdOrName` [code: app/bundles/StageBundle/Entity/StageRepository.php:40-189 @7.x].
 
 There are no console commands and no `parameters` in either bundle's config [code: app/bundles/PointBundle/Config/config.php:6-137 @7.x].
 
@@ -64,7 +64,7 @@ There are no console commands and no `parameters` in either bundle's config [cod
 | `page.hit` | `mautic.page.point.action.pagehit` | `PageBundle\Helper\PointActionHelper::validatePageHit` | `PointActionPageHitType` | `PageEvents::PAGE_ON_HIT` (landing page) | `app/bundles/PageBundle/EventListener/PointSubscriber.php:31-41,55-62` |
 | `url.hit` | `mautic.page.point.action.urlhit` | `[$this->pointActionHelper, 'validateUrlHit']` (service) | `PointActionUrlHitType` | `PageEvents::PAGE_ON_HIT` (tracking pixel/JS) | `app/bundles/PageBundle/EventListener/PointSubscriber.php:43-52,63-65` |
 
-[code: app/bundles/EmailBundle/EventListener/PointSubscriber.php:33-107 @7.x] [code: app/bundles/FormBundle/EventListener/PointSubscriber.php:26-49 @7.x] [code: app/bundles/AssetBundle/EventListener/PointSubscriber.php:26-52 @7.x] [code: app/bundles/PageBundle/EventListener/PointSubscriber.php:26-65 @7.x]
+[code: app/bundles/EmailBundle/EventListener/PointSubscriber.php:33-107 @7.x] [code: app/bundles/FormBundle/EventListener/PointSubscriber.php:26-49 @419a08a9b35] [code: app/bundles/AssetBundle/EventListener/PointSubscriber.php:26-52 @7.x] [code: app/bundles/PageBundle/EventListener/PointSubscriber.php:26-65 @7.x]
 
 `GET /api/points/actions/types` returns this registry [code: app/bundles/PointBundle/Controller/Api/PointApiController.php:56-66 @7.x].
 
@@ -121,8 +121,8 @@ Events consumed from other bundles:
 [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:31-34 @7.x] [code: app/bundles/PointBundle/EventListener/SegmentFilterSubscriber.php:29-35 @7.x] [code: app/bundles/PointBundle/EventListener/ReportSubscriber.php:56-57 @7.x] [code: app/bundles/StageBundle/EventListener/CampaignSubscriber.php:29-62 @7.x] [code: app/bundles/PointBundle/EventListener/StatsSubscriber.php:18-23 @7.x]
 
 Campaign and form handlers that live in LeadBundle:
-- `lead.changepoints` action and the `lead.points` and `lead.stages` conditions [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:107-112,216-313,521-522,692-707 @7.x].
-- Form submit action `lead.pointschange` [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:53-54,70-78,164-205 @7.x].
+- `lead.changepoints` action and the `lead.points` and `lead.stages` conditions [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:107-112,216-313,521-522,692-707 @419a08a9b35].
+- Form submit action `lead.pointschange` [code: app/bundles/LeadBundle/EventListener/FormSubscriber.php:53-54,70-78,164-205 @419a08a9b35].
 
 ## 6. Routes
 
@@ -175,16 +175,16 @@ Trigger events are edited in the session under `mautic.point.<id>.triggerevents.
 - Levels `stages` and `categories`.
 - Merge needs both edit and delete.
 - The API add and remove-contact endpoints need edit on the Contact plus `stage:stages:view`.
-[code: app/bundles/StageBundle/Security/Permissions/StagePermissions.php:10-25 @7.x] [code: app/bundles/StageBundle/Controller/StageController.php:428-431 @7.x] [code: app/bundles/StageBundle/Controller/Api/StageApiController.php:59-95 @7.x]
+[code: app/bundles/StageBundle/Security/Permissions/StagePermissions.php:10-25 @7.x] [code: app/bundles/StageBundle/Controller/StageController.php:430-433 @7.x] [code: app/bundles/StageBundle/Controller/Api/StageApiController.php:59-95 @7.x]
 
 ## 8. Forms, views, translations
 
 Form types:
 - `PointType`: `repeatable` defaults to No [code: app/bundles/PointBundle/Form/Type/PointType.php:111-150 @7.x].
-- `TriggerType`: points, color and trigger_existing_leads [code: app/bundles/PointBundle/Form/Type/TriggerType.php:66-127 @7.x].
-- `GroupListType`: `return_entity` defaults to true [code: app/bundles/PointBundle/Form/Type/GroupListType.php:23-49 @7.x].
+- `TriggerType`: points, color and trigger_existing_leads [code: app/bundles/PointBundle/Form/Type/TriggerType.php:66-127 @419a08a9b35].
+- `GroupListType`: `return_entity` defaults to true [code: app/bundles/PointBundle/Form/Type/GroupListType.php:23-49 @419a08a9b35].
 - `PointInsightType`.
-- `StageType` [code: app/bundles/StageBundle/Form/Type/StageType.php:47-56 @7.x].
+- `StageType` [code: app/bundles/StageBundle/Form/Type/StageType.php:47-56 @419a08a9b35].
 - `StageListType`: published stages only [code: app/bundles/StageBundle/Form/Type/StageListType.php:44-54 @7.x].
 - `StageActionListType`.
 - LeadBundle `PointActionType` (campaign) and `CampaignEventPointType` (condition).

@@ -26,7 +26,7 @@ Cron and commands
 - Segment Emails and Segment SMS are sent only by `mautic:broadcasts:send`. No listener sends Segment notifications,
   tweets or Focus items [code: app/bundles/ChannelBundle/Command/SendChannelBroadcastCommand.php:136-183 @7.x].
 - Several commands are needed only when a "do this in background" setting is on. `contact_export_in_background`
-  defaults to **true**, so `mautic:contacts:scheduled_export` is needed by default [code: app/bundles/LeadBundle/Config/config.php:364 @7.x]. See references/code-map.md §3.
+  defaults to **true**, so `mautic:contacts:scheduled_export` is needed by default [code: app/bundles/LeadBundle/Config/config.php:360 @7.x]. See references/code-map.md §3.
 - `mautic:webhooks:process` does nothing unless Webhook Queue Mode is `command_process`. The default is `immediate_process` [code: app/bundles/WebhookBundle/Command/ProcessWebhookQueuesCommand.php:59-63 @7.x] [code: app/bundles/WebhookBundle/Config/config.php:54 @7.x].
 - `mautic:emails:send` and `mautic:queue:process` do not exist in 5.x–7.x. Use `messenger:consume email|hit` [code: UPGRADE-5.0.md:16,104-109 @7.x].
 - `mautic:maintenance:cleanup` asks for confirmation unless `--no-interaction` or `--dry-run` is passed. It exits 1 when
@@ -47,7 +47,7 @@ Locking (`ModeratedCommand`)
   [code: app/bundles/CoreBundle/Command/ModeratedCommand.php:137-212 @7.x].
 - `--timeout` is only a lock TTL in `flock`/`redis` mode (redis default 3600 s). It does nothing in `pid` mode, whatever
   the help text says [code: app/bundles/CoreBundle/Command/ModeratedCommand.php:64,85-88,209 @7.x].
-- `--bypass-locking` skips locking entirely. `--force` is its deprecated alias. `file_lock` maps to `flock` in 7.x and is an error in 8.x [code: app/bundles/CoreBundle/Command/ModeratedCommand.php:79-99 @7.x] [code: UPGRADE-8.0.md:267 @8.x].
+- `--bypass-locking` skips locking entirely. `--force` is its deprecated alias. `file_lock` maps to `flock` in 7.x and is an error in 8.x [code: app/bundles/CoreBundle/Command/ModeratedCommand.php:79-99 @7.x] [code: UPGRADE-8.0.md:358 @8.x].
 
 Messenger
 - There are three transports: `email` (outbound `SendEmailMessage`), `hit` (email opens and page hits) and `failed`. Their DSNs are
@@ -55,7 +55,7 @@ Messenger
 - Both business DSNs default to `sync://`, which means immediate, in-process handling with no worker needed. Any other DSN (`doctrine://default`,
   `redis://…`) queues messages until `messenger:consume <transport>` runs [code: app/bundles/MessengerBundle/Config/config.php:7-8 @7.x].
 - With `sync://` the SMTP/API call runs inside the web request or cron command, which marks failures there. With a queue
-  the request only stores the message; delivery errors appear in the worker [code: app/bundles/EmailBundle/Helper/MailHelper.php:402-414 @7.x].
+  the request only stores the message; delivery errors appear in the worker [code: app/bundles/EmailBundle/Helper/MailHelper.php:409-421 @7.x].
 - Retries: 3 retries at about 1 s, 2 s and 4 s (delay 1000 ms, multiplier 2, no max delay). After that the message goes to `failed`
   [code: app/bundles/MessengerBundle/Retry/RetryStrategy.php:31-43 @7.x].
 - An empty failure DSN resolves to `null://`, so exhausted messages are discarded and `messenger:failed:*` shows nothing
@@ -63,7 +63,7 @@ Messenger
 - If a queue DSN is set and no worker runs, Emails are not sent and opens are not recorded. Page hits stay as bare rows
   without page, Contact or UTM data, and Campaign "opens email"/"visits page" decisions never fire. Nothing alerts [code: app/bundles/PageBundle/Model/PageModel.php:468-529 @7.x].
 - Open and page-hit processing is not idempotent. A redelivered or manually retried message double-counts and re-fires
-  Campaign listeners [code: app/bundles/EmailBundle/Model/EmailModel.php:463-544 @7.x] [code: app/bundles/PageBundle/Model/PageModel.php:622-711 @7.x].
+  Campaign listeners [code: app/bundles/EmailBundle/Model/EmailModel.php:472-553 @7.x] [code: app/bundles/PageBundle/Model/PageModel.php:622-711 @7.x].
 - A missing page, redirect or Contact in a page-hit message is unrecoverable and goes straight to `failed`. Email-open deadlocks
   are retried. Page-hit persistence errors are swallowed in `prod` [code: app/bundles/MessengerBundle/MessageHandler/PageHitNotificationHandler.php:49-84 @7.x] [code: app/bundles/PageBundle/Model/PageModel.php:690-706 @7.x].
 - A cron-run `messenger:consume` needs `--limit`, `--time-limit` or `--memory-limit`. Otherwise run it under
@@ -131,7 +131,7 @@ Sources: [code: app/bundles/MessengerBundle/Config/services.php:9-18 @7.x] [code
 - For long loops, use `ProcessSignalService` to stop cleanly on SIGTERM/SIGINT and return `ExitCode::TERMINATED`
   [code: app/bundles/CoreBundle/ProcessSignal/ProcessSignalService.php:22-80 @7.x].
 - Prefer a "background" setting plus a command over long work in a request. Declare its default in `Config/config.php` and
-  document the cron line [code: app/bundles/LeadBundle/Config/config.php:338-373 @7.x].
+  document the cron line [code: app/bundles/LeadBundle/Config/config.php:334-369 @7.x].
 - New async work: create a message DTO and an `#[AsMessageHandler]` service. Route it to `email`/`hit` in
   `framework.messenger.routing`; unrouted messages run synchronously (inferred). Make handlers idempotent or accept
   duplicates. Throw `UnrecoverableExceptionInterface` for bad payloads and `RecoverableMessageHandlingException` for transient DB errors
@@ -173,7 +173,7 @@ Sources: [code: app/bundles/MessengerBundle/Config/services.php:9-18 @7.x] [code
 - 7.0: separate non-tag-aware and tag-aware Redis cache providers; Segment counts move to the cache provider with `lead:list:count-cache-update` [PR #14724] [PR #15554] [PR #14911].
 - 7.1.3: Queue Settings rejects a retry multiplier < 1 [PR #16157]. 7.2: Messenger message and handler classes are `final` [PR #16897].
 - 8.x: `--lock_mode=file_lock` errors. `CacheStorageHelper` and `cache_items` are removed. `mautic.cache.adapter.*` ids are gone, so use class
-  names. A cache miss returns `null`. Symfony 8.1 and PHP 8.4 are required [code: UPGRADE-8.0.md:267 @8.x] [PR #17033] [PR #17155]. See references/version-notes.md.
+  names. A cache miss returns `null`. Symfony 8.1 and PHP 8.4 are required [code: UPGRADE-8.0.md:358 @8.x] [PR #17033] [PR #17155]. See references/version-notes.md.
 
 ## Pitfalls
 - "Locked" and "ran" both exit 0. A stuck run blocks every later cron run of the same key with no non-zero exit. Check

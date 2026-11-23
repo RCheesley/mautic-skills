@@ -18,11 +18,11 @@ its admin/mautic login come from older setups; current DDEV and test fixtures us
 from is 5.0.0 [code: app/release_metadata.json @7.x].
 
 ## 7.x (snapshot: release 7.2.1 plus unreleased merged PRs)
-- PHP `~8.2` (composer platform 8.2.0); release metadata allows PHP 8.2.0-8.5.99, MySQL >= 8.4.0, MariaDB >= 10.11.0 [code: app/composer.json:16 @7.x] [code: composer.json:216-218 @7.x] [code: app/release_metadata.json @7.x].
-- PHPUnit 11.5 (locked 11.5.56), schema 10.5 config; Codeception 5.3.6; PHPStan 2.3.1 at level 6; Rector `dev-main`; php-cs-fixer 3.95 plus ECS 13; Symfony 7.4 [code: composer.json:28-54 @7.x].
+- PHP `~8.2` (composer platform 8.2.0); release metadata allows PHP 8.2.0-8.5.99, MySQL >= 8.4.0, MariaDB >= 10.11.0 [code: app/composer.json:16 @7.x] [code: composer.json:214-216 @7.x] [code: app/release_metadata.json @7.x].
+- PHPUnit 11.5 (locked 11.5.56), schema 10.5 config; Codeception 5.3.6; PHPStan 2.3.1 at level 6; Rector `dev-main`; php-cs-fixer 3.95 plus ECS 13; Symfony 7.4 [code: composer.json:28-54 @419a08a9b35].
 - DDEV runs PHP 8.5 with MariaDB 10.11 while CI's minimum cell is PHP 8.2; check behaviour that differs between PHP versions [code: .ddev/config.yaml:1-24 @7.x] [code: .github/workflows/tests.yml:22-32 @7.x].
 - CI matrix: PHP 8.2 x (MySQL 8.4, MariaDB 10.11), PHP 8.5 x (MySQL 9.2, MariaDB 11.4) [code: .github/workflows/tests.yml:22-32 @7.x].
-- Twig is patched so `IntegrationTestCase` data providers are static for PHPUnit 11 [code: composer.json:254-258 @7.x].
+- Twig is patched so `IntegrationTestCase` data providers are static for PHPUnit 11 [code: composer.json:252-256 @7.x].
 - 7.0: MySQL 8.4+/MariaDB 10.11+ in CI and DDEV; PHPUnit 10.5 runs without deprecations on PHP 8.4 [PR #14836] [PR #15280] [PR #15814].
 - 7.1: `mautic:phpunit:config <N>` and deterministic E2E selectors [PR #15628] [PR #15937].
 - 7.2.0: PHPUnit 11.5; custom PHPStan and Rector rules move to `utils/`; `NoTablePrefixDefinitionInTestsRule` replaces the CS fixer; baseline cut to about 14.1k lines; the baseline-change job and PR coverage removed, label-triggered coverage added; api-library CI; Actions pinned to SHAs; `EnvHelper` for E2E [PR #16891] [PR #16583] [PR #16578] [PR #16500] [PR #16581] [PR #16646] [PR #16697] [PR #16532] [PR #16227] [PR #16729].

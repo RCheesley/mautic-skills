@@ -1,7 +1,7 @@
 # Mautic contributing: rules and norms (full specification)
 
-Authoritative for Mautic 7.x (upstream `7.x` at `419a08a9b35`: release 7.2.1 plus 87 unreleased merged PRs). `@7.x` tags point at that tree;
-`@8.x` tags point at upstream `8.x` at `11599729491`. Every numbered rule carries a source tag.
+Authoritative for Mautic 7.x (the upstream `7.x` snapshot pinned in SOURCES.md). `@7.x` tags point at that tree;
+`@8.x` tags point at the upstream `8.x` snapshot pinned in SOURCES.md. Every numbered rule carries a source tag.
 
 ## Contents
 - A. Branches, versions and what goes where
@@ -65,14 +65,14 @@ A.8 What may go where (synthesis of A.1-A.7):
 [kb: https://kb.mautic.org/article/understanding-migrations-and-schema-update-with-doctrine-in-mautic.html]
 The project's definition of a BC break is linked from the in-repo agent skill as
 https://contribute.mautic.org/en/latest/contributing/developer.html#backward-compatibility-breaks (not digested here).
-[code: .agents/skills/mautic-dev/SKILL.md:51 @7.x]
+[code: .agents/skills/mautic-dev/SKILL.md:50 @7.x]
 
 A.9 Tags are `X.Y.Z` plus pre-releases `X.Y.0-alpha`, `-beta`, `-rc`, `-rc2`. Observed: 7.0.0 on 2026-01-20, 7.1.0 on
 2026-04-14, 7.2.0 on 2026-09-02, 7.2.1 on 2026-09-23. [code: git tag @7.x] (analysis §9.C.4)
 
 A.10 Releasing: the pushed tag must equal `app/release_metadata.json` `version`, so `version` and `announcement_url` are
 bumped before tagging; the workflow builds a DRAFT GitHub release and tests a fresh install and an update from
-`minimum_mautic_version`. [code: .github/workflows/release.yml:38-47,77-103,184-250 @7.x]
+`minimum_mautic_version`. [code: .github/workflows/release.yml:38-47,78-104,185-251 @7.x]
 
 A.11 Release notes are grouped by PR labels: `bc-break` (Breaking Changes), `refactoring`, `security`,
 `feature`/`enhancement`, `bug`/`regression`; `chore` and `github-actions` are excluded. Label PRs accordingly.
@@ -140,9 +140,9 @@ C.1 Run commands through DDEV (`ddev exec php bin/phpunit -c app/phpunit.xml.dis
 `ddev composer ...`), not on the host, unless the user asks. [code: AGENTS.md:11-14 @7.x]
 
 C.2 The documented PR checklist is `ddev composer test`, `ddev composer phpstan`, `ddev composer cs`, plus
-`ddev composer run e2e-test` for UI changes. [code: AGENTS.md:110-119 @7.x]
+`ddev composer run e2e-test` for UI changes. [code: AGENTS.md:119-128 @7.x]
 
-C.3 CI runs more than C.2, so also run these before pushing: [code: .github/workflows/tests.yml:181-316 @7.x]
+C.3 CI runs more than C.2, so also run these before pushing: [code: .github/workflows/tests.yml:181-316 @419a08a9b35]
 
 | Check | Local command | CI job |
 |---|---|---|
@@ -172,29 +172,29 @@ catch flaky tests. [code: .github/workflows/e2e-tests.yml:25-28 @7.x]
 
 C.8 CI's CS Fixer job checks only PHP files changed in the PR; ECS is not run in CI. `composer cs` locally checks the
 whole tree; `composer fixcs` runs php-cs-fixer and ECS with `--fix`. [code: .github/workflows/tests.yml:256-264 @7.x]
-[code: composer.json:166-214 @7.x]
+[code: composer.json:164-212 @7.x]
 
 C.9 Install the git hooks with `composer githooks` (run by `post-install-cmd`): the pre-commit hook fixes style on staged
-files. [code: composer.json:166-214 @7.x]
+files. [code: composer.json:164-212 @7.x]
 
 C.10 `composer phpstan` first boots the test kernel so `var/cache/test/AppKernelTestDebugContainer.xml` exists; without it
 PHPStan fails. After adding a plugin entity, clear `var/cache/prod` and `var/phpstan-cache`.
-[code: composer.json:166-214 @7.x] [code: phpstan.neon:249-254 @7.x] [code: .agents/skills/mautic-dev/SKILL.md @7.x]
+[code: composer.json:164-212 @7.x] [code: phpstan.neon:271-276 @7.x] [code: .agents/skills/mautic-dev/SKILL.md @7.x]
 
 C.11 CodeRabbit reviews every PR, with path instructions for PHP, `**/Tests/**` (prefer `MauticMysqlTestCase` for DB
 behaviour, flag mock-only assertions, order- or time-dependent tests) and `app/migrations/*.php`.
-[code: .coderabbit.yaml:2-13 @7.x]
+[code: .coderabbit.yaml:3-14 @7.x]
 
 C.12 SonarCloud fails on duplicated new code; extract a helper rather than copying near-identical test methods.
-[code: .agents/skills/mautic-dev/SKILL.md:30 @7.x]
+[code: .agents/skills/mautic-dev/SKILL.md:30 @419a08a9b35]
 
 C.13 `rector/rector` is pinned to `dev-main`, so new Rector findings can appear after a rebase without any Mautic change.
-[code: composer.json:28-54 @7.x]
+[code: composer.json:28-54 @419a08a9b35]
 
 ## D. Coding standards
 
 D.1 PHP 8.2+, `declare(strict_types=1)`, PSR-12/Symfony style, 4-space indent, short array syntax, ordered imports,
-explicit types and nullable hints, minimal DocBlocks. [code: AGENTS.md:95-101 @7.x]
+explicit types and nullable hints, minimal DocBlocks. [code: AGENTS.md:104-110 @7.x]
 
 D.2 php-cs-fixer rules: `@Symfony`; aligned `=>` and `=` accepted; `ordered_imports`; short `array_syntax`;
 `no_unused_imports`; empty `header_comment`; `nullable_type_declaration_for_default_null_value`; `no_superfluous_phpdoc_tags`
@@ -205,7 +205,7 @@ D.3 ECS adds the `comments`, `docblocks`, `namespaces`, `cleanup`, `controlStruc
 concat spacing and method-chaining fixers are skipped. [code: ecs.php:7-43 @7.x]
 
 D.4 Fix types rather than suppressing: inline `@phpstan-ignore` and new `ignoreErrors` entries are a last resort
-(see E.3). [code: phpstan.neon:42-239 @7.x]
+(see E.3). [code: phpstan.neon:42-239 @419a08a9b35]
 
 D.5 Test classes are `final`, declare strict types, end in `Test`, and abstract shared bases are named
 `Abstract…TestCase`. [code: .github/prompts/write-test.prompt.md:19 @7.x]
@@ -213,21 +213,21 @@ D.5 Test classes are `final`, declare strict types, end in `Test`, and abstract 
 ## E. PHPStan: configuration and custom rules
 
 E.1 Level 6; paths `app/bundles`, `app/migrations`, `plugins`, `utils`; `treatPhpDocTypesAsCertain: false`.
-[code: phpstan.neon:5-35 @7.x]
+[code: phpstan.neon:5-35 @419a08a9b35]
 
 E.2 Type-coverage floors: return 88.3 %, param 75.7 %, property 71.6 %, constant 3, declare 73. Lowering overall type
-coverage fails the run. [code: phpstan.neon:14-20 @7.x]
+coverage fails the run. [code: phpstan.neon:14-20 @419a08a9b35]
 
 E.3 `phpstan-baseline.neon` (about 2040 entries) is generated; regenerate with `composer phpstan-baseline`. Hand-written
 suppressions go in `phpstan.neon` `ignoreErrors` with `identifier` and `path`, or inline. An obsolete suppression fails
 the run (`reportUnmatchedIgnoredErrors` default true). Never commit a broader exclusion.
-[code: phpstan.neon:1-2,8,42-239 @7.x] [code: composer.json:184 @7.x]
+[code: phpstan.neon:1-2,8,42-239 @419a08a9b35] [code: composer.json:182 @7.x]
 
 E.4 Uses of Mautic's own deprecated classes are tolerated by `ignoreErrors` (`*.deprecated*` whose message matches
-`class\s+Mautic`). Do not read a clean PHPStan run as "no deprecated API used". [code: phpstan.neon:42-239 @7.x]
+`class\s+Mautic`). Do not read a clean PHPStan run as "no deprecated API used". [code: phpstan.neon:42-239 @419a08a9b35]
 
 E.5 Custom rules (in `utils/phpstan/src/Rule/`, tests in `utils/phpstan/tests/Rule/`), with the message each emits:
-[code: phpstan.neon:257-277 @7.x] [code: utils/phpstan/src/Rule/ @7.x]
+[code: phpstan.neon:279-299 @7.x] [code: utils/phpstan/src/Rule/ @7.x]
 
 | Rule | Fails when |
 |---|---|
@@ -250,19 +250,19 @@ E.5 Custom rules (in `utils/phpstan/src/Rule/`, tests in `utils/phpstan/tests/Ru
 | Symplify `NoJustPropertyAssignRule` | (enabled) |
 
 E.6 Present but not registered: `NoObjectPropertyAssignToVariableInTestsRule`, `NoServiceInMethodParameterRule`,
-`NoUnusedServiceAliasRule` (commented out). [code: phpstan.neon:275 @7.x]
+`NoUnusedServiceAliasRule` (commented out). [code: phpstan.neon:297 @7.x]
 
 ## F. Rector
 
 F.1 Paths `app/bundles`, `plugins`; sets `deadCode`, `typeDeclarations`, `phpunitCodeQuality`, `phpunitMockToStub`,
 `phpunitNarrowAsserts`, `privatization`, `codeQuality`, PHP sets from composer (8.2). Custom rectors
-`UnserializeToSerializerDecodeRector` and `ModelGetRepositoryToRepositoryServiceRector`. [code: rector.php:10-55 @7.x]
+`UnserializeToSerializerDecodeRector` and `ModelGetRepositoryToRepositoryServiceRector`. [code: rector.php:10-55 @419a08a9b35]
 
 F.2 `withTypeGuardedClasses` protects the signatures of the common controllers, `CommonRepository`, `AbstractPermissions`,
-`AbstractIntegration` and `CrmAbstractIntegration`, because plugins extend them. [code: rector.php:26-40 @7.x]
+`AbstractIntegration` and `CrmAbstractIntegration`, because plugins extend them. [code: rector.php:27-41 @7.x]
 
 F.3 `reportUnusedSkips()` is on: a skip entry that no longer matches fails. Add skips sparingly.
-[code: rector.php:56-122 @7.x]
+[code: rector.php:56-122 @419a08a9b35]
 
 F.4 Run `ddev composer rector` (rewrites files) and commit the result; CI runs `bin/rector --dry-run`.
 [code: .github/workflows/tests.yml:250-253 @7.x]
@@ -275,14 +275,14 @@ G.1 Register services by autowiring in `Config/services.php`, not in the `servic
 [code: app/bundles/CoreBundle/DependencyInjection/MauticCoreExtension.php:14-28 @7.x]
 
 G.2 Inject typed constructor dependencies, preferring interfaces; never `$container->get()`, `getModel('string')` or
-`$em->getRepository(Entity::class)` in controllers or repositories. [code: phpstan.neon:257-277 @7.x]
+`$em->getRepository(Entity::class)` in controllers or repositories. [code: phpstan.neon:279-299 @7.x]
 
 G.3 Controllers inheriting `CommonController`'s constructor add dependencies through a
 `#[Required] public function autowire<ClassName>()` method, not by redeclaring the constructor.
 [code: utils/phpstan/src/Rule/ @7.x] (analysis dev-tooling-testing §6.29)
 
 G.4 Every console command has `#[AsCommand(name: ..., description: ...)]`; every validator constraint has `#[\Attribute]`.
-[code: phpstan.neon:257-277 @7.x]
+[code: phpstan.neon:279-299 @7.x]
 
 G.5 New 7.x code should already avoid what 8.x removes: `*Events::CONST` as subscriber keys or as the second
 `dispatch()` argument, `CacheStorageHelper`, `Core\Controller\FormController`, `services`/`menus`/`models` arrays in
@@ -338,7 +338,7 @@ H.11 Verify a migration manually, because functional tests never run it: on a da
 change, run `doctrine:migrations:execute --up 'Mautic\Migrations\VersionX'`, then `doctrine:schema:update --dump-sql`
 must print nothing for the entities you changed. On a database that already has the change the pre-up assertions skip
 the migration and the check proves nothing. Unit-test it by building a `Schema` and asserting `preUp` skip and `up` SQL.
-[code: .agents/skills/mautic-dev/SKILL.md:27,46 @7.x]
+[code: .agents/skills/mautic-dev/SKILL.md:27,45 @7.x]
 [code: app/bundles/CoreBundle/Tests/Unit/Doctrine/CampaignLeadEventLogIndexMigrationTest.php @7.x]
 
 H.12 After changing an entity, `ddev exec rm -rf var/cache` so the cached test schema dumps regenerate.
@@ -387,7 +387,7 @@ after the GrapesJS plugin `ddev gjs-build`. Generated files are gitignored and m
 
 J.2 Root scaffolded files (`.env`, `.gitignore`, `webpack.config.js`, `importmap.php`, `package.json`,
 `package-lock.json`, `tsconfig.json`, `index.php`, `.htaccess`, `robots.txt`, `bin/console`, `patches/*`) change together
-with their twin in `app/assets/scaffold/files/`. [code: app/composer.json:112-133 @7.x]
+with their twin in `app/assets/scaffold/files/`. [code: app/composer.json:116-137 @7.x]
 [code: .github/workflows/tests.yml:265-277 @7.x]
 
 ## K. Documentation expectations
@@ -449,7 +449,7 @@ M.5 Contribution is open to anyone; all changes go through GitHub pull requests;
 https://contribute.mautic.org/contributing-to-mautic. [code: .github/CONTRIBUTING.md:5-11 @7.x]
 
 M.6 Agent skills for the core repo live in `.agents/skills/` (symlinked from `.claude/skills/`); because `.gitignore`
-ignores dot-directories, new skills are added with `git add -f`. [code: AGENTS.md:128-134 @7.x]
+ignores dot-directories, new skills are added with `git add -f`. [code: AGENTS.md:137-143 @7.x]
 
 ## N. Terminology and writing style
 
@@ -497,10 +497,10 @@ c.x example reads "(e.g. 7.x)"; both are stale. Follow the a.x/a.b/c.x table: fe
 
 P.2 `AGENTS.md` describes `Config/` as "Bundle config (services in config.php)", but PHPStan `NoServicesInBundleConfigRule`
 fails when `config.php` defines services. Code wins: use `Config/services.php`. [code: AGENTS.md:70 @7.x]
-[code: phpstan.neon:257-277 @7.x]
+[code: phpstan.neon:279-299 @7.x]
 
 P.3 `AGENTS.md` says `composer cs` must pass or "CI will fail"; CI checks only changed files and never runs ECS.
-[code: AGENTS.md:101 @7.x] [code: .github/workflows/tests.yml:256-264 @7.x]
+[code: AGENTS.md:110 @7.x] [code: .github/workflows/tests.yml:256-264 @7.x]
 
 P.4 PR testing environment: the PR template says GitHub Codespaces; the KB article says Gitpod with login admin/mautic,
 while fixtures and DDEV use `Maut1cR0cks!`. [code: .github/PULL_REQUEST_TEMPLATE.md:59 @7.x]
@@ -514,7 +514,7 @@ https://mautic.org/security/reporting-a-security-issue/. All require private rep
 
 P.6 Stale governance: `README.md` links to the `6.x` branch; `RELEASE_LEADS.md` has no 7.1/7.2 schedule and wrong 7.0 dates;
 `.github/CODEOWNERS` assigns EmailBundle to @mabumusa1, who is on the maintainers' honor roll, not the current list;
-`MAINTAINERS.md` links `CONTRIBUTING.md` at the root, which lives in `.github/`. [code: README.md:17,120,411 @7.x]
+`MAINTAINERS.md` links `CONTRIBUTING.md` at the root, which lives in `.github/`. [code: README.md:17,120,416 @7.x]
 [code: RELEASE_LEADS.md @7.x] [code: .github/CODEOWNERS @7.x] [code: MAINTAINERS.md @7.x]
 
 P.7 Open: whether e2e tests are required for every UI PR or only "for UI changes" (AGENTS.md wording). [unverified]

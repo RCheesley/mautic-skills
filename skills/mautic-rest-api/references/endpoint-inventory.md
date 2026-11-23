@@ -28,14 +28,14 @@ that the endpoint exists, which permission gates it, and where it is declared.
 - `<base>` is the controller's `$permissionBase`, which defaults to the model's `getPermissionBase()`.
   [code: app/bundles/ApiBundle/Controller/FetchCommonApiController.php:143-145 @7.x]
 - Every request also needs `api_enabled = true` and a fully authenticated caller.
-  [code: app/bundles/ApiBundle/EventListener/ApiSubscriber.php:49-68 @7.x] [code: app/config/security.php:153 @7.x]
+  [code: app/bundles/ApiBundle/EventListener/ApiSubscriber.php:49-68 @7.x] [code: app/config/security.php:171 @7.x]
 - "Owning skill" is where the resource's behaviour is specified. `mautic-rest-api` means this skill owns it.
 
 ## 2. OAuth2 and credentials endpoints
 
 | Method | Path | Permission | Owning skill | Citation |
 |---|---|---|---|---|
-| GET, POST | `/oauth/v2/token` | none (`security: false`; client id/secret in the body) | mautic-rest-api | [code: app/bundles/ApiBundle/Config/config.php:9-13 @7.x] [code: app/config/security.php:38-41 @7.x] |
+| GET, POST | `/oauth/v2/token` | none (`security: false`; client id/secret in the body) | mautic-rest-api | [code: app/bundles/ApiBundle/Config/config.php:9-13 @7.x] [code: app/config/security.php:49-52 @7.x] |
 | GET, POST | `/oauth/v2/authorize` | logged-in Mautic User holding `api:access:full` | mautic-rest-api | [code: app/bundles/ApiBundle/Config/config.php:14-18 @7.x] [code: app/bundles/ApiBundle/EventListener/PreAuthorizationEventListener.php:42-44 @7.x] |
 | GET, POST | `/oauth/v2/authorize_login` | public (login form) | mautic-rest-api | [code: app/bundles/ApiBundle/Config/config.php:19-23 @7.x] |
 | POST | `/oauth/v2/authorize_login_check` | handled by the `oauth2_area` firewall | mautic-rest-api | [code: app/bundles/ApiBundle/Config/config.php:24-28 @7.x] |
@@ -46,12 +46,12 @@ that the endpoint exists, which permission gates it, and where it is declared.
 
 | Method | Path | Permission | Owning skill | Citation |
 |---|---|---|---|---|
-| GET | `/api/campaigns/{id}/contacts` | campaign view access (`checkEntityAccess`) | mautic-campaigns | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:324-332 @7.x] |
-| POST | `/api/campaigns/{id}/contact/{leadId}/add` | `lead:leads:editown`/`editother` on the Contact | mautic-campaigns | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:123-132 @7.x] |
-| POST | `/api/campaigns/{id}/contact/{leadId}/remove` | edit access to the Contact (`checkLeadAccess(..., 'edit')`) | mautic-campaigns | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:154-160 @7.x] |
-| POST | `/api/campaigns/clone/{campaignId}` | `campaign:campaigns:create` (`checkEntityAccess(..., 'create')`) | mautic-campaigns | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:366-378 @7.x] |
-| GET | `/api/campaigns/export/{campaignId}` | `campaign:export:enable` | mautic-campaigns | [code: app/bundles/CampaignBundle/Config/config.php:132-134 @7.x] [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:404-413 @7.x] |
-| POST | `/api/campaigns/import` | `campaign:imports:create` | mautic-campaigns | [code: app/bundles/CampaignBundle/Config/config.php:137-139 @7.x] [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:429-432 @7.x] |
+| GET | `/api/campaigns/{id}/contacts` | campaign view access (`checkEntityAccess`) | mautic-campaigns | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:325-333 @7.x] |
+| POST | `/api/campaigns/{id}/contact/{leadId}/add` | `lead:leads:editown`/`editother` on the Contact | mautic-campaigns | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:124-133 @7.x] |
+| POST | `/api/campaigns/{id}/contact/{leadId}/remove` | edit access to the Contact (`checkLeadAccess(..., 'edit')`) | mautic-campaigns | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:155-161 @7.x] |
+| POST | `/api/campaigns/clone/{campaignId}` | `campaign:campaigns:create` (`checkEntityAccess(..., 'create')`) | mautic-campaigns | [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:367-379 @7.x] |
+| GET | `/api/campaigns/export/{campaignId}` | `campaign:export:enable` | mautic-campaigns | [code: app/bundles/CampaignBundle/Config/config.php:132-134 @7.x] [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:405-414 @7.x] |
+| POST | `/api/campaigns/import` | `campaign:imports:create` | mautic-campaigns | [code: app/bundles/CampaignBundle/Config/config.php:137-139 @7.x] [code: app/bundles/CampaignBundle/Controller/Api/CampaignApiController.php:430-433 @7.x] |
 | GET | `/api/campaigns/events` | `campaign:campaigns:view` | mautic-campaigns | [code: app/bundles/CampaignBundle/Config/config.php:84-86 @7.x] |
 | GET | `/api/campaigns/events/{id}` | view access to the parent Campaign | mautic-campaigns | [code: app/bundles/CampaignBundle/Controller/Api/EventApiController.php:60-63 @7.x] |
 | GET | `/api/campaigns/events/contact/{contactId}` | view access per Campaign | mautic-campaigns | [code: app/bundles/CampaignBundle/Controller/Api/EventLogApiController.php:92-106 @7.x] |
@@ -66,7 +66,7 @@ that the endpoint exists, which permission gates it, and where it is declared.
 | POST | `/api/themes/new` | `core:themes:create` | mautic-rest-api | [code: app/bundles/CoreBundle/Controller/Api/ThemeApiController.php:32-34 @7.x] |
 | DELETE | `/api/themes/{theme}/delete` | `core:themes:delete` | mautic-rest-api | [code: app/bundles/CoreBundle/Controller/Api/ThemeApiController.php:128-130 @7.x] |
 | GET | `/api/stats` (lists `availableTables`, `tableColumns`) | authenticated API caller | mautic-rest-api | [code: app/bundles/CoreBundle/Controller/Api/StatsApiController.php:25-46 @7.x] |
-| GET | `/api/stats/{table}` | `<base>:view` of the table's owning area, own-only without `viewother` (checked in the stats subscriber) | mautic-rest-api | [code: app/bundles/CoreBundle/EventListener/CommonStatsSubscriber.php:63-68 @7.x] |
+| GET | `/api/stats/{table}` | `<base>:view` of the table's owning area, own-only without `viewother` (checked in the stats subscriber) | mautic-rest-api | [code: app/bundles/CoreBundle/EventListener/CommonStatsSubscriber.php:67-72 @7.x] |
 | GET | `/api/data` | authenticated API caller | mautic-reports-and-dashboard | [code: app/bundles/DashboardBundle/Controller/Api/WidgetApiController.php:62 @7.x] |
 | GET | `/api/data/{type}` | authenticated API caller; widget-level checks in the widget's subscriber | mautic-reports-and-dashboard | [code: app/bundles/DashboardBundle/Controller/Api/WidgetApiController.php:77-86 @7.x] |
 | POST | `/api/emails/{id}/send` | email view access (`checkEntityAccess`) | mautic-emails | [code: app/bundles/EmailBundle/Controller/Api/EmailApiController.php:107-121 @7.x] |
@@ -237,106 +237,106 @@ returns report data rows, not the report definition (see mautic-reports-and-dash
 
 | Method | Path | Permission | Owning skill | Citation |
 |---|---|---|---|---|
-| GET | `/api/contacts` | `lead:leads:view` (own-only filter without `viewother`) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| GET | `/api/contacts/{id}` | `lead:leads:viewown`/`viewother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/contacts/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/contacts/batch/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/contacts/batch/edit` | `lead:leads:editown`/`editother` (+`create` for missing ids) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/contacts/batch/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/contacts/{id}/edit` | `lead:leads:editown`/`editother` (+`create` if id missing) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/contacts/{id}/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/contacts/batch/delete?ids=` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/contacts/{id}/delete` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
+| GET | `/api/contacts` | `lead:leads:view` (own-only filter without `viewother`) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| GET | `/api/contacts/{id}` | `lead:leads:viewown`/`viewother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/contacts/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/contacts/batch/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/contacts/batch/edit` | `lead:leads:editown`/`editother` (+`create` for missing ids) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/contacts/batch/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/contacts/{id}/edit` | `lead:leads:editown`/`editother` (+`create` if id missing) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/contacts/{id}/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/contacts/batch/delete?ids=` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/contacts/{id}/delete` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
 
 #### Segments — `/api/segments` (keys `list/lists`)
 
 | Method | Path | Permission | Owning skill | Citation |
 |---|---|---|---|---|
-| GET | `/api/segments` | `lead:lists:view` (own-only filter without `viewother`) | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| GET | `/api/segments/{id}` | `lead:lists:viewown`/`viewother` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/segments/new` | `lead:lists:create` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/segments/batch/new` | `lead:lists:create` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/segments/batch/edit` | `lead:lists:editown`/`editother` (+`create` for missing ids) | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/segments/batch/edit` | `lead:lists:editown`/`editother` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/segments/{id}/edit` | `lead:lists:editown`/`editother` (+`create` if id missing) | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/segments/{id}/edit` | `lead:lists:editown`/`editother` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/segments/batch/delete?ids=` | `lead:lists:deleteown`/`deleteother` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/segments/{id}/delete` | `lead:lists:deleteown`/`deleteother` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
+| GET | `/api/segments` | `lead:lists:view` (own-only filter without `viewother`) | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| GET | `/api/segments/{id}` | `lead:lists:viewown`/`viewother` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/segments/new` | `lead:lists:create` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/segments/batch/new` | `lead:lists:create` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/segments/batch/edit` | `lead:lists:editown`/`editother` (+`create` for missing ids) | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/segments/batch/edit` | `lead:lists:editown`/`editother` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/segments/{id}/edit` | `lead:lists:editown`/`editother` (+`create` if id missing) | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/segments/{id}/edit` | `lead:lists:editown`/`editother` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/segments/batch/delete?ids=` | `lead:lists:deleteown`/`deleteother` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/segments/{id}/delete` | `lead:lists:deleteown`/`deleteother` | mautic-segments | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
 
 #### Companies — `/api/companies` (keys `company/companies`)
 
 | Method | Path | Permission | Owning skill | Citation |
 |---|---|---|---|---|
-| GET | `/api/companies` | `lead:leads:view` (own-only filter without `viewother`) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| GET | `/api/companies/{id}` | `lead:leads:viewown`/`viewother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/companies/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/companies/batch/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/companies/batch/edit` | `lead:leads:editown`/`editother` (+`create` for missing ids) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/companies/batch/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/companies/{id}/edit` | `lead:leads:editown`/`editother` (+`create` if id missing) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/companies/{id}/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/companies/batch/delete?ids=` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/companies/{id}/delete` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
+| GET | `/api/companies` | `lead:leads:view` (own-only filter without `viewother`) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| GET | `/api/companies/{id}` | `lead:leads:viewown`/`viewother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/companies/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/companies/batch/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/companies/batch/edit` | `lead:leads:editown`/`editother` (+`create` for missing ids) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/companies/batch/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/companies/{id}/edit` | `lead:leads:editown`/`editother` (+`create` if id missing) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/companies/{id}/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/companies/batch/delete?ids=` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/companies/{id}/delete` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
 
 #### Custom fields — `/api/fields/{object}` (keys `field/fields`)
 
 | Method | Path | Permission | Owning skill | Citation |
 |---|---|---|---|---|
-| GET | `/api/fields/{object}` | `lead:fields:view` (own-only filter without `viewother`) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| GET | `/api/fields/{object}/{id}` | `lead:fields:viewown`/`viewother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/fields/{object}/new` | `lead:fields:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/fields/{object}/batch/new` | `lead:fields:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/fields/{object}/batch/edit` | `lead:fields:editown`/`editother` (+`create` for missing ids) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/fields/{object}/batch/edit` | `lead:fields:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/fields/{object}/{id}/edit` | `lead:fields:editown`/`editother` (+`create` if id missing) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/fields/{object}/{id}/edit` | `lead:fields:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/fields/{object}/batch/delete?ids=` | `lead:fields:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/fields/{object}/{id}/delete` | `lead:fields:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
+| GET | `/api/fields/{object}` | `lead:fields:view` (own-only filter without `viewother`) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| GET | `/api/fields/{object}/{id}` | `lead:fields:viewown`/`viewother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/fields/{object}/new` | `lead:fields:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/fields/{object}/batch/new` | `lead:fields:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/fields/{object}/batch/edit` | `lead:fields:editown`/`editother` (+`create` for missing ids) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/fields/{object}/batch/edit` | `lead:fields:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/fields/{object}/{id}/edit` | `lead:fields:editown`/`editother` (+`create` if id missing) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/fields/{object}/{id}/edit` | `lead:fields:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/fields/{object}/batch/delete?ids=` | `lead:fields:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/fields/{object}/{id}/delete` | `lead:fields:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
 
 #### Notes — `/api/notes` (keys `note/notes`)
 
 | Method | Path | Permission | Owning skill | Citation |
 |---|---|---|---|---|
-| GET | `/api/notes` | `lead:notes:view` (own-only filter without `viewother`) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| GET | `/api/notes/{id}` | `lead:notes:viewown`/`viewother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/notes/new` | `lead:notes:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/notes/batch/new` | `lead:notes:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/notes/batch/edit` | `lead:notes:editown`/`editother` (+`create` for missing ids) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/notes/batch/edit` | `lead:notes:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/notes/{id}/edit` | `lead:notes:editown`/`editother` (+`create` if id missing) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/notes/{id}/edit` | `lead:notes:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/notes/batch/delete?ids=` | `lead:notes:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/notes/{id}/delete` | `lead:notes:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
+| GET | `/api/notes` | `lead:notes:view` (own-only filter without `viewother`) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| GET | `/api/notes/{id}` | `lead:notes:viewown`/`viewother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/notes/new` | `lead:notes:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/notes/batch/new` | `lead:notes:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/notes/batch/edit` | `lead:notes:editown`/`editother` (+`create` for missing ids) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/notes/batch/edit` | `lead:notes:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/notes/{id}/edit` | `lead:notes:editown`/`editother` (+`create` if id missing) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/notes/{id}/edit` | `lead:notes:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/notes/batch/delete?ids=` | `lead:notes:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/notes/{id}/delete` | `lead:notes:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
 
 #### Devices — `/api/devices` (keys `device/devices`)
 
 | Method | Path | Permission | Owning skill | Citation |
 |---|---|---|---|---|
-| GET | `/api/devices` | `lead:leads:view` (own-only filter without `viewother`) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| GET | `/api/devices/{id}` | `lead:leads:viewown`/`viewother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/devices/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/devices/batch/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/devices/batch/edit` | `lead:leads:editown`/`editother` (+`create` for missing ids) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/devices/batch/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/devices/{id}/edit` | `lead:leads:editown`/`editother` (+`create` if id missing) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/devices/{id}/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/devices/batch/delete?ids=` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/devices/{id}/delete` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
+| GET | `/api/devices` | `lead:leads:view` (own-only filter without `viewother`) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| GET | `/api/devices/{id}` | `lead:leads:viewown`/`viewother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/devices/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/devices/batch/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/devices/batch/edit` | `lead:leads:editown`/`editother` (+`create` for missing ids) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/devices/batch/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/devices/{id}/edit` | `lead:leads:editown`/`editother` (+`create` if id missing) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/devices/{id}/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/devices/batch/delete?ids=` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/devices/{id}/delete` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
 
 #### Tags — `/api/tags` (keys `tag/tags`)
 
 | Method | Path | Permission | Owning skill | Citation |
 |---|---|---|---|---|
-| GET | `/api/tags` | `lead:leads:view` (own-only filter without `viewother`) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| GET | `/api/tags/{id}` | `lead:leads:viewown`/`viewother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/tags/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| POST | `/api/tags/batch/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/tags/batch/edit` | `lead:leads:editown`/`editother` (+`create` for missing ids) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/tags/batch/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PUT | `/api/tags/{id}/edit` | `lead:leads:editown`/`editother` (+`create` if id missing) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| PATCH | `/api/tags/{id}/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/tags/batch/delete?ids=` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
-| DELETE | `/api/tags/{id}/delete` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:154 @7.x] |
+| GET | `/api/tags` | `lead:leads:view` (own-only filter without `viewother`) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| GET | `/api/tags/{id}` | `lead:leads:viewown`/`viewother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/tags/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| POST | `/api/tags/batch/new` | `lead:leads:create` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/tags/batch/edit` | `lead:leads:editown`/`editother` (+`create` for missing ids) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/tags/batch/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PUT | `/api/tags/{id}/edit` | `lead:leads:editown`/`editother` (+`create` if id missing) | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| PATCH | `/api/tags/{id}/edit` | `lead:leads:editown`/`editother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/tags/batch/delete?ids=` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
+| DELETE | `/api/tags/{id}/delete` | `lead:leads:deleteown`/`deleteother` | mautic-contacts | [code: app/bundles/LeadBundle/Config/config.php:150 @7.x] |
 
 #### Web push notifications — `/api/notifications` (keys `notification/notifications`)
 
@@ -595,7 +595,7 @@ All under `/api/v2`. Unless noted each declares `GetCollection`, `Post`, `Get`, 
 | same | derived (`Notification`) | `notification:notifications:*` | mautic-channels | [code: app/bundles/NotificationBundle/Entity/Notification.php:29-31 @7.x] |
 | same; **GetCollection has no security expression** | derived (`Category`) | `category:categories:*` (non-ownership) on the other operations | mautic-assets-categories-projects | [code: app/bundles/CategoryBundle/Entity/Category.php:23-26 @7.x] |
 | GetCollection, Get only | derived (`IpAddress`) | `lead:leads:viewown`/`viewother` | mautic-contacts | [code: app/bundles/CoreBundle/Entity/IpAddress.php:13-15 @7.x] |
-| same | derived (`Asset`) | `asset:assets:*` | mautic-assets-categories-projects | [code: app/bundles/AssetBundle/Entity/Asset.php:32-34 @7.x] |
+| same | derived (`Asset`) | `asset:assets:*` | mautic-assets-categories-projects | [code: app/bundles/AssetBundle/Entity/Asset.php:33-35 @7.x] |
 | GetCollection, Get only | `/api/v2/downloads` | `asset:assets:view*` (ownership via `getPermissionUser()`) | mautic-assets-categories-projects | [code: app/bundles/AssetBundle/Entity/Download.php:16-18 @7.x] [code: app/bundles/AssetBundle/Tests/Functional/ApiPlatform/DownloadOwnershipApiV2AuthorizationRegressionTest.php:67 @7.x] |
 | same | `/api/v2/pages` | `page:pages:*` | mautic-pages-and-tracking | [code: app/bundles/PageBundle/Entity/Page.php:36-38 @7.x] [code: app/bundles/ApiBundle/Tests/Functional/Serializer/PutOperationTest.php:50-93 @7.x] |
 | same | derived (`Sms`) | `sms:smses:*` | mautic-channels | [code: app/bundles/SmsBundle/Entity/Sms.php:37-39 @7.x] |

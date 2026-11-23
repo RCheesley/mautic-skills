@@ -13,8 +13,8 @@ plugin end to end is in mautic-plugin-development, and the test harness is in ma
 
 ## Expected behaviour (essentials)
 Stack and layout
-- Mautic 7.2.1 runs on PHP ~8.2, Symfony ~7.4, Doctrine ORM ^2.14 (2.20.9) and DBAL 3.7.x. [code: app/composer.json:15-105 @7.x]
-- The repository root is the `mautic/mautic` project that requires `mautic/core-lib`; core-lib is the `app/` directory and autoloads `Mautic\` from `app/bundles/`, while the root autoloads `MauticPlugin\` from `plugins/`. [code: composer.json:23-27 @7.x] [code: composer.json:108-119 @7.x] [code: app/composer.json:7-16 @7.x]
+- Mautic 7.2.1 runs on PHP ~8.2, Symfony ~7.4, Doctrine ORM ^2.14 (2.20.9) and DBAL 3.7.x. [code: app/composer.json:15-105 @419a08a9b35]
+- The repository root is the `mautic/mautic` project that requires `mautic/core-lib`; core-lib is the `app/` directory and autoloads `Mautic\` from `app/bundles/`, while the root autoloads `MauticPlugin\` from `plugins/`. [code: composer.json:23-27 @7.x] [code: composer.json:106-117 @7.x] [code: app/composer.json:7-16 @7.x]
 - A bundle whose namespace contains `MauticPlugin\` is treated as a plugin and `Mautic\` as core; CoreBundle is always loaded first. [code: app/bundles/CoreBundle/DependencyInjection/Builder/BundleMetadataBuilder.php:55-81 @7.x]
 
 Dependency injection
@@ -37,7 +37,7 @@ Models and entities
 - On save, `dateModified` is set only when it is currently null, and `modifiedBy` only when the entity reports changes through `isChanged()`-tracking setters. [code: app/bundles/CoreBundle/Model/FormModel.php:243-293 @7.x]
 - Cloning a `FormEntity` resets `dateAdded`, `checkedOut`, `createdBy` and changes, and sets `isPublished = false`. [code: app/bundles/CoreBundle/Entity/FormEntity.php:215-223 @7.x]
 - Publish status is `unpublished` when the flag is off, `pending` before `publishUp`, `expired` at or after `publishDown`, else `published`; `isPublished()` on dated entities also requires a published (or no) category. [code: app/bundles/CoreBundle/Entity/FormEntity.php:233-251 @7.x] [code: app/bundles/CoreBundle/Entity/FormEntity.php:412-435 @7.x]
-- All `datetime` columns are stored in UTC through `UTCDateTimeType` and read back into PHP's default timezone, which Mautic sets per request from the session `_timezone` or `default_timezone`. [code: app/bundles/CoreBundle/Doctrine/Type/UTCDateTimeType.php:17-71 @7.x] [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:20-40 @7.x]
+- All `datetime` columns are stored in UTC through `UTCDateTimeType` and read back into PHP's default timezone, which Mautic sets per request from the session `_timezone` or `default_timezone`. [code: app/bundles/CoreBundle/Doctrine/Type/UTCDateTimeType.php:17-71 @7.x] [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:20-40 @419a08a9b35]
 - String fields and indexed fields mapped through `ClassMetadataBuilder` are forced to length 191 for utf8mb4. [code: app/bundles/CoreBundle/Doctrine/Mapping/ClassMetadataBuilder.php:370-396 @7.x]
 
 Repositories and list search
@@ -51,7 +51,7 @@ Controllers, locks and AJAX
 - "Save & Close" releases the lock and "Apply" keeps it. [code: app/bundles/CoreBundle/Controller/AbstractStandardFormController.php:407 @7.x] [code: app/bundles/CoreBundle/Model/FormModel.php:245-249 @7.x]
 - Locks never expire unless `max_entity_lock_time` (seconds) is non-zero; the "Override Lock" link appears only for users who can edit the entity. [code: app/bundles/CoreBundle/Model/FormModel.php:47-74 @7.x] [code: app/bundles/CoreBundle/Controller/AbstractFormController.php:71-136 @7.x]
 - Delete and batch delete act only on POST. [code: app/bundles/CoreBundle/Controller/AbstractStandardFormController.php:107-171 @7.x]
-- `/s/ajax?action=bundle:name` forwards to `{name}Action()` on `Mautic\{Bundle}Bundle\Controller\AjaxController` (`plugin:bundle:name` → `MauticPlugin`); unauthenticated calls or missing methods return `{"success":0}`. [code: app/bundles/CoreBundle/Controller/AjaxController.php:64-136 @7.x]
+- `/s/ajax?action=bundle:name` forwards to `{name}Action()` on `Mautic\{Bundle}Bundle\Controller\AjaxController` (`plugin:bundle:name` → `MauticPlugin`); unauthenticated calls or missing methods return `{"success":0}`. [code: app/bundles/CoreBundle/Controller/AjaxController.php:65-137 @7.x]
 - Every XHR POST to a `/s/` path must carry header `X-CSRF-Token` for intention `mautic_ajax_post`; an invalid token gets HTTP 200 with a JSON `flashes` error and the controller never runs. [code: app/bundles/CoreBundle/EventListener/RequestSubscriber.php:27-63 @7.x]
 - `delegateView()` returns a full page for normal requests and JSON (`newContent`, `route`, `mauticContent`, `flashes`) for XHR requests. [code: app/bundles/CoreBundle/Controller/CommonController.php:218-278 @7.x]
 
@@ -86,7 +86,7 @@ Bundle-by-bundle ownership: references/bundle-map.md. Full map: references/code-
 - New repository: extend `CommonRepository`, override `getTableAlias()`, return `getStandardSearchCommands()` from `getSearchCommands()` to get `is:published` and friends, and override `addCatchAllWhereClause()`/`addSearchCommandWhereClause()` for custom columns. [code: app/bundles/CoreBundle/Entity/CommonRepository.php:707-789 @7.x]
 - New model: extend `FormModel`, override `getRepository()`, `getPermissionBase()`, `createForm()` and `dispatchEvent()`; without `dispatchEvent()` nothing downstream (audit log, webhooks) sees saves. [code: app/bundles/CoreBundle/Model/FormModel.php:370-405 @7.x]
 - New CRUD screen: extend `AbstractStandardFormController`, implement `getModelName()`, call the `*Standard()` methods, and ship `form.html.twig` and `details.html.twig` (only `list.html.twig` has a core fallback). [code: app/bundles/CoreBundle/Controller/AbstractStandardFormController.php:679-693 @7.x]
-- New AJAX action: add `fooAction(Request $request): JsonResponse` to your bundle's `AjaxController extends Mautic\CoreBundle\Controller\AjaxController` and call `action=bundle:foo`. [code: app/bundles/CoreBundle/Controller/AjaxController.php:77-136 @7.x]
+- New AJAX action: add `fooAction(Request $request): JsonResponse` to your bundle's `AjaxController extends Mautic\CoreBundle\Controller\AjaxController` and call `action=bundle:foo`. [code: app/bundles/CoreBundle/Controller/AjaxController.php:78-137 @7.x]
 - Prefer `Config/services.php` with autowiring over `config.php` `services` arrays; 8.x no longer reads the `services` group. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/autowiring.html#introducing-services-php] [PR #17470]
 - Subscribe to event classes where they exist, and register the 7.x constant as a second key guarded by `defined()` when the code must run on both 7.x and 8.x. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/event_listeners.html#mautic-8-class-name-event-dispatch] [PR #17157]
 - Core bundles must keep string service aliases for backward compatibility; plugins may switch to FQCN service ids in a major release. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/autowiring.html#consider-backward-compatibility-for-services]
@@ -124,7 +124,7 @@ Bundle-by-bundle ownership: references/bundle-map.md. Full map: references/code-
 - Docs say configuration is written to `app/config/local.php`; since 5.x the loader reads `config/local.php`. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/mautic_vs_symfony.html#custom-configuration] [code: app/bundles/CoreBundle/Loader/ParameterLoader.php:195-216 @7.x]
 - Docs say `trans()` returns an empty string for a missing key; Mautic's decorator delegates to Symfony, which returns the key itself, and only retries with locale `EN` on an `InvalidArgumentException`. [devdocs: https://devdocs.mautic.org/en/7.2/plugin_services/translator.html#using-the-translator-service] [code: app/bundles/CoreBundle/Translation/Translator.php:42-49 @7.x]
 - The 7.2 custom-event docs pass `($eventName, $event)` to `dispatch()`; Symfony's order is `dispatch($event, $eventName)`. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/event_listeners.html#custom-events]
-- `track_private_ip_ranges = false` (default) records 10.x/192.168.x visitors as `127.0.0.1`. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:213-222 @7.x]
+- `track_private_ip_ranges = false` (default) records 10.x/192.168.x visitors as `127.0.0.1`. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:194-203 @7.x]
 - A crashed prod asset generation leaves `media/generation_in_progress.txt` behind and every request spin-waits on it. [code: app/bundles/CoreBundle/Helper/AssetGenerationHelper.php:121-123 @7.x]
 - Moving or renaming a service must keep its old string ID as a deprecated alias; 7.2.0 dropped IDs such as `mautic.helper.encryption` and broke plugins until 7.2.1 restored them. [PR #16843] [PR #17251] [code: app/bundles/CoreBundle/Config/services.php:189-190 @7.x]
 - Do not tag an autoconfigured subscriber as `kernel.event_listener` too; it then runs twice per event, as `ExceptionListener` did. [PR #16879]

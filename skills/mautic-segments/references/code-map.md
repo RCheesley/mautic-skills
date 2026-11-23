@@ -12,7 +12,7 @@ LB = `app/bundles/LeadBundle/` in the tables below. Citations use full paths.
 ## Services
 | Class | Path | Role |
 |---|---|---|
-| `ListModel` | LB/Model/ListModel.php | `rebuildListLeads`, `addLead`, `removeLead`, counts, `getChoiceFields`, dependency checks [code: app/bundles/LeadBundle/Model/ListModel.php:109-1476 @7.x] |
+| `ListModel` | LB/Model/ListModel.php | `rebuildListLeads`, `addLead`, `removeLead`, counts, `getChoiceFields`, dependency checks [code: app/bundles/LeadBundle/Model/ListModel.php:109-1476 @419a08a9b35] |
 | `SegmentActionModel` | LB/Model/SegmentActionModel.php | Batch add/remove from the contact list [code: app/bundles/LeadBundle/Model/SegmentActionModel.php:12-40 @7.x] |
 | `ContactSegmentService` | LB/Segment/ContactSegmentService.php | New-member, total and orphan queries, with batch limiters |
 | `ContactSegmentQueryBuilder` | LB/Segment/Query/ContactSegmentQueryBuilder.php | Base query, plugin filtering event, dependency plan, new-contact restriction |
@@ -58,9 +58,9 @@ LB = `app/bundles/LeadBundle/` in the tables below. Citations use full paths.
 | `mautic_api_getcontactsegments` | `/api/contacts/list/segments` | `ListApiController::getListsAction` |
 | `mautic_api_getcontactssegments` | `/api/contacts/{id}/segments` | `LeadApiController::getListsAction` |
 
-[code: app/bundles/LeadBundle/Config/config.php:23-244 @7.x]
+[code: app/bundles/LeadBundle/Config/config.php:23-244 @419a08a9b35]
 
-AJAX actions [code: app/bundles/LeadBundle/Controller/AjaxController.php:168-843 @7.x]:
+AJAX actions [code: app/bundles/LeadBundle/Controller/AjaxController.php:175-850 @7.x]:
 - `loadSegmentFilterForm`
 - `toggleLeadList` (manual)
 - `getLeadCount` (cached count plus the "Building" label)
@@ -86,7 +86,7 @@ AJAX actions [code: app/bundles/LeadBundle/Controller/AjaxController.php:168-843
 | `batch_sleep_time` (Core) | 1 | Sleep per rebuild batch |
 | `default_timezone` (Core) | — | Base for `date` filters |
 
-[code: app/bundles/LeadBundle/Config/config.php:336-371 @7.x] [code: app/bundles/CoreBundle/Config/config.php:699 @7.x]
+[code: app/bundles/LeadBundle/Config/config.php:332-367 @7.x] [code: app/bundles/CoreBundle/Config/config.php:699 @7.x]
 
 ## Permissions
 `lead:lists:viewown|viewother|editown|editother|create|deleteown|deleteother|full`. Any `lists` permission implies own-contact view [code: app/bundles/LeadBundle/Security/Permissions/LeadPermissions.php:11-96 @7.x].
@@ -102,10 +102,10 @@ AJAX actions [code: app/bundles/LeadBundle/Controller/AjaxController.php:168-843
 - Validators: `SegmentInUse`, `SegmentUsedInCampaigns`, `UniqueUserAlias`, `SegmentDate`.
 
 ## Views
-`LB/Resources/views/List/{list,_list,_list_row,details,form,filterpropform}.html.twig` [code: app/bundles/LeadBundle/Resources/views/List/_list_row.html.twig:5-76 @7.x].
+`LB/Resources/views/List/{list,_list,_list_row,details,form,filterpropform}.html.twig` [code: app/bundles/LeadBundle/Resources/views/List/_list_row.html.twig:5-76 @419a08a9b35].
 
 ## Consumers in other bundles
-- `CampaignRepository` joins `lead_lists_leads` with `manually_removed = 0` [code: app/bundles/CampaignBundle/Entity/CampaignRepository.php:600-620 @7.x].
+- `CampaignRepository` joins `lead_lists_leads` with `manually_removed = 0` [code: app/bundles/CampaignBundle/Entity/CampaignRepository.php:601-621 @7.x].
 - `EmailBundle` `SegmentSubscriber` [code: app/bundles/EmailBundle/EventListener/SegmentSubscriber.php:19-30 @7.x].
 - `PointBundle` `SegmentFilterSubscriber` [code: app/bundles/PointBundle/EventListener/SegmentFilterSubscriber.php:29-80 @7.x].
 - CRM plugin `LeadListSubscriber` [code: plugins/MauticCrmBundle/EventListener/LeadListSubscriber.php:27-119 @7.x].

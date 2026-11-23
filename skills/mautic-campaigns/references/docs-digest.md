@@ -28,7 +28,7 @@ Add/Remove Do Not Contact, Add to Company's score, Add Company, Adjust Contact P
 Device visit, Downloads Asset, Request Dynamic Content, Submits Form, Visits a page; Opens/Clicks/Replies to Email only after a Send Email action [docs: https://docs.mautic.org/en/7.2/campaigns/campaign_builder.html#decisions].
 
 ## Conditions
-Contact Campaigns, Contact device, Contact field value, Contact owner, Contact Segments, Contact Tags, Contact Points, Form Field value, Has active notification, Has valid Email address (syntax only), Prevent action after date [docs: https://docs.mautic.org/en/7.2/campaigns/campaign_builder.html#conditions]. Prevent action after date: Time Stamp = Campaign Start Date, operator less/greater than, interval in minutes–years [docs: https://docs.mautic.org/en/7.2/campaigns/campaign_builder.html#prevent-action-after-date-condition]. Code uses publish-up, or date added when no publish-up [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:718-760 @7.x].
+Contact Campaigns, Contact device, Contact field value, Contact owner, Contact Segments, Contact Tags, Contact Points, Form Field value, Has active notification, Has valid Email address (syntax only), Prevent action after date [docs: https://docs.mautic.org/en/7.2/campaigns/campaign_builder.html#conditions]. Prevent action after date: Time Stamp = Campaign Start Date, operator less/greater than, interval in minutes–years [docs: https://docs.mautic.org/en/7.2/campaigns/campaign_builder.html#prevent-action-after-date-condition]. Code uses publish-up, or date added when no publish-up [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:719-761 @7.x].
 
 ## Scheduling
 - Event timing options: immediately / relative time period / specific date-time / optimal for Contact; "Send from or between the hours of"; "Schedule only on selected days" (incl. Weekdays) — screenshot only [docs: https://docs.mautic.org/en/7.2/campaigns/campaign_builder.html#notes-on-campaign-actions].
@@ -65,7 +65,7 @@ Contact Campaigns, Contact device, Contact field value, Contact owner, Contact S
 Endpoints C1–C11 (get, list with `published`/`withContactCounts`, contacts, new, clone, edit, delete, export, import, add/remove contact); counts cached 12 h [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/campaigns.html#list-campaigns]. Event payload schema for create/edit is not documented ("see the unit tests") [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/campaigns.html#create-campaign].
 
 ## Terminology
-"Contact" not "Lead"; "Segment" not "list"; Actions, Decisions, Conditions; green/red paths in user docs vs `yes`/`no` anchors in dev docs; UI says "Republish" while user docs say "Reactivation"/"activation" [code: app/bundles/CampaignBundle/Translations/en_US/messages.ini:194-199 @7.x] [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#configuring-reactivation-behaviour].
+"Contact" not "Lead"; "Segment" not "list"; Actions, Decisions, Conditions; green/red paths in user docs vs `yes`/`no` anchors in dev docs; UI says "Republish" while user docs say "Reactivation"/"activation" [code: app/bundles/CampaignBundle/Translations/en_US/messages.ini:194-199 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/campaigns/managing_campaigns.html#configuring-reactivation-behaviour].
 
 ## Known doc errors
 - Dev docs: export via POST (route is GET) [code: app/bundles/CampaignBundle/Config/config.php:131-135 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/campaigns.html#exporting-via-api].

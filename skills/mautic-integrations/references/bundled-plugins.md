@@ -30,7 +30,7 @@ limitations. "Status" is what code and docs show; nothing here tests the remote 
 | `plugins/MauticZapierBundle` | none (info card only) | none | n/a | none |
 | `plugins/MauticGmailBundle` | Gmail | IntegrationsBundle | inbound tracking | unit |
 | `plugins/MauticOutlookBundle` | Outlook | legacy | inbound tracking | unit |
-Sources: [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:17 @7.x] [code: plugins/MauticClearbitBundle/Integration/ClearbitIntegration.php:10-32 @7.x] [code: plugins/MauticGmailBundle/Integration/GmailIntegration.php:10-26 @7.x] [code: plugins/MauticOutlookBundle/Integration/OutlookIntegration.php:10-53 @7.x]
+Sources: [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:17 @7.x] [code: plugins/MauticClearbitBundle/Integration/ClearbitIntegration.php:10-32 @7.x] [code: plugins/MauticGmailBundle/Integration/GmailIntegration.php:10-26 @7.x] [code: plugins/MauticOutlookBundle/Integration/OutlookIntegration.php:10-53 @419a08a9b35]
 
 No CRM uses the IntegrationsBundle sync engine, so `mautic:integrations:sync` does nothing for them. Their pull and push run through `mautic:integration:fetchleads`. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:17 @7.x] [docs: https://docs.mautic.org/en/7.2/plugins/hubspot.html#configure-the-hubspot-crm-plugin]
 
@@ -40,7 +40,7 @@ History: Pipedrive and Citrix/GoTo were deprecated in 4.4.9 and removed in 5.0; 
 
 ## 1 Salesforce
 - Purpose: two-way Contact/Lead/Account sync, CRM campaign membership, activity export. Framework: legacy. [code: plugins/MauticCrmBundle/Integration/SalesforceIntegration.php:119-122 @7.x]
-- Features: `push_lead`, `get_leads`, `push_leads`. Settings: `sandbox`, `updateOwner`, `updateBlanks`, `updateDncByDate`, `objects` (Lead/Contact/company/Activity), `activityEvents`, `namespace`. [code: plugins/MauticCrmBundle/Integration/SalesforceIntegration.php:514-632 @7.x]
+- Features: `push_lead`, `get_leads`, `push_leads`. Settings: `sandbox`, `updateOwner`, `updateBlanks`, `updateDncByDate`, `objects` (Lead/Contact/company/Activity), `activityEvents`, `namespace`. [code: plugins/MauticCrmBundle/Integration/SalesforceIntegration.php:514-632 @419a08a9b35]
 - Auth: OAuth2 against `login.salesforce.com` (or `test.salesforce.com` with sandbox), scope `api refresh_token`. REST API v34.0, composite v38.0. [code: plugins/MauticCrmBundle/Integration/SalesforceIntegration.php:79-164 @7.x]
 - Commands: `mautic:integration:fetchleads -i Salesforce` and `mautic:integration:pushleadactivity -i Salesforce` (creates `mautic_timeline__c` records). [code: plugins/MauticCrmBundle/Integration/SalesforceIntegration.php:987-1095 @7.x]
 - Behaviour:
@@ -73,7 +73,7 @@ History: Pipedrive and Citrix/GoTo were deprecated in 4.4.9 and removed in 5.0; 
 
 ## 3 Zoho CRM
 - Purpose: push, pull (Leads/Contacts/Accounts) and bulk push. Framework: legacy. Features add `push_leads`. [code: plugins/MauticCrmBundle/Integration/ZohoIntegration.php:93-96 @7.x]
-- Auth: OAuth2 against `accounts.<datacenter>`; the data centre (`zoho.com`/`.eu`/`.co.jp`/`.com.cn`) is required. The API base is `api_domain/crm/v2`. [code: plugins/MauticCrmBundle/Integration/ZohoIntegration.php:32-117,612-669 @7.x] [docs: https://docs.mautic.org/en/7.2/plugins/zoho_crm.html#configure-the-zoho-crm-plugin]
+- Auth: OAuth2 against `accounts.<datacenter>`; the data centre (`zoho.com`/`.eu`/`.co.jp`/`.com.cn`) is required. The API base is `api_domain/crm/v2`. [code: plugins/MauticCrmBundle/Integration/ZohoIntegration.php:32-117,612-669 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/plugins/zoho_crm.html#configure-the-zoho-crm-plugin]
 - Behaviour:
   - `pushLead` always targets the `Leads` module and searches by Email. [code: plugins/MauticCrmBundle/Integration/ZohoIntegration.php:775-794 @7.x]
   - Bulk push caps batches at 100. [code: plugins/MauticCrmBundle/Integration/ZohoIntegration.php:1005-1081 @7.x]
@@ -84,9 +84,9 @@ History: Pipedrive and Citrix/GoTo were deprecated in 4.4.9 and removed in 5.0; 
 - History: moved to Zoho REST API v2 with OAuth in 2.16; installs had to re-authorise. [PR #8272]
 
 ## 4 Microsoft Dynamics CRM
-- Purpose: push and pull contacts/companies. Framework: legacy. Auth: OAuth2 via `login.microsoftonline.com/common`. API: Web API v8.2 with a 300 s timeout. [code: plugins/MauticCrmBundle/Integration/DynamicsIntegration.php:41-159 @7.x] [code: plugins/MauticCrmBundle/Api/DynamicsApi.php:11-60 @7.x]
+- Purpose: push and pull contacts/companies. Framework: legacy. Auth: OAuth2 via `login.microsoftonline.com/common`. API: Web API v8.2 with a 300 s timeout. [code: plugins/MauticCrmBundle/Integration/DynamicsIntegration.php:41-159 @419a08a9b35] [code: plugins/MauticCrmBundle/Api/DynamicsApi.php:11-60 @7.x]
 - Behaviour: an existing mapping triggers a PATCH, otherwise a POST that parses `OData-EntityId`. Pull follows `@odata.nextLink`, 200 per page. [code: plugins/MauticCrmBundle/Integration/DynamicsIntegration.php:298-423 @7.x]
-- Limitations: `updateBlanks` is added to every form area. The docs page is title only. [code: plugins/MauticCrmBundle/Integration/DynamicsIntegration.php:52-100 @7.x] [docs: https://docs.mautic.org/en/7.2/plugins/microsoft_dynamics_crm.html]
+- Limitations: `updateBlanks` is added to every form area. The docs page is title only. [code: plugins/MauticCrmBundle/Integration/DynamicsIntegration.php:52-100 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/plugins/microsoft_dynamics_crm.html]
 - History: the plural `Contacts` object fix landed in 5.0.4. [PR #13208]
 
 ## 5 SugarCRM
@@ -102,19 +102,19 @@ History: Pipedrive and Citrix/GoTo were deprecated in 4.4.9 and removed in 5.0; 
 
 ## 7 ConnectWise
 - Purpose: push and pull Contacts/Companies, plus creating CW Activities from the campaign action. Framework: legacy. Auth: `basic` plus a `clientId` header. [code: plugins/MauticCrmBundle/Integration/ConnectwiseIntegration.php:36-155 @7.x]
-- Behaviour: `pushLead` updates every CW contact with that email. With `push_activities` it creates an Activity recorded as `Activities`. [code: plugins/MauticCrmBundle/Integration/ConnectwiseIntegration.php:566-626,971-988 @7.x] [code: plugins/MauticCrmBundle/Form/Type/IntegrationCampaignsTaskType.php:27-79 @7.x]
+- Behaviour: `pushLead` updates every CW contact with that email. With `push_activities` it creates an Activity recorded as `Activities`. [code: plugins/MauticCrmBundle/Integration/ConnectwiseIntegration.php:566-626,971-988 @7.x] [code: plugins/MauticCrmBundle/Form/Type/IntegrationCampaignsTaskType.php:27-79 @419a08a9b35]
 - Limitations: inverted `update_mautic` convention on update, and `customFields` is a todo. [code: plugins/MauticCrmBundle/Integration/ConnectwiseIntegration.php:344,633 @7.x]
 - History: the appcookie credential was replaced by a Client ID in 5.1. [PR #13408]
 
 ## 8 Shared CRM behaviour (CrmAbstractIntegration)
 - `pushLead` returns `[]` with no mapped fields, `false` on an empty payload or an error, and `true` on success. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:57-84 @7.x]
-- Activity export defaults to `point.gained, form.submitted, email.read` when the setting is absent. A present-but-empty setting sends nothing. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:178-266 @7.x]
+- Activity export defaults to `point.gained, form.submitted, email.read` when the setting is absent. A present-but-empty setting sends nothing. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:178-266 @419a08a9b35]
 - A pull without any unique-identifier value returns `null`, so no Contact is created. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:357-389 @7.x]
 - For existing Contacts only `update_mautic=1` fields are written. `updateBlanks` additionally fills empty fields. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:391-410,476-505 @7.x]
 - `updateOwner` sets the owner from `owner_email` when a matching user exists. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:437-443 @7.x]
 - Companies without `companyname` are not created. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:271-326 @7.x]
 - A trailing `/` in the `url` key is stripped. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:23-33 @7.x]
-- History: `getLeadData()` detaches the wrong entities from 5.0.0 to 7.2.1, so activity push silently does nothing; fixed in 7.2.2. The 7.x snapshot still has the bug. [PR #12361] [PR #17815] [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:245-254 @7.x]
+- History: `getLeadData()` detaches the wrong entities from 5.0.0 to 7.2.1, so activity push silently does nothing; fixed in 7.2.2. The 7.x snapshot still has the bug. [PR #12361] [PR #17815] [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:245-254 @419a08a9b35]
 - Add a CRM: subclass `CrmAbstractIntegration`, add `Api/<Name>Api extends CrmApi`, and alias `mautic.integration.<name>`. [code: plugins/MauticCrmBundle/Integration/CrmAbstractIntegration.php:155-163 @7.x]
 
 ## 9 Clearbit
@@ -129,7 +129,7 @@ History: Pipedrive and Citrix/GoTo were deprecated in 4.4.9 and removed in 5.0; 
 - History: moved from `AbstractIntegration` to `BasicIntegration` in 7.2. [PR #16586]
 
 ## 10 FullContact
-- Purpose: same enrichment flow as Clearbit against FullContact v2. Framework: legacy, auth `none`, key `apikey`. [code: plugins/MauticFullContactBundle/Integration/FullContactIntegration.php:13-111 @7.x]
+- Purpose: same enrichment flow as Clearbit against FullContact v2. Framework: legacy, auth `none`, key `apikey`. [code: plugins/MauticFullContactBundle/Integration/FullContactIntegration.php:13-111 @419a08a9b35]
 - Limitations:
   - The plugin targets the v2 API. Inferred: the integer status is compared to strings, so `NoCreditException` and rate limiting never trigger. [code: plugins/MauticFullContactBundle/Services/FullContact_Base.php:171-178 @7.x]
   - The stats call runs from the admin's browser and exposes the key there. [code: plugins/MauticFullContactBundle/Assets/js/fullcontact.js:31 @7.x]
@@ -152,13 +152,13 @@ History: Pipedrive and Citrix/GoTo were deprecated in 4.4.9 and removed in 5.0; 
 - Limitation: the info modal loads third-party JavaScript into the admin UI. [code: plugins/MauticZapierBundle/Config/config.php:14 @7.x]
 
 ## 13 Gmail and Outlook
-- Purpose: store the shared `secret` used to verify tracking pixels from the Gmail extension / Outlook add-in. Tracking itself lives in EmailBundle at `/plugin/{integration}/tracking.gif`. [code: app/bundles/EmailBundle/Controller/PublicController.php:710-810 @7.x]
-- Gmail uses IntegrationsBundle (`GmailKeysType` with a required `secret`). Outlook uses the legacy framework (auth `none`, key `secret`). [code: plugins/MauticGmailBundle/Form/Type/GmailKeysType.php:18-36 @7.x] [code: plugins/MauticOutlookBundle/Integration/OutlookIntegration.php:10-53 @7.x]
+- Purpose: store the shared `secret` used to verify tracking pixels from the Gmail extension / Outlook add-in. Tracking itself lives in EmailBundle at `/plugin/{integration}/tracking.gif`. [code: app/bundles/EmailBundle/Controller/PublicController.php:710-810 @419a08a9b35]
+- Gmail uses IntegrationsBundle (`GmailKeysType` with a required `secret`). Outlook uses the legacy framework (auth `none`, key `secret`). [code: plugins/MauticGmailBundle/Form/Type/GmailKeysType.php:18-36 @419a08a9b35] [code: plugins/MauticOutlookBundle/Integration/OutlookIntegration.php:10-53 @419a08a9b35]
 - Behaviour:
-  - The signature is `crc32b(crypt(urlencode(d), '$1$'.secret))`, compared with `hash_equals`. [code: app/bundles/EmailBundle/Controller/PublicController.php:710-752 @7.x]
-  - The payload needs `email`, `subject` and `body`. [code: app/bundles/EmailBundle/Controller/PublicController.php:764-801 @7.x]
-  - Outlook's first request is not counted as an open. [code: app/bundles/EmailBundle/Controller/PublicController.php:764-801 @7.x]
-- Limitation (inferred): `GmailIntegration` has no `getDecryptedApiKeys()`, which the tracking code calls, so Gmail tracking would fail with an undefined-method error. [code: app/bundles/EmailBundle/Controller/PublicController.php:741 @7.x] [code: app/bundles/IntegrationsBundle/Integration/BasicIntegration.php:10-40 @7.x]
+  - The signature is `crc32b(crypt(urlencode(d), '$1$'.secret))`, compared with `hash_equals`. [code: app/bundles/EmailBundle/Controller/PublicController.php:710-752 @419a08a9b35]
+  - The payload needs `email`, `subject` and `body`. [code: app/bundles/EmailBundle/Controller/PublicController.php:862-899 @7.x]
+  - Outlook's first request is not counted as an open. [code: app/bundles/EmailBundle/Controller/PublicController.php:862-899 @7.x]
+- Limitation (inferred): `GmailIntegration` has no `getDecryptedApiKeys()`, which the tracking code calls, so Gmail tracking would fail with an undefined-method error. [code: app/bundles/EmailBundle/Controller/PublicController.php:741 @419a08a9b35] [code: app/bundles/IntegrationsBundle/Integration/BasicIntegration.php:10-40 @7.x]
 - History: Gmail moved from `AbstractIntegration` to `BasicIntegration` in 7.2.0, which is when this limitation appeared. [PR #16847]
 
 ## 14 Other plugins (pointers)

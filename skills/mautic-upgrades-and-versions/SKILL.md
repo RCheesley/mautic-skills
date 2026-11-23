@@ -27,20 +27,20 @@ Versions and platform
 The updater
 - Updating is CLI-only from 7.0; the browser updater (`UpdateController`, `/s/update/schema`) existed through 6.0.x [code: UPGRADE-7.0.md:9 @7.x] [code: git ls-tree 6.0.0 / 7.0.0].
 - `mautic:update:apply` is two-phase: phase 1 (checks, new files, deleted files, cache nuke) then a hard `exit()`; phase 2 `--finish` (language packs, migrations, finalise) [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:90-108 @7.x] [code: app/bundles/CoreBundle/Update/StepProvider.php:33-60 @7.x].
-- With `composer_updates` = true the command refuses to run at all, including `--finish` [code: ApplyUpdatesCommand.php:84-88 @7.x].
-- Without `--force` phase 1 asks for confirmation, default No [code: ApplyUpdatesCommand.php:117-125 @7.x].
+- With `composer_updates` = true the command refuses to run at all, including `--finish` [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:84-88 @7.x].
+- Without `--force` phase 1 asks for confirmation, default No [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:117-125 @7.x].
 - `--update-package <zip>` skips all pre-update checks [code: app/bundles/CoreBundle/Update/Step/PreUpdateChecksStep.php:38-44 @7.x].
 - Pre-update checks abort before any file changes when PHP is outside min/max, the DB is below the MySQL/MariaDB minimum, metadata is missing, or no newer compatible release exists; all failures print together [code: app/bundles/CoreBundle/Helper/UpdateHelper.php:166-196 @7.x].
 - The release offered is the first GitHub release whose `release_metadata.json` exists, passes `update_stability`, accepts the running version via `minimum_mautic_version`, and is newer [code: app/bundles/CoreBundle/Helper/Update/Github/ReleaseParser.php:25-86 @7.x].
-- Update data is cached 3 hours in `lastUpdateCheck.txt`; `mautic:update:find` bypasses the cache and always exits 0, even on error [code: UpdateHelper.php:83-95 @7.x] [code: app/bundles/CoreBundle/Command/FindUpdatesCommand.php @7.x].
-- An empty `system_update_url` disables update checks and reports "running the latest version" [code: UpdateHelper.php:288-291 @7.x].
+- Update data is cached 3 hours in `lastUpdateCheck.txt`; `mautic:update:find` bypasses the cache and always exits 0, even on error [code: app/bundles/CoreBundle/Helper/UpdateHelper.php:83-95 @7.x] [code: app/bundles/CoreBundle/Command/FindUpdatesCommand.php @7.x].
+- An empty `system_update_url` disables update checks and reports "running the latest version" [code: app/bundles/CoreBundle/Helper/UpdateHelper.php:288-291 @7.x].
 
 Migrations and recovery
 - Phase 2 runs `doctrine:migrations:migrate`; Doctrine executes every unrecorded migration regardless of its date, so migrations must be idempotent [code: app/bundles/CoreBundle/Update/Step/UpdateSchemaStep.php:41-54 @7.x] [code: app/migrations/ @7.x].
 - A `PreUpAssertionMigration` is skipped only if all its assertions are true [code: app/bundles/CoreBundle/Doctrine/PreUpAssertionMigration.php:26-45 @7.x].
 - Fresh installs and functional tests never run migrations; they build schema from entity metadata and mark migrations executed [code: app/bundles/InstallBundle/Install/InstallService.php:528-547 @7.x].
-- There is no rollback: files are replaced and cache nuked before the schema step [code: StepProvider.php @7.x].
-- A failed migration step hides Doctrine's output (NullOutput); re-run `php bin/console doctrine:migrations:migrate` to see the error [code: UpdateSchemaStep.php:41-54 @7.x].
+- There is no rollback: files are replaced and cache nuked before the schema step [code: app/bundles/CoreBundle/Update/StepProvider.php @7.x].
+- A failed migration step hides Doctrine's output (NullOutput); re-run `php bin/console doctrine:migrations:migrate` to see the error [code: app/bundles/CoreBundle/Update/Step/UpdateSchemaStep.php:41-54 @7.x].
 - Some 7.2 migrations write data or files: `Version20260709103000` writes to `config/local.php` and throws if it is not writable [code: app/migrations/Version20260709103000.php @7.x].
 - Deleted-file and language-pack failures are only logged; the update continues [code: app/bundles/CoreBundle/Update/Step/RemoveDeletedFilesStep.php:34-77 @7.x] [code: app/bundles/CoreBundle/Update/Step/UpdateTranslationsStep.php:36-80 @7.x].
 - A Plugin bundle with `MINIMUM_MAUTIC_VERSION` above the running version is not loaded [code: app/AppKernel.php:175-181 @7.x].
@@ -72,11 +72,11 @@ Sources: [code: app/bundles/CoreBundle/ @7.x] [code: app/release_metadata.json @
 
 ## How to change or extend it
 
-- Add an update step by implementing `StepInterface` and tagging `mautic.update_step`; pick an order between the existing 0/10/20/30 (before files are final) or 40/50/60 (after) [code: StepProvider.php:22-30 @7.x].
+- Add an update step by implementing `StepInterface` and tagging `mautic.update_step`; pick an order between the existing 0/10/20/30 (before files are final) or 40/50/60 (after) [code: app/bundles/CoreBundle/Update/StepProvider.php:22-30 @7.x].
 - Add a pre-update check by extending `AbstractPreUpdateCheck` and tagging `mautic.update_check` [code: app/bundles/CoreBundle/Helper/PreUpdateCheckHelper.php:20-27 @7.x].
 - Bump `version` and `announcement_url` in `app/release_metadata.json` before tagging; the release workflow rejects a tag that differs [code: .github/workflows/release.yml:38-47 @7.x].
 - Raise `minimum_php_version` / `minimum_mysql_version` / `minimum_mariadb_version` only in a major, and write the change into that major's `UPGRADE-X.0.md` under "Platform requirements" [code: UPGRADE-7.0.md:3-6 @7.x] [kb: https://kb.mautic.org/article/understanding-migrations-and-schema-update-with-doctrine-in-mautic.html].
-- Every schema change needs both the entity mapping (fresh installs) and an idempotent migration (upgrades) [code: InstallService.php:528-547 @7.x]. Migration rules are in mautic-contributing.
+- Every schema change needs both the entity mapping (fresh installs) and an idempotent migration (upgrades) [code: app/bundles/InstallBundle/Install/InstallService.php:528-547 @7.x]. Migration rules are in mautic-contributing.
 - BC breaks go to the next-major branch (`8.x`) with an `UPGRADE-8.0.md` entry and the `bc-break` label [code: .github/PULL_REQUEST_TEMPLATE.md @7.x] [code: .github/release.yml @7.x].
 - In new 7.x code, avoid everything 8.x removes: string event keys, `ON_CAMPAIGN_TRIGGER_ACTION`, `CacheStorageHelper`, `FormController`, `definePermissions()`, `config.php` `services`, string service ids, `Request::get()` (full list in references/upgrade-to-8.md §12) [code: UPGRADE-8.0.md @8.x].
 - For code that must run on 7.x and 8.x: subscribe with both the class key and the guarded constant key; use `batchEventName` + `PendingEvent`; add native types to every override now (references/upgrade-to-8.md §9) [code: UPGRADE-8.0.md @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html].
@@ -103,11 +103,11 @@ Sources: [code: app/bundles/CoreBundle/ @7.x] [code: app/release_metadata.json @
 
 ## Pitfalls
 
-- Docs tell Composer users to run `mautic:update:apply --finish`; with `composer_updates` on, it fails. Run `doctrine:migrations:migrate --no-interaction` and `cache:clear` instead [code: ApplyUpdatesCommand.php:84-88 @7.x] [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_update_mautic.html#updating-mautic-composer-based-installs].
+- Docs tell Composer users to run `mautic:update:apply --finish`; with `composer_updates` on, it fails. Run `doctrine:migrations:migrate --no-interaction` and `cache:clear` instead [code: app/bundles/CoreBundle/Command/ApplyUpdatesCommand.php:84-88 @7.x] [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_update_mautic.html#updating-mautic-composer-based-installs].
 - Docs still describe a browser updater "removed in 5.0" and a `/s/update/schema` tool; both existed until 6.0.x and are gone in 7.x [code: git ls-tree 6.0.0 / 7.0.0] [docs: https://docs.mautic.org/en/7.2/troubleshooting/troubleshooting.html#checking-for-schema-updates].
 - Install docs still say PHP 7.4 and `recommended-project:^5` [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_install_mautic.html#how-can-you-specify-a-php-version].
-- Skipping phase 2 leaves new code on an old schema; errors look like random SQL failures [code: StepProvider.php @7.x].
-- `mautic:update:find` exit code 0 does not mean the check succeeded [code: FindUpdatesCommand.php @7.x].
+- Skipping phase 2 leaves new code on an old schema; errors look like random SQL failures [code: app/bundles/CoreBundle/Update/StepProvider.php @7.x].
+- `mautic:update:find` exit code 0 does not mean the check succeeded [code: app/bundles/CoreBundle/Command/FindUpdatesCommand.php @7.x].
 - `doctrine:schema:update --force --complete` (KB last resort) drops custom DB objects and the `migrations` table [kb: https://kb.mautic.org/article/understanding-migrations-and-schema-update-with-doctrine-in-mautic.html].
 - Running updates as root breaks cache ownership (Doctrine proxy "failed to open stream") [docs: https://docs.mautic.org/en/7.2/troubleshooting/file_ownership_permissions.html].
 - On 8.x a listener on a kept constant (`FormEvents::FORM_ON_SUBMIT`, `LeadEvents::LEAD_POST_SAVE`, `PageEvents::PAGE_ON_HIT`, `ReportEvents::*`, `ChannelEvents::*`) never fires and nothing logs it [code: UPGRADE-8.0.md @8.x].

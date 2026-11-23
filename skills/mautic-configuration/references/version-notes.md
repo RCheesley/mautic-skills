@@ -50,7 +50,7 @@ Full history with reasons is in `pr-history.md`.
   ```
   On 7.x the pre/post-save handlers receive `ConfigEvent`, so type-hint loosely or guard with `class_exists()`. [PR #17625]
 - `config.php` no longer reads the `services` group (including `models` and `menus`); plugins keep `parameters` and `routes` in `config.php`. Core bundle routes move to `#[Route]` attributes. [PR #17470] [PR #17169]
-- `cache_adapter` must be a class name, because the `mautic.cache.adapter.*` service ids are removed. [code: UPGRADE-8.0.md:177 @8.x]
+- `cache_adapter` must be a class name, because the `mautic.cache.adapter.*` service ids are removed. [code: UPGRADE-8.0.md:267 @8.x]
 - The Redis Sentinel session handler is removed, so configs that reference it break. [PR #17050]
 - SAML moves from `javer/sp-bundle` to `lightsaml2/sp-bundle`; the SAML settings are intended to be unchanged. [PR #17370]
 - Platform: PHP minimum 8.4 [PR #16993], Symfony 8.1 [PR #17392], Doctrine ORM 3.7 / DBAL 4.4 [PR #17361]. The MySQL 8.4.0 and MariaDB 10.11.0 minimums are unchanged. [code: app/release_metadata.json @8.x]

@@ -3,7 +3,7 @@
 ## Before 7.x (history only)
 
 - Forms were split into "standalone" and "campaign" types. Only campaign forms could be campaign sources. That split is why `formType` still appears in 7.x payloads, fixtures and API responses. [code: app/bundles/FormBundle/Entity/Form.php:166-172 @7.x] [code: app/bundles/FormBundle/Tests/FormTestHelperTrait.php:22 @7.x]
-- `Field::$leadField` was the original mapping column. A code comment says it would be removed "in Mautic 4". It is still persisted and kept in sync with `mappedObject`/`mappedField`. [code: app/bundles/FormBundle/Entity/Field.php:728-746 @7.x] [code: app/bundles/FormBundle/Model/FormModel.php:1085-1098 @7.x]
+- `Field::$leadField` was the original mapping column. A code comment says it would be removed "in Mautic 4". It is still persisted and kept in sync with `mappedObject`/`mappedField`. [code: app/bundles/FormBundle/Entity/Field.php:728-746 @7.x] [code: app/bundles/FormBundle/Model/FormModel.php:1087-1100 @7.x]
 - From Mautic 5, plugins may drop subscriber and form-type service definitions from `config.php` in favour of autowiring. This affects how `FORM_ON_BUILD` subscribers are registered. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/autowiring.html#remove-commands-subscribers-and-forms]
 - Merged PRs give the 5.x and 6.x differences below; reasons are in pr-history.md. [PR #11905] [PR #14604]
 
@@ -27,7 +27,7 @@
 
 ## 7.0 – 7.2
 
-- 7.1 deprecated form types. `Form::getFormType()`, `setFormType()`, `isStandalone()` and `FormRepository::getFormList($formType)` now trigger deprecations, and removal is planned for 8.0. Every form can be a campaign source. The builder no longer shows a form-type field, and `Mautic.selectFormType` JS is deprecated. [code: app/bundles/FormBundle/Entity/Form.php:778-800 @7.x] [code: app/bundles/FormBundle/Entity/Form.php:853-860 @7.x] [code: app/bundles/FormBundle/Entity/FormRepository.php:61-66 @7.x]
+- 7.1 deprecated form types. `Form::getFormType()`, `setFormType()`, `isStandalone()` and `FormRepository::getFormList($formType)` now trigger deprecations, and removal is planned for 8.0. Every form can be a campaign source. The builder no longer shows a form-type field, and `Mautic.selectFormType` JS is deprecated. [code: app/bundles/FormBundle/Entity/Form.php:778-800 @7.x] [code: app/bundles/FormBundle/Entity/Form.php:853-860 @7.x] [code: app/bundles/FormBundle/Entity/FormRepository.php:62-67 @7.x]
 - The 7.2 REST docs still list `formType` (`standalone`/`campaign`) without a deprecation note. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/forms.html#form-properties]
 - 7.x enables Symfony `framework.validation.enable_attributes`, so plugin entities may use attribute constraints. Core `Form` still uses static `loadValidatorMetadata`. [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/forms_advanced.html#using-entity-attribute-constraints] [code: app/bundles/FormBundle/Entity/Form.php:311-324 @7.x]
 - 7.0.0: field width, `hideform`, `noIndex` on by default, slider field, deleting a field drops its results column. [PR #14800] [PR #15118] [PR #15255] [PR #15332] [PR #15129]

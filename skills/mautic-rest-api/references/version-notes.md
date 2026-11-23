@@ -1,6 +1,6 @@
 # REST API framework: version notes
 
-Authoritative behaviour is 7.x (commit 419a08a9b35: release 7.2.1 plus unreleased merged PRs). 8.x is unreleased development (its `release_metadata.json` still says
+Authoritative behaviour is 7.x (the 7.x snapshot pinned in SOURCES.md). 8.x is unreleased development (its `release_metadata.json` still says
 7.2.0). [code: app/release_metadata.json @8.x]
 
 ## History that explains current behaviour
@@ -14,7 +14,7 @@ Authoritative behaviour is 7.x (commit 419a08a9b35: release 7.2.1 plus unrelease
 - Before Mautic 7 an API rate limiter existed, configured with `api_rate_limiter_cache` (`file_system` default, memcached
   alternative). It is not available in 7 or later and 7.2.1 has no rate limiting code.
   [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/getting_started.html#api-rate-limiter-cache]
-  [code: app/config/security.php:105-108 @7.x]
+  [code: app/config/security.php:118-121 @7.x]
 
 ## Mautic 5.x and 6.x
 
