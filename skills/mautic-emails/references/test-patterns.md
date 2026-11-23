@@ -116,7 +116,7 @@ final class SegmentEmailEligibilityFunctionalTest extends MauticMysqlTestCase
 ```
 The entity setup mirrors
 `app/bundles/EmailBundle/Tests/Functional/PendingCountTest.php` and the broadcast test in
-`EmailControllerFunctionalTest.php`, which runs `mautic:broadcast:send` (singular alias) with `--channel` and `--id`.
+`EmailControllerFunctionalTest.php`, which runs `mautic:broadcast:send` with `--channel` and `--id`. That name is not an alias: Symfony Console resolves it to `mautic:broadcasts:send` as an unambiguous abbreviation [code: app/bundles/ChannelBundle/Command/SendChannelBroadcastCommand.php:23 @7.x].
 [code: app/bundles/EmailBundle/Tests/Controller/EmailControllerFunctionalTest.php:1316 @7.x]
 
 ## Skeleton: unsubscribe endpoint

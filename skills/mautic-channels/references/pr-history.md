@@ -45,7 +45,7 @@ means merged to `8.x`. Current behaviour is in references/behaviour.md; this fil
 - `mautic:messages:send` drains the whole queue by default; `--limit` caps the total and `--batch` (default 50) sets the batch size [PR #15333] (v7.0.0). Before 7.0 a run sent at most a hard-coded 50 messages. The options are absent at tag 6.0.0 and present at 7.0.0 [code: app/bundles/ChannelBundle/Command/ProcessMarketingMessagesQueueCommand.php:38-70 @7.x].
 
 ### 2.3 Broadcasts
-- `mautic:broadcast:send` takes `--limit` (default 100), `--batch`, `--min-contact-id` and `--max-contact-id`, so non-overlapping runs can go in parallel [PR #5715] (v2.13.0). The options exist for every channel; only email used them at first.
+- `mautic:broadcasts:send` takes `--limit` (default 100), `--batch`, `--min-contact-id` and `--max-contact-id`, so non-overlapping runs can go in parallel [PR #5715] (v2.13.0). The options exist for every channel; only email used them at first.
 - Segment ("list") Text Messages are sent by `mautic:broadcasts:send --channel=sms` within their publish window [PR #7879] (v3.2.0). The documentation PR was mautic/documentation#346.
 - `--max-threads=N --thread-id=i` split Contacts between parallel processes without duplicate sends, for email and SMS [PR #11549] (v5.0).
 - The broadcast command must not fail with "cannot assign null to property" under 5.x types [PR #13172] (v5.0.0).
