@@ -76,6 +76,9 @@ working inside a Mautic checkout, agents should load both.
 
 ## Install
 
+Each build is tagged by date (for example `v2026.11.23`) and has a GitHub release listing the Mautic snapshots it
+describes. Pin a tag for reproducible results; `main` tracks the latest snapshot.
+
 ```bash
 # Claude Code (default target ~/.claude/skills)
 ./scripts/link-skills.sh
