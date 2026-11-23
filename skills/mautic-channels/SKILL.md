@@ -107,16 +107,18 @@ Full detail: references/test-patterns.md.
 
 ## Version notes
 - 7.2 deprecated the `mautic.channel.helper.channel_list` alias [code: app/bundles/ChannelBundle/Config/services.php:33-34 @7.x].
-- 8.x: channel, SMS, notification, focus and social events are dispatched by class; 10 `SmsEvents` constants are removed; `SmsEvent` becomes abstract with `SmsPre/PostSave/DeleteEvent` [PR #17216] [PR #17622] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/sms.html#sms-event-constants].
+- 8.x: channel, SMS, notification and focus events are dispatched by class; 10 `SmsEvents` constants are removed; `SmsEvent` becomes abstract with `SmsPre/PostSave/DeleteEvent` [PR #17216] [PR #17622] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/sms.html#sms-event-constants].
 - 8.x: `/sms/receive` and `mautic_receive_notification` are removed, so point Twilio at `/sms/twilio/callback`; `NotificationHelper::unsubscribe()` is removed [code: UPGRADE-8.0.md:323,368,422 @8.x] [PR #17231].
-- 8.x: Focus and Social campaign actions move to `ON_CAMPAIGN_BATCH_ACTION`; legacy `eventName`/`callback` campaign actions no longer run [PR #17097] [PR #17223] [PR #17544].
+- 8.x: Focus campaign actions move to `ON_CAMPAIGN_BATCH_ACTION`; legacy `eventName`/`callback` campaign actions no longer run [PR #17097] [PR #17223].
+- 8.x removes MauticSocialBundle: Social Monitoring, Tweets, the `tweet` channel and the `twitter.tweet` action are gone; social tables are kept and saved campaigns are not rewritten [PR #17473] [code: UPGRADE-8.0.md "Social media integrations" @8.x].
+- 8.x: OneSignal becomes an IntegrationsBundle `BasicIntegration`; its subscribers take `OneSignalIntegrationHelper` [PR #18113].
 - 5.0: Twilio sends through a Messaging Service SID instead of a "From" number, the SMS click-tracking toggle became the global `sms_disable_trackable_urls`, and LinkedIn left core [PR #12539] [PR #11683] [PR #12147].
 - 5.1: focus items close only with ×, and "Stop engaging after closing" uses cookie `mautic_focus_{id}_closed`; 5.0 and earlier have neither [PR #12705] [PR #12742].
 - 6.0 added the "Focus Stats" report source; 5.x has none [PR #14340].
 - 7.0: SMS and mobile notifications gained translations, and the focus rendering cache was removed [PR #15481] [PR #15520] [PR #15502].
 - Before 7.0, `mautic:messages:send` sent at most 50 queued messages per run; 7.0 drains the queue and adds `--limit`/`--batch` [PR #15333].
 - 7.2 added MMS and the bulk/MMS transport interfaces [PR #15999].
-- The user docs for SMS, marketing messages, push, focus and social monitoring are unchanged between 7.2 and 8.0 [docs: https://docs.mautic.org/en/7.2/channels/sms.html].
+- The user docs for SMS, marketing messages, push and focus are unchanged between 7.2 and 8.0 [docs: https://docs.mautic.org/en/7.2/channels/sms.html]; the 8.0 social monitoring page is still there although 8.x removed the feature [PR #17473].
 Full detail: references/version-notes.md.
 
 ## Pitfalls

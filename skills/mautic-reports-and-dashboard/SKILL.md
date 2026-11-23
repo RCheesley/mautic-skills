@@ -93,6 +93,7 @@ Out of scope: Contact fields and the Contact export (mautic-contacts), Email sta
 - 8.x dispatches the 8 report events by class. The `ReportEvents` constants are kept, so listeners keyed on them load but never fire; Report CRUD pre/post save/delete events still dispatch by name [PR #17200].
 - 8.x deletes `DashboardEvents` (use `WidgetTypeListEvent`, `WidgetFormEvent`, `GenerateWidgetDetailEvent`, `PreLoadWidgetDetailEvent`) and `StatEvents` (use `AggregateStatRequestEvent`) [PR #17216] [PR #17654].
 - 8.x makes `WidgetDetailEvent` abstract and removes the legacy filesystem widget cache: `setCacheDir()` and `setCacheTimeout()` are gone and a cache provider is required [PR #17033] [PR #17034].
+- 8.x (snapshot) still has the `is:mine` Reports-list crash; the fix [PR #17978] is on the 7.2 branch only [code: app/bundles/ReportBundle/Entity/ReportRepository.php:56 @8.x].
 - 8.x makes `ReportDataEvent`, `ReportGeneratorEvent` and `ReportGraphEvent` `final` and types the `Report::get*()` getters as `array`/`?array` (see references/version-notes.md).
 
 ## Pitfalls

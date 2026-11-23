@@ -54,7 +54,8 @@
 - A link with `data-mautic-disable-tracking="true"` keeps its `href` even when a tracked URL in the same content is a prefix of it (issue mautic/mautic#16050) [PR #16354] [code: app/bundles/PageBundle/Model/TrackableModel.php:330-342 @7.x].
 - New Tracking setting `aggregate_analytics` ("Record aggregate analytics", default true); nothing reads it yet [PR #17965] [code: app/bundles/PageBundle/Config/config.php:106 @7.x].
 
-## 8.x delta (8.x @ 11599729491; 7.2.1 work not yet merged forward)
+## 8.x delta: 8.x (snapshot pinned in SOURCES.md)
+- Topology: 7.2.2 and the 7.x work up to 2026-11-16 are in 8.x through the squash merge [PR #18236]; compare trees, not ancestry. On 8.x: null-id `/mtc` and `/mtc/event` responses and `{"success":0}` for untrackable visitors [PR #18013] [PR #18028], `markVisitorAsUntracked()` / `isCurrentIpTrackable()` [PR #17868] [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php @8.x], `aggregate_analytics` [PR #17965] [code: app/bundles/PageBundle/Config/config.php:52 @8.x], the manual A/B winner [PR #17303], DWC tokens in `href`/`src`/`action` [PR #17913] [PR #17918], and literal do-not-track URLs [PR #16354]. No PRs based on 8.x touched this area in the 2026-10-15..2026-11-23 delta.
 - Event dispatch by class. Re-key subscribers:
   - `CoreEvents::BUILD_MAUTIC_JS` → `BuildJsEvent::class` (`CoreEvents` class deleted). [devdocs: https://devdocs.mautic.org/en/8.0/mauticjs_api/tracking_script.html]
   - `PageEvents::PAGE_ON_BUILD` → `PageBuilderEvent::class`, `PAGE_ON_DISPLAY` → `PageDisplayEvent::class` (constants removed; `PageDisplayEvent` final). [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/landing_pages.html] [PR #17203] [PR #17638]
@@ -62,9 +63,9 @@
   - DWC: `TOKEN_REPLACEMENT` → `TokenReplacementEvent`, `ON_CONTACTS_FILTER_EVALUATE` → `ContactFiltersEvaluateEvent`; CRUD names unchanged; duplicate `CATEGORY_*` constants removed. [PR #17691] [PR #17198]
   - `PAGE_ON_TOGGLE_PUBLISH` stays string-keyed (shared `PageEvent`); `UrlTokenReplaceEvent::class` unchanged. [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/landing_pages.html#toggle-available-for-use-event]
 - Campaign actions: `ON_CAMPAIGN_TRIGGER_ACTION` removed; `tracking.pixel.send` and `dwc.push_content` run as batch actions on `PendingEvent` (`ON_CAMPAIGN_BATCH_ACTION`). [PR #17097] [PR #17691]
-- `mautic:disable-tracking` is no longer honoured (links get tracked). [PR #17066]
+- `mautic:disable-tracking` is no longer honoured (links get tracked). The do-not-track URL list is fed only from `data-mautic-disable-tracking="true"` links. [PR #17066] [code: app/bundles/PageBundle/Model/TrackableModel.php:645-659 @8.x]
 - Landing pages with empty `customHtml` no longer fall back to v1 theme `content` rendering; `PublicController::indexAction()` lost the `ThemeHelper` argument. [PR #17078]
 - API changes: `RedirectModel::generateRedirectUrl($redirect, $clickthrough)` only (call `applyUtmTags()`, `shortenUrl()` yourself); `HitRepository::getHitCountForSource()` removed; `Page::getContent(): ?array`, `getCloneObjectId(): ?int`, `getPublicPreview(): ?bool`. [PR #17203]
 - `IdentifyCompanyHelper` becomes an autowired service with instance methods (affects hit-time Company identification code). [PR #17260]
 
-Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
+Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md).

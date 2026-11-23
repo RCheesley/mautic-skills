@@ -106,6 +106,7 @@ Full detail: references/test-patterns.md.
 - 8.x dispatches Asset CRUD events by class (`AssetPreSaveEvent`, `AssetPostSaveEvent`, `AssetPreDeleteEvent`, `AssetPostDeleteEvent`) and drops `ASSET_ON_UPLOAD` and service `mautic.asset.upload.error.handler`. [PR #17196] [PR #17215]
 - 8.x: `CATEGORY_ON_BUNDLE_LIST_BUILD` is dispatched as `CategoryTypesEvent` (constant kept); `CategoryModel` CRUD events still use string names; duplicate `CATEGORY_*` constants are removed from `DynamicContentEvents`. [PR #17217] [PR #17097]
 - 8.x fixes an asset upload size validation that was off by 1000×. [PR #17080]
+- Batch ZIP download is on 8.x since the 7.x → 8.x merge of 2026-11-17. [PR #18236] [code: app/bundles/AssetBundle/Service/ArchiveBuilder.php @8.x]
 - The `default_assetlimit` parameter is marked for removal in Mautic 8. [code: app/bundles/AssetBundle/Controller/AssetController.php:59-63 @7.x]
 - 5.0 serves public links inline only for `streamed_extensions` and stores UTM fields on downloads; 5.1 turns "Block search engines" on for new Assets. [PR #11474] [PR #12098] [PR #13531]
 - 5.2.7 makes upload validation honour the configured `allowed_extensions`. [PR #15111]

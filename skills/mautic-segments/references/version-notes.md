@@ -49,8 +49,8 @@
   - `LeadList::addLegacyParams`;
   - `ModeratedCommand::MODE_LOCK` (`file_lock` → `flock`).
 
-## 8.x delta (snapshot 11599729491, 2026-10-15)
-- **Branch topology**: 7.x work since 7.2.0, including the unreleased `company_all`, is not yet merged into 8.x. A two-dot diff wrongly shows it as removed. Expect it in 8.0.
+## 8.x delta: 8.x (snapshot pinned in SOURCES.md)
+- **Branch topology**: 7.2.2 and the 7.x work up to 2026-11-16 are in 8.x through the squash merge [PR #18236], so `git rev-list 8.x..7.x` still lists 7.x commits; compare trees, not ancestry. "Any associated company" (`company_all`) filters are on 8.x [PR #15800] [code: app/bundles/LeadBundle/Segment/ContactSegmentFilterCrate.php:11 @8.x]. No 8.x-based Segment PRs were merged between 2026-10-15 and 2026-11-23.
 - **Event dispatch by class.** Segment events are dispatched by class name. The string constants below were removed, so subscribe to the class [PR #17077] [PR #17218] [PR #17545] [PR #17625]:
 
   | Removed constant | Event class |
@@ -93,4 +93,4 @@
 ## Writing code for both 7.x and 8.x
 Register both keys in `getSubscribedEvents()`. Guard the string constant with `defined()`, and subscribe to the event class where it exists on 7.x. Most Segment event classes already exist on 7.x [PR #17625].
 
-Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
+Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md).

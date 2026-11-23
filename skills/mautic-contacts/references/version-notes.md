@@ -51,9 +51,13 @@
 - `Lead::setPrimaryIdentifierOrder()`; `customContent()` hooks on Company views and the import mapping form. [PR #17687] [PR #18106]
 - `htmlEntityDecode()` accepts null (Companies list with a NULL name); contact photo removed from the page title. [PR #18062] [PR #18082]
 
-## 8.x delta (unreleased, branch at 11599729491)
+## 8.x delta: 8.x (snapshot pinned in SOURCES.md)
 
-Topology warning: 7.2.1 and the later unreleased 7.x work are not merged into 8.x yet, so 7.x-only features are missing from 8.x code but are expected after the next forward merge. Do not document them as removed.
+Topology: 7.2.2 and the 7.x work up to 2026-11-16 are in 8.x through the squash merge [PR #18236], so `git rev-list 8.x..7.x` still lists 7.x commits; compare trees, not ancestry. The batch add-contacts endpoint, "Any associated company" filters and Quick Add "Save & New" are on 8.x [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:133 @8.x]. Fixes on the 7.2 branch after 7.2.2 arrive with the next merge-up.
+
+- The unused contact companies modal is removed: `LeadController::companyAction()`, `@MauticLead/Lead/company.html.twig`, JS `Mautic.toggleCompanyLead` and AJAX `lead:toggleCompanyLead`; `/s/contacts/company/{id}` returns 404. Change a Contact's companies in the edit form or with `/api/companies/{companyId}/contact/{contactId}/add|remove`. (7.2 keeps the action and adds an edit-permission check [PR #18090].) [PR #18091] [code: UPGRADE-8.0.md "Other removed code" @8.x]
+- Contact dashboard widgets honour `lead:leads:viewother` (a Contact owner's widgets show only their own Contacts), and API `Location` headers are absolute URLs [PR #17496] [code: app/bundles/LeadBundle/EventListener/DashboardSubscriber.php:71 @8.x] [code: app/bundles/ApiBundle/Controller/CommonApiController.php:568-571 @8.x].
+- `lead.css` frequency selects use Bootstrap utilities; no behaviour change [PR #18286].
 
 - Platform: PHP 8.4, Symfony 8.1, Doctrine ORM 3.7 and DBAL 4.4; PHPUnit 13 with `dg/bypass-finals`. Custom-field DBAL writes and repository code must follow the Doctrine 3/4 API (`ArrayParameterType`, `getEntityManager()` instead of `$_em`).
 - Events are dispatched by class. 56 `LeadEvents` constants were removed. Subscribe to concrete classes: `LeadPreSaveEvent`, `LeadPostSaveEvent`, `LeadPreDeleteEvent`, `LeadPostDeleteEvent`, `LeadIdentifiedEvent`, `LeadPreMergeEvent`, `LeadPostMergeEvent`, `FieldPreSaveEvent`/`FieldPostSaveEvent`/`FieldPreDeleteEvent`/`FieldPostDeleteEvent`, `NotePreSaveEvent` etc., `ImportPreSaveEvent` etc., `TagPreMergeEvent` etc., `CompanyPreSaveEvent`, `CompanySoftDeleteEvent`, `CompanyPreMergeEvent`/`CompanyPostMergeEvent`, `DevicePreSaveEvent` etc., `ContactIdentificationEvent` for clickthrough identification, `LeadChangeEvent` for `CURRENT_LEAD_CHANGED`.
@@ -87,4 +91,4 @@ return $events;
 
 Type-hint `LeadEvent` in the handler. On 8.x the `LEAD_POST_SAVE` constant still exists but nothing dispatches it as a name, so the second key is inert there. [PR #17218]
 
-Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
+Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [unreleased-7.x-prs.md](../../mautic-upgrades-and-versions/references/unreleased-7.x-prs.md).

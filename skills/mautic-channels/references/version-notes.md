@@ -24,15 +24,18 @@
 - `SmsEvents::ON_CAMPAIGN_TRIGGER_ACTION` is marked deprecated and is never dispatched [code: app/bundles/SmsBundle/SmsEvents.php:78-82 @7.x].
 - API Platform (`/api/v2`) resources exist for `Message`, `Channel`, `Sms`, `Focus` (`/focus_items`) and `Monitoring`, but not for `Notification` [code: app/bundles/SmsBundle/Entity/Sms.php:37-55 @7.x] [code: plugins/MauticSocialBundle/Entity/Monitoring.php:21-39 @7.x].
 
-## 8.x delta (8.x @ 11599729491; 7.2.1 work not yet merged forward)
-Platform: PHP 8.4, Symfony 8.1, Doctrine ORM 3 and DBAL 4 [PR #16993] [PR #17392] [PR #17361].
+## 8.x delta: 8.x (snapshot pinned in SOURCES.md)
+Platform: PHP 8.4, Symfony 8.1, Doctrine ORM 3 and DBAL 4 [PR #16993] [PR #17392] [PR #17361]. 7.2.2 and the 7.x work up to 2026-11-16 are in 8.x through the squash merge [PR #18236]; compare trees, not ancestry. The focus-item form message fix [PR #18115] (7.2 branch after 7.2.2) is not on 8.x yet [code: plugins/MauticFocusBundle/Resources/views/Builder/form.html.twig @8.x].
+
+Removed: Social Monitoring, Tweets and the social integrations
+- MauticSocialBundle and `mautic/plugin-social` are removed: the Facebook, Twitter/X, Instagram and Foursquare integrations, Social Monitoring (`mautic:social:monitoring`, `social:monitor:twitter:hashtags|mentions`), Tweets (`/api/tweets`, the `tweet` Marketing Message channel, the `twitter.tweet` campaign action) and the `plugin.loginSocial` form field all go. Social tables and integration settings are kept; `mautic:plugins:reload` marks the plugin missing; saved campaigns and forms are not rewritten, so a retained tweet action can interrupt its campaign [PR #17473] [code: UPGRADE-8.0.md "Social media integrations" @8.x]. Remove the scheduled social monitoring commands before upgrading.
 
 Events (dispatch by class)
 - ChannelBundle dispatches its 5 events by class (`ChannelEvent`, `ChannelBroadcastEvent`, `MessageQueueEvent`, `MessageQueueProcessEvent`, `MessageQueueBatchProcessEvent`). The constants are **kept but no longer dispatched by name**, so a listener keyed on `ChannelEvents::ADD_CHANNEL` silently never runs [PR #17201] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/channels.html#extending-broadcasts].
 - SmsBundle: 10 constants removed (`DNC_FILTER_CONTACTS_ON_SEND`, `QUEUE_FILTER_CONTACTS_ON_SEND`, `FILTER_CONTACTS_ON_SEND`, `ON_CAMPAIGN_TRIGGER_ACTION`, `ON_REPLY`, `ON_SMS_TOKENS_BUILD`, `SMS_PRE/POST_SAVE`, `SMS_PRE/POST_DELETE`). Subscribe to `DncEvent`, `QueueEvent`, `FilterEvent`, `ReplyEvent`, `TokensBuildEvent` and `SmsPre/PostSave/DeleteEvent`; `SmsEvent` is abstract. Kept: `TOKEN_REPLACEMENT` (still dispatched by name), `SMS_ON_SEND` (dispatched as `SmsSendEvent`), `ON_CAMPAIGN_TRIGGER_BATCH_ACTION` and `ON_CAMPAIGN_REPLY` [PR #17216] [PR #17622] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/sms.html#sms-event-constants].
 - NotificationBundle: `NOTIFICATION_ON_SEND` is dispatched as `NotificationSendEvent`; `TOKEN_REPLACEMENT` stays a string dispatch; CRUD groups are still dispatched by name [PR #17216].
 - MauticFocusBundle: `TOKEN_REPLACEMENT` → `FocusTokenReplacementEvent`; `FOCUS_ON_VIEW` → `FocusViewEvent`; `ON_CAMPAIGN_TRIGGER_ACTION` → `ON_CAMPAIGN_BATCH_ACTION` (`mautic.focus.on_campaign_batch_action`, listen on `PendingEvent`) [PR #17223] [PR #17782].
-- MauticSocialBundle: `SocialEvent` removed; `AbstractMonitorEvent`/`AbstractTweetEvent` plus 8 lifecycle classes; `ON_CAMPAIGN_BATCH_ACTION` (`mautic.social.on_campaign_batch_action`) added; `CampaignEventHelper::sendTweetAction()` takes a `Campaign\Entity\Event`; `SocialIntegration` gets array return types [PR #17544] [PR #17250].
+- The earlier MauticSocialBundle event work (`SocialEvent` removed, `mautic.social.on_campaign_batch_action`) [PR #17544] [PR #17250] is moot: the whole bundle was removed afterwards [PR #17473].
 - Legacy campaign actions registered with `eventName`/`callback` no longer run at all; only `batchEventName` actions execute [PR #17097].
 
 Removed routes and APIs
@@ -44,6 +47,9 @@ Removed routes and APIs
 Signatures
 - `MessageModel::getMessageChannels(int)`, `MessageQueueModel::processMessageQueue(array|MessageQueue)`, `Channel::getProperties(): array`, `MessageQueue::getMetadata(): array` [PR #17201].
 - `TransportChain::sendSms(…, string)`; typed setters on `Notification`, `PushID` and push `Stat` [PR #17622] [PR #17216].
-- Doctrine ORM 3 may not resolve the `MauticSocialBundle:Tweet` alias used by the `tweet` channel (inferred from the code analysis; verify on 8.x) [code: plugins/MauticSocialBundle/EventListener/ChannelSubscriber.php:43 @7.x].
 
-User docs: SMS, Marketing Messages, web and mobile notifications, Focus Items and Social Monitoring are unchanged in 8.0 [docs: https://docs.mautic.org/en/7.2/channels/sms.html].
+OneSignal (push)
+- `OneSignalIntegration` extends IntegrationsBundle `BasicIntegration`; keys come from `OneSignalKeysType` (`app_id`, `safari_web_id`, `rest_api_key`, `gcm_sender_id`, required only while published) and features from `OneSignalFeatureSettingsType`. Saved `subdomain_name` and `platforms` move under `featureSettings['integration']` (migration `Version20261109120000`). `CampaignSubscriber`, `ChannelSubscriber`, `PageSubscriber`, `BuildJsSubscriber`, `NotificationHelper` and `MobileNotificationDetailsType` take `OneSignalIntegrationHelper` instead of `IntegrationHelper` [PR #18113] [code: UPGRADE-8.0.md "Changed code" @8.x] [code: app/bundles/NotificationBundle/Helper/OneSignalIntegrationHelper.php @8.x].
+- Notification preview CSS moved to Bootstrap utilities; no behaviour change [PR #18287].
+
+User docs: SMS, Marketing Messages, web and mobile notifications and Focus Items are unchanged in 8.0 [docs: https://docs.mautic.org/en/7.2/channels/sms.html]. The 8.0 user docs still carry the Social Monitoring, Social Login and Twitter pages although 8.x removed them [docs: https://docs.mautic.org/en/8.0/channels/social_monitoring.html]; dev docs 8.0 dropped the tweets REST page [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/getting_started.html].

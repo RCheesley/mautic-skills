@@ -24,19 +24,19 @@
 - Point Groups have entity export and import keyed by UUID [code: app/bundles/PointBundle/EventListener/GroupImportExportSubscriber.php:45-157 @7.x].
 - API Platform `#[ApiResource]` attributes exist on `Point`, `Trigger`, `TriggerEvent` and `Stage`, next to the legacy `/api/*` controllers [code: app/bundles/PointBundle/Entity/Point.php:28-36 @7.x] [code: app/bundles/StageBundle/Entity/Stage.php:26-44 @7.x].
 
-## 8.x delta (from 7.x to 8.x @11599729491)
+## 8.x delta: 8.x (snapshot pinned in SOURCES.md)
 Event dispatch by class. Subscribers must use the class as the key; the string constants still exist but are never dispatched:
 - `PointBuilderEvent` is dispatched by class [code: app/bundles/PointBundle/Model/PointModel.php:163 @8.x].
 - `TriggerBuilderEvent` is dispatched by class [code: app/bundles/PointBundle/Model/TriggerModel.php:276 @8.x].
 - `PointActionEvent` (formerly `POINT_ON_ACTION`) and `GroupScoreChangeEvent` (formerly `SCORE_CHANGE`) are dispatched by class [code: app/bundles/PointBundle/Model/PointGroupModel.php:162 @8.x].
 - `StageBuilderEvent` (formerly `STAGE_ON_BUILD`) is dispatched by class.
-- The LeadBundle events the PointBundle listens to are now keyed by class: `PointsChangeEvent`, `LeadPostSaveEvent`, `LeadPostMergeEvent` and `LeadTimelineEvent` [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:32-35,43-44,57-58,103-104 @8.x].
+- The LeadBundle events the PointBundle listens to are now keyed by class through `#[AsEventListener]` attributes (`LeadSubscriber` no longer implements `EventSubscriberInterface`): `PointsChangeEvent`, `LeadPostSaveEvent`, `LeadPostMergeEvent` and `LeadTimelineEvent` [PR #17988] [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:32-35,43-44,57-58,103-104 @8.x].
 - The constants `POINT_ON_BUILD`, `TRIGGER_ON_BUILD` and `STAGE_ON_BUILD` remain, which makes this a trap: a listener on the string loads but never fires [code: app/bundles/PointBundle/PointEvents.php:45,87 @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/points.html].
 
 Still dispatched by string:
 - The CRUD pre/post save and delete events of `PointModel`, `TriggerModel`, `PointGroupModel` and `StageModel` [code: app/bundles/PointBundle/Model/TriggerModel.php:228 @8.x].
 - Trigger events registered with `eventName`, such as `TRIGGER_ON_EVENT_EXECUTE` and `TRIGGER_ON_LEAD_SEGMENTS_CHANGE` [code: app/bundles/PointBundle/Model/TriggerModel.php:343 @8.x].
-- `LEAD_POINTS_CHANGE` stays as a webhook type id, but listeners must key on `PointsChangeEvent` [code: UPGRADE-8.0.md:200 @8.x]. UPGRADE-8.0.md:728 contradicts this ("unchanged"); the 8.x subscriber code follows line 130 [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:32-35 @8.x].
+- `LEAD_POINTS_CHANGE` stays as a webhook type id, but listeners must key on `PointsChangeEvent` [code: UPGRADE-8.0.md:200 @8.x]. UPGRADE-8.0.md:951 contradicts this (lists `LEAD_POINTS_CHANGE` as "unchanged"); the 8.x subscriber code follows line 200 [code: app/bundles/PointBundle/EventListener/LeadSubscriber.php:32-35 @8.x].
 
 Removed:
 - `StageEvents::ON_CAMPAIGN_TRIGGER_ACTION`; use `ON_CAMPAIGN_BATCH_ACTION` with a `PendingEvent` listener [code: app/bundles/StageBundle/StageEvents.php:17-59 @8.x] [PR #17059].
@@ -53,7 +53,9 @@ Unchanged:
 - `campaign.changecampaign` still registers the missing `CampaignEventHelper::addRemoveLead` [code: app/bundles/CampaignBundle/EventListener/PointSubscriber.php:22 @8.x].
 - The user docs for points and stages and the REST pages are identical in 8.0 [docs: https://docs.mautic.org/en/8.0/stages/stages.html] [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/].
 
-Branch topology: the last forward merge into 8.x was 7.2.0 [PR #17253]. 7.2.1-only fixes may be missing from 8.x until the next forward merge.
+CSS: `point.css` is cut from 46 to 22 lines (dead trigger-event and colour-column rules); no intended visual change [PR #18291].
+
+Branch topology: 7.2.2 and the 7.x work up to 2026-11-16 are in 8.x through the squash merge [PR #18236]; compare trees, not ancestry. The stage list Contacts column is on 8.x [PR #15403] [code: app/bundles/StageBundle/Model/StageModel.php:227 @8.x]. The Point Actions `type:gain`/`type:loss`/`is:repeatable` search [PR #18078] is not on 8.x yet.
 
 ### Porting a 7.x points plugin to 8.x
 ```diff

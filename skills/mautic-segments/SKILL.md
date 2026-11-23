@@ -93,7 +93,7 @@ Full detail: references/test-patterns.md.
 - 8.x (snapshot) dispatches Segment events by class: `ListPreSaveEvent`, `ListPostSaveEvent`, `ListPreDeleteEvent`, `ListDeleteEvent`, `ListPostDeleteEvent`, `ListPreUnpublishEvent`, `ListBatchChangeEvent`, `LeadListFiltersChoicesEvent`, `LeadListFilteringEvent`, `SegmentDictionaryGenerationEvent` and others. Listeners keyed only on the old string names never fire [PR #17218] [PR #17545] [PR #17625].
 - 8.x removes `OperatorOptions::IN`/`NOT_IN` and `OperatorListTrait::getFilterExpressionFunctions()`. `LeadListEvent` is `abstract`. `Segment\Query\QueryBuilder::setParameter()` rejects `:`-prefixed keys [code: UPGRADE-8.0.md @8.x].
 - 8.x removes the `file_lock` lock mode. `--lock_mode=file_lock` now errors [code: UPGRADE-8.0.md @8.x].
-- `company_all` is not yet on the 8.x branch. It arrives with the next 7.x → 8.x forward merge. Do not treat it as removed.
+- `company_all` is on the 8.x branch since the 7.x → 8.x merge of 2026-11-17 [PR #18236] [code: app/bundles/LeadBundle/Segment/ContactSegmentFilterCrate.php:11 @8.x].
 - 5.0: `-i` with a failing or missing Segment exits non-zero, `last_built_time` and the slow-build warning arrive, and leading or OR-ed membership filters keep their glue [PR #11439] [PR #11917] [PR #12214] [PR #12530].
 - 5.1: OR-ed `=` filters merge into `IN`, `--exclude` is added, `first day of`/`last day of` are relative, and multiselect exclude includes NULL [PR #11007] [PR #13383] [PR #10822] [PR #12906].
 - 5.2.3: an empty `default_timezone` falls back to UTC instead of failing the rebuild [PR #14549].

@@ -43,10 +43,13 @@
 - Unreleased on 7.x (7.3.0-rc): `has:actions` search filter and quick filter on the forms list [PR #18077]; the `form.field_value` campaign condition is not met when its field is gone, and imported forms get results columns [PR #17928].
 - 7.2 adds theme `config.json` `tags`. This affects theme packaging, not form rendering. [devdocs: https://devdocs.mautic.org/en/7.2/themes/getting_started.html#configuration-file]
 
-## 8.x delta (in development; 7.2.1 not yet merged forward)
+## 8.x delta: 8.x (snapshot pinned in SOURCES.md)
+
+Topology: 7.2.2 and the 7.x work up to 2026-11-16 are in 8.x through the squash merge [PR #18236]; compare trees, not ancestry. On 8.x: existing-contact merge wins and repost-error handling [PR #16426] [PR #17461], untrackable and kiosk submissions [PR #17847] [code: app/bundles/FormBundle/Model/SubmissionModel.php:149 @8.x], field-condition and import fixes [PR #17928]. Not on 8.x yet: the `has:actions` filter [PR #18077] (merged to 7.x on 2026-11-18) and the 7.2-branch fixes after 7.2.2 [PR #18163] [PR #18160] [code: app/bundles/FormBundle/Resources/views/Builder/_labels.html.twig @8.x].
 
 Removed
-- Form type is gone from the entity, the API, exports and `FormListType`. Migration `Version20260814141635` drops `forms.form_type`. This is the only new 8.x migration. API input `formType` is ignored. [code: app/migrations/Version20260814141635.php @8.x] [PR #17082] [PR #17059] [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/forms.html#form-properties]
+- MauticSocialBundle is removed, and with it the Social Login field `plugin.loginSocial`. A retained field cannot be rendered: remove it, save the form to regenerate its HTML and update any externally embedded static form HTML before upgrading [PR #17473] [code: UPGRADE-8.0.md "Social media integrations" @8.x].
+- Form type is gone from the entity, the API, exports and `FormListType`. Migration `Version20260814141635` drops `forms.form_type`. API input `formType` is ignored. [code: app/migrations/Version20260814141635.php @8.x] [PR #17082] [PR #17059] [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/forms.html#form-properties]
 - `FormRepository::getFormList()` lost its `$formType` parameter. [PR #17082]
 - The core `Controller\FormController` base class is removed. Extend `AbstractFormController` or `AbstractStandardFormController`. `mautic_core_form_action` moves to `LockController`. This is the CoreBundle base class, not FormBundle's own `FormController`. [PR #17481] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/mvc.html#abstractformcontroller-mautic-corebundle-controller-abstractformcontroller]
 
@@ -63,6 +66,7 @@ Signatures
   - `Submission` declares `$deletedId`. [PR #17421]
   - `FormModel` single-parameter methods are typed (`saveEntity(object)`, …). [PR #17365]
 - Symfony 8 constraints need named arguments. A Symfony 8 regression returned 500 on submissions with email, url or captcha fields; it is fixed. Check custom constraints in plugins. [PR #17392] [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/forms_advanced.html#data-validation]
+- `form.css` clean-up: submit-action group header styles and the fixed 200px height of HTML text areas are removed; no other intended visual change [PR #18288].
 - Generated aliases are checked against a MySQL+MariaDB `ReservedWords` list. A few aliases that were previously left alone now get a prefix. [PR #17361]
 
 Docs

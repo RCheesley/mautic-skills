@@ -114,6 +114,7 @@ Sources: [code: app/bundles/FormBundle/Config/config.php:8-150 @7.x] [code: app/
 - 8.x: `form_type` column dropped (`Version20260814141635`) and `formType` ignored by the API. [PR #17082]
 - 8.x: `FORM_ON_SUBMIT`, `FORM_ON_BUILD`, `ON_OBJECT_COLLECT` and `ON_FIELD_COLLECT` are dispatched by class name; their constants still exist but receive nothing. [PR #17223]
 - 8.x: `SubmissionEvent` is final, and `setPostSubmitCallbackResponse()` requires a `RedirectResponse`. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
+- 8.x: the Social Login field (`plugin.loginSocial`) is gone with MauticSocialBundle; remove it from forms and re-save them before upgrading, or the form cannot render it [PR #17473] [code: UPGRADE-8.0.md "Social media integrations" @8.x].
 - 8.x: a Symfony 8 regression returned 500 on email, url and captcha submissions; it is fixed. [PR #17392]
 - 5.0: form templates are Twig, so theme field overrides must be `.html.twig`. Mapping moved to `mapped_object`/`mapped_field`. URL pre-fill works on external JS embeds. [PR #11898] [PR #11905] [PR #11077]
 - 5.1: new forms default to "Display message"; the API default stays `return`. Forms gained a language setting. [PR #12813] [PR #13410] [PR #12814]

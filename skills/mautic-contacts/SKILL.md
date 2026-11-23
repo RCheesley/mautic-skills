@@ -106,6 +106,7 @@ Custom fields and import
 - Fixed on the 7.2 branch after 7.2.2 (milestone 7.2.3, not in the 7.x snapshot): stage kept on merge, edit-permission checks on six contact AJAX actions, company import queue/cancel. [PR #17573] [PR #18090] [PR #18189]
 - 8.x dispatches events by class (56 LeadBundle constants removed; subscribe to `LeadPostSaveEvent`, `LeadPostMergeEvent`, `CompanySoftDeleteEvent` ...). [PR #17218] [PR #17545]
 - 8.x removes `LeadModel::isContactable()`, `FieldModel::getFieldList()`, `CompanyModel::getCompanyLeadRepository()`, `LeadModel::getTagRepository()`, and makes `IdentifyCompanyHelper` an instance service. [PR #17247] [PR #17248] [PR #17260]
+- 8.x removes the contact companies modal (`/s/contacts/company/{id}` returns 404) and makes Contact dashboard widgets honour `lead:leads:viewother`. [PR #18091] [PR #17496]
 - 8.x unique-identifier columns get length 255 (7.x: 191) and require PHP 8.4, Symfony 8.1, Doctrine ORM 3 / DBAL 4. [PR #17361]
 - 5.0 removed the `mtc_sid` cookie, moved LeadBundle views to Twig and validated unique identifiers server-side. [PR #12440] [PR #11793] [PR #11716]
 - 5.1 added field length and indexable flags, the HTML field type, single-company mode and the Export permission. [PR #13319] [PR #13428] [PR #12219] [PR #12884]

@@ -137,7 +137,7 @@ Docs gaps: no statement of duplicate/merge behaviour on create, `company` field 
 
 ## 12. 8.0 docs changes
 
-The 8.0 docs branch mostly documents unreleased 7.x features merged after 7.2.1 (see `mautic-upgrades-and-versions/references/post-7.2.1-prs.md`): custom-field quick filters `is:indexed`/`is:unique`, Quick Add "Save & New", "No owner" in Change Owner, email confirmation before the Preference Center, "Contact's primary company" versus "Any associated company" segment filter groups, `POST /companies/batch/addcontacts`, and default email UTM values. [docs: https://docs.mautic.org/en/8.0/contacts/custom_fields.html#filtering-custom-fields-with-quick-filters] [docs: https://docs.mautic.org/en/8.0/contacts/manage_contacts.html#quick-add] [docs: https://docs.mautic.org/en/8.0/companies/companies_overview.html#company-segments]
+The 8.0 docs branch mostly documents unreleased 7.x features merged after 7.2.1 (see `mautic-upgrades-and-versions/references/unreleased-7.x-prs.md`): custom-field quick filters `is:indexed`/`is:unique`, Quick Add "Save & New", "No owner" in Change Owner, email confirmation before the Preference Center, "Contact's primary company" versus "Any associated company" segment filter groups, `POST /companies/batch/addcontacts`, and default email UTM values. [docs: https://docs.mautic.org/en/8.0/contacts/custom_fields.html#filtering-custom-fields-with-quick-filters] [docs: https://docs.mautic.org/en/8.0/contacts/manage_contacts.html#quick-add] [docs: https://docs.mautic.org/en/8.0/companies/companies_overview.html#company-segments]
 
 ## 13. Upcoming in 7.3 (docs branch, unreleased)
 
