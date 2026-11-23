@@ -36,15 +36,17 @@ docs, then PR discussion. The disagreement is recorded where it occurs.
 |---|---|---|
 | mautic/mautic branch `7.x` (authoritative): release 7.2.2 plus 181 merged, unreleased pull requests bound for 7.3. `app/release_metadata.json` says 7.2.2. | commit `838c9c772ec` | 2026-11-19 |
 | mautic/mautic branch `8.x` (in development; `release_metadata.json` says 7.2.2, minimum PHP 8.4) | commit `c79cf37a57b` | 2026-11-22 |
-| mautic/user-documentation branch `7.2` (docs.mautic.org/en/7.2) | commit `4ad1d85` | 2026-10-15 |
-| mautic/user-documentation branch `8.0` (docs.mautic.org/en/8.0) | commit `5565491` | 2026-10-15 |
-| mautic/developer-documentation-new branch `7.2` (devdocs.mautic.org/en/7.2) | commit `bb8818f` | 2026-10-12 |
-| mautic/developer-documentation-new branch `8.0` (devdocs.mautic.org/en/8.0) | commit `4e37690` | 2026-10-12 |
-| kb.mautic.org, English categories (How-to guides, Troubleshooting, Tutorials) | 42 articles crawled | 2026-10-15 |
+| mautic/user-documentation branch `7.2` (docs.mautic.org/en/7.2) | commit `a308c7f9` | 2026-11-23 |
+| mautic/user-documentation branch `7.3` (unreleased; cited as GitHub paths, marked "upcoming in 7.3") | commit `79ae3d0c` | 2026-11-23 |
+| mautic/user-documentation branch `8.0` (docs.mautic.org/en/8.0) | commit `50f10873` | 2026-11-23 |
+| mautic/developer-documentation-new branch `7.2` (devdocs.mautic.org/en/7.2) | commit `aa63e2e` | 2026-11-23 |
+| mautic/developer-documentation-new branch `7.3` (unreleased; cited as GitHub paths) | commit `4a3be59` | 2026-11-23 |
+| mautic/developer-documentation-new branch `8.0` (devdocs.mautic.org/en/8.0) | commit `2b27e13` | 2026-11-23 |
+| kb.mautic.org, English categories (How-to guides, Troubleshooting, Tutorials) | 48 articles crawled | 2026-11-23 |
 | github.com/mautic/mautic merged pull requests (all base branches, #1 to #17840) | 7,422 PRs with descriptions, labels, files, review and issue comments | harvested 2026-10-15 |
 | github.com/mautic/mautic merged pull requests, delta (merged 2026-10-15 to 2026-11-23: 94 to `7.x`, 152 to `8.x`, 38 to `7.2`, 7 to other branches) | 291 PRs | harvested 2026-11-23 |
 
-Previous code snapshots: 7.x `419a08a9b35` (2026-10-14, 7.2.1 plus 87 PRs) and 8.x `11599729491` (2026-10-15).
+Previous snapshots (2026-10-15 build): code 7.x `419a08a9b35` (7.2.1 plus 87 PRs) and 8.x `11599729491`; user docs 7.2 `4ad1d85`, 8.0 `5565491`; devdocs 7.2 `bb8818f`, 8.0 `4e37690`; KB 42 articles.
 
 Release dates used to place PRs in versions: 1.0.0 2015-03-10 · 2.0.0 2016-07-05 · 3.0.0 2020-06-15 ·
 4.0.0 2021-08-30 · 5.0.0 2024-01-09 · 5.1.0 2024-06-12 · 5.2.0 2024-12-02 · 6.0.0 2025-03-25 · 7.0.0 2026-01-20 ·
