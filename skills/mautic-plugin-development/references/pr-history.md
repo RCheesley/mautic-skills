@@ -29,6 +29,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - Plugin install and update classes (`PluginBundleBase`, `AbstractPluginBundle`, `PluginDatabase`, the install/update events, `ReloadHelper`/`ReloadFacade`, `PluginModel`, the migration engine) receive the DB connection through DI, because `MauticFactory::getDatabase()` was removed [PR #14418] (~v6.0.0). The change was tested with a purpose-built plugin bumped to 1.1.0 and reloaded to prove a column is added [PR #14418].
 - `PluginUpdateEvent::getMetadata()` returns `?array`; `null` means the plugin has no entities, matching `PluginInstallEvent` [PR #15951] (v7.0.2). Updating a plugin with no `Entity` directory had thrown a TypeError (issue mautic/mautic#15741) [PR #15951].
 - A listener on `PluginEvents::PLUGIN_IS_PUBLISHED_STATE_CHANGING` can veto publishing with `PluginIsPublishedEvent` (`canPublish=false`); the `CanPublish` constraint shows the listener's message [PR #13696] (v7.0.0). Access and refresh tokens are cleared whenever plugin credentials change [PR #13696]. The goal was to block authorising with a user that lacks the required API access [PR #13696].
+- Plugin install creates only the plugin's own tables: `installPluginSchema()` builds the schema from metadata and drops tables that already exist before generating SQL (unreleased on 7.x, 7.3.0-rc) [PR #17977]. `getCreateSchemaSql()` is meant for an empty database, and Symfony Messenger's schema listener adds `messenger_messages` without checking the real database, so with a Doctrine queue the first reload failed between creating tables and adding foreign keys [PR #17977]. The reviewer asked that tables added by plugin listeners also be handled, which is why every existing table is dropped from the generated schema, not only `messenger_messages` [PR #17977].
+- Plugin discovery skips unreadable directories instead of failing kernel boot (7.2 branch after 7.2.2, milestone 7.2.3) [PR #18025]. A maintainer worried that a skipped plugin would disappear silently, so the skipped path is logged; `trigger_error(E_USER_WARNING)` was replaced by `error_log()` because Symfony's debug error handler converts the warning into an exception during boot [PR #18025].
 
 ### Legacy integration framework (`AbstractIntegration`)
 - `AbstractIntegration` is deprecated in favour of the IntegrationsBundle, with a docblock saying "To be removed in Mautic 6.0" [PR #11050] (~v4.3). It is still present and still carries that docblock in 7.x [code: app/bundles/PluginBundle/Integration/AbstractIntegration.php:54 @7.x]. Legacy plugins are still maintained in 7.2 [PR #16202].
@@ -48,6 +50,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - `FetchLeadsCommand` checks that the integration really implements `pushLeads` before calling it [PR #4880] (~v2.10.1), and prints clear errors when the integration is missing or unauthorised [PR #5336] (~v2.12.1).
 - Authorization header tokens in legacy request logs are replaced by the literal `[REDACTED]` [PR #14277] (v5.2.1). Hashing the token was rejected because a hash does not show that the value was modified [PR #14277]. The rule is still in 7.x [code: app/bundles/PluginBundle/Helper/oAuthHelper.php:221 @7.x].
 - The legacy field-mapping AJAX endpoint reads `integration` and `page` from POST with a GET fallback and merges `settings` recursively, so mapping pages 2+ are reachable [PR #16202] (v7.2.0). Issue mautic/mautic#16197 reported the Salesforce paginator stuck on page 1 [PR #16202].
+- 8.x removes `AbstractSsoServiceIntegration` (and folds `AbstractSsoFormIntegration` into the same removal note) because no core or bundled integration extended it and it depends on `AbstractIntegration`'s OAuth handling, which is on its way out [PR #18118] (8.0.0-alpha). The SSO hook itself (`sso_service`/`sso_form` features, `PreAuthenticationEvent`, `FormAuthenticationEvent`) is unchanged; a maintainer ruled that no 7.x deprecation notice was needed because the parent is already deprecated [PR #18118].
 
 ### IntegrationsBundle as a plugin framework
 - The standalone `mautic-inc/plugin-integrations` repository became the core `IntegrationsBundle`, with git history kept [PR #8210] (~v3.0.0) and kernel registration fixed in [PR #8223] (~v3.0.0).
@@ -72,6 +75,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - Tagged-service compiler passes are being replaced by `#[AutowireIterator]` constructor arguments [PR #16776] (~v7.2).
 - PluginBundle controllers get `PluginModel` by typed injection instead of `getModel('plugin')` [PR #16625] (~v7.2).
 - Re-thrown exceptions in MarketplaceBundle and the IntegrationsBundle pass the original as `previous` [PR #16488] (~v7.2).
+- 7.3 (unreleased on 7.x) moves core markup to Bootstrap 5 class names and attributes and native Bootstrap 5 JS APIs, in a numbered series of PRs [PR #17826] [PR #17827] [PR #17829] [PR #17830]. Only Bootstrap's own `data-toggle` uses were renamed; Mautic's custom data attributes were left alone [PR #17829].
+- `SearchHelpEvent` is deprecated in 7.3 because list toolbars no longer show search help; plugins supply quick filters through the `quickFilters` toolbar option instead [PR #18069] [code: UPGRADE-7.0.md:69 @7.x]. 8.x removes the class [code: UPGRADE-8.0.md:233 @8.x].
 
 ### Front-end hooks
 - Mautic's AJAX page loader triggers the jQuery events `mautic:onPageLoad:before` and `mautic:onPageLoad:after` on the container with `(container, response, inModal)` [PR #15789] (v7.1.0). A reviewer praised them as an extension point that avoids overriding core JS [PR #15789]. They are in 7.x `1a.content.js` [code: app/bundles/CoreBundle/Assets/js/1a.content.js:321,736 @7.x].
@@ -84,6 +89,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - The Marketplace shows the latest stable version (else a dev branch), a display name, issue-tracker and documentation links, and a "Clear cache" action for its 1-hour package cache [PR #11197] (~v4.4.0).
 - Package detail pages show the CLI install command, and a failed UI install always returns a JSON error [PR #12529] (~v5.0).
 - Marketplace HTML descriptions render with Twig `|purify` [PR #12528] (~v5.0). Marketplace copy is written for marketers and tells them to hand Composer instructions to a developer [PR #13326] (~v5.1.0).
+- The Marketplace list filters by package type (Plugin, Theme, Campaign) through the standard filter popover, keeps the search in the session, and the detail page renders the Markdown description (HTML stripped, unsafe links disabled, purified) plus compatibility, language, industry, price, author, support, funding and statistics metadata (unreleased on 7.x, 7.3.0-rc) [PR #17764]. Type filtering needs the matching Marketplace service change; all 7.x PRs are to be merged into 8.x [PR #17764].
 
 ## Regression catalogue
 
@@ -98,6 +104,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | Plugin migrations fail on PHP 8 with "There is no active transaction" | The engine skips commit when DDL already committed | [PR #14440] | 5.2.2 |
 | Plugin that gained a version did not update | Empty stored version plus a configured version counts as an update | [PR #13423] | ~5.1.0 |
 | Updating a plugin without an `Entity` directory threw a TypeError | Update succeeds; `getMetadata()` returns null | [PR #15951] | 7.0.2 |
+| First `mautic:plugins:reload` of an entity plugin failed with "Table 'messenger_messages' already exists"; plugin tables left without foreign keys and no `plugins` row | Existing tables are dropped from the generated schema; tables and foreign keys created on the first reload | [PR #17977] | unreleased (7.3.0-rc) |
+| An unreadable directory under `plugins/` returned HTTP 500 on every request | Unreadable paths skipped and logged; readable plugins still load | [PR #18025] | 7.2 branch after 7.2.2 |
 | HelloWorld plugin opened an info box instead of a config form | IntegrationsBundle templates resolve for bundles not prefixed `Mautic` | [PR #8564] | ~3.0.0 |
 | Enabling a no-auth IntegrationsBundle plugin: "Undefined index: apiKeys" | Plugin publishes without auth config | [PR #9050] | ~3.1.0 |
 | Undefined `isAuthorized()` on config save | Called only when `ConfigFormAuthorizeButtonInterface` is implemented | [PR #9642] | ~3.3.0 |
@@ -149,6 +157,9 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | 7.1.0 | Plugin version badge; `mautic:onPageLoad:before/after` JS events | [PR #15789] |
 | 7.2.0 | `final` sweep of childless classes; legacy mapping pagination via POST | [PR #16888] [PR #16902] [PR #16202] |
 | ~7.2 | `#[Required] autowire*()` rule; `#[AutowireIterator]`; IntegrationsBundle services autowired; exception chaining | [PR #16880] [PR #16776] [PR #16781] [PR #16488] |
+| 7.2 branch after 7.2.2 | Unreadable plugin directories skipped at boot | [PR #18025] |
+| unreleased (7.3.0-rc) | Plugin install skips existing tables; `SearchHelpEvent` deprecated; Bootstrap 5 markup and JS; Marketplace type filter and package metadata | [PR #17977] [PR #18069] [PR #17826] [PR #17827] [PR #17829] [PR #17830] [PR #17764] |
+| 8.0.0-alpha (8.x branch) | `AbstractSso*Integration` removed; plugin CSS trimmed | [PR #18118] [PR #18292] |
 
 ## Removed, deprecated, replaced
 
@@ -169,6 +180,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | Extensible childless DAOs and integration classes | `final` classes | [PR #16888] [PR #16902] | 7.2.0 | Compose instead of extending |
 | Parent-constructor forwarding in child controllers | `#[Required] autowire*()` setters | [PR #16880] | ~7.2 | Claimed no BC break |
 | Explicit IntegrationsBundle `config.php` services | Autowired `services.php` | [PR #16781] | ~7.2 | Use FQCN ids |
+| `SearchHelpEvent` listeners | `quickFilters` toolbar option | [PR #18069] | deprecated 7.3 (unreleased), removed 8.x | Not dispatched any more on 7.x |
+| `AbstractSsoServiceIntegration`, `AbstractSsoFormIntegration` | Listen to `PreAuthenticationEvent`/`FormAuthenticationEvent` | [PR #18118] | 8.x | Listed in UPGRADE-8.0.md |
 
 ## Maintainer norms for this area
 - Keep BC for third-party plugins on renames; deprecated prefixes and base classes stay supported [PR #740].
@@ -182,6 +195,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - Re-thrown exceptions chain the previous exception [PR #16488].
 - Each bug fix needs a test, and "Steps to test" must be manual UI steps [PR #16202].
 - Do not override core JS; prefer core extension points such as the page-load events [PR #15789].
+- Boot-time diagnostics must not throw: before the container and logger exist, log with `error_log()` rather than raising a PHP warning [PR #18025].
+- All 7.x PRs are merged forward into 8.x, so docs changes for 7.x features are back-ported to the 8.0 docs too [PR #17764].
 - Bug fixes target the patch branch, features the next minor; there are no back-merges, so a fix for an older line needs its own PR [PR #9096] [PR #11775] [PR #14361].
 
 ## Open questions
@@ -201,3 +216,4 @@ The integrations, plugins and Marketplace area has 221 merged PRs in three chunk
 Chunk 1 has 104 PRs (97 substantive), chunk 2 has 83 (74 substantive), chunk 3 has 34 (22 substantive, 10 refactor-only, 2 noise).
 This file keeps the plugin-development and Marketplace-installation items; sync-engine and CRM items are in mautic-integrations.
 A further 869 noise PRs across all areas were excluded upstream before chunking.
+The November 2026 delta (PRs merged 2026-10-15 to 2026-11-23) added 4 integrations, plugins and Marketplace PRs, of which three are used here [PR #17764] [PR #17977] [PR #18118], plus plugin-facing core PRs [PR #18025] [PR #18069] [PR #17826] [PR #17827] [PR #17829] [PR #17830].

@@ -29,7 +29,7 @@ Contents: 1 Pages · 2 Plugin basics · 3 config.php · 4 Autowiring · 5 Lifecy
 - Plugins are Symfony bundles in `plugins/`, namespaced `MauticPlugin\<Plugin Folder Name>\` [devdocs: https://devdocs.mautic.org/en/7.2/plugins/getting_started.html].
 - Do not override core classes from a plugin; contribute the hook to core as a PR [devdocs: https://devdocs.mautic.org/en/7.2/plugins/getting_started.html].
 - Minimum structure: `Config/config.php` + `<Name>Bundle.php` extending `Mautic\IntegrationsBundle\Bundle\AbstractPluginBundle` [devdocs: https://devdocs.mautic.org/en/7.2/plugins/structure.html].
-- Full example layout: `Assets/{images,css,js}`, `Config/`, `Controller/`, `Entity/`, `EventListener/`, `Form/Type/`, `Migrations/Version_0_0_1.php`, `Model/`, `Helper/`, `Security/Permissions/`, `Translations/en_US/{flashes,messages}.ini`, `Tests/{Unit,Functional}/`, `Views/` [devdocs: https://devdocs.mautic.org/en/7.2/plugins/structure.html]. In practice the bundled plugins put Twig under `Resources/views/` [code: bundled-plugins §0.1 @7.x].
+- Full example layout: `Assets/{images,css,js}`, `Config/`, `Controller/`, `Entity/`, `EventListener/`, `Form/Type/`, `Migrations/Version_0_0_1.php`, `Model/`, `Helper/`, `Security/Permissions/`, `Translations/en_US/{flashes,messages}.ini`, `Tests/{Unit,Functional}/`, `Views/` [devdocs: https://devdocs.mautic.org/en/7.2/plugins/structure.html]. In practice the bundled plugins put Twig under `Resources/views/` [code: plugins/MauticTagManagerBundle/Controller/TagController.php:153 @7.x] [code: ls plugins/*/Resources/views @7.x].
 - Do not bundle dependencies in the distributable; use Composer plus the Marketplace [devdocs: https://devdocs.mautic.org/en/7.2/plugins/dependencies.html].
 - Mautic's own config framework lets one PHP file per bundle declare routes, services, menus and parameters (`MauticCoreExtension` and listeners) [devdocs: https://devdocs.mautic.org/en/7.2/plugins/mautic_vs_symfony.html#php-everything].
 - Mautic's permission system is bitwise and does not use Symfony voters [devdocs: https://devdocs.mautic.org/en/7.2/plugins/mautic_vs_symfony.html#firewalls-and-user-access-management].
@@ -73,9 +73,10 @@ Contents: 1 Pages · 2 Plugin basics · 3 config.php · 4 Autowiring · 5 Lifecy
 - Cache: `var/cache/<env>`; `cache:clear --env=<env>`; delete the folder if the command fails; CacheBundle offers PSR-6/16 tag-aware adapters; `mautic:cache:clear` [devdocs: https://devdocs.mautic.org/en/7.2/plugins/cache.html].
 - Flash messages: keys in `flashes.ini`, `addFlashMessage($key, $params, $type)` [devdocs: https://devdocs.mautic.org/en/7.2/design/flash_messages.html].
 - Labels: sentence case, "Apply" not "Save changes", "Log in", "Move to trash" for recoverable deletes [devdocs: https://devdocs.mautic.org/en/7.2/design/labelling.html].
+- Validation groups (7.2 docs, updated after the 2026-10-12 snapshot): a Form type can point `validation_groups` at a static callback on the entity class, which receives the `FormInterface` and returns the group names; Symfony applies only constraints assigned to those groups, so give each constraint a `groups` option, and guard against an empty submission where the form data is not an entity [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/forms_advanced.html#using-entity-static-callback].
 
 ## 7. Doc errors and discrepancies (checked against code)
-| Docs claim | Code reality (7.2.1) | Sources |
+| Docs claim | Code reality (7.x) | Sources |
 |---|---|---|
 | `config.php` services "won't work in Mautic 6" | Still processed by `ServicePass` on 7.x; removed on 8.x | [devdocs: https://devdocs.mautic.org/en/7.2/plugins/autowiring.html] [code: app/bundles/CoreBundle/DependencyInjection/Compiler/ServicePass.php:31-64 @7.x] |
 | "Mautic doesn't auto-wire native services other than commands and controllers" | Every bundle is autowired by default | [devdocs: https://devdocs.mautic.org/en/7.2/plugins/mautic_vs_symfony.html#autowired-services] [code: app/config/services.php:10-32 @7.x] |
@@ -90,7 +91,9 @@ Contents: 1 Pages · 2 Plugin basics · 3 config.php · 4 Autowiring · 5 Lifecy
 | MVC page uses `.html.php` and `$view[...]` helpers | Twig is mandatory since 5 | [devdocs: https://devdocs.mautic.org/en/7.2/plugins/mvc.html#template-helpers] |
 | CI example pins PHP 7.4/8.0, Mautic 4.x, `whitelist` | Outdated for 7.x | [devdocs: https://devdocs.mautic.org/en/7.2/plugins/continuous_integration.html] |
 | Campaign decision example calls `addCondition()` | Use `addDecision()` | [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/campaigns.html#registering-a-campaign-decision] |
-| 8.0 forms page unchanged (`FORM_ON_BUILD`) | 8.x dispatches `FormBuilderEvent` by class; constant kept but not dispatched | [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/forms.html] [code: 8x-changes §3.2 @8.x] |
+| 8.0 forms page unchanged (`FORM_ON_BUILD`) | 8.x dispatches `FormBuilderEvent` by class; constant kept but not dispatched | [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/forms.html] [code: app/bundles/FormBundle/Model/FormModel.php:641-642 @8.x] |
+| 7.3 docs branch: custom Email search commands use `SearchHelpEvent` for help text | 7.x deprecated `SearchHelpEvent` and no longer dispatches it; 8.x removes it | [devdocs: github.com/mautic/developer-documentation-new/blob/7.3/docs/plugin_extensions/emails.rst] [PR #18069] [code: UPGRADE-8.0.md:233 @8.x] |
+| 7.3 docs branch: `ConfigEvents::CONFIG_ON_GENERATE` / `CONFIG_PRE_SAVE` | Correct for 7.x; 8.x removed `ConfigEvents` (the 8.0 page uses the event classes) | [devdocs: github.com/mautic/developer-documentation-new/blob/7.3/docs/plugins/config.rst] [code: UPGRADE-8.0.md:101,474 @8.x] |
 
 ## 8. Procedures (docs)
 - **Create a minimal plugin** — folder, `config.php` with name/description/author/version, bundle class extending `AbstractPluginBundle` [devdocs: https://devdocs.mautic.org/en/7.2/plugins/structure.html].
@@ -117,7 +120,20 @@ Contents: 1 Pages · 2 Plugin basics · 3 config.php · 4 Autowiring · 5 Lifecy
 - Permissions: no-arg constructor; registered in `services.php`; `getSynonym(): array`; `isGranted(array $userPermissions, $name, $level): bool` [devdocs: https://devdocs.mautic.org/en/8.0/plugins/permissions.html].
 - Models: implement `MauticModelInterface` with static `getName()` for `getModel('key')` [devdocs: https://devdocs.mautic.org/en/8.0/plugins/mvc.html#registering-a-model].
 - Cache: `CacheStorageHelper` removed; miss returns `null` [devdocs: https://devdocs.mautic.org/en/8.0/plugins/cache.html#replacing-cachestoragehelper].
-- New `update_m7_to_m8` page: signature changes, `FormController` removal, 300+ final classes, typed constants, `DG\BypassFinals` for tests [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html].
+- New `update_m7_to_m8` page: at the 2026-10-12 docs snapshot it listed signature changes, `FormController` removal, 300+ final classes, typed constants and `DG\BypassFinals` for tests; it has since been cut down to a pointer to UPGRADE-8.0.md (next bullet) [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html].
+
+- The 8.0 `update_m7_to_m8` page now only points to UPGRADE-8.0.md in the Mautic repository and suggests passing that file and the plugin code to an AI coding agent; its former sections (final classes, removed `FormController`) are gone [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html] [code: UPGRADE-8.0.md @8.x].
+- Attribute listeners: plugins may mark listener methods with `#[AsEventListener]` instead of implementing `EventSubscriberInterface`; classes extending a core listener base inherit its listeners only when autoconfigured; Symfony Form and JMS serializer subscribers still implement their own subscriber interfaces [devdocs: https://devdocs.mautic.org/en/8.0/plugins/event_listeners.html#attribute-listeners].
+- Database: core entities use attributes only; map new plugin entities with attributes because Mautic's PHPStan rules flag a static `loadMetadata()` as `mautic.noLoadMetadata`; an `Entity` directory is registered when a class has `loadMetadata()` or a class-level ORM attribute; read complete mappings with `getClassMetadata()` [devdocs: https://devdocs.mautic.org/en/8.0/plugins/database.html#entity-php-static-function-mapping].
+- Campaigns: the condition and decision API pages now use `getEvent()`, `getLead()` and `getLog()->setChannel()`/`setChannelId()` instead of the removed `setChannel()` [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/campaigns.html#evaluating-a-campaign-condition].
+- Config: each `addForm()` section is a separate entry in the Configuration navigation at `/s/config/edit/{formAlias}`, listed only when it has a parameter; `ConfigPreSaveEvent`/`ConfigPostSaveEvent` carry only the saved section [devdocs: https://devdocs.mautic.org/en/8.0/plugins/config.html#custom-config-parameters].
+- The Social bundle notes on the event-listeners page were removed with the bundle [devdocs: https://devdocs.mautic.org/en/8.0/plugins/event_listeners.html] [PR #17473].
+
+### Upcoming in 7.3 (docs branch, unreleased)
+- Configuration sections: the same `/s/config/edit/{formAlias}` navigation and single-section save behaviour are documented for 7.3 [devdocs: github.com/mautic/developer-documentation-new/blob/7.3/docs/plugins/config.rst] [code: app/bundles/ConfigBundle/Config/config.php:10 @7.x].
+- Contacts: `Lead::setPrimaryIdentifierOrder()` changes which field becomes a Contact's display name; set it on every load, for example from a Doctrine `postLoad` entity listener registered with `#[AsEntityListener]` [devdocs: github.com/mautic/developer-documentation-new/blob/7.3/docs/plugin_extensions/contacts.rst] [code: app/bundles/LeadBundle/Entity/Lead.php:772 @7.x].
+- UI: the Email preview page exposes the `email.preview.buttons` custom-content context for extra download buttons, and the `CustomContentEvent` "Injecting custom content" section (Company views and the import mapping step) is now in the 7.3 docs [devdocs: github.com/mautic/developer-documentation-new/blob/7.3/docs/plugin_extensions/ui.rst] [code: app/bundles/EmailBundle/Resources/views/Email/preview.html.twig:12 @7.x].
+- Emails: a custom search command section (`SearchCommandEvent`, `SearchQueryEvent`, `SearchHelpEvent`); see the discrepancy row in section 7 [devdocs: github.com/mautic/developer-documentation-new/blob/7.3/docs/plugin_extensions/emails.rst].
 
 ## 11. Gaps in the docs
 - No documentation of `mautic:plugins:reload` semantics, `is_missing`, or Plugin Manager flow; no uninstall [devdocs: https://devdocs.mautic.org/en/7.2/plugins/installation.html].

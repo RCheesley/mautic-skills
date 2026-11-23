@@ -10,13 +10,14 @@
 | Base | Use for | Source |
 |---|---|---|
 | `PHPUnit\Framework\TestCase` | permission classes, subscribers with mocked events, helpers | [code: plugins/MauticTagManagerBundle/Tests/Unit/Security/Permissions/TagManagerPermissionsTest.php:11 @7.x] |
-| `Mautic\CoreBundle\Test\MauticMysqlTestCase` | routes, controllers, repositories, commands (`$this->client`, `$this->em`, `testSymfonyCommand()`) | [code: plugins/MauticFocusBundle/Tests/Controller/FocusControllerTest.php:14 @7.x] [code: integrations-plugins-marketplace §10 @7.x] |
-| `Mautic\CoreBundle\Test\AbstractMauticTestCase` | kernel without DB reset | [code: integrations-plugins-marketplace §10 @7.x] |
-| `Symfony\Bundle\FrameworkBundle\Test\KernelTestCase` | container wiring checks | [code: integrations-plugins-marketplace §10 @7.x] |
+| `Mautic\CoreBundle\Test\MauticMysqlTestCase` | routes, controllers, repositories, commands (`$this->client`, `$this->em`, `testSymfonyCommand()`) | [code: plugins/MauticFocusBundle/Tests/Controller/FocusControllerTest.php:14 @7.x] [code: app/bundles/CoreBundle/Test/MauticMysqlTestCase.php:17 @7.x] |
+| `Mautic\CoreBundle\Test\AbstractMauticTestCase` | kernel without DB reset (extends Symfony `WebTestCase`) | [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:30 @7.x] |
+| `Symfony\Bundle\FrameworkBundle\Test\KernelTestCase` | container wiring checks | [code: app/bundles/PluginBundle/Tests/ConfigFormTest.php @7.x] |
 
 ## 3. Representative tests to copy
 1. `app/bundles/PluginBundle/Tests/Helper/ReloadHelperTest.php` — `testDisableMissingPlugins`, `testEnableFoundPlugins`, `testUpdatePlugins`, `testInstallPlugins`; uses `PluginBundleBaseStub` [code: app/bundles/PluginBundle/Tests/Helper/ReloadHelperTest.php:17-160 @7.x].
-2. `app/bundles/PluginBundle/Tests/Controller/PluginControllerTest.php` — runs `mautic:plugins:install` then reads `/s/plugins/info/MauticFocusBundle` [code: integrations-plugins-marketplace §10 @7.x].
+2. `app/bundles/PluginBundle/Tests/Controller/PluginControllerTest.php` — runs `mautic:plugins:install` then reads `/s/plugins/info/MauticFocusBundle` [code: app/bundles/PluginBundle/Tests/Controller/PluginControllerTest.php:50-52 @7.x].
+2a. `app/bundles/PluginBundle/Tests/Functional/Command/ReloadCommandFunctionalTest.php` — `testFirstReloadInstallsPluginWhenMessengerTableExists`: a first reload of an entity plugin succeeds when `messenger_messages` already exists (unreleased on 7.x, 7.3.0-rc) [code: app/bundles/PluginBundle/Tests/Functional/Command/ReloadCommandFunctionalTest.php:37 @7.x] [PR #17977].
 3. `plugins/MauticTagManagerBundle/Tests/Unit/Security/Permissions/TagManagerPermissionsTest.php` — `testBuildFormMethodAddsStandardFormFields` [code: plugins/MauticTagManagerBundle/Tests/Unit/Security/Permissions/TagManagerPermissionsTest.php:30 @7.x].
 4. `plugins/MauticFocusBundle/Tests/Controller/FocusControllerTest.php` — index/new pages return 200 [code: plugins/MauticFocusBundle/Tests/Controller/FocusControllerTest.php:16-32 @7.x].
 5. `app/bundles/CoreBundle/Tests/Unit/DependencyInjection/Builder/BundleMetadataBuilderTest.php` — expected plugin metadata shape [code: app/bundles/CoreBundle/Tests/Unit/DependencyInjection/Builder/BundleMetadataBuilderTest.php:59-82 @7.x].
@@ -26,7 +27,7 @@
 - Route + permission: a User with the permission gets 200; a User without gets 403; anonymous `main` access redirects to login [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:219-247 @7.x].
 - Extension registration: after dispatching the builder event the plugin's key is present (`CampaignBuilderEvent::getActions()`, `FormBuilderEvent`, `ReportBuilderEvent`) [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/campaigns.html#registering-campaign-events].
 - Action execution: every `LeadEventLog` passed to a `PendingEvent` ends up in `getSuccessful()` or `getFailures()` [code: app/bundles/CampaignBundle/Event/PendingEvent.php:217-225 @7.x].
-- Subscriber keys: `getSubscribedEvents()` contains the 8.x class key (and the 7.x constant when defined) [code: 8x-changes §7 @8.x].
+- Subscriber keys: `getSubscribedEvents()` contains the 8.x class key (and the 7.x constant when defined) [code: UPGRADE-8.0.md:641 @8.x]. Core dropped these assertions for its own listeners before moving them to `#[AsEventListener]` [PR #18003].
 - Migration idempotence: `isApplicable()` true before, `up()` SQL valid, `isApplicable()` false after; no core test covers the engine [code: app/bundles/IntegrationsBundle/Migration/AbstractMigration.php:23-45 @7.x].
 - Install/update: after bumping `version`, `mautic:plugins:reload` reports the plugin as updated and the `plugins.version` column changes [code: app/bundles/PluginBundle/Helper/ReloadHelper.php:67-95 @7.x].
 
@@ -54,7 +55,7 @@ public function testRegistersCampaignAction(): void
     $this->assertArrayHasKey(CampaignBuilderEvent::class, CampaignSubscriber::getSubscribedEvents());
 }
 ```
-[devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/campaigns.html#registering-campaign-events] [code: 8x-changes §7 @8.x]
+[devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/campaigns.html#registering-campaign-events] [code: UPGRADE-8.0.md:485 @8.x]
 
 Functional route test:
 ```php
@@ -82,12 +83,13 @@ public function testMigrationIsIdempotent(): void
 [code: app/bundles/IntegrationsBundle/Migration/AbstractMigration.php:17-45 @7.x]
 
 ## 6. Fixtures and data
-- Create entities in the test with `$this->em->persist()`/`flush()`; `MauticMysqlTestCase` resets the DB between tests [code: integrations-plugins-marketplace §10 @7.x].
-- Data fixtures used by core plugin tests include `LeadFieldData`, `LoadLeadData` [code: integrations-plugins-marketplace §10 @7.x].
+- Create entities in the test with `$this->em->persist()`/`flush()`; `MauticMysqlTestCase` wraps each test in a transaction and rolls it back, or resets the database when `$useCleanupRollback` is false or the rollback cannot be used [code: app/bundles/CoreBundle/Test/MauticMysqlTestCase.php:24-30,60-90 @7.x].
+- `MauticMysqlTestCase` installs the `LeadFieldData`, role and user fixtures; `LoadLeadData` lives in `LeadBundle/DataFixtures/ORM` [code: app/bundles/CoreBundle/Test/MauticMysqlTestCase.php:227 @7.x] [code: app/bundles/LeadBundle/DataFixtures/ORM/LoadLeadData.php @7.x].
 
 ## 7. 8.x testing changes
-- PHPUnit 13; 300+ core classes are `final`, so mocking them needs `DG\BypassFinals` enabled in a plugin bootstrap; no test doubles of `Request`/`InputBag`/`Router` [code: 8x-changes §7 "Porting a plugin" @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html#final-classes].
-- Tests asserting on `getSubscribedEvents()` must expect class keys [code: 8x-changes §3.1 @8.x].
+- PHPUnit 13; about 2,500 core classes are `final`, so mocking them needs `DG\BypassFinals` enabled in a plugin bootstrap, as core's own `app/tests/bootstrap.php` does [code: composer.json:33,44 @8.x] [code: app/tests/bootstrap.php:5-9 @8.x] [code: grep of app/bundles and plugins for final class, 2527 of 2808 non-test classes @8.x]. Whether core forbids test doubles of `Request`/`InputBag`/`Router` was not re-checked [unverified].
+- Tests asserting on `getSubscribedEvents()` must expect class keys [code: UPGRADE-8.0.md:641 @8.x]. To unit-test a listener that uses `#[AsEventListener]`, register it on a dispatcher with `Mautic\CoreBundle\Test\AttributeEventListenerRegistrar::register($dispatcher, $listener)`, because no container runs `RegisterListenersPass` [code: app/bundles/CoreBundle/Test/AttributeEventListenerRegistrar.php:10-16 @8.x] [PR #18004].
+- `AbstractMauticTestCase::getService()` is a typed replacement for `static::getContainer()->get()` [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:161 @8.x] [PR #18221].
 - For deeper testing conventions see mautic-testing.
 
 ## 8. Regression tests worth adding
@@ -98,7 +100,8 @@ Rows from the regression catalogue in [pr-history.md](pr-history.md) with no mat
 | Updating a plugin without an `Entity` directory succeeds and `PluginUpdateEvent::getMetadata()` is `null` | [PR #15951] | `ReloadHelperTest` |
 | A plugin whose stored version is empty and whose config now has one is updated and its migrations run | [PR #13423] | `ReloadHelperTest` |
 | The migration engine does not commit after DDL implicitly committed the transaction | [PR #14440] | new `Migration\Engine` functional test |
-| `mautic:plugins:reload` installs an entity plugin without "No active transaction" | [PR #13249] | `PluginControllerTest` or a reload command test |
+| `mautic:plugins:reload` installs an entity plugin without "No active transaction" | [PR #13249] | `ReloadCommandFunctionalTest` |
+| An unreadable directory under `plugins/` does not break kernel boot (7.2 branch; `AppKernelTest` there) | [PR #18025] | `AppKernelTest` once merged forward |
 | `makeRequest()` `curl_options` keep their `CURLOPT_*` keys and override defaults | [PR #5022] | `AbstractIntegration` unit test |
 | `INTEGRATION_CONFIG_BEFORE_SAVE` listeners see the submitted values | [PR #9886] | IntegrationsBundle config controller test |
 | `INTEGRATION_CONFIG_ON_GENERATE_AUTH_URL` can rewrite the OAuth2 authorisation URL | [PR #13434] | IntegrationsBundle auth unit test |
