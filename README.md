@@ -127,3 +127,5 @@ backward compatibility and deprecation, review and testing rules, and how those 
    them back to `@7.x` or `@8.x`, and updates `behaviour.md`, `pr-history.md` and `version-notes.md`.
 6. Diff the docs branches and the KB crawl and update each `docs-digest.md`.
 7. Run `scripts/check-citations.py` and `scripts/check-pr-tags.py` before committing.
+8. Tag the build `vYYYY.MM.DD` (annotated, naming the 7.x and 8.x commits) and create a GitHub release whose notes
+   list the snapshots from `SOURCES.md`, the main changes and anything found upstream.
