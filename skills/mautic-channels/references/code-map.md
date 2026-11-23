@@ -138,14 +138,14 @@ Menu gating: SMS needs Twilio [code: app/bundles/SmsBundle/Config/config.php:51-
 ## 6. Configuration parameters
 | Parameter | Default | Live? | Source |
 |---|---|---|---|
-| `sms_transport` | `mautic.sms.twilio.transport` | yes (Configuration → SMS Settings) | [code: app/bundles/SmsBundle/Config/config.php:70-79 @7.x] [code: app/bundles/SmsBundle/Form/Type/ConfigType.php:39-47 @419a08a9b35] |
+| `sms_transport` | `mautic.sms.twilio.transport` | yes (Configuration → SMS Settings) | [code: app/bundles/SmsBundle/Config/config.php:70-79 @7.x] [code: app/bundles/SmsBundle/Form/Type/ConfigType.php:39-47 @7.x] |
 | `sms_disable_trackable_urls` | false | yes | [code: app/bundles/SmsBundle/Helper/SmsHelper.php:66-69 @7.x] |
 | `sms_frequency_number` / `sms_frequency_time` | 0 / DAY | yes (not in UI) | [code: app/bundles/SmsBundle/Config/config.php:75-76 @7.x] |
 | `sms_enabled`, `sms_username`, `sms_password`, `sms_messaging_service_sid` | — | no | [code: app/bundles/SmsBundle/Config/config.php:70-79 @7.x] |
 | `shortener_sms_enable` (Core) | — | yes | [code: app/bundles/SmsBundle/EventListener/SmsSubscriber.php:95 @7.x] |
 | `notification_*`, `welcomenotification_enabled` | — | no | [code: app/bundles/NotificationBundle/Config/config.php:112-125 @7.x] |
 | `gcm_sender_id` | `482941778795` (inline fallback `446150739532`) | yes, `/manifest.json` | [code: app/bundles/NotificationBundle/Controller/JsController.php:16 @7.x] |
-| `campaign_send_notification_to_author`, `campaign_notification_email_addresses`, `webhook_send_notification_to_author`, `webhook_notification_email_addresses` | true/null | yes, but about emailing users, not push | [code: app/bundles/NotificationBundle/Form/Type/NotificationConfigType.php:23-83 @419a08a9b35] |
+| `campaign_send_notification_to_author`, `campaign_notification_email_addresses`, `webhook_send_notification_to_author`, `webhook_notification_email_addresses` | true/null | yes, but about emailing users, not push | [code: app/bundles/NotificationBundle/Form/Type/NotificationConfigType.php:23-83 @7.x] |
 | `website_snapshot_url`, `website_snapshot_key` | — | no | [code: plugins/MauticFocusBundle/Config/config.php:65-68 @7.x] |
 | `cached_data_timeout` (Core) | — | focus counters | [code: plugins/MauticFocusBundle/Controller/AjaxController.php:53,97 @7.x] |
 | `twitter_handle_field` | `twitter` | monitoring only | [code: plugins/MauticSocialBundle/Config/config.php:87-93 @7.x] |

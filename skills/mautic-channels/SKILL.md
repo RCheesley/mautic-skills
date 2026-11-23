@@ -11,7 +11,7 @@ This skill covers ChannelBundle, SmsBundle, NotificationBundle, MauticFocusBundl
 of scope (see mautic-emails); DNC records and frequency rules as Contact data are in mautic-contacts; campaign
 execution mechanics are in mautic-campaigns.
 
-Maintenance status (7.2.1). Maintained and tested: ChannelBundle, SmsBundle with Twilio, MauticFocusBundle
+Maintenance status (7.x: 7.2.2 and the 7.x branch). Maintained and tested: ChannelBundle, SmsBundle with Twilio, MauticFocusBundle
 [code: app/bundles/ChannelBundle/Tests/EventListener/CampaignSubscriberTest.php:157 @7.x]
 [code: app/bundles/SmsBundle/Tests/Functional/SmsModelFunctionalTest.php:75 @7.x]
 [code: plugins/MauticFocusBundle/Tests/Controller/FocusPublicControllerFunctionalTest.php:18-60 @7.x]. Working but
@@ -127,8 +127,9 @@ Full detail: references/version-notes.md.
 - Failed SMS leave no stat row, so the timeline shows no failure and a broadcast re-run retries them [code: app/bundles/SmsBundle/Model/SmsModel.php:350-353 @7.x].
 - Twilio region `US` default mis-parses national-format non-US numbers. Store numbers as `+E.164` [code: app/bundles/SmsBundle/Integration/Twilio/TwilioTransport.php:98 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/sms.html#important-notes].
 - `SmsBundle/Entity/StatRepository.php` queries the wrong table name `sms_messages_stats` in `getSentStats()`, and `updateLead()` updates `sms_id`, so Contact merges do not move SMS stats [code: app/bundles/SmsBundle/Entity/StatRepository.php:43,169-176 @7.x].
-- The Focus "Display a notice" type is stored as `notice`, but the stats code and JS compare with `notification`. Notice items therefore get a submissions dataset and stop-after-conversion logic [code: plugins/MauticFocusBundle/Resources/views/Focus/form.html.twig:153 @419a08a9b35] [code: plugins/MauticFocusBundle/Model/FocusModel.php:373 @7.x].
+- The Focus "Display a notice" type is stored as `notice`, but the stats code and JS compare with `notification`. Notice items therefore get a submissions dataset and stop-after-conversion logic [code: plugins/MauticFocusBundle/Resources/views/Focus/form.html.twig:153 @7.x] [code: plugins/MauticFocusBundle/Model/FocusModel.php:373 @7.x].
 - Focus frequency `once` is permanent (cookie expires in 9999), not "once per session" as the docs say [code: plugins/MauticFocusBundle/Resources/views/Builder/generate.js.twig:497,709 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#engagement-options].
+- On the 7.x snapshot a form inside a focus item shows no success message or validation error after submitting (empty box); the fix is on the 7.2 branch after 7.2.2, milestone 7.2.3 [PR #18115] [code: plugins/MauticFocusBundle/Resources/views/Builder/form.html.twig:106-117 @7.x].
 - The `sms_enabled`, `sms_username`, `sms_password` and all `notification_*` parameters are unused. Configure Twilio and OneSignal in their plugin integrations [code: app/bundles/SmsBundle/Config/config.php:70-79 @7.x].
 - `MessageModel::getChannels()` caches in a static property, so long-running workers miss integrations published later [code: app/bundles/ChannelBundle/Model/MessageModel.php:30,108 @7.x].
 - `/notification/appcallback` is unauthenticated and creates Contacts by email [code: app/bundles/NotificationBundle/Controller/AppCallbackController.php:33-55 @7.x].

@@ -11,8 +11,8 @@
 8. Coverage
 
 ## 1. How to read this file
-- Source: merged pull requests on mautic/mautic for Pages, Tracking, Redirects and DWC, harvested 2026-10-15. Versions come from the base branch, milestone, merge date and, where checked, the release tags in the 7.x tree; pre-3.0 versions are inferred from merge dates. [PR #1582] [PR #16660]
-- "Unreleased on 7.x (after 7.2.1)" means the merge is on the 7.x head but in no release tag; a PR on the 8.x base branch applies to 8.x only. [PR #17671]
+- Source: merged pull requests on mautic/mautic for Pages, Tracking, Redirects and DWC, harvested 2026-10-15, plus the delta merged 2026-10-15 to 2026-11-23. Versions come from the base branch, milestone, merge date and, where checked, the release tags in the 7.x tree; pre-3.0 versions are inferred from merge dates. [PR #1582] [PR #16660]
+- "Unreleased on 7.x (7.3.0-rc)" means the merge is on the 7.x head but in no release tag (the latest release is 7.2.2, 2026-10-26); a PR on the 8.x base branch applies to 8.x only. [PR #17671]
 - Current behaviour is in behaviour.md; this file explains why and when. Where the two disagree, behaviour.md (code-verified) wins and the conflict is listed in section 7. [PR #9265]
 
 ## 2. Decisions that shaped current behaviour
@@ -43,6 +43,8 @@
 - Preview: originally any published page or variant had a public, untracked preview URL [PR #391] (v1.1). The variations preview requires a logged-in user with view permission, to avoid leaking content and contact data [PR #11719] (v5.1.0). A per-page "public preview" toggle then reopened anonymous preview for reviewers without accounts [PR #14766] (v7.0.0); 7.x defaults `publicPreview` to true [code: app/bundles/PageBundle/Entity/Page.php:203 @7.x].
 - Landing page drafts sit behind `page_draft_enabled`, default false. One draft per page; the public URL serves the published content until "Apply draft". Ported from Acquia Campaign Studio and rebased to 7.x because 6.x no longer took features [PR #13937] (v7.0.0) [code: app/bundles/PageBundle/Helper/PageConfig.php:18 @7.x].
 
+- Any published variant can be made the A/B winner by hand once the test has started, not only the statistical leader; the filled trophy still marks the leader. The same PR fixed the email winner action returning to the landing-page route [PR #17303] (v7.2.2).
+
 ### Pages: preference centre, scripts, builder, UI
 - Any page can be a preference centre; an email chooses its preference page, else the default is used. A page without a "save preferences" button cannot save [PR #4779] (v2.11.0).
 - The preference form must wrap every preference field, or CSRF fails and DNC changes are lost. The form wraps only the preference slots so other forms can sit on the page [PR #6404] (v2.15.2); all fields moved inside the `<form>` to fix "CSRF token is invalid" [PR #11442] (v5.1.0); a `{channelfrequency}` slot placed first is marked `data-prefs-center-first="1"` [PR #15045] [PR #15518] (v7.2.0).
@@ -54,7 +56,7 @@
 - Landing page settings and tracking settings are separate config forms; when merged, tracking values overwrote page values [PR #5577] (v2.12.2).
 - The landing page list has created/modified columns sorted by modified date [PR #9691] (v4.2.0) and a "Results" column of form submissions per page [PR #9693] (v4.2.0). The results join is added only where needed, because adding it in `getEntities()` broke global search [PR #11842] (v5.0).
 - Tooltips never contain links: they cannot be clicked and docs URLs move [PR #14891] (v5.2.5).
-- Theme Twig templates may use `map`, `filter`, `reduce`, `sort` and `find`; Twig's sandbox, not a Mautic denylist, blocks callable-string callbacks [PR #17620] (7.2 patch branch, not in 7.2.1).
+- Theme Twig templates may use `map`, `filter`, `reduce`, `sort` and `find`; Twig's sandbox, not a Mautic denylist, blocks callable-string callbacks [PR #17620] (v7.2.2).
 
 ### Tracking script and transport
 - `mtc.js` is built server-side through `BUILD_MAUTIC_JS`, so plugins append JS by priority. It was the first step to JS-only tracking; the pixel was to be "removed in 2.0" [PR #1582] (v1.4.0). The pixel is still the fallback in 7.x [code: app/bundles/PageBundle/EventListener/BuildJsSubscriber.php:76-128 @7.x].
@@ -75,7 +77,7 @@
 - Page data uses `page_title` and `page_url`; `title` and `url` stay as fallbacks, but `title` is the contact field [PR #670] (v1.1.3).
 - Company fields can be sent in a pageview; a company is created only when a name can be found [PR #5611] (v2.13.0). Dropping the email-domain lookup was called "a business decision" and deferred.
 - Tracking by IP is opt-in (`track_contact_by_ip`, default false) because shared IPs merged different people [PR #3196] (v2.6.0) [code: app/bundles/PageBundle/Config/config.php:96 @7.x].
-- Fingerprint identification was opt-in from the start, "since tracking by fingerprint is illegal in some countries" [PR #3279] (v2.8.0). It was removed in 3.0 with fingerprintjs2 and adblock detection, because identical fingerprints (for example iPhones) merged strangers: "this feature is a trap" [PR #8428] (v3.0.0). The dead `track_by_fingerprint` key stayed until [PR #17671] (unreleased on 7.x, after 7.2.1).
+- Fingerprint identification was opt-in from the start, "since tracking by fingerprint is illegal in some countries" [PR #3279] (v2.8.0). It was removed in 3.0 with fingerprintjs2 and adblock detection, because identical fingerprints (for example iPhones) merged strangers: "this feature is a trap" [PR #8428] (v3.0.0). The dead `track_by_fingerprint` key stayed until [PR #17671] (unreleased on 7.x, 7.3.0-rc).
 - "Identify visitor by tracking URL" arrived on by default for cross-device identification [PR #3685] (v2.9.0). It was removed as a BC break in 7.0: the `ct` clickthrough now identifies through `LeadEvents::ON_CLICKTHROUGH_IDENTIFICATION`, which email and SMS implement. Why: legacy, manual setup, unused, and it put email in the query string [PR #14974] (v7.0.0). Confirmed: `track_by_tracking_url` is in 6.0.0 and gone from 7.0.0 [code: app/bundles/LeadBundle/LeadEvents.php:788 @7.x].
 - A logged-in Mautic user is never tracked as a contact [PR #4395] (v2.9.0).
 - Mautic-wide "Anonymize IP" first masked the last octet of new IPs only [PR #6121] (v2.15.0). Since [PR #10116] (v5.1.0) turning it on anonymises existing IP rows and audit-log IPs too, irreversibly, with a red warning. Not storing IP rows was rejected because changing foreign keys on huge tables locked them for hours. In 7.x the key is `anonymize_ip`, declared with default false in the tracking config form, not in a bundle `parameters` list, and every hit stores `*.*.*.*` [code: app/bundles/PageBundle/EventListener/ConfigSubscriber.php:51 @7.x] [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:111-125 @7.x]. Background anonymisation is controlled by `anonymize_ip_address_in_background` [code: app/bundles/CoreBundle/Config/config.php:711 @7.x].
@@ -83,6 +85,10 @@
 - Anonymous 404s can be excluded with `do_not_track_404_anonymous` (default false); known contacts' 404s are still tracked, at aspiers' insistence [PR #7614] (v4.1) [code: app/bundles/PageBundle/Config/config.php:104 @7.x].
 - Bot filtering for opens and email-click page hits uses `bot_helper_blocked_ip_addresses`, `bot_helper_blocked_user_agents`, `bot_helper_time_email_threshold` (2 s) and `bot_helper_bot_ratio_threshold` (0.6). These are cheap metrics with no DB queries, separate from the do-not-track lists [PR #14593] (v6.0.0) [code: app/bundles/EmailBundle/Config/config.php:214-221 @7.x]. In 7.x a page hit is checked only when `ct` carries an email stat [code: app/bundles/PageBundle/Model/PageModel.php:427-433 @7.x].
 - The `Blocked-Tracking` cookie must not cause a 500; tracking cookies are cleared [PR #15102] (v6.0.3).
+
+- A visitor who was tracked before and then turns on DNT or GPC is no longer recognised from the old cookie: `/mtc` and `/mtc/event` answer with null ids, set no cookie and store no IP, and bots and excluded IPs are treated the same. The check is the request itself, so it no longer depends on the `Blocked-Tracking` cookie being present [PR #18013] (unreleased on 7.x, 7.3.0-rc). Part of the Mautic Privacy Project (2c).
+- Form submitters whose request is not trackable are flagged on the request (`markVisitorAsUntracked()`), so the Contact lookup is skipped and the IP stays out of the contact, company, points and campaign logs; the trackability check itself stops saving new IP rows, so bots and do-not-track IPs do not reach the database [PR #17868] (unreleased on 7.x, 7.3.0-rc).
+- "Record aggregate analytics" (`aggregate_analytics`) is on by default "so nothing changes on existing installs"; features that record totals not linked to a Contact are to check `AggregateAnalyticsHelper::isEnabled()`, and the setting never touches Contact tracking. Nothing used it at merge; the form submission count was to be first [PR #17965] (unreleased on 7.x, 7.3.0-rc). Privacy Project 2a.
 
 ### Hit pipeline, UTM, points and campaign matching
 - Hit counters use atomic SQL increments because concurrent hits lost updates [PR #1036] (v1.2.1). Unique checks avoid COUNT on hot paths [PR #1244] (v1.2.3).
@@ -111,7 +117,8 @@
 - Whitespace around `href` and redirect URLs is tolerated [PR #14958] (v7.0.0) [PR #15698] (v7.0.1). Query strings keep RFC 3986 `%20` [PR #15336] (v7.0.0) and dots in parameter names [PR #15725] (v7.1.0) [PR #15869] (v7.0.1).
 - UTM parameters go before any `#fragment` [PR #8467] (v3.0.1). "Disable trackable URLs" still appends UTM tags: shortening, tagging and redirecting are independent [PR #15748] (v7.0.1).
 - A missing `ct` still redirects without notices [PR #10418] (v4.2.0). A corrupt `ct` is treated as a bot: served, not tracked, no exception; maintainers left issue mautic/mautic#9400 open because this only treats the symptom [PR #10444] (v4.0.2). A malformed `ct` is stripped instead of causing a TypeError [PR #15567] (v7.0.0), and is logged at WARNING [PR #16893] (v7.2.0).
-- Links opt out with `data-mautic-disable-tracking="true"`; `mautic:disable-tracking` is deprecated because it is not valid HTML and gets stripped [PR #15713] (v7.1.0). Confirmed: the new attribute is absent from 7.0.0 and present from 7.1.0 [code: app/bundles/PageBundle/Model/TrackableModel.php:740-747 @419a08a9b35].
+- Links opt out with `data-mautic-disable-tracking="true"`; `mautic:disable-tracking` is deprecated because it is not valid HTML and gets stripped [PR #15713] (v7.1.0). Confirmed: the new attribute is absent from 7.0.0 and present from 7.1.0 [code: app/bundles/PageBundle/Model/TrackableModel.php:763-770 @7.x].
+- The HTML replacement pass checks each full `href` against the do-not-track list before rewriting it. Before, the lazy suffix match let a tracked `https://example.com/` rewrite a disabled `https://example.com/contact/` into a broken redirect, because the longest-first sort only protects when both URLs are tracked. Review added trimming, case, entity and token-expansion handling while keeping event-supplied regex patterns working [PR #16354] (unreleased on 7.x, 7.3.0-rc).
 - A click is unique per contact first, then per tracking cookie [PR #4293] (v2.9.0).
 - Redirect SQL uses bound parameters [PR #15040] (v5.2.6) and single-quoted literals for `ANSI_QUOTES` [PR #15324] (v6.0.4) [PR #15325] (v7.0.0).
 
@@ -122,8 +129,8 @@
 - DWC is requested before the page hit, with the same identifying parameters, which took about 600 ms instead of 2500 ms; a non-matching slot logs no campaign decision [PR #5360] (v2.12.1).
 - Slot content is wrapped in CDATA before DOM insertion so entities and `&` do not break it [PR #6726] (v2.15.0). Untracked requests to `/dwc/{slot}` do not throw [PR #7197] (v2.15.2).
 - DWC content can hold `{form=ID}` and `{focus=ID}` [PR #3044] (v2.5) but not nested `{dwc=}` tokens [PR #14744] (v7.0.0). Items have a Text or HTML type, only Text DWC can go in an email subject, and all items in one slot share a type [PR #14759] [PR #14901] (v7.0.0).
-- Filter evaluation dispatches `ContactFiltersEvaluateEvent` for plugin filters [PR #10886] (v4.3), including for inline `{dwc=slot}` tokens [PR #14599] (v5.2.7). Filters added: segment membership [PR #13526] (v5.1.0), primary-company fields [PR #13393] (v5.1.0), tags again [PR #15988] (unreleased on 7.x, after 7.2.1). Filters that do not work for DWC are not re-introduced [PR #15988].
-- DWC links become trackables with the item's UTM tags [PR #6347] (v2.14.1). `{dwc=slot}` inside an `href` resolves with HTML stripped [PR #17495] (v7.2.1).
+- Filter evaluation dispatches `ContactFiltersEvaluateEvent` for plugin filters [PR #10886] (v4.3), including for inline `{dwc=slot}` tokens [PR #14599] (v5.2.7). Filters added: segment membership [PR #13526] (v5.1.0), primary-company fields [PR #13393] (v5.1.0), tags again [PR #15988] (unreleased on 7.x, 7.3.0-rc). Filters that do not work for DWC are not re-introduced [PR #15988].
+- DWC links become trackables with the item's UTM tags [PR #6347] (v2.14.1). `{dwc=slot}` inside an `href` resolves with HTML stripped [PR #17495] (v7.2.1). Newer libxml stopped URL-encoding `{`/`}` in attributes, so the `%7B…%7D` replacement missed the token and raw DWC HTML landed in the attribute; tokens in `href`, `src` and `action` are now replaced in both forms [PR #17913] (v7.2.2) [PR #17918] (7.x counterpart, so 7.x CI was not blocked on the merge-up).
 - Fallback content works with `mautic-essential.js` alone; personalised DWC needs `mautic-tracking.js` [PR #16660] (v7.2.0).
 - Deleting a DWC item cascades to `dynamic_content_lead_data`; `SET NULL` was rejected because stats mean nothing without the item [PR #3509] (v2.7.0). Create and delete need the matching permission [PR #11278] (v4.4.3) [PR #15458] (v7.0.0).
 
@@ -190,6 +197,9 @@
 | `<area>` and `mailto:` links untracked | Tracked | [PR #11391], [PR #11481] | 4.4.2 / 5.0 |
 | SMS click counts did not increase | Channel counts increase | [PR #6233] | 2.14.1 |
 | ANSI SQL mode broke redirect stats | Single-quoted literals | [PR #15324], [PR #15325] | 6.0.4 / 7.0.0 |
+| Disabled-tracking link rewritten when a tracked URL was its prefix | `href` kept as authored | [PR #16354] | unreleased on 7.x |
+| `/mtc/event` 500 `TypeError` when no Contact resolved (`Blocked-Tracking`) | `{"success":0}` | [PR #18028] | unreleased on 7.x |
+| DNT/GPC visitor still recognised by `/mtc` and `/mtc/event` from an old cookie | Null ids, no cookie, no IP | [PR #18013] | unreleased on 7.x |
 | **DWC** | | | |
 | Empty slot returned 404 | 204 | [PR #2161] | 2.1.0 |
 | Unpublished filter-based DWC served | Only published served | [PR #5338] | 2.12.1 |
@@ -205,6 +215,7 @@
 | Cloning DWC gave 500 | Clone works | [PR #12811], [PR #15562] | 5.0 / 7.1.0 |
 | DWC timeline entries broke the contact page | Shown as "triggered" | [PR #11726], [PR #12902] | 5.0 |
 | `{dwc=}` in `href` not replaced | Resolved, HTML stripped | [PR #17495] | 7.2.1 |
+| Raw DWC HTML in `href`/`src`/`action` on newer libxml | Stripped, escaped content | [PR #17913], [PR #17918] | 7.2.2 |
 
 ## 4. Feature timeline
 
@@ -225,7 +236,8 @@
 | 7.0 | Landing page drafts; public preview toggle; identify by tracking URL removed; DWC Text/HTML type and no nesting; Time Spent column | [PR #13937], [PR #14766], [PR #14974], [PR #14759], [PR #14744], [PR #15141] |
 | 7.1 | `data-mautic-disable-tracking`; segment IDs on tracking URLs; optimistic locking | [PR #15713], [PR #15746], [PR #15774] |
 | 7.2 | Split embed scripts; `UrlMatcher` everywhere; page-hit validation; `UrlTokenReplaceEvent`; preference-slot labels; toggle-publish events | [PR #16660], [PR #15979], [PR #16130], [PR #16199], [PR #16041], [PR #16244] |
-| Unreleased on 7.x (after 7.2.1) | DWC tags filter; dead `track_by_fingerprint` key removed | [PR #15988], [PR #17671] |
+| 7.2.2 | Manual A/B winner for any published variant; DWC tokens in attributes on newer libxml | [PR #17303], [PR #17913] |
+| Unreleased on 7.x (7.3.0-rc) | DWC tags filter; dead `track_by_fingerprint` key removed; untracked visitors not recognised by `/mtc` and `/mtc/event`; `aggregate_analytics` setting; disabled-tracking prefix fix | [PR #15988], [PR #17671], [PR #18013], [PR #17965], [PR #16354] |
 
 ## 5. Removed, deprecated, replaced
 
@@ -264,6 +276,8 @@
 - Test tracking in a private window on a publicly reachable page; 127.0.0.1 is on the do-not-track list [PR #4395] [PR #8205] [PR #15529].
 - Wording: marketer-friendly labels, active voice, no links in tooltips, and wide terminology changes only after community consultation [PR #611] [PR #13436] [PR #14891] [PR #13502].
 - Parsing logic (trackables, URLs) needs unit tests with every change [PR #4028] [PR #11644].
+- Privacy decisions are made on the request (DNT, GPC, bot and IP checks), not on a short-lived cookie, and an untracked visitor gets nothing back that would let the script recognise them again [PR #18013] [PR #17868].
+- A fix that unblocks CI goes to the lowest affected branch, with a separate PR for `7.x` so its CI does not wait for the merge-up [PR #17913] [PR #17918].
 
 ## 7. Open questions and conflicts
 - Conflict, UTM uniqueness: [PR #9265] (and [PR #2642] earlier) say UTM tags are recorded only on a contact's first visit to a URL. 7.x writes a `lead_utmtags` row on every recorded hit whose query has a `utm_` key; behaviour.md wins [code: app/bundles/PageBundle/Model/PageModel.php:680,1055-1097 @7.x].
@@ -278,6 +292,7 @@
 - Whether 6.x had partial IP masking or `*.*.*.*` was debated; 7.x stores `*.*.*.*` [PR #10116].
 - The null `page_hits` root cause is unknown, and validation is off in community installs [PR #16130].
 - `mtc.js` has no stated deprecation plan after the split [PR #16660].
+- The untrackable `/mtc/event` response has no `success` key; whether clients (the `mt()` `onload` callback, API library) rely on it is not stated [PR #18013].
 
 ## 8. Coverage
 - Area total: 338 PRs across 4 chunks (120, 79, 79, 60); 302 substantive (113, 75, 64, 50), the rest noise, refactor-only, test-only or unclear. 869 noise PRs were excluded upstream before chunking. [PR #1582] [PR #17671]

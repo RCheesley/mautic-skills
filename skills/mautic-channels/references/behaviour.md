@@ -10,7 +10,7 @@ current behaviour; doc discrepancies are flagged with **Docs differ**.
 4. Expected behaviour: broadcasts command (B1–B6)
 5. Expected behaviour: SMS / Text Messages (S1–S30)
 6. Expected behaviour: web and mobile push notifications (N1–N17)
-7. Expected behaviour: Focus Items (F1–F16)
+7. Expected behaviour: Focus Items (F1–F17)
 8. Expected behaviour: Social Monitoring and Tweets (T1–T10)
 9. Maintenance status: maintained vs legacy/dead
 10. Open questions
@@ -142,9 +142,9 @@ S14. The number is `mobile ?: phone`, parsed with region `US` and formatted E.16
 
 S15. Configuration needs the integration published, the `username` (Account SID) and `password` (Auth Token) keys, and the feature setting `messaging_service_sid`; otherwise `ConfigurationException` [code: app/bundles/SmsBundle/Integration/Twilio/Configuration.php:71-95 @7.x] [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#mautic-twilio-plugin].
 
-S16. The Twilio integration form shows `frequency_number`/`frequency_time` fields that no code reads. The docs tell users to "configure global frequency rules for the SMS channel" there [code: app/bundles/SmsBundle/Integration/TwilioIntegration.php:68-92 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#mautic-twilio-plugin].
+S16. The Twilio integration form shows `frequency_number`/`frequency_time` fields that no code reads. The docs tell users to "configure global frequency rules for the SMS channel" there [code: app/bundles/SmsBundle/Integration/TwilioIntegration.php:68-92 @7.x] [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#mautic-twilio-plugin].
 
-S17. MMS limits: media hosted on Mautic must total ≤ 5,000,000 bytes (external URLs are not counted), with at most 10 entries. Docs: `.gif/.png/.jpg/.jpeg`, MMS only to US/CA/AU numbers, elsewhere the image is sent as a link (Twilio behaviour) [code: app/bundles/SmsBundle/Form/Validator/Constraints/MediaMaxAllowedSizeValidator.php:16,38-66 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/sms.html#sending-multimedia-messages-mms] [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#enabling-multimedia-messaging-mms].
+S17. MMS limits: media hosted on Mautic must total ≤ 5,000,000 bytes (external URLs are not counted), with at most 10 entries. Docs: `.gif/.png/.jpg/.jpeg`, MMS only to US/CA/AU numbers. The SMS page still says the image goes as a link elsewhere, but the Twilio page (revised on the 7.2 docs branch after 2026-10-15) says Mautic sends the same message to everyone and Twilio either converts it to an SMS with a link (**MMS Converter** on) or does not deliver it; the code sends the same `mediaUrl` payload to every number, which matches the Twilio page (S14) [code: app/bundles/SmsBundle/Form/Validator/Constraints/MediaMaxAllowedSizeValidator.php:16,38-66 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/sms.html#sending-multimedia-messages-mms] [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#enabling-multimedia-messaging-mms].
 
 S18. Transports without `MMSTransportInterface` send plain SMS when media is present, without an error [code: app/bundles/SmsBundle/Sms/TransportChain.php:113-117 @7.x].
 
@@ -214,11 +214,11 @@ N17. The menu shows web notifications when OneSignal is enabled, and mobile noti
 
 F1. Types: `form` (Collect Data; conversion = submission), `notice` (Display a Notice; no conversion) and `link` (Emphasize a link; conversion = click). Styles: `bar`, `modal`, `notification`, `page`. Type and style are required [code: plugins/MauticFocusBundle/Entity/Focus.php:145-166 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#types-of-focus-item].
 
-F2. Bar options: `allow_hide`, `push_page`, `sticky`, placement, and size `large`/`regular` only. Modal, notification and page have placement options [code: plugins/MauticFocusBundle/Form/Type/FocusPropertiesType.php:25-120 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#styles].
+F2. Bar options: `allow_hide`, `push_page`, `sticky`, placement, and size `large`/`regular` only. Modal, notification and page have placement options [code: plugins/MauticFocusBundle/Form/Type/FocusPropertiesType.php:25-120 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#styles].
 
-F3. Engagement properties: `when` ∈ immediately, scroll_slight, scroll_middle, scroll_bottom, leave; `timeout` in seconds; `frequency` ∈ everypage, once, q2min, q15min, hourly, daily; `stop_after_conversion` (default on), `stop_after_close` (default off), `animate` (default on) [code: plugins/MauticFocusBundle/Form/Type/PropertiesType.php:57-175 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#engagement-options].
+F3. Engagement properties: `when` ∈ immediately, scroll_slight, scroll_middle, scroll_bottom, leave; `timeout` in seconds; `frequency` ∈ everypage, once, q2min, q15min, hourly, daily; `stop_after_conversion` (default on), `stop_after_close` (default off), `animate` (default on) [code: plugins/MauticFocusBundle/Form/Type/PropertiesType.php:57-175 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#engagement-options].
 
-F4. Content modes `basic`, `editor` and `html`. In basic mode a form renders only for type `form` [code: plugins/MauticFocusBundle/Form/Type/FocusType.php:76-124 @419a08a9b35] [code: plugins/MauticFocusBundle/Model/FocusModel.php:186 @7.x].
+F4. Content modes `basic`, `editor` and `html`. In basic mode a form renders only for type `form` [code: plugins/MauticFocusBundle/Form/Type/FocusType.php:76-124 @7.x] [code: plugins/MauticFocusBundle/Model/FocusModel.php:186 @7.x].
 
 F5. `GET /focus/{id}.js` returns minified `application/javascript` for a published item, generated per request for the tracked Contact. Unpublished or missing items get an empty 404. The request is not tracked [code: plugins/MauticFocusBundle/Controller/PublicController.php:27-44 @7.x] [code: plugins/MauticFocusBundle/Model/FocusModel.php:134-176 @7.x].
 
@@ -238,11 +238,13 @@ F12. Campaign action `focus.show` attaches only to the inaction branch of `page.
 
 F13. Stats chart: views always, clicks for `link`, submissions otherwise. Counts are cached (tag `focus.{id}`) for `cached_data_timeout` minutes [code: plugins/MauticFocusBundle/Model/FocusModel.php:361-417 @7.x] [code: plugins/MauticFocusBundle/Controller/AjaxController.php:42-121 @7.x].
 
-F14. Known defect: the notice type is stored as `notice`, but the stats and JS compare against `notification`, so notice items get a submissions series and conversion logic [code: plugins/MauticFocusBundle/Resources/views/Focus/form.html.twig:153 @419a08a9b35] [code: plugins/MauticFocusBundle/Model/FocusModel.php:373 @7.x].
+F14. Known defect: the notice type is stored as `notice`, but the stats and JS compare against `notification`, so notice items get a submissions series and conversion logic [code: plugins/MauticFocusBundle/Resources/views/Focus/form.html.twig:153 @7.x] [code: plugins/MauticFocusBundle/Model/FocusModel.php:373 @7.x].
 
 F15. Deleting a form nulls `form_id` on the items that use it (`form_id` is not a foreign key). Form fields are pre-filled from the tracked Contact. UTM tags are appended to links and submissions [code: plugins/MauticFocusBundle/EventListener/FormSubscriber.php:29-46 @7.x] [code: plugins/MauticFocusBundle/Tests/Functional/Model/FocusFormAutoFillTest.php:28 @7.x] [docs: https://docs.mautic.org/en/7.2/channels/focus_items.html#measuring-success].
 
-F16. `website_snapshot_url`/`_key` are unused; the builder loads the site in an iframe [code: plugins/MauticFocusBundle/Assets/js/focus.js:238-245 @419a08a9b35].
+F16. `website_snapshot_url`/`_key` are unused; the builder loads the site in an iframe [code: plugins/MauticFocusBundle/Assets/js/focus.js:238-245 @7.x].
+
+F17. Known defect on the 7.x snapshot: the focus form template does not pass `successfulSubmitAction` to `@MauticForm/Builder/form.html.twig`, which renders the `mauticform_<name>_message` and `_error` elements only for `top` or `bottom`. After a successful submission `MauticFocusHandler` hides the form, headline and tagline and has nowhere to put the message, so the item stays open as an empty box; validation errors have no element either. Fixed on the 7.2 branch after 7.2.2 (milestone 7.2.3) by passing the global `successful_submit_action` (default `top`); not yet merged into 7.x [PR #18115] [code: plugins/MauticFocusBundle/Resources/views/Builder/form.html.twig:22-30,106-117 @7.x] [code: app/bundles/FormBundle/Resources/views/Builder/form.html.twig:28,38,130 @7.x].
 
 ## 8. Expected behaviour: Social Monitoring and Tweets
 

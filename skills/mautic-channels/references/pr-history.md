@@ -11,8 +11,8 @@
 8. [Coverage](#8-coverage)
 
 ## 1. How to read this file
-Source: merged pull requests on github.com/mautic/mautic, harvested 2026-10-15. The version is inferred from the base
-branch, milestone and merge date; "unreleased 7.x" means merged to `7.x` after 7.2.1 (milestone 7.3.0-rc), and "8.0 only"
+Source: merged pull requests on github.com/mautic/mautic, harvested 2026-10-15, plus the delta merged 2026-10-15 to 2026-11-23. The version is inferred from the base
+branch, milestone and merge date; "unreleased 7.x" means merged to `7.x` and in no release (the latest is 7.2.2, 2026-10-26; milestone 7.3.0-rc), and "8.0 only"
 means merged to `8.x`. Current behaviour is in references/behaviour.md; this file explains why and when it came about.
 
 ## 2. Decisions that shaped current behaviour
@@ -61,7 +61,7 @@ means merged to `8.x`. Current behaviour is in references/behaviour.md; this fil
 - A transport's `sendSms()` receives the Lead, not just a number, as a declared BC break [PR #6295] (v2.14.0). 2.14.0 shipped it incomplete and every Twilio send failed with a TypeError until [PR #6366] (v2.14.1).
 - The chosen default transport is saved; with no SMS plugin enabled the config shows a notice instead of an empty dropdown [PR #6544] (v2.15.1).
 - Transports implement `TransportInterface` (`Integration\Twilio\TwilioTransport`); `AbstractSmsApi` and `Api\TwilioApi` were deprecated so callbacks work with pluggable transports [PR #7449] (v2.16.0).
-- Twilio sends through a Messaging Service SID instead of a "From" number [PR #12539] (v5.0.0). Why: Twilio stopped supporting sending from a number for this use (issue mautic/mautic#12479). It was flagged as a possible BC break for number-configured installs. At tag 4.4.0 the feature setting is `sending_phone_number`; at 5.0.0 it is `messaging_service_sid`. In 7.x the live value is the integration feature setting `messaging_service_sid`; the `sms_messaging_service_sid` parameter is declared but not read [code: app/bundles/SmsBundle/Integration/Twilio/Configuration.php:83 @7.x] [code: app/bundles/SmsBundle/Integration/TwilioIntegration.php:56-64 @419a08a9b35] [code: app/bundles/SmsBundle/Config/config.php:74 @7.x].
+- Twilio sends through a Messaging Service SID instead of a "From" number [PR #12539] (v5.0.0). Why: Twilio stopped supporting sending from a number for this use (issue mautic/mautic#12479). It was flagged as a possible BC break for number-configured installs. At tag 4.4.0 the feature setting is `sending_phone_number`; at 5.0.0 it is `messaging_service_sid`. In 7.x the live value is the integration feature setting `messaging_service_sid`; the `sms_messaging_service_sid` parameter is declared but not read [code: app/bundles/SmsBundle/Integration/Twilio/Configuration.php:83 @7.x] [code: app/bundles/SmsBundle/Integration/TwilioIntegration.php:56-64 @7.x] [code: app/bundles/SmsBundle/Config/config.php:74 @7.x].
 - Channels → Text Messages appears only when an SMS transport plugin is enabled; bogus credentials are enough to show it [PR #11866] (v5.0) [PR #8542] (v3.0.0).
 - SMS transports may implement `BulkTransportInterface::sendBatchSms()` and `MMSTransportInterface::sendMms()` [PR #15999] (v7.2.0). The interfaces are absent at tag 7.1.0 and present at 7.2.0.
 - A test-only SMS transport lets functional tests exercise real sending [PR #13743] (v5.1).
@@ -117,7 +117,7 @@ means merged to `8.x`. Current behaviour is in references/behaviour.md; this fil
 - "Stop engaging after conversion" works for "Emphasize a link" only with the Basic-mode link [PR #6049] (v2.14.1).
 - A modal or notification closes only with its × button; a click elsewhere, such as on a cookie banner, no longer closes it [PR #12705] (v5.1). Reviewers called the click-anywhere handler "far too broad a solution". In 7.x clicks inside the item stop propagation and the close link dispatches `focus_{id}_close` [code: plugins/MauticFocusBundle/Resources/views/Builder/generate.js.twig:83-96 @7.x].
 - "Stop engaging after closing the focus?" suppresses an item after the visitor closes it with ×, using a separate cookie `mautic_focus_{id}_closed` that counts closes [PR #12742] (v5.1). Rejected: reusing `mautic_focus_{id} = -1`, because a dedicated cookie records why the item stopped. The cookie is absent at tag 5.0.0 and present at 5.1.0 [code: plugins/MauticFocusBundle/Resources/views/Builder/generate.js.twig:55,673-682 @7.x] [code: plugins/MauticFocusBundle/Form/Type/PropertiesType.php:167-173 @7.x].
-- After a form submission inside a focus item, the success message stays until the visitor closes it [PR #12706] (v5.1).
+- After a form submission inside a focus item, the success message stays until the visitor closes it [PR #12706] (v5.1). Since the "location of the successful submit action" setting (5.x), the shared form template renders the message and error elements only when it gets `successfulSubmitAction`, and the focus form template never passed it, so a submitted focus form left an empty box. [PR #18115] passes the global `successful_submit_action` as `FormModel::generateHtml()` does (fixed on the 7.2 branch after 7.2.2, milestone 7.2.3; not in the 7.x snapshot). Reviewer's optional follow-up: also test the `bottom` position.
 - Modals and notifications resize with the window and scroll vertically [PR #13132] (v5.1).
 - A focus link containing contact tokens resolves to the Contact's value, and each link produces exactly one tracked redirect [PR #15502] (v7.0.0). The same PR removed the focus rendering cache because it "was always missed" and only added DB load.
 - Form auto-fill works in focus items [PR #15860] (v7.0.1). Rejected: unifying form names everywhere, because that is a BC break.
@@ -222,6 +222,7 @@ Rows describe contracts still true in 7.x unless marked historical.
 | [Focus] Token link redirected to a broken URL; double redirect | Token resolved; one redirect | [PR #15502] | 7.0.0 |
 | [Focus] CSP `frame-ancestors` not detected | Framing blocked is reported | [PR #15837] | 7.0.1 |
 | [Focus] Auto-fill missing in focus forms | Known values pre-filled | [PR #15860] | 7.0.1 |
+| [Focus] Empty box after submitting a form in a focus item; no validation errors shown | Success and error elements rendered | [PR #18115] | 7.2 branch after 7.2.2 (7.2.3) |
 | [Social] Duplicate Contacts from handle case | Case-insensitive match | [PR #4035] | 2.8.2 |
 | [Social] Tweet over 255 characters gave SQL error | 280 characters with validation | [PR #5594] | 2.12.2 |
 | [Social] Monitoring command missing in 5.x | Command registered | [PR #11981] | 5.0.0 |
@@ -252,6 +253,7 @@ Rows describe contracts still true in 7.x unless marked historical.
 | 7.0 | SMS and mobile notification translations; `mautic:messages:send --limit/--batch`; focus cache removed; Focus Leads report; SMS phone preview | [PR #15481] [PR #15520] [PR #15333] [PR #15502] [PR #14923] [PR #15410] |
 | 7.1 | Social Monitoring in API v2; web notification preview; "Text Message Sent/Failed" labels | [PR #15696] [PR #15428] [PR #15763] |
 | 7.2 | MMS and bulk SMS transports; translation-aware SMS stats; live web push preview; typed model injection in controllers | [PR #15999] [PR #15545] [PR #16928] [PR #16582] |
+| 7.2 branch after 7.2.2 | Success message for forms in focus items | [PR #18115] |
 | unreleased 7.x | Send-to-unsubscribed indicator; "text message" delete wording; `notification_tracking_page_enabled` removed | [PR #17388] [PR #17443] [PR #17671] |
 | 8.0 only | `getLookupResults(): array` on lookup models; URL fields default to `http://` | [PR #15655] [PR #17349] |
 
@@ -312,6 +314,7 @@ Rows describe contracts still true in 7.x unless marked historical.
 - [PR #14583]: no description; the Marketing Message log fix is inferred.
 - [PR #14480]: merged without a test; empty `push_id` handling in 7.x is untested (see test-patterns.md).
 - [PR #16481]: the added BroadcastQuery/BroadcastResult methods are not listed.
+- Conflict: [PR #12706] (v5.1) describes the focus form success message staying until closed, but [PR #18115] reports that since 5.x focus forms had no message element at all, and the 7.x snapshot still lacks it (behaviour.md F17). Which 5.x release introduced the gap is not stated.
 
 ## 8. Coverage
 The channels area had 320 merged PRs in 4 chunks (111, 69, 90 and 50). About 260 were substantive, 19 were

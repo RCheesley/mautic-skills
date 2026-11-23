@@ -13,14 +13,14 @@ where the docs differ; each difference is marked **Code differs** with the behav
 - Template messages can't be sent manually to a list. Segment messages can't be edited once sent, keep going to new Segment members, reach each Contact once, and need the "Send Scheduled Broadcasts" cron job [docs: https://docs.mautic.org/en/7.2/channels/sms.html#segment-text-messages].
 - Fields: Internal name, Text Message (character counter, `{contactfield=alias}`), Category, Language, Published. Segment type adds Contact Segment, Publish at and Unpublish at [docs: https://docs.mautic.org/en/7.2/channels/sms.html#template-text-message-fields].
 - Messages created from the Campaign Builder are Template type [docs: https://docs.mautic.org/en/7.2/channels/sms.html#creating-text-messages-from-campaign-builder].
-- MMS: the **Is MMS** toggle, media from Assets or a URL, `.gif/.png/.jpg/.jpeg`, max 10 images, 5 MB total, external URLs not validated, US/CA/AU only (link elsewhere), `[MMS]` prefix in the builder [docs: https://docs.mautic.org/en/7.2/channels/sms.html#sending-multimedia-messages-mms].
+- MMS: the **Is MMS** toggle, media from Assets or a URL, `.gif/.png/.jpg/.jpeg`, max 10 images, 5 MB total, external URLs not validated, US/CA/AU only (link elsewhere, which the revised Twilio page contradicts; see below), `[MMS]` prefix in the builder [docs: https://docs.mautic.org/en/7.2/channels/sms.html#sending-multimedia-messages-mms].
 - Unsubscribe: STOP, STOPALL, UNSUBSCRIBE, CANCEL, END and QUIT set DNC until manual resubscribe [docs: https://docs.mautic.org/en/7.2/channels/sms.html#managing-unsubscribes]. **Code differs:** only `stop` (behaviour.md S29).
 - The reply decision matches against "Pattern the reply should match" and does not require a prior send [docs: https://docs.mautic.org/en/7.2/channels/sms.html#working-with-replies-to-text-messages].
 - Numbers must be `+XXXXXXX` in the Mobile field [docs: https://docs.mautic.org/en/7.2/channels/sms.html#important-notes]. Code also falls back to `phone` (behaviour.md S14).
 
 ## Twilio plugin
 - Account SID and Auth Token go on the Enabled/Auth tab, the Messaging Service SID on the Features tab. Set Request URL, Fallback URL and Delivery Status Callback to `https://<host>/sms/twilio/callback`. Configure SMS frequency rules and publish [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#mautic-twilio-plugin]. **Code differs:** the frequency fields on the Twilio form are not read (behaviour.md S16).
-- MMS must be on in the Twilio Messaging Service. Alphanumeric Sender ID needs a paid account, and recipients can't reply [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#enabling-multimedia-messaging-mms] [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#alphanumeric-sender-id].
+- MMS (revised on the 7.2 docs branch after 2026-10-15): there is no MMS toggle in the Messaging Service; it needs an MMS-capable Twilio number in its **Sender Pool** (a US or Canadian number for US/CA Contacts, an Australian number for AU Contacts). Twilio delivers MMS only to US, CA and AU numbers; Mautic sends the same message to every Contact, and elsewhere (or on carriers without MMS) Twilio sends an SMS with a link only if **MMS Converter** is on under Content Settings, otherwise it does not deliver. Earlier text said to turn MMS on in the Messaging Service and that Mautic sends a link outside those regions [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#enabling-multimedia-messaging-mms]. Alphanumeric Sender ID needs a paid account, and recipients can't reply [docs: https://docs.mautic.org/en/7.2/plugins/twilio.html#alphanumeric-sender-id].
 
 ## Marketing Messages
 - One message across Email, SMS, Browser Notification, Mobile Notification, Tweets and custom channels, sent through the "Send Marketing Message" campaign action [docs: https://docs.mautic.org/en/7.2/channels/marketing_messages.html#what-are-marketing-messages].
@@ -29,6 +29,7 @@ where the docs differ; each difference is marked **Code differs** with the behav
 
 ## Web and mobile notifications
 - Enable the OneSignal plugin. Create a OneSignal app (Website Push, Typical Site), upload the SDK files to the Mautic root, enter the keys from Settings > Keys & IDs, and choose features (mobile, Landing Pages, tracked pages, welcome notification, subdomain) [docs: https://docs.mautic.org/en/7.2/channels/web_notifications.html#configuration].
+- Editing (added to the 7.2 docs after 2026-10-15): the editor shows a live preview beside **Heading**, **Message** and **Action Button Text**; an empty Heading shows 'Notification', an empty Message 'You have a new message', and an empty button text hides the button [docs: https://docs.mautic.org/en/7.2/channels/web_notifications.html#editing-a-notification].
 - Sent by a Campaign action or a Marketing Message [docs: https://docs.mautic.org/en/7.2/channels/web_notifications.html#sending-notifications].
 - Mobile apps POST `{"email","push_id","enabled"}` to `/notification/appcallback`, optionally with `stat` [docs: https://docs.mautic.org/en/7.2/channels/push_notifications.html#notification-statistics]. The iOS sample is old (Swift 3.1) [docs: https://docs.mautic.org/en/7.2/channels/push_notifications.html#ios-code-for-onesignal-integration].
 
@@ -56,6 +57,9 @@ where the docs differ; each difference is marked **Code differs** with the behav
 - `/api/smses`: CRUD, plus `GET /smses/ID/contact/CID/send` returning `{"success":1,"status":"Delivered"}`. The page is flagged outdated [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/text_messages.html#send-sms-to-contact]. The code accepts any method (behaviour.md S20).
 - `/api/tweets`: CRUD; `name` and `text` (≤280) are required; needs Twitter active [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/tweets.html].
 - `/api/focus` and `/api/messages` pages are stubs with no endpoints, so rely on code [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/focus.html] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/messages.html].
+
+## Upcoming in 7.3 (docs branch, unreleased)
+- Marketing Messages: when an Email channel's Email is selected, a **Yes**/**No** indicator shows whether that Email sends to unsubscribed Contacts (its **Send to unsubscribed contacts** setting) [docs: github.com/mautic/user-documentation/blob/7.3/docs/channels/marketing_messages.rst] [PR #17388].
 
 ## 8.0 devdocs changes
 - SMS: filter events are keyed by class (`DncEvent`, `QueueEvent`, `FilterEvent`); new `SmsPreSaveEvent`, `SmsPostSaveEvent`, `SmsPreDeleteEvent`, `SmsPostDeleteEvent` and `ReplyEvent`. The remaining constants are `TOKEN_REPLACEMENT`, `SMS_ON_SEND`, `ON_CAMPAIGN_TRIGGER_BATCH_ACTION` and `ON_CAMPAIGN_REPLY` [devdocs: https://devdocs.mautic.org/en/8.0/plugin_extensions/sms.html#sms-event-constants].

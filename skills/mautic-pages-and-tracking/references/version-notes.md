@@ -6,7 +6,7 @@
 - Third-party `mtc_id` was deprecated in 2.13 in favour of `mautic_device_id`; `mautic_session_id` was deprecated in 2 and removed in 3; 7.2.1 only reads the legacy scheme for migration. [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#cookies-used-by-mautic] [code: app/bundles/LeadBundle/Tracker/Service/ContactTrackingService/ContactTrackingService.php:29-75 @7.x]
 - The GrapesJS builder arrived in Mautic 3 and became default in Mautic 4. [docs: https://docs.mautic.org/en/7.2/builders/email_landing_page.html#email-landing-page-builder]
 - The v1 theme path (`content` array + theme `page.html.twig`) was marked "BC support to be removed in 3.0" but is still present in 7.2.1. [code: app/bundles/PageBundle/Controller/PublicController.php:250-274 @7.x]
-- Fingerprint-based tracking (`track_by_fingerprint`) no longer exists (7.2.1 still declares the unused key; the 7.x branch removes it after 7.2.1, unreleased [PR #17671]); only `timezone_offset`/`timezone` remain from that data. [code: app/bundles/PageBundle/Config/config.php:93-107 @419a08a9b35]
+- Fingerprint-based tracking (`track_by_fingerprint`) no longer exists (7.2.2 still declares the unused key; the 7.x branch removes it, unreleased on 7.x (7.3.0-rc) [PR #17671]); only `timezone_offset`/`timezone` remain from that data. [code: app/bundles/PageBundle/Config/config.php:93-108 @7.x]
 - Earlier majors: 3.0 removed fingerprint identification and fingerprintjs2 [PR #8428]; 3.2 stopped transliterating page titles by default (`transliterate_page_title`) [PR #9026]; 4.0 added the custom 404 page and UTM capture from every page hit [PR #9813] [PR #9265]; 4.1 added `do_not_track_404_anonymous` [PR #7614]. Full history: pr-history.md.
 
 ## 5.x
@@ -44,6 +44,15 @@
 - 7.2: split scripts `/mautic-essential.js` + `/mautic-tracking.js`, `BuildJsScope`, `appendJsForScope`, `acceptsScope`, consent snippet; `/mtc.js` unchanged. [devdocs: https://devdocs.mautic.org/en/7.2/mauticjs_api/tracking_script.html#generated-scripts-and-endpoints] Which 7.x minor first shipped the split is not stated beyond the 7.2 docs branch. [devdocs: https://devdocs.mautic.org/en/7.2/mauticjs_api/tracking_script.html#script-scopes-and-split-scripts]
 - 7.2: preference-centre slot labels customisable via `PAGE_ON_DISPLAY` params. [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/landing_pages.html#customizing-preference-center]
 - 7.2: service alias `mautic.form.type.dwc_entry_filters` deprecated. [code: app/bundles/DynamicContentBundle/Config/services.php:29-30 @7.x]
+- 7.2.2 (2026-10-26): any published variant of a started landing-page (or email) A/B test can be made the winner by hand; before, the "Make winner" action appeared only on the statistical leader [PR #17303] [code: app/bundles/CoreBundle/Resources/views/Variant/row.html.twig:31-34,53-61 @7.x].
+- 7.2.2: `{dwc=slot}` tokens in `href`/`src`/`action` attributes are replaced with stripped, escaped content whether or not libxml URL-encodes the braces; newer libxml had let raw DWC HTML into the attribute [PR #17913] (7.x counterpart [PR #17918]) [code: app/bundles/DynamicContentBundle/EventListener/DynamicContentSubscriber.php:195-212 @7.x].
+
+## 7.3 (unreleased on 7.x, 7.3.0-rc)
+- `/mtc` and `/mtc/event` no longer recognise an untrackable visitor (DNT, GPC, bot, excluded IP) from an old cookie: they return null `id`/`sid`/`device_id`, set no cookie and store no IP [PR #18013] [code: app/bundles/PageBundle/Controller/PublicController.php:424-433,586-592 @7.x].
+- `/mtc/event` returns `{"success":0}` instead of a 500 when no Contact resolves, for example while `Blocked-Tracking` is set [PR #18028] [code: app/bundles/PageBundle/Controller/PublicController.php:435-438 @7.x].
+- Visitors that a form submission does not track (`markVisitorAsUntracked()`) are not looked up by `ContactTracker`, and `isRequestTrackable()` no longer saves `ip_addresses` rows for bots and excluded IPs [PR #17868] [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:272-275 @7.x] [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:301-313 @7.x].
+- A link with `data-mautic-disable-tracking="true"` keeps its `href` even when a tracked URL in the same content is a prefix of it (issue mautic/mautic#16050) [PR #16354] [code: app/bundles/PageBundle/Model/TrackableModel.php:330-342 @7.x].
+- New Tracking setting `aggregate_analytics` ("Record aggregate analytics", default true); nothing reads it yet [PR #17965] [code: app/bundles/PageBundle/Config/config.php:106 @7.x].
 
 ## 8.x delta (8.x @ 11599729491; 7.2.1 work not yet merged forward)
 - Event dispatch by class. Re-key subscribers:

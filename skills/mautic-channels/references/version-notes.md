@@ -12,12 +12,13 @@
 - 6.0: the "Focus Stats" report source was added [PR #14340]. 6.0.1 stopped SMS campaign sends detaching the Lead, which had caused duplicate SMS [PR #14874]. No other channel-specific 6.0 differences were found in 90 PRs of chunk 3.
 - Historical leftovers that explain the current code: SMS parameters `sms_username`/`sms_password`/`sms_messaging_service_sid`/`sms_enabled` and the `notification_*` parameters predate the move of credentials into the Twilio and OneSignal integrations, and nothing reads them now [code: app/bundles/SmsBundle/Config/config.php:70-79 @7.x] [code: app/bundles/NotificationBundle/Config/config.php:112-125 @7.x]. `/sms/receive` is the Twilio-specific path kept as an alias of `/sms/{transport}/callback` [code: app/bundles/SmsBundle/Config/config.php:26-33 @7.x]. The `tweet` channel still registers the legacy `MauticSocialBundle:Tweet` repository alias [code: plugins/MauticSocialBundle/EventListener/ChannelSubscriber.php:43 @7.x].
 
-## 7.x (7.0–7.2.1)
+## 7.x (7.0–7.2.2)
 - 7.0: SMS and mobile notification translations (`translation_parent_id`) [PR #15481] [PR #15520]; `mautic:messages:send` drains the whole queue with `--limit`/`--batch` (default 50) instead of 50 per run [PR #15333]; the focus rendering cache was removed and focus links redirect once [PR #15502]; "Focus Leads" report source [PR #14923]; `iterator_mode` removed [PR #14896].
 - 7.0.1: focus builder parses CSP `frame-ancestors` [PR #15837]; form auto-fill works inside focus items [PR #15860].
 - 7.1: Social Monitoring in API v2 [PR #15696]; timeline labels "Text Message Sent/Failed" [PR #15763].
 - 7.2: MMS with `BulkTransportInterface` and `MMSTransportInterface` [PR #15999]; SMS stats recorded against the sent translation [PR #15545]; controllers get models by typed injection [PR #16582]; SMS, Social and Notification services autowired [PR #16785] [PR #16790] [PR #16800].
-- Unreleased 7.x (after 7.2.1): send-to-unsubscribed indicator on Marketing Message email selection [PR #17388]; `notification_tracking_page_enabled` removed [PR #17671].
+- Fixed on the 7.2 branch after 7.2.2 (milestone 7.2.3, not yet in the 7.x snapshot): forms in focus items show the success message and validation errors again [PR #18115].
+- Unreleased on 7.x (7.3.0-rc): send-to-unsubscribed indicator on Marketing Message email selection [PR #17388]; `notification_tracking_page_enabled` removed [PR #17671]. Social Monitoring, Tweets and the social integrations are still shipped in 7.2.2 and on the 7.x branch [code: plugins/MauticSocialBundle/Integration/TwitterIntegration.php:83-86 @7.x].
 - 7.2 deprecates the service alias `mautic.channel.helper.channel_list`; inject `Mautic\ChannelBundle\Helper\ChannelListHelper` [code: app/bundles/ChannelBundle/Config/services.php:33-34 @7.x].
 - `NotificationHelper::unsubscribe()` is `@deprecated` with removal planned for 8.0 [code: app/bundles/NotificationBundle/Helper/NotificationHelper.php:33-44 @7.x].
 - `SmsEvents::ON_CAMPAIGN_TRIGGER_ACTION` is marked deprecated and is never dispatched [code: app/bundles/SmsBundle/SmsEvents.php:78-82 @7.x].

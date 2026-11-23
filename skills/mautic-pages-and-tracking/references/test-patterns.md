@@ -34,7 +34,8 @@
 - The default `hit` transport is `sync://`, so `processPageHit` runs inside the request; a test that configures an async transport must consume the message before asserting enrichment. [code: app/bundles/MessengerBundle/Config/config.php:8 @7.x]
 - Requests from a logged-in admin client are not tracked; use an anonymous client (or log out) for hit tests. [code: app/bundles/PageBundle/Model/PageModel.php:410-412 @7.x]
 - Loopback/private IPs are untrackable unless `track_private_ip_ranges` is true or a public `REMOTE_ADDR`/`HTTP_X_FORWARDED_FOR` is supplied in server params [unverified how the test env sets this]. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:58,67-100 @7.x]
-- `DNT: 1` or `Sec-GPC: 1` server headers make the request untrackable, which is the cheapest negative test. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:276-309 @419a08a9b35]
+- `DNT: 1` or `Sec-GPC: 1` server headers make the request untrackable, which is the cheapest negative test. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:257-290 @7.x]
+- For `/mtc` and `/mtc/event` with a privacy signal, copy `PageBundle/Tests/Controller/UntrackedVisitorPixelFunctionalTest.php`: a previously tracked visitor (cookie kept) sending DNT/GPC, or on an excluded IP, must get null `id`/`sid`/`device_id`, no tracking cookie and no new hit, and a tracked visitor must still be recognised (unreleased on 7.x (7.3.0-rc) [PR #18013]). [code: app/bundles/PageBundle/Tests/Controller/UntrackedVisitorPixelFunctionalTest.php:59-155 @7.x]
 
 ## Skeleton: functional hit test
 
