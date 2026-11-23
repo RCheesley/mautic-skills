@@ -1,7 +1,7 @@
 # Mautic Emails - docs digest
 
 What docs.mautic.org (7.2 and 8.0), devdocs.mautic.org and kb.mautic.org say about Emails. Statements are the docs'
-claims; where the 7.2.1 code differs, see "Discrepancies" at the end and references/behaviour.md section 16.
+claims; where the 7.x code differs, see "Discrepancies" at the end and references/behaviour.md section 16.
 
 Main pages:
 - User docs, Emails: https://docs.mautic.org/en/7.2/channels/emails.html (8.0: https://docs.mautic.org/en/8.0/channels/emails.html)
@@ -29,6 +29,7 @@ Main pages:
 13. Procedures
 14. 8.0 docs changes
 15. Discrepancies with code
+16. Upcoming in 7.3 (docs branch, unreleased)
 
 ## 1. Terminology
 - Use "Email", "Contact", "Segment", "Campaign", "Do Not Contact (DNC)", "Preference Center"; "Segment Email" = broadcast; "template Email" = triggered/transactional by default. UI status labels are Active/Unavailable. [docs: https://docs.mautic.org/en/7.2/channels/emails.html#email-types]
@@ -120,6 +121,9 @@ Version status of KB articles: k-10things and k-sesrate describe the pre-5 spool
 - Amazon SES: Sandbox causes webhook payload errors; region must match. [kb: https://kb.mautic.org/article/mautic-and-amazon-ses-troubleshooting.html]
 - A/B (4.x-era): variants created unpublished; trophy ends the test early. [kb: https://kb.mautic.org/article/how-to-create-an-a-b-test-for-emails-in-mautic.html]
 - An API "success" means queued, not delivered. [kb: https://kb.mautic.org/article/how-to-migrate-from-hubspot-to-mautic.html]
+- Bounces (crawl 2026-11-23): 4.x.x soft, 5.x.x hard; a 5.7.1 policy block points at the sender, so investigate rather than drop the Contacts; get bounces into Mautic by provider webhook (recommended, because Gmail and SES rewrite Return-Path) or a monitored inbox with `mautic:email:fetch` and the `+bounce_` Return-Path; test by mailing a non-existent address and checking for a bounced DNC. [kb: https://kb.mautic.org/article/how-to-handle-email-bounces-in-mautic.html]
+- One-click unsubscribe: Gmail/Yahoo show the button only when DKIM covers `List-Unsubscribe` and `List-Unsubscribe-Post` and the URL is HTTPS; the click sets DNC for the whole email channel, not one newsletter; Gmail exempts transactional mail; a custom endpoint must accept POST `List-Unsubscribe=One-Click` without redirect or login. The article says every marketing email carries the headers; in code they need an unsubscribe token in the body (see section 15). [kb: https://kb.mautic.org/article/how-to-set-up-one-click-unsubscribe-in-mautic.html]
+- Sender requirements (Gmail, Yahoo, Microsoft): SPF, DKIM and DMARC pass with DKIM aligned to your own domain, one-click unsubscribe, a visible unsubscribe link and postal address, and sunsetting inactive Contacts; related articles cover SPF, DKIM, DMARC, reading `Authentication-Results`, and a re-engage/sunset Campaign. [kb: https://kb.mautic.org/article/how-to-meet-gmail-yahoo-and-microsoft-sender-requirements-with-mautic.html] [kb: https://kb.mautic.org/article/how-to-check-your-email-authentication-in-message-headers.html] [kb: https://kb.mautic.org/article/how-to-re-engage-or-sunset-inactive-contacts-in-mautic.html]
 
 ## 13. Procedures
 - Convert to A/B: unsent Segment Email -> Convert to A/B test -> criteria/wait/size -> Add variant -> Schedule sending. [docs: https://docs.mautic.org/en/7.2/channels/emails.html#a-b-testing-for-segment-emails]
@@ -136,5 +140,18 @@ Version status of KB articles: k-10things and k-sesrate describe the pre-5 spool
 ## 15. Discrepancies with code
 See references/behaviour.md section 16. Summary: `sendToDnc` vs bounced, transactional vs DNC (KB), `listIds` vs `lists`,
 later Segment members and unpublish date, `mautic:disable:tracking` spelling, `/mailer/{transport}/callback`,
-Swiftmailer-era transport docs, the legacy Queue page (`mautic:queue:process`, `mautic:email:send`), and the unreleased 7.x (post-7.2.1)
-unsubscribe validation feature documented only on the 8.0 branch.
+Swiftmailer-era transport docs, the legacy Queue page (`mautic:queue:process`, `mautic:email:send`), the unreleased 7.x (7.3.0-rc)
+unsubscribe validation feature documented on the 8.0 and 7.3 branches only, and the one-click KB article saying every marketing email
+carries the List-Unsubscribe headers.
+
+The 7.2 docs pages this digest cites were unchanged for Emails between `4ad1d85` and the 7.2 branch head on 2026-11-23 (only CORS,
+Campaign reactivation wording and the Support menu item changed in settings.rst) [docs: https://docs.mautic.org/en/7.2/configuration/settings.html].
+
+## 16. Upcoming in 7.3 (docs branch, unreleased)
+These pages describe 7.x behaviour that is not in 7.2.2.
+- "Segment Email sending status": **Ready to send** (no scheduled start date; use Send or Schedule) vs **Sending** (inside the scheduled period) ([PR #18011]). [docs: github.com/mautic/user-documentation/blob/7.3/docs/channels/emails.rst]
+- Manual A/B winner: any Active variant shows a **Make winner** trophy once the test is sending; confirming makes it the main Email, turns off the others, stops the test and resets its stats, and does not send the winner to the remaining Contacts. [docs: github.com/mautic/user-documentation/blob/7.3/docs/channels/emails.rst]
+- "Opening and downloading the Email preview": Contact and Company pickers, **Download HTML** with all tokens replaced; Company data needs Contacts View Own (owner, or creator when unowned) or View Others; anonymous Preview URL visitors always see sample Company data ([PR #17549] [PR #18129]). [docs: github.com/mautic/user-documentation/blob/7.3/docs/channels/emails.rst]
+- Unsubscribing: `{unsubscribe_url}`, `{unsubscribe_text}` and `{resubscribe_url}` lead to a "Confirm your email address" page; links from older sends redirect there when the stat exists, otherwise "Record not found." (unsubscribe) or 404 (resubscribe); setting **Require email validation for unsubscribe** (default Yes) ([PR #16870]). [docs: github.com/mautic/user-documentation/blob/7.3/docs/channels/emails.rst] [docs: github.com/mautic/user-documentation/blob/7.3/docs/configuration/settings.rst]
+- MJML builder: copy and paste sections between Emails through browser local storage. [docs: github.com/mautic/user-documentation/blob/7.3/docs/builders/email_landing_page.rst]
+- Developer docs: custom Email list search commands through `SearchCommandEvent`, `SearchQueryEvent` and `SearchHelpEvent` with `checkContext('email')`; the email-validation step precedes the theme unsubscribe page. [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/plugin_extensions/emails.rst] [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/themes/getting_started.rst]

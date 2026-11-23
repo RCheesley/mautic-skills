@@ -26,7 +26,7 @@
 
 ## 1. How to read this file
 Source: merged pull requests on mautic/mautic for the Emails area, harvested 2026-10-15.
-Versions are inferred from the base branch, milestone and merge date; where a release tag was checked in the 7.x tree, the tag is cited. "v7.3.0-rc" means merged to 7.x after 7.2.1 and not yet released.
+Versions are inferred from the base branch, milestone and merge date; where a release tag was checked in the 7.x tree, the tag is cited. "v7.3.0-rc" means merged to 7.x and not in the 7.2.2 tag (checked with `git merge-base --is-ancestor`), so not yet released. A delta of 22 Emails-area PRs merged 2026-10-15 to 2026-11-22 was added on 2026-11-23.
 Current behaviour is in behaviour.md. This file explains why and when. Where the two disagree, behaviour.md wins.
 
 ## 2. Decisions that shaped current behaviour
@@ -67,6 +67,9 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - MailHelper clears message metadata after each successful send to keep large broadcasts in memory [PR #15121] (v5.2.7).
 - With mailer-is-owner on, a Segment send where only some Contacts have owners must not send duplicates [PR #4705] (v2.10).
 - Each batched recipient gets a unique bounce return path (`+bounce_<hash>`) [PR #1266] (v1.2.3).
+- Translation children are excluded from the broadcast query, so a translation goes out only through its parent's broadcast and locale routing; broadcasting children on their own sent the wrong language and later crashed `mautic:broadcasts:send` with `ORMInvalidArgumentException` [PR #16492] (v7.3.0-rc). Reviewers confirmed a translation still waits for its own `publishUp`.
+- The pending query takes an `EmailPendingQueryOptions` DTO (the positional signature stays for BC); `getBatchMaxContactId()` uses a JOIN instead of a correlated subquery for Segment membership, the subquery stays the default elsewhere [PR #17765] (v7.3.0-rc).
+- A published Segment Email with pending Contacts and no `publishUp` shows "Ready to send" instead of "Sending"; the change is display only [PR #18011] (v7.3.0-rc).
 
 ### Campaign, Form and Point sends, message queue, frequency rules
 - Campaign marketing emails go through `message_queue`; over-limit Contacts are rescheduled to the next frequency period, not dropped [PR #2549] (v2.2) [PR #4761] (v2.10). The queue command is `mautic:messages:send` with alias `mautic:campaigns:messagequeue` [code: app/bundles/ChannelBundle/Command/ProcessMarketingMessagesQueueCommand.php:17-20 @7.x].
@@ -96,6 +99,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - A plain-text part is generated from HTML when empty [PR #8645] (v3.1); anchors spanning `<br>` are detected so each recipient gets their own `ct` [PR #15190] (v7.0).
 - `<title>` and `<html lang>` are added on send if missing [PR #10402] (v4.2). A Preheader field was added to every send route [PR #13792] (v5.2).
 - Native emoji are stored in utf8mb4 columns instead of shortcodes [PR #13337] (v5.1).
+- Dynamic Content number filters were aligned with Segment SQL: empty stays NULL, comparisons never match NULL, `!=` matches NULL, `0` is not empty [PR #17551] (v7.3.0-rc).
 
 ### Link tracking and UTM
 - All links become trackable redirects automatically; `{externallink}` was dropped [PR #505] (v1.1).
@@ -108,6 +112,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Links in Segment sends use `site_url`, not the request or CLI host [PR #11919] (v5.0) [PR #17168] (v7.2).
 - Whitespace in `href` is trimmed and still tracked [PR #15698] (v7.0.1). Malformed links are left untracked at send so the cron does not crash, and saving an email with one is blocked by `ValidEmailLinks` [PR #16256] (v7.2); `#`, `tel:`, `mailto:`, relative links and tokens pass [PR #16508] (v7.2).
 - Clicks while logged into Mautic in the same browser are not tracked [PR #15486] (v7.0).
+- No-track links are matched on the exact URL, and the href rewrite skips an href whose full URL is on the no-track list, so links sharing a prefix are handled independently [PR #16354] (v7.3.0-rc).
 
 ### Open tracking and bot filtering
 - The pixel goes before `</body>` [PR #122] (v1.0) without `display:none`, which Gmail skipped [PR #2316] (v2.1.1). Tracking runs before the image is streamed [PR #1035] [PR #1050] (v1.2.2). It can be turned off with `mailer_append_tracking_pixel` [PR #1632] (v1.4).
@@ -115,6 +120,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - `read_count` increments once per Contact under concurrency [PR #12673] (v5.0) and was repaired with a backfill migration [PR #13915] (v5.1.1).
 - Bot ratio (6.0): blocked IPs, blocked user agents and an open within `bot_helper_time_email_threshold` (2 s) of sending are signals; at `bot_helper_bot_ratio_threshold` (0.6) the open is not tracked [PR #14593] (v6.0). The pixel and `ct` carry `sent_time` so a front layer can drop early hits [PR #14816] (v7.0). Matomo device-detector was added and closes issue mautic/mautic#16069 (Gmail image-proxy opens lost in 7.1) [PR #15870] (v7.2).
 - Stat and device stat are saved in separate transactions to avoid deadlocks [PR #6843] (v2.15).
+- Contacts who turned tracking off (`lead_tracking_preferences`, purpose `activity`) get the image but no recorded open; the reviewer required the check before the hit is queued, because the queued message carries cookies and server parameters, with a second check when processing [PR #18006] (v7.3.0-rc). Part of the Privacy Project; anonymous counting was deferred.
 
 ### Unsubscribe, List-Unsubscribe and the Preference Centre
 - Unsubscribe records "unsubscribed", not bounced [PR #1421] (v1.3), and works for direct sends without an email entity [PR #591] (v1.1.3). Deleted-Contact links return gracefully [PR #6287] [PR #6135] [PR #7089] [PR #7414] (v2.14–v2.15.2).
@@ -128,6 +134,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - The language order is Contact locale, then Preference page language, then user locale, then system locale [PR #14370] (v6.0).
 - The global default Preference Centre was first copied onto new emails [PR #15905] (v7.2); it is now resolved live at unsubscribe time: the email's page, then the current global default [PR #16352] (v7.2).
 - Changing an email's Preference Centre page is audit-logged [PR #15553] (v7.0).
+- The unsubscribe controller passes `message_type` (`unsubscribed`, `resubscribed`, `preference_center`) to the theme message template; the default states have their own templates and icons, and the shared styles no longer reach custom Preference Centre pages, while the email-validation page keeps them [PR #15680] (v7.3.0-rc).
 
 ### Bounces, replies, VERP and the monitored inbox
 - Monitored IMAP inboxes are read by `mautic:email:fetch` [PR #797] (v1.2), one folder per purpose, unread only [PR #2303] (v2.1.1), disconnecting between mailboxes [PR #2715] (v2.2.1).
@@ -138,6 +145,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - `X-EMAIL-ID` on campaign and Segment emails lets provider bounces be attributed [PR #7893] (v2.16.1).
 - VERP chain. Mautic authenticates with the configured account, not the randomised bounce address (Postfix 553) [PR #15674] (v7.1). That change set an unconditional `Sender` header, which Symfony prefers over Return-Path, so VERP bounces were lost. `Sender` and Return-Path are now exclusive: with a bounce mailbox or `mailer_return_path`, Return-Path is set and `Sender` removed [PR #16152] (v7.2).
 - Multi-folder fetch no longer fails with "IMAP\Connection is already closed" [PR #15364] (v6.0.5); sending no longer fails when IMAP is set but "Monitored address" is empty [PR #16302] (v7.1.3).
+
+- Saving Configuration with a blank monitored-inbox password restores the original normalised value, so `%%` escapes survive (7.2 branch after 7.2.2; not yet in 7.x) [PR #18018].
 
 ### Transports, mailer DSN, embedding and S/MIME
 - 5.0 replaced Swiftmailer with Symfony Mailer. All bundled transports left core for plugins, the mailer is one DSN (`mailer_dsn`), queueing goes through Messenger, the file spool was dropped, and callback keys follow the DSN scheme [PR #11613] (v5.0).
@@ -168,10 +177,14 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Translations and variants appear as their own list rows [PR #15407] (v7.1) [PR #15408] (v7.0).
 - Cloning creates nothing until save [PR #699], starts with zero stats [PR #5781], resets plain text [PR #12748] (v5.0) and clears publish dates so the clone is not broadcast [PR #12784] (v5.0). Clone permission is checked on the original [PR #14580] (v5.2.3). "Clone with translations and variants" creates an unpublished family [PR #16131] (v7.2).
 
+- Manual "Make winner" is offered on every published variant once the test has started, and the email action returns to the email view instead of the landing-page route [PR #17303] (v7.2.2).
+- Clicking Save on a clone clears the clone flag before reopening the edit form [PR #17784] (v7.3.0-rc).
+
 ### Preview, web view, test sends and drafts
 - A web view by a logged-in user records no view stat [PR #1445] (v1.3).
 - Public preview became a per-email toggle (403 when off) [PR #6679] (v2.15), off by default [PR #10845] (v4.2.1), because email IDs are enumerable. [PR #10971] and [PR #14525] (v5.2.3) made it work for expired and unpublished emails. [PR #17549] (v7.3.0-rc) requires the published flag for anonymous viewers. In the 7.x snapshot anonymous access needs `isPublished` and `publicPreview`; publish-up/down are not checked, so an expired published email still previews [code: app/bundles/EmailBundle/Controller/PublicController.php:634-648 @7.x]. At 7.2.1 only `publicPreview` was checked [code: app/bundles/EmailBundle/Controller/PublicController.php:473 @7.2.1].
 - [PR #17549] (v7.3.0-rc) also added the standalone preview page with Contact and Company pickers and "Download HTML"; real Contact tokens show only with Contact view permission.
+- `companyId` in preview and download had no permission check after [PR #17549]; it now needs Contacts view own/other on the Company owner (creator when unowned), and anonymous viewers always see the sample Company [PR #18129] (v7.3.0-rc, 7.x only).
 - Preview of translations and A/B variants needs login and view permission [PR #11719] (v5.1).
 - Send example sends to several recipients [PR #2488] (v2.5), prefixes `[TEST]` [PR #8443] (v3.0), has no pixel, tracking or UTM [PR #122] [PR #3891], can render as a chosen Contact [PR #13983] (v5.2) and is available from each list row [PR #16871] (v7.2).
 - Drafts (`email_draft_enabled`, off by default) store changes separately; sends always use live content [PR #14028] (v5.2). Discard restores plain text, publish dates and Continue sending [PR #17653] (v7.2.2).
@@ -183,6 +196,9 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Bulk delete deletes only emails; a 5.2 regression deleted Contacts with the same IDs [PR #14335] (v5.2.1).
 - "Template email" was renamed "Trigger email" [PR #14084] (v5.2).
 - Per-email feature flags go in the JSON `settings` field [PR #16363] (v7.2); `EMAIL_ON_TOGGLE_PUBLISH` was added [PR #16244] (v7.2).
+- API PATCH without `dynamicContent` keeps the stored dynamic content; the fix sits in `EmailApiController::processForm()` because `EmailType`'s PRE_SUBMIT default cannot tell PATCH from PUT [PR #17851] (v7.2.2).
+- Email lists gained `is:segment` and `is:triggered` search commands and Type quick filters [PR #18073] (v7.3.0-rc).
+- The audit log records a Segment change only when the id set differs and keeps only known A/B settings keys, cutting stored data [PR #15300] (v7.3.0-rc).
 
 ### Stats, reports and webhooks
 - Emails to Mautic users get tokens replaced but create no stat and no timeline entry [PR #595] (v1.1.3) [PR #5529] (v2.12.2).
@@ -193,6 +209,9 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Webhook `mautic.email_on_send` fires once per real send, not for test sends [PR #7716] (v3.3) [PR #8619] (v3.0.2). `webhook_email_details` off removes content and tokens from the payload [PR #13447] (v5.1).
 - Timeline "Email read" shows the time from send to read [PR #17321] (v7.2.1).
 - Reports gained CTR/CTOR [PR #12713] (v5.0) and UTOR [PR #15066] (v7.1).
+- Batch-transport per-recipient failures are processed even when `flushQueue()` returns true; before, they left no failed stat or DNC [PR #17666] (v7.2.2).
+- Report Unsubscribed/Bounced columns use one per-email DNC aggregate (about 97% faster) and count only the email channel; click-through also counts only email [PR #17859] (v7.3.0-rc), a port of the 5.2 patch.
+- The Gmail plugin tracking pixel returned 500 after Gmail moved to IntegrationsBundle; keys are now read through `IntegrationsHelper` with a legacy fallback [PR #18061] (7.2 branch after 7.2.2) [PR #18065] (v7.3.0-rc).
 
 ## 3. Removed, deprecated, replaced
 
@@ -315,6 +334,15 @@ Rows describe contracts still true in 7.x. Sorted by sub-topic.
 | Locking | Lock error on second builder Apply | Refresh version after Apply | [PR #15894] | v7.1 |
 | Management | Bulk email delete removed Contacts | Only emails deleted | [PR #14335] | v5.2.1 |
 | Permissions | Users without publish permission auto-published | Saved unpublished | [PR #15543] | v7.0 |
+| Segment | Translation child broadcast on its own: wrong language, then `ORMInvalidArgumentException` | Only the parent is broadcast; locale routing picks the translation | [PR #16492] | v7.3.0-rc |
+| Stats | Partial batch failures from API transports silently ignored | Failures processed whatever `flushQueue()` returns | [PR #17666] | v7.2.2 |
+| API | PATCH without `dynamicContent` replaced it with the sample entry | Current dynamic content kept | [PR #17851] | v7.2.2 |
+| A/B | Manual winner redirected to the landing-page route | Returns to the email view | [PR #17303] | v7.2.2 |
+| Tracking | Gmail plugin pixel 500 (`getDecryptedApiKeys()` undefined) | Keys via `IntegrationsHelper` | [PR #18061] [PR #18065] | 7.2 after 7.2.2 / v7.3.0-rc |
+| Inbox | Blank-password config save broke `%%` passwords (`ParameterNotFoundException`) | Original normalised value restored | [PR #18018] | 7.2 after 7.2.2 |
+| Dynamic content | Empty number field matched `>= 0`; `0` treated as empty | NULL and 0 follow Segment SQL | [PR #17551] | v7.3.0-rc |
+| Preview | Any Company's data readable through `companyId` | Company permission checked | [PR #18129] | v7.3.0-rc |
+| Reports | SMS DNC rows counted in email Unsubscribed/Bounced | Email channel only | [PR #17859] | v7.3.0-rc |
 
 ## 5. Feature timeline
 
@@ -335,6 +363,9 @@ Rows describe contracts still true in 7.x. Sorted by sub-topic.
 | 7.2 | `sendToDnc` and "Repeatable email", Segment A/B tests, tokenised From chain, VERP fix, link validation, global UTM defaults, settings JSON | [PR #15995] [PR #15897] [PR #16060] [PR #16152] [PR #16256] [PR #15905] [PR #16363] |
 | 7.2.2 | Discard draft restores all, frequency block ids | [PR #17653] [PR #17669] |
 | 7.3.0-rc | Unsubscribe address validation, A/B winner via broadcast, Reply-To final rule, preview page, AND-ed dynamic-content filters | [PR #16870] [PR #17296] [PR #17356] [PR #17549] [PR #17404] |
+| 7.2.2 (delta) | Batch failure handling, API PATCH keeps dynamic content, manual winner on any published variant | [PR #17666] [PR #17851] [PR #17303] |
+| 7.2 after 7.2.2 | Monitored-inbox `%%` passwords, Gmail plugin pixel | [PR #18018] [PR #18061] |
+| 7.3.0-rc (delta) | Translations only via parent, JOIN pending range, Ready to send, tracking opt-out, `is:segment`/`is:triggered`, Company preview permission, `message_type`, DWC number NULLs, report DNC aggregate, audit log trimming, exact no-track URLs | [PR #16492] [PR #17765] [PR #18011] [PR #18006] [PR #18073] [PR #18129] [PR #15680] [PR #17551] [PR #17859] [PR #15300] [PR #16354] |
 
 ## 6. Maintainer norms for this area
 - BC breaks are acceptable in a major when documented in UPGRADE notes and tooltips, and are preferred over adding switches [PR #11786] [PR #11787].
@@ -352,6 +383,9 @@ Rows describe contracts still true in 7.x. Sorted by sub-topic.
 - Classes without children are `final`; depend on interfaces with constructor injection [PR #16886] [PR #16941].
 - Many 7.x features are "unforked" from downstream forks [PR #15897] [PR #15995] [PR #16060] [PR #16870] [PR #17296].
 - New tokens and behaviour changes need user documentation and help-modal entries [PR #14114] [PR #14215] [PR #15897].
+- A fix merged to 7.2 is ported to 7.x and 8.x as separate PRs when the merge-up has not happened yet [PR #18061] [PR #18065] [PR #18136].
+- Privacy checks run before anything is queued, so personal data never reaches a Messenger transport [PR #18006].
+- Query optimisations add the new path as an option and keep the old one as the default where it is not measured [PR #17765].
 
 ## 7. Open questions
 1. Campaigns skill conflict: the campaigns skill says an event saved without `email_type` is sent as Transactional, "which ignores DNC" [PR #14145]. The default to transactional is true in 7.x, but since 7.2.0 DNC bypass comes only from the email's `sendToDnc` [code: app/bundles/EmailBundle/EventListener/CampaignSubscriber.php:274-286 @7.x]. The "ignores DNC" part holds only for 5.0 to 7.1.
@@ -360,7 +394,7 @@ Rows describe contracts still true in 7.x. Sorted by sub-topic.
 4. Duplicate Segment sends: [PR #14531] leaves a race window; no atomic stat insert followed, and [PR #13768] was not re-landed.
 5. Gmail proxy opens: [PR #15870] closes issue mautic/mautic#16069 by stricter bot detection; verify that GoogleImageProxy opens count.
 6. `validate_unsubscribe_emails`: its effect on the Preference Centre page and on pre-7.3 links is unclear [PR #16870]. The broader DNC review after [PR #14967] did not ship.
-7. Manual A/B winner: the warning implies the rest is never sent automatically [PR #17296].
+7. Manual A/B winner: the warning implies the rest is never sent automatically [PR #17296]. The 7.3 docs branch now says so explicitly: Mautic does not send the winner to the remaining Contacts [docs: github.com/mautic/user-documentation/blob/7.3/docs/channels/emails.rst].
 8. VERP on 7.1.x: the fix merged after 7.1 EOL, so 7.1.x keeps the regression [PR #16152].
 9. Link validation applies to emails but not landing pages [PR #16256].
 10. Emails created between [PR #15905] and [PR #16352] may store the default Preference Centre explicitly; no migration was mentioned.
@@ -373,5 +407,6 @@ Rows describe contracts still true in 7.x. Sorted by sub-topic.
 
 ## 8. Coverage
 - 761 PRs were analysed in 10 chunks (472 for 2015 to mid-2024 and 289 for late 2022 to 2026, with some overlap in dates); about 660 were substantive and about 100 were refactors, merge-ups or chores [PR #11613] [PR #17549].
+- Delta 2026-11-23: 22 PRs merged 2026-10-15 to 2026-11-22 (5 on 7.2, 13 on 7.x, 4 on 8.x); [PR #18046] (test-only), [PR #18284] [PR #18285] (CSS) and [PR #18299] (Rector) carry no behaviour.
 - 869 noise PRs (dependency bumps, CS, all-contributors) were excluded upstream before chunking [PR #11613].
 - Pre-5.0 transport code (Swiftmailer, SparkPost, Mandrill, Mailjet, SES, SendGrid, Momentum, Pepipost, Elastic Email) is historical; those fixes live in external plugins if anywhere [PR #11613].
