@@ -6,26 +6,26 @@ named only where it is the contract (base classes other bundles extend).
 
 ## Contents
 - A. Stack and package layout (A1-A6)
-- B. Bundles, configuration and dependency injection (B1-B16)
-- C. Events (C1-C12)
+- B. Bundles, configuration and dependency injection (B1-B17)
+- C. Events (C1-C13)
 - D. Models, save pipeline and audit log (D1-D17)
 - E. Entities, change tracking, publish state and dates (E1-E16)
-- F. Repositories, list search and getEntities() (F1-F17)
+- F. Repositories, list search and getEntities() (F1-F18)
 - G. Standard controllers, locks and views (G1-G18)
-- H. AJAX actions and CSRF (H1-H7)
+- H. AJAX actions and CSRF (H1-H8)
 - I. Request lifecycle listeners (I1-I8)
-- J. Permissions framework (summary) (J1-J8)
+- J. Permissions framework (summary) (J1-J9)
 - K. Translations (K1-K7)
 - L. Logging and console errors (L1-L5)
 - M. Error handling and offline page (M1-M6)
 - N. Input sanitisation (N1-N6)
-- O. Admin UI JavaScript and assets (O1-O10)
+- O. Admin UI JavaScript and assets (O1-O11)
 - P. Routing, menus, notifications, misc platform (P1-P12)
 - Q. Contradictions and open questions
 
 ## A. Stack and package layout
 
-A1. 7.2.1 requires PHP ~8.2 and Symfony components ~7.4 (framework-bundle v7.4.16 locked on 7.x at `419a08a9b35`; v7.4.14 in the 7.2.1 tag), Doctrine ORM ^2.14 (2.20.9 locked), DBAL ^3.6.2 <3.8 (3.7.3), API Platform ^4.1, FOSRestBundle ^3.8, JMS serializer bundle ^5.4, Twig 3, Guzzle ~7.15, Predis ^3. [code: app/composer.json:15-105 @419a08a9b35]
+A1. 7.2.2 and the 7.x branch require PHP ~8.2 and Symfony components ~7.4 (framework-bundle v7.4.16 locked on 7.x; v7.4.14 in the 7.2.2 tag), Doctrine ORM ^2.14 (2.20.9 locked), DBAL ^3.6.2 <3.8 (3.7.3), API Platform ^4.1, FOSRestBundle ^3.8, JMS serializer bundle ^5.4, Twig 3, Guzzle ~7.15, Predis ^3. The 7.x branch adds `dicebear/core`, `dicebear/styles`, `jumbojett/openid-connect-php` and `league/commonmark`, which 7.2.2 does not require. [code: app/composer.json:18-116 @7.x] [code: app/composer.json:32-33 @7.x] [code: app/composer.json:56 @7.x] [code: app/composer.json:61 @7.x]
 
 A2. The root package `mautic/mautic` requires `mautic/core-lib ^7.0`, which is the `app/` directory served as a path repository. [code: composer.json:23-27 @7.x] [code: composer.json:126-142 @7.x]
 
@@ -71,6 +71,8 @@ B15. The container refuses to build (`MessageOnlyErrorHandlerException`) when `p
 
 B16. A directory `themes/system/<BundleDir>/Resources/views` overrides that bundle's templates; the original stays reachable as `@!<Namespace>`. In the `test` env, Guzzle and Symfony HttpClient are replaced by mocks. [code: app/bundles/CoreBundle/DependencyInjection/Compiler/SystemThemeTemplatePathPass.php:30-96 @7.x] [code: app/bundles/CoreBundle/DependencyInjection/Compiler/TestPass.php:18-31 @7.x]
 
+B17. An unreadable `plugins/` root or plugin directory used to make `AppKernel::registerBundles()` throw `AccessDeniedException` (HTTP 500 at boot); on the 7.2 branch, after 7.2.2, the scan skips it, keeps registering readable plugins and writes the skipped path to the PHP error log with `error_log()` (not `trigger_error()`, which the debug handler would turn into an exception). The fix is not yet on 7.x at the snapshot. [PR #18025]
+
 ## C. Events
 
 C1. 7.x dispatches most events by a string name defined as a constant in the bundle's `*Events.php`; to find who dispatches, grep the constant (and its string value); to find listeners, grep `getSubscribedEvents()` for the constant. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/event_listeners.html#available-events] [code: app/bundles/CoreBundle/CoreEvents.php @7.x]
@@ -96,6 +98,8 @@ C10. `CoreEvents::PRE_UPGRADE` and `POST_UPGRADE` have no dispatcher in core or 
 C11. `CommonEvent::setFailed()` is the generic veto used by events derived from `CommonEvent`. [code: app/bundles/CoreBundle/Event/CommonEvent.php:56 @7.x]
 
 C12. In 8.x events are dispatched with a single argument so the class name is the event name; constant classes `CoreEvents`, `ApiEvents`, `ConfigEvents`, `DashboardEvents`, `IntegrationEvents`, `StatEvents`, `UserEvents` are deleted, and constants that remain but are no longer dispatched (e.g. `ChannelEvents::ADD_CHANNEL`, `FormEvents::FORM_ON_SUBMIT`) leave old listeners silently unused. [PR #17157] [PR #17183] [PR #17625] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/event_listeners.html#mautic-8-class-name-event-dispatch]
+
+C13. `SearchHelpEvent` is deprecated (to be removed in 8.0) and nothing dispatches it on 7.x: list toolbars no longer show search help, so listeners for it are never called; plugins pass quick filters (legacy arrays or grouped filters) through the toolbar `quickFilters` option. Unreleased on 7.x (7.3.0-rc). [code: UPGRADE-7.0.md:69 @7.x] [code: app/bundles/CoreBundle/Event/SearchHelpEvent.php:10 @7.x] [PR #18069]
 
 ## D. Models, save pipeline and audit log
 
@@ -203,6 +207,8 @@ F16. `getSimpleList()` returns `value/label` rows ordered by label, restricted t
 
 F17. `upsert()` issues raw `INSERT … ON DUPLICATE KEY UPDATE`, sets the id from `LAST_INSERT_ID()`, flags insert vs update from the affected-row count (1/2), and bypasses the entity manager. [code: app/bundles/CoreBundle/Entity/CommonRepository.php:868-951 @7.x] [code: app/bundles/CoreBundle/Tests/Functional/Entity/CommonRepositoryUpsertTest.php:23 @7.x]
 
+F18. Runs of three or more spaces between terms (`a   b`, `email:   test`) parse normally: an empty term followed by another term keeps the pending filter slot. Before 7.2.2 this was a fatal `Attempt to assign property "command" on null`, and because the search is stored in the session the list failed on every reload. [code: app/bundles/CoreBundle/Helper/SearchStringHelper.php:227-237 @7.x] [PR #17857] (v7.2.2) Still open per review: `a  (b  OR  c)` exhausts memory. [PR #17857]
+
 ## G. Standard controllers, locks and views
 
 G1. Hierarchy: Symfony `AbstractController` → `CommonController` → `AbstractFormController` → `AbstractStandardFormController` (→ deprecated `FormController`); `AjaxController` extends `CommonController`. Only controllers implementing the `MauticController` marker are affected by Mautic's controller listeners. [code: app/bundles/CoreBundle/Controller/MauticController.php:7-12 @7.x]
@@ -249,7 +255,7 @@ H2. Unauthenticated callers (`IS_AUTHENTICATED_REMEMBERED` missing) get `{"succe
 
 H3. `bundle:name` routes to `Mautic\{Bundle}Bundle\Controller\AjaxController::{name}Action`, retrying with `Mautic{Bundle}`; `plugin:bundle:name` uses `MauticPlugin`; a missing method returns `{"success":0}`. [code: app/bundles/CoreBundle/Controller/AjaxController.php:78-137 @7.x]
 
-H4. Core actions without prefix: `globalSearch`, `commandList`, `globalCommandList`, `togglePublishStatus`, `unlockEntity`, `clearNotification`, `getBuilderTokens`, `downloadIpLookupDataStore`, `getIpLookupForm`. [code: app/bundles/CoreBundle/Controller/AjaxController.php:138-440 @419a08a9b35]
+H4. Core actions without prefix: `globalSearch`, `commandList`, `globalCommandList`, `togglePublishStatus`, `unlockEntity`, `clearNotification`, `setThemeFavorite` (unreleased on 7.x (7.3.0-rc)), `getBuilderTokens`, `downloadIpLookupDataStore`, `getIpLookupForm`. [code: app/bundles/CoreBundle/Controller/AjaxController.php:139-479 @7.x] [PR #18138]
 
 H5. `togglePublishStatus` checks `publishown/publishother` → `publish` → `manage` → `full` → `editown/editother` → `edit`; returns `{success:1, statusHtml}`, HTTP 422 on `RecordCanNotUnpublishException`, HTTP 403 without permission. A `customToggle` property is flipped with a plain repository save and no model hooks. [code: app/bundles/CoreBundle/Controller/AjaxController.php:220-300 @7.x]
 
@@ -257,11 +263,13 @@ H6. XHR POSTs to paths starting `/s/` require header `X-CSRF-Token` for intentio
 
 H7. The admin page exposes the token as JS global `mauticAjaxCsrf` and `mQuery.ajaxSetup` adds the header to every request; regular forms use Symfony's `_token`. [code: app/bundles/CoreBundle/Resources/views/Default/script.html.twig:10 @7.x] [code: app/bundles/CoreBundle/Assets/js/1.core.js:37-40 @7.x]
 
+H8. `setThemeFavorite` returns HTTP 400 `{success:0}` for anything but an XHR POST (so the CSRF check of H6 always applies) and for an unknown theme type; otherwise it stores the per-user favourite under `theme_favorites` in the user's `preferences` (types `email` and `page`, kept separately) and returns `{success:1, favorite}`. Unreleased on 7.x (7.3.0-rc). [code: app/bundles/CoreBundle/Controller/AjaxController.php:339-359 @7.x] [code: app/bundles/CoreBundle/Helper/ThemeFavoritesHelper.php:18-23 @7.x] [PR #18138]
+
 ## I. Request lifecycle listeners
 
 I1. `ErrorHandlingListener` (kernel.request 2047) wires the Monolog loggers into the static `ErrorHandler`. [code: app/bundles/CoreBundle/EventListener/ErrorHandlingListener.php:15-33 @7.x]
 
-I2. Priority 128: PHP default timezone set from session `_timezone` (fallback `default_timezone`), only when the request has a previous session. [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:20-40 @419a08a9b35]
+I2. Priority 128: PHP default timezone and `DateTimeHelper::setLocalTimezone()` set from session `_timezone` (fallback `default_timezone`), only when the request has a previous session. [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:20-42 @7.x] [PR #17627] (v7.2.2)
 
 I3. Priority 101: request locale from session `_locale` (fallback `locale`). [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:43-63 @7.x]
 
@@ -292,6 +300,8 @@ J5. The `full` bit grants every level; `view` ≡ `viewown` on extended permissi
 J6. Modes: `MATCH_ALL` (default), `MATCH_ONE`, `RETURN_ARRAY`. [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:252-263 @7.x]
 
 J7. `hasEntityAccess($own, $other, $ownerId)`: guests get false; owner 0 → other; owner = current user → own; else other. [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:335-379 @7.x]
+
+J9. `core:file_manager` has a single `full` bit (1024); `ElFinderSubscriber` throws `AccessDeniedHttpException` (403) for any `ElFinderController` request without `core:file_manager:full`. Migration `Version20261015121426` grants it to non-admin roles that can create or edit Emails, Landing Pages, Assets or Dynamic Content, and does its backfill in `up()` so a dry run writes nothing. Unreleased on 7.x (7.3.0-rc). [code: app/bundles/CoreBundle/Security/Permissions/SystemPermissions.php:14-29 @7.x] [code: app/bundles/CoreBundle/EventListener/ElFinderSubscriber.php:30-50 @7.x] [PR #17870]
 
 J8. Mautic's permission system is bitwise and does not use Symfony voters. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/mautic_vs_symfony.html#firewalls-and-user-access-management]
 
@@ -365,11 +375,13 @@ O5. Forms in loaded content are ajaxified and posted by `Mautic.postForm`. [code
 
 O6. Every AJAX request appends `mauticUserLastActive` and `mauticLastNotificationId`; `/s/keep-alive` is pinged every `session.gc_maxlifetime/2` seconds. [code: app/bundles/CoreBundle/Assets/js/1.core.js:16-46 @7.x] [code: app/bundles/CoreBundle/Assets/js/1.core.js:74-105 @7.x]
 
-O7. List sorting, paging and filtering (`Mautic.reorderTableData`, `limitTableData`, `filterTableData`) re-request the index with `tmpl=list`; bulk actions send checked ids as JSON `ids`. [code: app/bundles/CoreBundle/Assets/js/10.entity.js:36-116 @7.x] [code: app/bundles/CoreBundle/Assets/js/10.entity.js:371-432 @419a08a9b35]
+O7. List sorting, paging and filtering (`Mautic.reorderTableData`, `limitTableData`, `filterTableData`) re-request the index with `tmpl=list`; bulk actions send checked ids as JSON `ids`, collected from `input.list-checkbox:checked` (matched by class token, so the checkbox component's extra classes do not break selection). [code: app/bundles/CoreBundle/Assets/js/10.entity.js:36-116 @7.x] [code: app/bundles/CoreBundle/Assets/js/10.entity.js:372-433 @7.x] [PR #17843] On the 7.2 branch, after 7.2.2, sorting a list whose URL already has a query string keeps it (it used to append `?tmpl=list` to the search value) and waits for a pending search first. [PR #18095]
 
 O8. Bundle assets in `Assets/css` and `Assets/js` are discovered automatically and, in prod, combined into `media/css/{libraries,app}.css` and `media/js/{libraries,app}.js` (regenerated when missing or older than a source); URLs carry `?v<sha1(secret_key+version)>`; themes override with `libraries_custom`/`app_custom`. [code: app/bundles/CoreBundle/Helper/AssetGenerationHelper.php:68-237 @7.x]
 
 O9. The admin `<head>` loads `importmap('app')` (Symfony AssetMapper entry `app/bundles/CoreBundle/Assets/app.js`, which only imports `app.scss`); webpack builds only the CKEditor 5 bundle. [code: app/bundles/CoreBundle/Resources/views/Default/head.html.twig:14-19 @7.x] [code: importmap.php:3-12 @7.x] [code: webpack.config.js:28-37 @7.x]
+
+O11. On 7.x (unreleased, 7.3.0-rc) core markup uses Bootstrap 5 names (`data-bs-toggle`, `form-label`, `form-text`, `float-end`, `visually-hidden`, …) and core JS calls the native `bootstrap.Modal`/`Tooltip`/`Tab`/`Collapse` APIs instead of jQuery plugin calls; Mautic markers such as `data-toggle="ajax"` keep their names. `1.bootstrap-compatibility.js` still routes legacy jQuery plugin calls to Bootstrap 5 and mirrors legacy `data-*` attributes through a `MutationObserver`, so BS3-style plugin markup keeps working until Mautic 8. Charts use Chart.js ^4.6.1. [code: app/bundles/CoreBundle/Assets/js/1.bootstrap-compatibility.js:1150-1185 @7.x] [code: app/bundles/CoreBundle/Assets/js/9.modals.js:19-34 @7.x] [code: package.json:53 @7.x] [PR #17826] [PR #17827] [PR #17829] [PR #17830] [PR #17917]
 
 O10. Flash messages: PHP `addFlashMessage($key, $params, $type)` with keys in `flashes.ini`; JS `Mautic.addInfoFlashMessage`/`addErrorFlashMessage` + `Mautic.setFlashes`. [devdocs: https://devdocs.mautic.org/en/7.2/design/flash_messages.html]
 
@@ -397,12 +409,12 @@ P10. `EncryptionHelper` encrypts the serialized value with `secret_key` (AES-256
 
 P11. `ModeratedCommand` adds `--bypass-locking`, `--timeout`, `--lock_mode` (pid default, flock, redis) to cron commands; details in mautic-cron-and-queues. [code: app/bundles/CoreBundle/Command/ModeratedCommand.php:56-135 @7.x]
 
-P12. The client IP is taken from the first valid forwarded header or `REMOTE_ADDR`, removing `do_not_track_internal_ips`; private ranges become `127.0.0.1` unless `track_private_ip_ranges`. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:67-123 @7.x] [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:194-239 @7.x]
+P12. The client IP is taken from the first valid forwarded header or `REMOTE_ADDR`, removing `do_not_track_internal_ips`; private ranges become `127.0.0.1` unless `track_private_ip_ranges`. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:67-123 @7.x] [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:194-239 @7.x] `markVisitorAsUntracked()` flags the current request so listeners leave the IP out of the audit, point-trigger and campaign logs (used for kiosk-mode and untrackable form submitters), and `isRequestTrackable()` is false for HEAD, prefetch/prerender, `Sec-GPC: 1`, `DNT: 1` and bot requests. Unreleased on 7.x (7.3.0-rc). [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:163-174 @7.x] [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:257-290 @7.x] [PR #17868] [PR #17899]
 
 ## Q. Contradictions and open questions
 
 Resolved in favour of code (docs are wrong or stale):
-- Autowiring docs say `config.php` service definitions stop working in Mautic 6; 7.2.1 still processes them via `ServicePass`; removal happens in 8.x. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/autowiring.html] [code: app/bundles/CoreBundle/DependencyInjection/Compiler/ServicePass.php:33-75 @7.x] [PR #17470]
+- Autowiring docs say `config.php` service definitions stop working in Mautic 6; 7.2.2 and 7.x still process them via `ServicePass`; removal happens in 8.x. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/autowiring.html] [code: app/bundles/CoreBundle/DependencyInjection/Compiler/ServicePass.php:33-75 @7.x] [PR #17470]
 - "Mautic doesn't auto-wire native services other than commands and controllers" contradicts the autowiring page; code autowires every non-excluded class in `Config/services.php`. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/mautic_vs_symfony.html#autowired-services] [code: app/bundles/CoreBundle/Config/services.php:23-53 @7.x]
 - Config file location: docs say `app/config/local.php`; the loader reads `config/local.php`. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/mautic_vs_symfony.html#custom-configuration] [code: app/bundles/CoreBundle/Loader/ParameterLoader.php:195-216 @7.x]
 - `trans()` docs say a missing key returns an empty string; the decorator delegates to Symfony, which returns the key. [devdocs: https://devdocs.mautic.org/en/7.2/plugin_services/translator.html#using-the-translator-service] [code: app/bundles/CoreBundle/Translation/Translator.php:42-49 @7.x]

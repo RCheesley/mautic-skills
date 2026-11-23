@@ -83,7 +83,7 @@ prefer code where they disagree (see "Discrepancies"). [devdocs: https://devdocs
 - Permission notation `bundle:level:permission`; firewall names `main`, `public`, `api`, `catchall`. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/permissions.html#how-permissions-work]
 
 ## Discrepancies with 7.x code
-| Docs claim | Code (7.2.1) |
+| Docs claim | Code (7.2.2 and 7.x) |
 |---|---|
 | `config.php` service definitions "won't work in Mautic 6" [devdocs: https://devdocs.mautic.org/en/7.2/plugins/autowiring.html] | Still processed by `ServicePass` [code: app/bundles/CoreBundle/DependencyInjection/Compiler/ServicePass.php:33-75 @7.x]; removed in 8.x [PR #17470] |
 | "Mautic doesn't auto-wire native services other than commands and controllers" [devdocs: https://devdocs.mautic.org/en/7.2/plugins/mautic_vs_symfony.html#autowired-services] | `Config/services.php` autowires all non-excluded classes [code: app/bundles/CoreBundle/Config/services.php:23-53 @7.x] |
@@ -95,6 +95,13 @@ prefer code where they disagree (see "Discrepancies"). [devdocs: https://devdocs
 | Route debugging via `php app/console router:debug` [devdocs: https://devdocs.mautic.org/en/7.2/plugins/config.html#debugging-routes] | Console lives at `bin/console` [code: composer.json:213-228 @7.x] |
 | Custom-event example `dispatch($eventName, $event)` [devdocs: https://devdocs.mautic.org/en/7.2/plugins/event_listeners.html#custom-events] | Symfony signature is `dispatch($event, $eventName)` (single argument in 8.x) [devdocs: https://devdocs.mautic.org/en/8.0/plugins/event_listeners.html#custom-events] |
 | Translator type-hint `Symfony\Component\Translation\TranslatorInterface` [devdocs: https://devdocs.mautic.org/en/7.2/plugin_services/translator.html#using-the-translator-service] | Mautic's `Translator` decorates the Symfony contracts translator [code: app/bundles/CoreBundle/DependencyInjection/Compiler/TranslationsPass.php:27-29 @7.x] |
+
+## Upcoming in 7.3 (docs branch, unreleased)
+The 7.2 docs files cited here are unchanged since the last snapshot. The 7.3 branch adds:
+- Bootstrap 5.3.8 from `twbs/bootstrap` replaces Bootstrap 3.4.1; new Plugin code should use Bootstrap 5 classes, `data-bs-*` attributes and the Bootstrap 5 JS API, while `_bootstrap-3-compatibility.scss` and `1.bootstrap-compatibility.js` keep Bootstrap 3 markup and jQuery calls such as `$(el).modal('show')` working until Mautic 8 removes them. This matches the 7.x code. [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/development-environment/building_assets.rst] [code: app/bundles/CoreBundle/Assets/js/1.bootstrap-compatibility.js:1150-1185 @7.x] [PR #17767]
+- Configuration: each `addForm()` set is its own section at `/s/config/edit/{formAlias}` (listed only when it has a parameter), and the `ConfigEvent` seen by `CONFIG_PRE_SAVE`/`CONFIG_POST_SAVE` holds only the section being saved, so a listener must check that its key exists. [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/plugins/config.rst]
+- A Checkbox component template (`@MauticCore/Components/checkbox.html.twig`), included with `only`. [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/design_templates/checkbox.rst] [PR #17843]
+- Email preview buttons injected through `VIEW_INJECT_CUSTOM_CONTENT` at the `email.preview.buttons` context. [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/plugin_extensions/ui.rst]
 
 Gaps: devdocs do not document admin bypass of permissions, permission caching, event priorities, `CoreParametersHelper`,
 the `MAUTIC_*` env mapping, the asset pipeline, or most of the `Mautic.*` JS API; rely on code and references/behaviour.md.

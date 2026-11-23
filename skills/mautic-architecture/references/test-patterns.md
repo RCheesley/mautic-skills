@@ -6,7 +6,7 @@ The general harness (test DB, fixtures, Codeception, CI) is in mautic-testing.
 ## Running tests
 - `composer test` runs `bin/phpunit -d memory_limit=2G --bootstrap vendor/autoload.php --configuration app/phpunit.xml.dist`; append a path to run one file, for example `ddev exec composer test app/bundles/CoreBundle/Tests/Unit/Model/FormModelTest.php`. [code: composer.json:164-212 @7.x]
 - Under DDEV the PHPUnit database is `test` (from `.ddev/.env.test.local`). [code: .ddev/.env.test.local @7.x]
-- PHPUnit ^11.5 (11.5.56 locked) on 7.x; PHPUnit 13 and `dg/bypass-finals` on 8.x. [code: composer.json:28-54 @419a08a9b35] [PR #17004] [PR #17366]
+- PHPUnit ^11.5 on 7.x (11.5.56 locked in 7.2.2, 11.5.57 on the 7.x branch); PHPUnit 13 and `dg/bypass-finals` on 8.x. [code: composer.json:28-54 @7.x] [PR #17004] [PR #17366]
 
 ## Base classes
 | Class | Use for | Notes |

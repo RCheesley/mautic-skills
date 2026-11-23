@@ -76,7 +76,7 @@ Deprecated string aliases (since 7.2): `mautic.helper.encryption`, `mautic.core.
 | `ClassMetadataBuilder` | `app/bundles/CoreBundle/Doctrine/Mapping/ClassMetadataBuilder.php` | `addId`, `addBigIntIdField`, `addUuid`, `addIdColumns`, `addCategory`, `addPublishDates`, `addDateAdded`, `addIndex`, length 191 rule [code: app/bundles/CoreBundle/Doctrine/Mapping/ClassMetadataBuilder.php:23-451 @7.x] |
 | DBAL types | `Doctrine/Type/{UTCDateTimeType,UTCDateTimeImmutableType,ArrayType}.php` | registered globally [code: app/config/config.php:203-205 @7.x] |
 | `CommonRepository` | `app/bundles/CoreBundle/Entity/CommonRepository.php` | `getEntities()` (354-406), `getSearchCommands()`/`getStandardSearchCommands()` (707-789), `getSimpleList()` (723-774), `upsert()` (868-951), `getPublishedByDate*Expression()` (527-630), `findOneBySlugs()` (239-297) [code: app/bundles/CoreBundle/Entity/CommonRepository.php:239-1883 @7.x] |
-| `SearchStringHelper` | `app/bundles/CoreBundle/Helper/SearchStringHelper.php` | search syntax parser [code: app/bundles/CoreBundle/Helper/SearchStringHelper.php:47-284 @419a08a9b35] |
+| `SearchStringHelper` | `app/bundles/CoreBundle/Helper/SearchStringHelper.php` | search syntax parser [code: app/bundles/CoreBundle/Helper/SearchStringHelper.php:47-291 @7.x] |
 | `AbstractCommonModel` | `app/bundles/CoreBundle/Model/AbstractCommonModel.php` | `getRepository()`, `getPermissionBase()`, `getEntities()`, `getEntity()`, `getEntityBySlugs()`, `canViewOwnEntity()` [code: app/bundles/CoreBundle/Model/AbstractCommonModel.php:27-297 @7.x] |
 | `FormModel` | `app/bundles/CoreBundle/Model/FormModel.php` | lock/unlock, `saveEntity(ies)`, `deleteEntity(ies)`, `togglePublishStatus()`, `setTimestamps()`, `createForm()`, `dispatchEvent()` (no-op), `cleanAlias()`, `flushAndCatch()` [code: app/bundles/CoreBundle/Model/FormModel.php:29-503 @7.x] |
 | `AuditLogModel` | `app/bundles/CoreBundle/Model/AuditLogModel.php` | `writeToLog()`, `getLogForObject()` [code: app/bundles/CoreBundle/Model/AuditLogModel.php:34-80 @7.x] |
@@ -84,7 +84,7 @@ Deprecated string aliases (since 7.2): `mautic.helper.encryption`, `mautic.core.
 | `AbstractFormController` | `app/bundles/CoreBundle/Controller/AbstractFormController.php` | `unlockAction()`, `isLocked()`, `isFormCancelled()`, `isFormApplied()`, `canEdit()` [code: app/bundles/CoreBundle/Controller/AbstractFormController.php:22-204 @7.x] |
 | `AbstractStandardFormController` | `app/bundles/CoreBundle/Controller/AbstractStandardFormController.php` | `indexStandard`, `newStandard`, `editStandard`, `viewStandard`, `cloneStandard`, `deleteStandard`, `batchDeleteStandard`; hooks `beforeEntitySave`, `afterEntitySave`, `afterEntityClone`, `getViewArguments`, `getEntityFormOptions` [code: app/bundles/CoreBundle/Controller/AbstractStandardFormController.php:64-1215 @7.x] |
 | `AjaxController` | `app/bundles/CoreBundle/Controller/AjaxController.php` | `delegateAjaxAction()`, `executeAjaxAction()`, `sendJsonResponse()` [code: app/bundles/CoreBundle/Controller/AjaxController.php:45-137 @7.x] |
-| `AbstractFormStandardType` | `app/bundles/CoreBundle/Form/Type/AbstractFormStandardType.php` | name/description/category/isPublished/publish dates/buttons, `clean_masks` [code: app/bundles/CoreBundle/Form/Type/AbstractFormStandardType.php:40-133 @419a08a9b35] |
+| `AbstractFormStandardType` | `app/bundles/CoreBundle/Form/Type/AbstractFormStandardType.php` | name/description/category/isPublished/publish dates/buttons, `clean_masks` [code: app/bundles/CoreBundle/Form/Type/AbstractFormStandardType.php:40-133 @7.x] |
 | Controller traits | `Controller/{AjaxLookupControllerTrait,FormErrorMessagesTrait,FormThemeTrait,QuickFilterSearchTrait,CategoryListFiltersTrait,VariantAjaxControllerTrait}.php` | [code: app/bundles/CoreBundle/Controller/FormErrorMessagesTrait.php:79-94 @7.x] |
 
 ## 4. Core events (`app/bundles/CoreBundle/CoreEvents.php`)
@@ -156,7 +156,7 @@ Route groups in `config.php`: `main` (`/s`, user login), `public` (no auth), `ap
 |---|---|---|
 | `site_url` | `''` | Router context, https forcing, trailing-slash redirects [code: app/bundles/CoreBundle/Loader/RouteLoader.php:34-41 @7.x] |
 | `secret_key` | `temp` | Encryption key, asset version salt, remember-me key [code: app/bundles/CoreBundle/Helper/EncryptionHelper.php:39 @7.x] |
-| `locale` / `default_timezone` | `en_US` / `UTC` | UI locale and local timezone fallbacks [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:38-56 @419a08a9b35] |
+| `locale` / `default_timezone` | `en_US` / `UTC` | UI locale and local timezone fallbacks [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:39-58 @7.x] |
 | `default_pagelimit` | `30` | List page size [code: app/bundles/CoreBundle/Helper/PageHelper.php:19-25 @7.x] |
 | `max_entity_lock_time` | `0` (never expires) | Entity checkout expiry seconds [code: app/bundles/CoreBundle/Config/config.php:708 @7.x] |
 | `date_format_full/_short/_dateonly/_timeonly` | `F j, Y g:i a T` / `D, M d` / `F j, Y` / `g:i a` | Twig date helpers [code: app/bundles/CoreBundle/Config/config.php:287-290 @7.x] |
@@ -174,7 +174,7 @@ Configuration UI and `local.php` writing: mautic-configuration.
 |---|---|
 | `CorePermissions` (`mautic.security`) | `app/bundles/CoreBundle/Security/Permissions/CorePermissions.php` |
 | `AbstractPermissions` | `app/bundles/CoreBundle/Security/Permissions/AbstractPermissions.php` |
-| `SystemPermissions` (`core:themes`) | `app/bundles/CoreBundle/Security/Permissions/SystemPermissions.php` |
+| `SystemPermissions` (`core:themes`, `core:file_manager` on 7.x, unreleased) | `app/bundles/CoreBundle/Security/Permissions/SystemPermissions.php`; enforced for elFinder by `EventListener/ElFinderSubscriber.php` [code: app/bundles/CoreBundle/EventListener/ElFinderSubscriber.php:30-50 @7.x] [PR #17870] |
 | `VirtualPermissions` interface | `app/bundles/CoreBundle/Security/Permissions/VirtualPermissions.php` |
 | Exceptions (code 403) | `app/bundles/CoreBundle/Security/Exception/` |
 | Stored rows | `UserBundle\Entity\Permission` → `permissions` (`bundle`, `name`, `role_id`, `bitwise`) [code: app/bundles/UserBundle/Entity/Permission.php:79-99 @7.x] |

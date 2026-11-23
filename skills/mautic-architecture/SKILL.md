@@ -13,7 +13,7 @@ plugin end to end is in mautic-plugin-development, and the test harness is in ma
 
 ## Expected behaviour (essentials)
 Stack and layout
-- Mautic 7.2.1 runs on PHP ~8.2, Symfony ~7.4, Doctrine ORM ^2.14 (2.20.9) and DBAL 3.7.x. [code: app/composer.json:15-105 @419a08a9b35]
+- Mautic 7.2.2 and the 7.x branch run on PHP ~8.2, Symfony ~7.4, Doctrine ORM ^2.14 (2.20.9) and DBAL 3.7.x. [code: app/composer.json:18-116 @7.x]
 - The repository root is the `mautic/mautic` project that requires `mautic/core-lib`; core-lib is the `app/` directory and autoloads `Mautic\` from `app/bundles/`, while the root autoloads `MauticPlugin\` from `plugins/`. [code: composer.json:23-27 @7.x] [code: composer.json:106-117 @7.x] [code: app/composer.json:7-16 @7.x]
 - A bundle whose namespace contains `MauticPlugin\` is treated as a plugin and `Mautic\` as core; CoreBundle is always loaded first. [code: app/bundles/CoreBundle/DependencyInjection/Builder/BundleMetadataBuilder.php:55-81 @7.x]
 
@@ -26,6 +26,7 @@ Dependency injection
 
 Events
 - In 7.x events are dispatched by string names held in `*Events.php` constant classes (e.g. `CoreEvents::BUILD_MENU` = `mautic.build_menu`); subscribers key on those constants. [code: app/bundles/CoreBundle/CoreEvents.php @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/plugins/event_listeners.html#available-events]
+- `SearchHelpEvent` is deprecated on 7.x (unreleased on 7.x (7.3.0-rc)): list toolbars no longer show search help or dispatch it, so its listeners never run; supply quick filters through the toolbar `quickFilters` option. [code: UPGRADE-7.0.md:69 @7.x] [PR #18069]
 - In 8.x almost every dispatch uses the event class as the name; `CoreEvents` no longer exists, and a subscriber keyed on a constant that still exists but is no longer dispatched silently never fires. [PR #17157] [PR #17183] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/event_listeners.html#mautic-8-class-name-event-dispatch]
 
 Models and entities
@@ -37,7 +38,7 @@ Models and entities
 - On save, `dateModified` is set only when it is currently null, and `modifiedBy` only when the entity reports changes through `isChanged()`-tracking setters. [code: app/bundles/CoreBundle/Model/FormModel.php:243-293 @7.x]
 - Cloning a `FormEntity` resets `dateAdded`, `checkedOut`, `createdBy` and changes, and sets `isPublished = false`. [code: app/bundles/CoreBundle/Entity/FormEntity.php:215-223 @7.x]
 - Publish status is `unpublished` when the flag is off, `pending` before `publishUp`, `expired` at or after `publishDown`, else `published`; `isPublished()` on dated entities also requires a published (or no) category. [code: app/bundles/CoreBundle/Entity/FormEntity.php:233-251 @7.x] [code: app/bundles/CoreBundle/Entity/FormEntity.php:412-435 @7.x]
-- All `datetime` columns are stored in UTC through `UTCDateTimeType` and read back into PHP's default timezone, which Mautic sets per request from the session `_timezone` or `default_timezone`. [code: app/bundles/CoreBundle/Doctrine/Type/UTCDateTimeType.php:17-71 @7.x] [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:20-40 @419a08a9b35]
+- All `datetime` columns are stored in UTC through `UTCDateTimeType` and read back into PHP's default timezone, which Mautic sets per request from the session `_timezone` or `default_timezone`. Since 7.2.2 the same timezone is also pushed into `DateTimeHelper::setLocalTimezone()`. [code: app/bundles/CoreBundle/Doctrine/Type/UTCDateTimeType.php:17-71 @7.x] [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:31-42 @7.x] [PR #17627]
 - String fields and indexed fields mapped through `ClassMetadataBuilder` are forced to length 191 for utf8mb4. [code: app/bundles/CoreBundle/Doctrine/Mapping/ClassMetadataBuilder.php:370-396 @7.x]
 
 Repositories and list search
@@ -56,6 +57,7 @@ Controllers, locks and AJAX
 - `delegateView()` returns a full page for normal requests and JSON (`newContent`, `route`, `mauticContent`, `flashes`) for XHR requests. [code: app/bundles/CoreBundle/Controller/CommonController.php:218-278 @7.x]
 
 Permissions, translation, logging, errors
+- The elFinder file manager needs `core:file_manager:full` (unreleased on 7.x (7.3.0-rc)); anyone else gets HTTP 403, and the migration grants it to roles that can create or edit Emails, Landing Pages, Assets or Dynamic Content. [code: app/bundles/CoreBundle/EventListener/ElFinderSubscriber.php:30-50 @7.x] [code: app/bundles/CoreBundle/Security/Permissions/SystemPermissions.php:17 @7.x] [PR #17870]
 - Permission strings are `bundle:name:level`; administrators are granted any well-formed string; results are memoised per string for the service lifetime. Detail: mautic-users-and-permissions. [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:195-264 @7.x]
 - Translations load from bundle `Translations/<locale>/*.ini`, then the theme's `translations/`, then downloaded packs, then `translations/overrides/<locale>/`; later files win, the file name is the domain, and `en_US` is always loaded first as the fallback. [code: app/bundles/CoreBundle/Loader/TranslationLoader.php:21-97 @7.x] [code: app/bundles/CoreBundle/Translation/TranslatorLoader.php:14-24 @7.x]
 - The `mautic` log channel writes `var/logs/mautic_<env>.php`, rotating daily and keeping 7 files, at `notice` level unless `debug` is true or the env is `dev`. [code: app/bundles/CoreBundle/Monolog/Handler/FileLogHandler.php:12-25 @7.x]
@@ -108,6 +110,8 @@ Bundle-by-bundle ownership: references/bundle-map.md. Full map: references/code-
 - 6.0: every `MauticFactory` method and `CoreParametersHelper::getParameter()` were removed; the empty `MauticFactory` class itself went in 7.0. [PR #14400] [PR #13837] [code: UPGRADE-7.0.md:16 @7.x]
 - 7.0: updates are CLI-only (`/s/update` removed) and PHP 8.1 support was dropped. [PR #14689]
 - 7.2.0: LESS and Grunt replaced by SCSS with AssetMapper, many classes made `final`, and string `container->get()` banned by a PHPStan rule. [PR #16143] [PR #16754] [PR #16737]
+- 7.2.2: per-request `DateTimeHelper` timezone, a list search with runs of spaces no longer crashes, and theme templates may use Twig's own collection-filter checks. [PR #17627] [PR #17857] [PR #17620]
+- Unreleased on 7.x (7.3.0-rc): Bootstrap 5.3.8 with core markup and JS moved to Bootstrap 5 names and native APIs (BS3 layer kept for plugins), Chart.js 4, elFinder permission, `SearchHelpEvent` deprecated. [PR #17767] [PR #17826] [PR #17827] [PR #17829] [PR #17830] [PR #17917] [PR #17870] [PR #18069]
 - 8.x: PHP 8.4, Symfony 8.1, Doctrine ORM 3.7 / DBAL 4.4, PHPUnit 13; dispatch by event class; `CoreEvents` removed; `ServicePass`, `ModelPass`, `PermissionsPass`, `TwigPass` and the `config.php` `services` group removed; `FormController` removed; core routes become `#[Route]` attributes while plugins keep `config.php` routes. [PR #16993] [PR #17392] [PR #17361] [PR #17004] [PR #17157] [PR #17116] [PR #17133] [PR #17121] [PR #17117] [PR #17470] [PR #17481] [PR #17169]
 - Full detail: references/version-notes.md.
 
@@ -120,7 +124,7 @@ Bundle-by-bundle ownership: references/bundle-map.md. Full map: references/code-
 - `DateTimeHelper::getLocalDateTime()`/`getUtcDateTime()` mutate the wrapped object, while `toLocalString()`/`toUtcString()` do not. [code: app/bundles/CoreBundle/Helper/DateTimeHelper.php:101-150 @7.x]
 - Every form built on `AbstractFormStandardType` HTML-escapes all fields except `description` (strict HTML); allow raw HTML explicitly with a `clean_masks` entry. [code: app/bundles/CoreBundle/Form/Type/AbstractFormStandardType.php:40-44 @7.x]
 - `CoreEvents::FETCH_ICONS` is never dispatched by name; `DashboardSubscriber` dispatches `IconEvent` by class, so `CoreSubscriber::onFetchIcons` does not run for it (open question: regression or intended). [code: app/bundles/CoreBundle/EventListener/DashboardSubscriber.php:99-100 @7.x] [code: app/bundles/CoreBundle/EventListener/CoreSubscriber.php:45 @7.x]
-- Docs say `config.php` service definitions "won't work in Mautic 6"; in 7.2.1 `ServicePass` still processes them (removed only in 8.x). [devdocs: https://devdocs.mautic.org/en/7.2/plugins/autowiring.html] [code: app/bundles/CoreBundle/DependencyInjection/Compiler/ServicePass.php:33-75 @7.x]
+- Docs say `config.php` service definitions "won't work in Mautic 6"; in 7.2.2 and on 7.x `ServicePass` still processes them (removed only in 8.x). [devdocs: https://devdocs.mautic.org/en/7.2/plugins/autowiring.html] [code: app/bundles/CoreBundle/DependencyInjection/Compiler/ServicePass.php:33-75 @7.x]
 - Docs say configuration is written to `app/config/local.php`; since 5.x the loader reads `config/local.php`. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/mautic_vs_symfony.html#custom-configuration] [code: app/bundles/CoreBundle/Loader/ParameterLoader.php:195-216 @7.x]
 - Docs say `trans()` returns an empty string for a missing key; Mautic's decorator delegates to Symfony, which returns the key itself, and only retries with locale `EN` on an `InvalidArgumentException`. [devdocs: https://devdocs.mautic.org/en/7.2/plugin_services/translator.html#using-the-translator-service] [code: app/bundles/CoreBundle/Translation/Translator.php:42-49 @7.x]
 - The 7.2 custom-event docs pass `($eventName, $event)` to `dispatch()`; Symfony's order is `dispatch($event, $eventName)`. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/event_listeners.html#custom-events]

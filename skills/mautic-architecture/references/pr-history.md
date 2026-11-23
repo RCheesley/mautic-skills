@@ -13,8 +13,8 @@
 10. Coverage
 
 ## 1. How to read this file
-Source: merged pull requests on mautic/mautic for the framework layer (core-platform and core-foundation buckets), harvested 2026-10-15.
-Versions are inferred from each PR's base branch and merge date; "unreleased 7.x" means merged on `7.x` after 7.2.1 (milestone 7.3.0-rc), and "8.0 only" means merged on `8.x`.
+Source: merged pull requests on mautic/mautic for the framework layer (core-platform and core-foundation buckets), harvested 2026-10-15, with a delta harvested 2026-11-23.
+Versions are inferred from each PR's base branch and merge date; "unreleased on 7.x (7.3.0-rc)" means merged on `7.x` and in no release yet (7.2.2, released 2026-10-26, is merged into 7.x), "7.2 branch, after 7.2.2" means a fix merged on `7.2` after the 7.2.2 tag (milestone 7.2.3), and "8.0 only" means merged on `8.x`.
 Current behaviour is specified in `behaviour.md`, which is code-verified and wins on any conflict; this file explains why and when.
 
 ## 2. Decisions that shaped current behaviour
@@ -75,7 +75,7 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 - Trusted hosts are validated on save, so a bad pattern is a form error, not a 500. [PR #16006] (v7.1.1)
 - `mautic:motd` runs on Composer hooks and DDEV start [PR #15970] (v7.1) and always exits 0, because non-essential Composer hooks must not block installs [PR #16226] (v7.2.0).
 - The "Support Mautic" menu item is hidden only through `support_mautic_enabled`; making it user-dismissible was rejected. [PR #16337] (v7.2)
-- New shared features go into CoreBundle "following the usual practice" rather than a new bundle; the Privacy Centre (`gravatar_enabled`, default false) lives in CoreBundle and no PrivacyBundle exists. [PR #17781] (unreleased 7.x) [code: app/bundles/CoreBundle/Config/config.php:265 @7.x]
+- New shared features go into CoreBundle "following the usual practice" rather than a new bundle; the Privacy Centre (`gravatar_enabled`, default false) lives in CoreBundle and no PrivacyBundle exists. [PR #17781] (unreleased on 7.x, 7.3.0-rc) [code: app/bundles/CoreBundle/Config/config.php:265 @7.x]
 - Only code shared by more than one bundle belongs in CoreBundle. [PR #4123]
 
 ### Request lifecycle, routing, errors and logging
@@ -84,7 +84,7 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 - The URL generator always uses `site_url`, so cached forms carry the right action URL. [PR #7193] (v2.15.2) That broke `index_dev.php` and subdirectory installs, fixed in [PR #7457] and [PR #7572] (v2.15.2). Originally CLI only: [PR #151] (v1.0).
 - Links generated in subrequests use `site_url` because `RouterSubscriber` reapplies it after Symfony restores the parent context. [PR #17168] (v7.2.0)
 - A kernel-request subscriber applies the user's locale and timezone [PR #2352]; its priority was fixed after timestamps showed in UTC [PR #2397] (v2.2). The user preference overrides the system locale. [PR #11119] (v4.4.1)
-- `EnvironmentSubscriber` sets PHP's default timezone from the session user and pushes it into `DateTimeHelper::setLocalTimezone()` on each authenticated request. [PR #17627] (v7.2.2) [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:20-40 @419a08a9b35]
+- `EnvironmentSubscriber` sets PHP's default timezone from the session user and pushes it into `DateTimeHelper::setLocalTimezone()` on each authenticated request. [PR #17627] (v7.2.2) [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:31-42 @7.x]
 - API and OAuth routes are always registered and a disabled API returns 403 at runtime [PR #1025] (v1.2.1); enabling the API needs no cache clear [PR #11420] (v4.4.2).
 - Core helpers that run on every page must not touch the database before install. [PR #10372] (v4.0)
 - Errors go to Mautic's Monolog log with daily rotation [PR #721] (v1.2); 40x responses are not logged [PR #2881] [PR #3421] (v2.3, v2.6.1).
@@ -168,7 +168,7 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 - The remember-me secret is `%mautic.secret_key%`, static per install, because a random secret logged everyone out [PR #12425] (v5.0). The lifetime fell from 365 to 90 days. [PR #15739] (v7.1) [code: app/bundles/CoreBundle/Config/config.php:282 @7.x]
 - `EncryptionHelper` took ciphers in priority order with lazy re-encryption [PR #5300] (v2.12); only `OpenSSLCipher` remains.
 - Security hardening that could break installs ships opt-in (`validate_remote_domains`) [PR #15868] (v7.1); a vulnerable library still in use goes behind an off-by-default flag first [PR #12416] (v5.0).
-- No third-party calls by default: fonts are self-hosted [PR #13317] (v5.1) and Gravatar is off [PR #17781] (unreleased 7.x).
+- No third-party calls by default: fonts are self-hosted [PR #13317] (v5.1) and Gravatar is off [PR #17781] (unreleased on 7.x, 7.3.0-rc).
 - SAML moved to a mautic/SpBundle fork [PR #13742] (v5.1), then `javer/sp-bundle` [PR #14390] (v6.0).
 
 ### Events and extension points
@@ -176,7 +176,7 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 - `CustomButtonEvent` lets plugins add buttons by priority and fires even where core defines no buttons. [PR #2905] [PR #6844]
 - `CoreEvents::MAINTENANCE_CLEANUP_DATA` lets bundles purge old data. [PR #2024] (v2.1)
 - Form actions and fields dispatch an `eventName`, with `callback` kept for BC. [PR #2451]
-- `SearchCommandEvent`, `SearchQueryEvent` and `SearchHelpEvent` let plugins add list search commands. [PR #17281] (unreleased 7.x)
+- `SearchCommandEvent`, `SearchQueryEvent` and `SearchHelpEvent` let plugins add list search commands. [PR #17281] (unreleased on 7.x, 7.3.0-rc) The shared quick-filters helper then stopped showing search help in list toolbars, so `SearchHelpEvent` is no longer dispatched and is deprecated for removal in 8.0; quick filters go through the toolbar `quickFilters` option. [PR #18069] (unreleased on 7.x, 7.3.0-rc) [code: UPGRADE-7.0.md:69 @7.x]
 - Global search is built from each bundle's `SearchSubscriber`, gated by view permission. [PR #14432] (v6.0)
 - Symfony 5: `dispatch()` returns the event, and tests may not mock Symfony event classes. [PR #12213] (v5.0)
 - Event-class properties are `private` and typed, so plugin subclasses must use getters. [PR #16821] (v7.2)
@@ -184,7 +184,7 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 
 ### Commands and locking
 - `ModeratedCommand` prevents overlapping runs [PR #1139] (v1.2.3), gained PID locking with a file-lock fallback [PR #2998] (v2.3), `--lock_mode` [PR #4337] and `flock` for NFS [PR #7137]. In 7.x `file_lock` is mapped to `flock`. [code: app/bundles/CoreBundle/Command/ModeratedCommand.php:91-93 @7.x]
-- `checkRunStatus()` returns false only for contention and callers exit SUCCESS; an unopenable lock file throws a `RuntimeException` naming the path, because returning false would make all ten callers report SUCCESS. [PR #17188] (unreleased 7.x) The lock file is removed only if it exists. [PR #15257] (v7.1)
+- `checkRunStatus()` returns false only for contention and callers exit SUCCESS; an unopenable lock file throws a `RuntimeException` naming the path, because returning false would make all ten callers report SUCCESS. [PR #17188] (unreleased on 7.x, 7.3.0-rc) The lock file is removed only if it exists. [PR #15257] (v7.1)
 - Subclasses pass every parent dependency to the two-argument constructor. [PR #12303] (v5.0)
 - Commands return an int exit code [PR #11576] using `Command::SUCCESS/FAILURE` [PR #12268] (v5.0); help goes in `#[AsCommand(help:)]` [PR #16723] and leaf commands are `final` [PR #16885] (v7.2).
 - Long-running commands finish the current batch on SIGTERM/SIGINT and exit 143. [PR #14745] (v7.0) `ProcessSignalService` arrived with a resumable `mautic:import`. [PR #12845] (v5.1)
@@ -199,15 +199,21 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 - JS dependency policy is same versions first, then max-minor updates, then majors. [PR #12373] Script order matters: touch-punch loads after jQuery UI. [PR #13216] (v5.0.2)
 - Minification stays on `mrclay/minify`. [PR #12461] (v5.0)
 - Styling moved from LESS and Grunt [PR #12942] [PR #14687] to SCSS through the SymfonyCasts Sass Bundle plus AssetMapper, with Bootstrap 3.4.1 from `twbs/bootstrap-sass`; this was judged not a BC break because plugins ship compiled CSS. [PR #16143] (v7.2.0)
-- Bootstrap 5.3.8 replaces 3.4.1 with a generated BS3 compatibility layer and a JS shim for the BS3 jQuery API, to be removed in Mautic 8; targeting 8.x directly was rejected. [PR #17767] (unreleased 7.x) [code: app/composer.json:113 @7.x]
+- Bootstrap 5.3.8 replaces 3.4.1 with a generated BS3 compatibility layer and a JS shim for the BS3 jQuery API, to be removed in Mautic 8; targeting 8.x directly was rejected. [PR #17767] (unreleased on 7.x, 7.3.0-rc) [code: app/composer.json:113 @7.x]
 - Update ZIPs must contain `assets/build/` and `var/sass/`, and release CI checks it. [PR #17300] (v7.2.1)
+- Core then moved to Bootstrap 5 in stages on top of that layer: PHP markup [PR #17826], Twig markup [PR #17827], JS attributes [PR #17829] and native Bootstrap 5 JS APIs instead of jQuery plugin calls [PR #17830], plus custom utilities renamed to Bootstrap ones while the old definitions stay [PR #17871] [PR #17872] (all unreleased on 7.x, 7.3.0-rc). Reviewers required legacy `data-toggle` markup from plugins to keep working, which is why insert handlers and `onPageLoad` still initialise legacy tooltips and popovers. [PR #17829] [PR #17830] Removing the custom utilities and unused BS3 styles is 8.0 only. [PR #17873] [PR #18266]
+- Chart.js 2.9.4 (unmaintained) was replaced by 4.6.1, keeping the chart look. [PR #17917] [PR #17955] (unreleased on 7.x, 7.3.0-rc) [code: package.json:53 @7.x]
+- Marketplace UI components move into CoreBundle as Twig components (`Resources/views/Components/`), one PR per component rather than per call site: checkbox [PR #17843], text and password inputs on the login page [PR #17909], progress bar for email send and contact import [PR #18217] (unreleased on 7.x, 7.3.0-rc).
 - Remix Icon was installed from npm [PR #13318] (v5.1), vendored into CoreBundle because release packages lack `node_modules` [PR #13758] (v5.1), and hand-patched at 4.6.0 [PR #14520] (v6.0). See section 8 for the 7.x state.
 - Third-party licences go in `LICENSE.txt`. [PR #14868]
-- The file manager is elFinder through FMElfinderBundle [PR #8306] (v3.0).
+- The file manager is elFinder through FMElfinderBundle [PR #8306] (v3.0). Until 7.3 any logged-in user could open it; it now needs `core:file_manager:full`, and the upgrade migration grants it to roles that already create or edit Emails, Landing Pages, Assets or Dynamic Content so existing workflows keep working. [PR #17870] (unreleased on 7.x, 7.3.0-rc) [code: app/bundles/CoreBundle/EventListener/ElFinderSubscriber.php:30-50 @7.x]
+- Plugin discovery at kernel boot skips unreadable plugin directories and logs them with `error_log()`; `trigger_error()` was rejected because Symfony's debug error handler turns the warning into an exception and the boot fails again. [PR #18025] (7.2 branch, after 7.2.2)
 
 ### IP lookup, tracking gate and shared helpers
 - IP lookup services are pluggable through `AbstractRemoteDataLookup`/`AbstractLocalDataLookup` and `mautic:iplookup:download`. [PR #964] [PR #1252] (v1.2.3) MaxMind downloads never crash the app. [PR #16137] (v7.1.3)
 - `IpLookupHelper::isRequestTrackable()` is the single tracking gate: false for bots, HEAD, prefetch, `DNT: 1` and `Sec-GPC: 1`. [PR #15844] (v7.1) Bot detection uses Matomo DeviceDetector and `do_not_track_bots` holds only custom extras. [PR #12750] (v7.1)
+- Form submitters the gate rejects (and kiosk-mode submitters) are treated as untracked: no tracked-contact lookup, no stored IP, referer stripped to the page address [PR #17868], and `IpLookupHelper::markVisitorAsUntracked()` keeps the IP out of the audit, point-trigger and campaign logs the submission writes; checking trackability no longer saves the IP of bots or do-not-track addresses. [PR #17899] (both unreleased on 7.x, 7.3.0-rc) [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:163-174 @7.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:138-145 @7.x]
+- The MaxMind GeoLite2 City download lookup read `location->postalCode`, which is always null, so contacts never got a zip code; it now reads `postal->code`. [PR #18084] (7.2 branch, after 7.2.2)
 - Private ranges map to 127.0.0.1 unless `track_private_ip_ranges` is set. [PR #6422]
 - The HTTP client is Guzzle `mautic.http.client`, replacing `joomla/http`. [PR #9833] (v4.0)
 - Charts aggregate in SQL with a minimum one-hour bucket. [PR #1169] [PR #6222]
@@ -278,8 +284,8 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 | `getPublishedByDateExpression()` | 7.2 | 8.0 planned | ORM/DBAL variants | [PR #16970] |
 | `BuilderEvent::addTokensFromHelper()` | 7.2 | 8.0 planned | `getFormattedTokens()` | [PR #15855] |
 | EmojiMap classes, `EmojiHelper` | 7.2 | 8.0 | none | [PR #16992] [PR #17031] |
-| Bootstrap 3.4.1 as native UI | unreleased 7.x | 8 planned | Bootstrap 5.3.8 | [PR #17767] |
-| Gravatar by default | — | unreleased 7.x | `gravatar_enabled` opt-in | [PR #17781] |
+| Bootstrap 3.4.1 as native UI | unreleased on 7.x (7.3.0-rc) | 8 planned | Bootstrap 5.3.8 | [PR #17767] |
+| Gravatar by default | — | unreleased on 7.x (7.3.0-rc) | `gravatar_enabled` opt-in | [PR #17781] |
 | `TranslatorLoader extends Translator` | — | 8.0 only | `MauticResourceTranslator` | [PR #17393] |
 | `Request::get()`, `ClassMetadataInfo` | — | 8.0 only | Explicit bags, `ClassMetadata` | [PR #17309] [PR #17359] |
 
@@ -317,7 +323,7 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 | Fixtures | "No active transaction" on install under PHP 8 | No DDL inside fixtures | [PR #10787] [PR #11701] | 4.2/5.0 |
 | DB | Install failed obscurely without `pdo_mysql` | Cache build fails with a clear message | [PR #13210] | 5.0.2 |
 | Locking | Second Apply reported "changed by someone else" | Version refreshed after each partial save | [PR #15894] | 7.1 |
-| Commands | Cron died with a `flock()` TypeError or silently succeeded | Permanent errors throw; false means contention | [PR #17188] | unreleased 7.x |
+| Commands | Cron died with a `flock()` TypeError or silently succeeded | Permanent errors throw; false means contention | [PR #17188] | unreleased on 7.x (7.3.0-rc) |
 | Commands | Overlapping cron runs caused duplicate keys | A second run is refused | [PR #1139] [PR #1867] | 1.2.3 |
 | Commands | Unused-IP delete locked tables | Select IDs, delete by PK in batches | [PR #7491] [PR #10710] | 2.15.2/4.1.2 |
 | CSRF | False "invalid CSRF" on Symfony 5 | `isTokenValid()`, not string compare | [PR #12198] | 5.0 |
@@ -340,6 +346,13 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 | Assets | A jquery-ui bump silently broke `libraries.js` | Asset generation fails loudly on a missing source | [PR #14226] | 5.2.0 |
 | Assets | Update 7.1.3 → 7.2.0 broke the UI | Update ZIP ships `assets/build` and `var/sass` | [PR #17300] | 7.2.1 |
 | Assets | Stale `libraries.css` overrode new SCSS | Asset generation clears legacy files | [PR #17597] | 7.2.2 |
+| Search | `a   b` (3+ spaces) fataled with `Attempt to assign property "command" on null`, and the saved search broke the list on every load | Empty terms keep the pending filter slot | [PR #17857] | 7.2.2 |
+| Twig | Nested `<form>` in free HTML/free text fields broke the form editor | Builder previews use the `purify_builder_preview` HTML Purifier policy; published output unchanged | [PR #17796] | 7.2.2 |
+| Boot | An unreadable directory under `plugins/` gave HTTP 500 before logging was up | Skip it and `error_log()` the path | [PR #18025] | 7.2 branch, after 7.2.2 |
+| UI | Sorting `/s/contacts?search=alice` sent `search=alice?tmpl=list` | Keep the query string; wait for a pending search | [PR #18095] | 7.2 branch, after 7.2.2 |
+| IP lookup | MaxMind download lookup never returned a zip code | Read `postal->code` | [PR #18084] | 7.2 branch, after 7.2.2 |
+| Translations | Non-200 language list response logged an empty status code and a PHP warning | Log `getStatusCode()` | [PR #18086] | 7.2 branch, after 7.2.2 |
+| UI | Bootstrap 5 tooltips from plugin-supplied legacy `data-toggle` markup lost their title and placement | Mirror legacy attributes before constructing the instance | [PR #17829] [PR #17830] | unreleased on 7.x (7.3.0-rc) |
 | URLs | Dots in query keys became underscores | Guzzle query parsing | [PR #15725] [PR #15744] | 7.1 |
 | Input | `iconv` notices on emoji input | `mb_check_encoding` detection | [PR #13572] [PR #15006] | 5.2.6 |
 | Sanitiser | Doctype duplicated on every save | Cleaning is idempotent | [PR #9108] [PR #9516] | 4.4.6 |
@@ -367,8 +380,9 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 | 7.1 | MOTD; remember-me 90 days; `isRequestTrackable`; DeviceDetector; MySQL generated stats columns; PHP 8.5 | [PR #15970] [PR #15739] [PR #15844] [PR #12750] [PR #15621] [PR #15721] |
 | 7.2.0 | `services.php` wave; `final` sweep; SCSS and AssetMapper; container smoke test; `#[AutowireIterator]`; container-by-name ban; env precedence; theme sandbox; PHPUnit 11 | [PR #16843] [PR #16754] [PR #16143] [PR #16747] [PR #16776] [PR #16737] [PR #17072] [PR #16238] [PR #16891] |
 | 7.2.1 | Deprecated aliases restored; AssetMapper webroot; update ZIP contents | [PR #17251] [PR #17300] |
-| 7.2.2 | Per-request `DateTimeHelper` timezone; sandbox denylist dropped; `libraries.css` regenerated | [PR #17627] [PR #17620] [PR #17597] |
-| unreleased 7.x | Privacy Centre; search events; Bootstrap 5.3.8 with BS3 layer; lock errors throw | [PR #17781] [PR #17281] [PR #17767] [PR #17188] |
+| 7.2.2 | Per-request `DateTimeHelper` timezone; sandbox denylist dropped; `libraries.css` regenerated; search with runs of spaces fixed; builder-preview purifier | [PR #17627] [PR #17620] [PR #17597] [PR #17857] [PR #17796] |
+| 7.2 branch, after 7.2.2 | Unreadable plugin directories skipped at boot; list sort keeps the query string; MaxMind zip code | [PR #18025] [PR #18095] [PR #18084] |
+| unreleased on 7.x (7.3.0-rc) | Privacy Centre; search events; Bootstrap 5.3.8 with BS3 layer; lock errors throw; core on Bootstrap 5 markup and native JS; Chart.js 4; elFinder permission; favourite themes AJAX action; `SearchHelpEvent` deprecated; untracked submitters keep no IP | [PR #17781] [PR #17281] [PR #17767] [PR #17188] [PR #17830] [PR #17917] [PR #17870] [PR #18138] [PR #18069] [PR #17899] |
 | 8.0 only | ORM 3 preparation; `Request::get()` removed; Symfony 8.1; translator decorator | [PR #17359] [PR #17309] [PR #17392] [PR #17393] |
 
 ## 6. Platform requirements timeline
@@ -389,10 +403,10 @@ Current behaviour is specified in `behaviour.md`, which is code-verified and win
 | 7.0 | ~8.2 (to 8.4.99) | 7.4 | MySQL 8.4.0 / MariaDB 10.11 minimum | oauth-server-bundle 5.x | [PR #14689] [PR #14887] |
 | 7.1 | 8.5 supported | — | — | — | [PR #15721] |
 | 7.2.0 | 8.2 floor (PHPUnit 11) | 7.4 | ORM 2.20, DBAL 3.7 | SCSS, AssetMapper, `twbs/bootstrap-sass` 3.4.1 | [PR #16891] [PR #16143] |
-| unreleased 7.x | — | — | — | Bootstrap 5.3.8 plus BS3 layer | [PR #17767] |
+| unreleased on 7.x (7.3.0-rc) | — | — | — | Bootstrap 5.3.8 plus BS3 layer; Chart.js 4.6.1 | [PR #17767] [PR #17917] |
 | 8.0 only | — | 8.1 | ORM 3, DBAL 4 | — | [PR #17392] [PR #17359] |
 
-The 4.4, 5.0, 6.0 and 7.0 PHP and Symfony constraints were read from `app/composer.json` and `app/release_metadata.json` at those git tags; the 5.0 row corrects the inputs, which said PHP 8.1. The current values are in the 7.x snapshot. [code: app/composer.json:19-82 @419a08a9b35] [code: app/release_metadata.json:4-7 @7.x]
+The 4.4, 5.0, 6.0 and 7.0 PHP and Symfony constraints were read from `app/composer.json` and `app/release_metadata.json` at those git tags; the 5.0 row corrects the inputs, which said PHP 8.1. The current values are in the 7.x snapshot. [code: app/composer.json:18-116 @7.x] [code: app/release_metadata.json:4-7 @7.x]
 
 ## 7. Maintainer norms for this area
 
@@ -404,7 +418,10 @@ BC policy
 - Changing a shared interface or signature, including adding a return type, is a BC break; add strict types to new APIs now. [PR #15481] [PR #15655] [PR #14503]
 - A new option's default keeps the old behaviour [PR #3549] [PR #6422]; adapt code rather than rename user data or identifiers [PR #5548].
 - Build tooling is not a BC break when plugins consume only compiled output. [PR #16143]
-- Large UI migrations ship a compatibility layer in a minor, migrate in stages, and remove the layer in the next major. [PR #17767]
+- Large UI migrations ship a compatibility layer in a minor, migrate in stages, and remove the layer in the next major. [PR #17767] [PR #17826] [PR #17872] [PR #17873]
+- Migrations that backfill data do it in `up()` with DBAL reads and parameterised `addSql()`, never ORM writes in `postUp()`, because Doctrine runs `postUp()` during `--dry-run` too. [PR #17870]
+- Twig component includes pass explicit inputs with `only`, so parent variables such as `required` do not leak into the component. [PR #17843]
+- Diagnostics during kernel boot use `error_log()`, because the debug error handler converts `trigger_error()` warnings into exceptions. [PR #18025]
 - Exception: the 7.2.0 `final` sweep landed in a minor without deprecation notices, weeks after [PR #16323] asked to keep typing changes off classes "meant to be extended". "No children" was judged against core only. [PR #16754] [PR #16883] [PR #16894] [PR #16898] [PR #16885] [PR #16821] The working policy is to extend through events, interfaces and decoration (VirtualPermissions [PR #14016], `EntityValidateEvent` [PR #13812], batch-save events [PR #14503]), not inheritance.
 
 Branches
