@@ -57,22 +57,26 @@ Forms, Points or the API. **DNC** (Do Not Contact) is a `lead_donotcontact` row;
 3 manual. [code: app/bundles/LeadBundle/Entity/DoNotContact.php:17-32 @7.x]
 
 1. **The broadcast cron is not running.** A Segment Email is sent only by `mautic:broadcasts:send` or the UI/API
-   "send". [code: app/bundles/EmailBundle/Entity/EmailRepository.php:892-914 @419a08a9b35]
+   "send". [code: app/bundles/EmailBundle/Entity/EmailRepository.php:924-952 @7.x]
    - Confirm: `php bin/console mautic:broadcasts:send --channel=email --id=<emailId>` by hand; watch the output.
    - Fix: add the cron line. No source gives a frequency. [docs: https://docs.mautic.org/en/7.2/configuration/cron_jobs.html#send-scheduled-broadcasts-segment-emails-cron-job]
 2. **The Email is not eligible.** The cron picks Emails that are published, have `publishUp <= now` (not null) and
-   `publishDown` null or in the future. [code: app/bundles/EmailBundle/Entity/EmailRepository.php:892-914 @419a08a9b35]
+   `publishDown` null or in the future. [code: app/bundles/EmailBundle/Entity/EmailRepository.php:924-952 @7.x]
+   On 7.x (unreleased, 7.3) a translation child is never picked on its own; the parent's broadcast sends it to Contacts
+   whose preferred locale matches. [code: app/bundles/EmailBundle/Entity/EmailRepository.php:938-942 @7.x] [PR #16492]
+   - "Contacts got the translation whatever their locale" on 7.2.x: the cron broadcast the child as its own Email.
+     Fix: upgrade, or unpublish the child and let the parent send. [PR #16492]
    `sendEmailToLists` returns zeros silently for an unpublished Email or one in an unpublished Category. [code: app/bundles/EmailBundle/Model/EmailModel.php:1125-1134 @7.x]
    - Confirm: check Published, the publish-up date and the Category's published state.
 3. **"Contact joined the Segment but never got it": Continue sending is off.** With it off (default), only Contacts
-   whose Segment membership `date_added` is before `publishUp` are sent. [code: app/bundles/EmailBundle/Model/EmailModel.php:1048 @7.x] [code: app/bundles/EmailBundle/Entity/EmailRepository.php:285-288 @419a08a9b35]
+   whose Segment membership `date_added` is before `publishUp` are sent. [code: app/bundles/EmailBundle/Model/EmailModel.php:1049 @7.x] [code: app/bundles/EmailBundle/Entity/EmailRepository.php:1130-1133 @7.x]
    - Confirm: `SELECT date_added FROM lead_lists_leads WHERE lead_id=<id> AND leadlist_id=<segmentId>;` and compare
      with the Email's publish-up. [code: app/bundles/LeadBundle/Entity/ListLead.php:49-68 @7.x]
    - Fix: turn Continue sending on. The cron docs describe the opposite default; code wins. [docs: https://docs.mautic.org/en/7.2/configuration/cron_jobs.html#send-scheduled-broadcasts-segment-emails-cron-job]
 4. **The Contact is excluded by the pending rules.** A Contact is pending only if it is in an included Segment (not
    manually removed), has no email DNC of any reason, has no stat for the Email or its variants/translations, has no
    unsent `message_queue` row for it, is not in an excluded Segment, has not opted out of its Category, and has an
-   email address. [code: app/bundles/EmailBundle/Entity/EmailRepository.php:183-345 @419a08a9b35]
+   email address. [code: app/bundles/EmailBundle/Entity/EmailRepository.php:188-347 @7.x]
    - Confirm: `SELECT * FROM lead_donotcontact WHERE lead_id=<id> AND channel='email';` and
      `SELECT * FROM email_stats WHERE lead_id=<id> AND email_id=<emailId>;` [code: app/bundles/LeadBundle/Entity/DoNotContact.php:17-90 @7.x]
    - Segment Emails never honour "Send to unsubscribed contacts" (`sendToDnc`). [code: app/bundles/EmailBundle/Entity/EmailRepository.php:219-228 @7.x]
@@ -94,7 +98,14 @@ Forms, Points or the API. **DNC** (Do Not Contact) is a `lead_donotcontact` row;
    - Amazon SES: errors such as "Unable to Understand webhook payload" often mean the account is still in the SES
      Sandbox; only verified identities can send. [kb: https://kb.mautic.org/article/mautic-and-amazon-ses-troubleshooting.html]
    - A malformed address creates a BOUNCED DNC "Incorrectly formatted email address". [code: app/bundles/EmailBundle/Model/SendEmailToContact.php:271-286 @7.x]
-9. **Dev or test instance.** DDEV sends to `smtp://localhost:1025`, a mail catcher that never delivers. [code: .ddev/mautic-setup.sh:6,32 @7.x]
+9. **The status says "Sending" but nothing goes out.** On 7.2.x an active Segment Email with pending Contacts shows
+   "Sending" even with no publish-up date and no broadcast cron. On 7.x (unreleased, 7.3) that state is "Ready to send";
+   "Sending" means a scheduled send window. [code: app/bundles/EmailBundle/Entity/Email.php:1448-1472 @7.x] [PR #18011]
+   On 7.2.0–7.2.2 the publish toggle of a "sending" or "sent" Segment Email is invisible (fixed on the 7.2 branch after
+   7.2.2). [PR #18010]
+10. **Failures reported as success (7.2.1 and earlier).** A send failure was ignored when the transport's
+   `flushQueue()` returned true; fixed in 7.2.2. [PR #17666]
+11. **Dev or test instance.** DDEV sends to `smtp://localhost:1025`, a mail catcher that never delivers. [code: .ddev/mautic-setup.sh:6,32 @7.x]
    Tests use `mailer_dsn null://null`. [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:52-61 @7.x]
 
 Not a cause in 7.x: `mautic:emails:send` and the file spool. They were removed in 5.0. [code: UPGRADE-5.0.md:16,104-109 @7.x]
@@ -112,13 +123,24 @@ Detail: mautic-emails, mautic-cron-and-queues.
    - Fix: test with a real Segment send to a test Segment. [kb: https://kb.mautic.org/article/how-to-test-emails-in-mautic.html]
 3. **The open was filtered.** Opens are ignored when the IP is untrackable or the bot heuristic fires (at least 60%
    of: opened within 2 s of sending, blocked IP, bot user agent). [code: app/bundles/EmailBundle/Model/EmailModel.php:451-461 @7.x] [code: app/bundles/EmailBundle/Helper/BotRatioHelper.php:35-85 @7.x]
-   Untrackable includes `DNT: 1`, `Sec-GPC: 1`, prefetch and IPs in `do_not_track_ips`. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:134-167,276-309 @419a08a9b35]
+   Untrackable includes `DNT: 1`, `Sec-GPC: 1`, prefetch and IPs in `do_not_track_ips`. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:257-290,315-352 @7.x]
+   On 7.x (unreleased, 7.3) an open is also ignored when the Contact turned activity tracking off: the image loads but
+   nothing is recorded and "Opens email" does not fire. [code: app/bundles/EmailBundle/Model/EmailModel.php:443-448,686-691 @7.x] [PR #18006]
+   - Confirm: `SELECT purpose, allowed, source FROM lead_tracking_preferences WHERE lead_id=<id>;` [code: app/bundles/LeadBundle/Entity/TrackingPreference.php:38-61 @7.x]
 4. **No pixel.** The open pixel is appended only when `mailer_append_tracking_pixel` is on. [code: app/bundles/EmailBundle/Helper/MailHelper.php:813-823 @7.x]
 5. **Links not rewritten.** Links are rewritten to `/r/<redirect>` unless `disable_trackable_urls` is on or the link
-   has `data-mautic-disable-tracking="true"`. [code: app/bundles/EmailBundle/EventListener/BuilderSubscriber.php:228-317 @7.x] [code: app/bundles/PageBundle/Model/TrackableModel.php:740-747 @419a08a9b35]
+   has `data-mautic-disable-tracking="true"`. [code: app/bundles/EmailBundle/EventListener/BuilderSubscriber.php:228-317 @7.x] [code: app/bundles/PageBundle/Model/TrackableModel.php:762-773 @7.x]
+   - A link that opts out with that attribute but shares a prefix with a tracked link (`https://example.com/` and
+     `https://example.com/contact/`) is rewritten anyway, into a broken redirect, on 7.2.x. Fixed on 7.x (unreleased,
+     7.3): the replacement pass skips URLs on the do-not-track list. [code: app/bundles/PageBundle/Model/TrackableModel.php:324-343 @7.x] [PR #16354]
    - The 7.2 user docs spell the attribute `mautic:disable:tracking`; code checks `mautic:disable-tracking`. [docs: https://docs.mautic.org/en/7.2/channels/emails.html#tracking-links-in-emails] [code: app/bundles/PageBundle/Model/TrackableModel.php:764 @7.x]
    - With SendGrid, turn off SendGrid's own click and open tracking. [kb: https://kb.mautic.org/article/how-to-use-the-sendgrid-api-in-mautic-5-with-symfony-mailer.html]
-6. **The click was a bot or untrackable.** No hit is recorded when `ct` points to a stat flagged as a bot click or the
+6. **Gmail or Outlook plugin opens are never recorded.** On 7.2.0–7.2.2, `/plugin/Gmail/tracking.gif` (and Outlook once
+   migrated) returns HTTP 500 `Call to undefined method ...GmailIntegration::getDecryptedApiKeys()`, so no open and no
+   Contact is recorded. Fixed on the 7.2 branch after 7.2.2 and on 7.x: keys are read through the IntegrationsHelper.
+   [code: app/bundles/EmailBundle/Controller/PublicController.php:906-921 @7.x] [PR #18061] [PR #18065]
+   - Confirm: the log shows that error for each signed tracking request.
+7. **The click was a bot or untrackable.** No hit is recorded when `ct` points to a stat flagged as a bot click or the
    request is untrackable. [code: app/bundles/PageBundle/Model/PageModel.php:410-416,427-433,460-463 @7.x]
 
 Note: the first valid open sets `is_read` once; later opens only append `open_details`. [code: app/bundles/EmailBundle/Model/EmailModel.php:463-557 @7.x]
@@ -183,7 +205,7 @@ Detail: mautic-segments.
    [code: app/bundles/CampaignBundle/Executioner/EventExecutioner.php:258-263 @7.x] Anonymous Contacts never fire
    decisions. [code: app/bundles/CampaignBundle/Executioner/RealTimeExecutioner.php:168-176 @7.x]
    - Testing while logged in to Mautic does not trigger page-visit decisions; use a private window. [docs: https://docs.mautic.org/en/7.2/campaigns/troubleshooting_campaigns.html#page-visits-aren-t-recognized]
-   - A decision fires once per rotation. [code: app/bundles/CampaignBundle/Entity/EventRepository.php:56-111 @419a08a9b35]
+   - A decision fires once per rotation. [code: app/bundles/CampaignBundle/Entity/EventRepository.php:56-129 @7.x]
    - "Visits a page" URL patterns also match as substrings. [code: app/bundles/EmailBundle/Helper/UrlMatcher.php:10-64 @7.x]
    - With an async `hit` transport, decisions run only after `messenger:consume` runs. [code: app/bundles/PageBundle/Model/PageModel.php:465-507 @7.x]
 6. **The "no" path never runs.** It runs in the trigger's inactive phase once the earliest "no" delay has elapsed.
@@ -199,7 +221,10 @@ Detail: mautic-segments.
 9. **Events added later did not run for existing Contacts.** `mautic:campaigns:resume-stuck` does not run them for
    Contacts who already passed that point. [code: app/bundles/CampaignBundle/Entity/CampaignRepository.php:743-744 @7.x]
 10. **A condition was false at the moment it was reached.** Conditions are evaluated immediately; Contacts do not wait.
-    [code: app/bundles/CampaignBundle/Executioner/Event/ConditionExecutioner.php:33-84 @419a08a9b35]
+    [code: app/bundles/CampaignBundle/Executioner/Event/ConditionExecutioner.php:33-85 @7.x]
+    - An action straight after a condition ran before the condition had settled its yes/no path, and the Contact could
+      stick. On 7.x (unreleased, 7.3) a child event is pending only when its parent condition's log matches its path.
+      [code: app/bundles/CampaignBundle/Entity/EventRepository.php:71-94 @7.x] [code: app/bundles/CampaignBundle/Executioner/Event/ConditionExecutioner.php:56 @7.x] [PR #16513]
 11. **The trigger is locked.** It prints "Script in progress" and exits 0. See §15. [code: app/bundles/CoreBundle/Command/ModeratedCommand.php:113-117 @7.x]
 
 Detail: mautic-campaigns, mautic-cron-and-queues.
@@ -211,17 +236,22 @@ Detail: mautic-campaigns, mautic-cron-and-queues.
 ### Not tracked
 1. **You are logged in to Mautic.** Logged-in Users, `Blocked-Tracking` cookies, bots and console contexts are never
    tracked. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-60 @7.x]
-2. **The browser opted out.** `DNT: 1` or `Sec-GPC: 1` is never tracked. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:276-309 @419a08a9b35]
+2. **The browser opted out.** `DNT: 1` or `Sec-GPC: 1` is never tracked. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:276-286 @7.x]
+   On 7.x (unreleased, 7.3) `/mtc` and `/mtc/event` also stop recognising such a visitor from an old cookie: they
+   return null IDs, set no cookie and store no IP. [code: app/bundles/PageBundle/Controller/PublicController.php:424-434,586-593 @7.x] [PR #18013]
 3. **Private-network IP.** Not tracked unless `track_private_ip_ranges` is true. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:58 @7.x]
 4. **CORS blocks `/mtc/event`.** The script then falls back to the third-party-cookie pixel. Allow the embedding origin.
    [code: app/bundles/PageBundle/EventListener/BuildJsSubscriber.php:76-128 @7.x] CORS is restricted by default.
    [code: app/bundles/CoreBundle/Config/config.php:702 @7.x]
-5. **Only the essential script loaded.** `/mautic-essential.js` alone makes no tracking request. [code: app/bundles/PageBundle/Resources/views/FormTheme/Config/_config_trackingconfig_widget.html.twig:32-85 @419a08a9b35]
+5. **Only the essential script loaded.** `/mautic-essential.js` alone makes no tracking request. [code: app/bundles/PageBundle/Resources/views/FormTheme/Config/_config_trackingconfig_widget.html.twig:27-85 @7.x]
 6. **Async `hit` transport.** Hits stay bare rows until `messenger:consume hit` runs. [code: app/bundles/PageBundle/Model/PageModel.php:468-529 @7.x]
+7. **`/mtc/event` returns HTTP 500 (`TypeError` for `TrackingEvent`).** On 7.2.x this happens while the short-lived
+   `Blocked-Tracking` cookie is set; 7.x (unreleased, 7.3) returns `{"success":0}` instead. [code: app/bundles/PageBundle/Controller/PublicController.php:436-439 @7.x] [PR #18028]
 
 ### Anonymous duplicates
 - A new anonymous Contact is created for every untracked browser; `track_contact_by_ip` (default off) reuses the
-  newest Contact with the same IP. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:191-293 @419a08a9b35]
+  newest Contact with the same IP. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:191-301 @7.x] On 7.x
+  (unreleased, 7.3) an untrackable visitor gets an unsaved Contact with no IP lookup. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:247-275 @7.x] [PR #17868]
 - The JS-written `mautic_device_id` is a session cookie; only the server cookie lasts a year. [code: app/bundles/CoreBundle/EventListener/BuildJsSubscriber.php:42-231 @7.x]
 - The Contacts list hides anonymous Contacts unless the search contains `is:anonymous`. [code: app/bundles/LeadBundle/Controller/LeadController.php:192-206 @7.x]
 - Clean up with `mautic:maintenance:cleanup`; it deletes with raw SQL and fires no delete events or webhooks.
@@ -230,7 +260,8 @@ Detail: mautic-campaigns, mautic-cron-and-queues.
 
 ### Unexpected merges
 - A form submission whose unique identifier matches an existing Contact merges the tracked anonymous Contact into it.
-  [code: app/bundles/FormBundle/Model/SubmissionModel.php:1027-1066 @419a08a9b35]
+  [code: app/bundles/FormBundle/Model/SubmissionModel.php:1049-1088 @7.x] On 7.x (unreleased, 7.3) this merge does not
+  happen for kiosk forms or untrackable submitters. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1064-1066 @7.x] [PR #17868]
 - A tracking hit with publicly-updatable unique-identifier fields in the query merges the anonymous Contact into the
   identified one. [code: app/bundles/LeadBundle/Helper/ContactRequestHelper.php:45-200 @7.x]
 - API PATCH with identifiers matching another Contact merges that Contact into the URL Contact. [code: app/bundles/LeadBundle/Controller/Api/LeadApiController.php:616-628 @7.x]
@@ -247,18 +278,30 @@ Detail: mautic-pages-and-tracking, mautic-contacts.
 1. **A field error stopped everything.** Any field error persists nothing: no Contact update, no submission, no
    actions. [code: app/bundles/FormBundle/Model/SubmissionModel.php:336-338 @7.x]
 2. **The form is unpublished, outside its window or over its limit.** `/form/submit` checks exists, publish window,
-   published state, then submission limit. [code: app/bundles/FormBundle/Controller/PublicController.php:54-245 @419a08a9b35]
-   Manually copied HTML of an unpublished form still renders but submit refuses it. [code: app/bundles/FormBundle/Controller/PublicController.php:588-610 @419a08a9b35]
+   published state, then submission limit. [code: app/bundles/FormBundle/Controller/PublicController.php:183-271 @7.x]
+   Manually copied HTML of an unpublished form still renders but submit refuses it; the automatic JS embed returns
+   nothing for it. [code: app/bundles/FormBundle/Controller/PublicController.php:660-674 @7.x]
 3. **No field is mapped to a Contact field.** Then no Contact is created or updated; from a logged-in admin browser
    `lead_id` is NULL. [code: app/bundles/FormBundle/Model/SubmissionModel.php:282-287 @7.x] [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:51-60 @7.x]
 4. **You tested while logged in.** Logged-in Users are not tracked, so the submission attaches to nobody. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-60 @7.x]
 5. **The email conflicts with the tracked Contact.** If it matches nobody, a new Contact is created and the tracked one
-   is not overwritten. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1068-1089 @419a08a9b35]
+   is not overwritten. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1090-1110 @7.x]
 6. **Empty values.** Empty mapped values never clear Contact fields. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1127 @7.x]
-7. **Kiosk mode.** It ignores the tracked Contact and reuses an email match without merging. [code: app/bundles/FormBundle/Model/SubmissionModel.php:935-955 @419a08a9b35]
-8. **An action threw `ValidationException`.** The saved submission is deleted; Emails already sent stay sent. [code: app/bundles/FormBundle/Model/SubmissionModel.php:377-388 @7.x]
-9. **The Campaign did not pick it up.** A submission adds the Contact to every published Campaign that uses the form as
-   a source. [code: app/bundles/FormBundle/Model/SubmissionModel.php:383-389 @419a08a9b35]
+7. **Kiosk mode.** It ignores the tracked Contact and reuses an email match without merging. [code: app/bundles/FormBundle/Model/SubmissionModel.php:963-976 @7.x]
+   On 7.x (unreleased, 7.3) kiosk submissions also store no IP address or device ID. [PR #17847]
+8. **The submitter is untrackable (7.x, unreleased 7.3).** With `DNT: 1`, `Sec-GPC: 1`, a bot or a prefetch request the
+   submission is treated like kiosk mode: no tracked-Contact lookup, no IP, device or cookie, no merge into the tracked
+   Contact, and a form with no Contact field creates no anonymous Contact. Mapped fields still update the matched
+   Contact. [code: app/bundles/FormBundle/Model/SubmissionModel.php:138-145,318-319,423-429 @7.x] [PR #17868]
+   - Confirm: test from a browser with DNT and GPC off, in a private window.
+9. **An action threw `ValidationException`.** The saved submission is deleted; Emails already sent stay sent. [code: app/bundles/FormBundle/Model/SubmissionModel.php:377-388 @7.x]
+10. **The Campaign did not pick it up.** A submission adds the Contact to every published Campaign that uses the form as
+   a source. [code: app/bundles/FormBundle/Model/SubmissionModel.php:396-403 @7.x] On 7.x this needs a Contact; an
+   untrackable submission with no Contact field joins no Campaign. [PR #17868]
+11. **The visitor is not sent back after submitting (7.2.2 and later).** The `return` URL, or the Referer, is used only
+   when it is relative, same-origin with `site_url`, or matches a CORS Valid Domains entry; otherwise it is dropped,
+   so "Return to page" and error redirects do nothing. [code: app/bundles/FormBundle/Controller/PublicController.php:106-178,276-286,532-560 @7.x] [PR #16507]
+   - Fix: add the embedding site to Configuration > System Settings > CORS Valid Domains. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html]
 
 Not a cause: `saveResult=false` keeps the value out of results but still updates mapped fields. [code: app/bundles/FormBundle/Model/SubmissionModel.php:304-306 @7.x]
 Detail: mautic-forms.
@@ -308,8 +351,9 @@ Errors use `{"errors":[{"code","message","details","type"}]}`. [code: app/bundle
 | 400 `invalid_client` | Wrong client id/secret, or grant not allowed (`client_credentials` only when an admin created the client; `password` never) | Recreate the client as an admin | [code: app/bundles/ApiBundle/Controller/ClientController.php:207-211 @7.x] |
 | 400 | Validation failure, or batch over `api_batch_max_limit` (200) | Read `details` | [code: app/bundles/ApiBundle/Controller/CommonApiController.php:605-617 @7.x] [code: app/bundles/ApiBundle/Controller/FetchCommonApiController.php:728-736 @7.x] |
 | 422 | Validation with a 422 cause, for example unpublishing a Segment that a Campaign or Segment uses | Remove the dependency first | [code: app/bundles/ApiBundle/Controller/CommonApiController.php:605-617 @7.x] [code: app/bundles/LeadBundle/EventListener/SegmentSubscriber.php:73-115 @7.x] |
-| 409 | Entity checked out; only Emails implement this in 7.2.1. Deleting a field used in a Segment filter is also 409 | Release the lock / remove the filter | [code: app/bundles/ApiBundle/Controller/CommonApiController.php:491-520 @7.x] [code: app/bundles/LeadBundle/Field/EventListener/LeadFieldSubscriber.php:33-52 @7.x] |
+| 409 | Entity checked out; only Emails implement this on 7.x. Deleting a field used in a Segment filter is also 409 | Release the lock / remove the filter | [code: app/bundles/ApiBundle/Controller/CommonApiController.php:491-520 @7.x] [code: app/bundles/LeadBundle/Field/EventListener/LeadFieldSubscriber.php:33-52 @7.x] |
 | 500 | A `where` clause missing `col` or `expr` | Fix the clause | [code: app/bundles/CoreBundle/Entity/CommonRepository.php:1610-1706 @7.x] |
+| 401 "Full authentication is required" on a public path such as `/api-keys` | 7.2.0–7.2.2 matched access control on `^/api`, not the `/api/` boundary | Fixed on the 7.2 branch after 7.2.2; avoid such paths until then | [PR #18058] |
 
 Silent traps (no error at all):
 - `publishedOnly` and `searchFilter` are ignored over HTTP; use `published` and `search`. [code: app/bundles/ApiBundle/Controller/FetchCommonApiController.php:167 @7.x]
@@ -345,6 +389,15 @@ or database issues. Check the Mautic log first, then the web-server log. [kb: ht
 7. **Every request hangs instead.** A crashed asset generation leaves `media/generation_in_progress.txt`; every request
    spin-waits on it. Delete the file. [code: app/bundles/CoreBundle/Helper/AssetGenerationHelper.php:121-123 @7.x]
 8. **Locked out, not offline.** Wrong `trusted_hosts` lock you out; fix them in local.php. [code: app/middlewares/TrustMiddleware.php:38-40 @7.x]
+9. **Known 500s fixed after 7.2.2** (on the 7.2 branch, not yet in a release):
+   - Every page fails with `ParameterNotFoundException` after saving Configuration with a monitored-inbox password that
+     contains `%`: the resolved value was written back to local.php. Fix by hand: double each `%` in that password in
+     `config/local.php`. [PR #18018]
+   - HTTP 500 before any Mautic log line: an unreadable directory under `plugins/` broke bundle discovery at boot; check
+     the PHP error log and the directory permissions. [PR #18025]
+   - Editing a User whose recent activity includes a Role change returns 500. [PR #17855]
+   - On 7.x (unreleased, 7.3) System Settings no longer returns 500 in dev when a third-party bundle's config has no
+     `parameters` key. [PR #18045]
 
 Detail: mautic-configuration, mautic-architecture, mautic-dev-environment.
 
@@ -370,6 +423,13 @@ Detail: mautic-configuration, mautic-architecture, mautic-dev-environment.
 7. **A migration re-ran or skipped unexpectedly.** `preUp()` skips only when every assertion is true. [code: app/bundles/CoreBundle/Doctrine/PreUpAssertionMigration.php:26-45 @7.x]
    Green functional tests do not prove a migration works. [code: app/bundles/CoreBundle/Test/AbstractMauticTestCase.php:159 @7.x]
 8. **Plugin schema did not update.** Plugin migrations run only when the plugin `version` was bumped. See §12. [code: app/bundles/PluginBundle/Helper/ReloadHelper.php:67-95 @7.x]
+9. **Known 7.1 → 7.2 migration failures**, fixed on the 7.2 branch after 7.2.2 (not in a release or on 7.x yet):
+   - `Version20211209022550` fails with more than one Role (role rows hydrated as `[Role, user_count]`). [PR #17274]
+   - `Version20260616075543` fails creating the `point_insights` foreign key when `categories.id` is a signed `INT`
+     (MySQL SQLSTATE 3780, MariaDB errno 150), and can leave the table without its key. [PR #17907]
+   - Until the next 7.2 release ships, the PR holds the corrected migration.
+10. **`--dry-run` changed data (7.x only).** `Version20260715144000` backfilled campaign event logs even under
+   `--dry-run`; fixed on 7.x before release. [PR #18164]
 
 Detail: mautic-upgrades-and-versions, mautic-contributing.
 
@@ -383,11 +443,13 @@ Detail: mautic-upgrades-and-versions, mautic-contributing.
    https route forcing need `bin/console cache:clear` after a manual edit. [code: app/config/config.php:35-44 @7.x] [code: app/AppKernel.php:316-334 @7.x]
 3. **`cache:clear` itself fails** with class-not-found errors: delete `var/cache/<env>`. [devdocs: https://devdocs.mautic.org/en/7.2/plugins/cache.html]
 4. **CSS/JS missing.** `composer generate-assets` fails when `node_modules/` or the CKEditor bundle is missing.
-   [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:51-120 @419a08a9b35] Generated assets are
+   [code: app/bundles/CoreBundle/Command/GenerateProductionAssetsCommand.php:51-64 @7.x] Generated assets are
    gitignored, so a git-only deploy lacks them. [code: .gitignore:66-105 @7.x]
 5. **Email/Page builder does not load.** A failed GrapesJS build only warns during `composer install`; fix with
    `composer gjs-build`. [code: build/gjs_build.php:5-13 @7.x] Without `dist/manifest.json` the builder is not
    injected (warning in the log). [code: plugins/GrapesJsBuilderBundle/EventSubscriber/AssetsSubscriber.php:36-91 @7.x]
+   Composer releases before 7.2.2 shipped without the compiled GrapesJS assets; 7.2.2 builds them into the release.
+   [PR #17831]
 6. **Requests hang.** Delete a stale `media/generation_in_progress.txt`. [code: app/bundles/CoreBundle/Helper/AssetGenerationHelper.php:121-123 @7.x]
 7. **Proxy or permission errors.** Files written by a different user; see §9.2. [docs: https://docs.mautic.org/en/7.2/troubleshooting/file_ownership_permissions.html]
 8. **Dashboards, Forms or Focus break with Redis.** `cache_adapter_tag_aware` must name a tag-aware adapter. [code: app/bundles/CacheBundle/Cache/CacheProviderTagAware.php:11-17 @7.x]
@@ -415,7 +477,13 @@ Detail: mautic-dev-environment, mautic-cron-and-queues, mautic-theme-development
    and `mautic.sync_integration`/`mautic.authentication_integration` must be tagged by hand. [code: app/bundles/IntegrationsBundle/Helper/IntegrationsHelper.php:87-98 @7.x] [code: app/bundles/IntegrationsBundle/DependencyInjection/IntegrationsExtension.php:26-33 @7.x]
 8. **Marketplace install refused.** It needs `composer_updates` true (403 otherwise); pages 404 when `marketplace_enabled`
    is false. [code: app/bundles/MarketplaceBundle/Controller/AjaxController.php:52-225 @7.x]
-9. **Long-running workers miss it.** Form components and channels are cached statically per process. [code: app/bundles/FormBundle/Model/FormModel.php:637-661 @7.x] [code: app/bundles/ChannelBundle/Model/MessageModel.php:30,108 @7.x]
+9. **First reload fails with "Table 'messenger_messages' already exists"** when Doctrine queueing is on and the plugin
+   adds tables: the tables are created without foreign keys and the plugin is not registered; a second reload looks
+   fine but never adds the keys. Fixed on 7.x (unreleased, 7.3). [PR #17977]
+   - Confirm: `SHOW CREATE TABLE <plugin table>` has no `CONSTRAINT` lines.
+10. **Every request returns 500 after adding a plugin directory.** An unreadable directory under `plugins/` broke
+   kernel boot on 7.2.0–7.2.2; fixed on the 7.2 branch after 7.2.2. Fix the permissions. [PR #18025]
+11. **Long-running workers miss it.** Form components and channels are cached statically per process. [code: app/bundles/FormBundle/Model/FormModel.php:637-661 @7.x] [code: app/bundles/ChannelBundle/Model/MessageModel.php:30,108 @7.x]
 
 Detail: mautic-plugin-development, mautic-integrations.
 
@@ -504,13 +572,13 @@ Detail: mautic-users-and-permissions.
 ## 17. 8.x: an event listener silently never fires
 
 - On 8.x almost every core event dispatches by event class. A subscriber keyed on a removed constant fatals; one keyed
-  on a kept constant or raw string silently receives nothing. [code: 8x-changes §3.1-3.2 @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/event_listeners.html#mautic-8-class-name-event-dispatch]
+  on a kept constant or raw string silently receives nothing. [code: UPGRADE-8.0.md:860-882 @8.x] [code: app/bundles/ReportBundle/Model/ReportModel.php:206-207 @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/plugins/event_listeners.html#mautic-8-class-name-event-dispatch]
 - Examples of kept constants that load fine and never fire: `FormEvents::FORM_ON_BUILD`, `PointEvents::POINT_ON_BUILD`,
-  `ReportEvents::REPORT_ON_BUILD`, `LeadEvents::TIMELINE_ON_GENERATE`. [code: 8x-changes §3.2 @8.x]
+  `ReportEvents::REPORT_ON_BUILD`, `LeadEvents::TIMELINE_ON_GENERATE`. [code: app/bundles/FormBundle/Model/FormModel.php:640-642 @8.x] [code: app/bundles/PointBundle/Model/PointModel.php:162-163 @8.x] [code: app/bundles/ReportBundle/ReportEvents.php:46 @8.x] [code: app/bundles/LeadBundle/Model/LeadModel.php:2059-2061 @8.x]
 - Fix: subscribe with the event class name. Names a plugin defines itself (campaign `batchEventName`, decision
-  `eventName`, form action `eventName`) stay string-dispatched. [code: 8x-changes §3.1 @8.x]
+  `eventName`, form action `eventName`) stay string-dispatched. [code: app/bundles/CampaignBundle/Executioner/Dispatcher/ActionDispatcher.php:40-41 @8.x] [code: app/bundles/CampaignBundle/Executioner/Dispatcher/DecisionDispatcher.php:27 @8.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:942 @8.x]
 - Also on 8.x: the `services` array in `config.php` is no longer read, and `--lock_mode=file_lock` is an error.
-  [code: 8x-changes §4 Core "services group ... no longer read" @8.x] [code: UPGRADE-8.0.md:358 @8.x]
+  [code: UPGRADE-8.0.md:205 @8.x] [code: app/bundles/CoreBundle/DependencyInjection/Builder/Metadata/ConfigMetadata.php:30-52 @8.x] [code: UPGRADE-8.0.md:358 @8.x]
 - On 7.x, a listener that never fires usually listens to an event core never dispatches, for example
   `EMAIL_FAILED`/`EMAIL_RESEND`, `WEBHOOK_PRE_EXECUTE`, `ApiEvents::CLIENT_PRE_SAVE`, `PluginEvents::ON_FORM_SUBMIT_ACTION_TRIGGERED`.
   [code: app/bundles/EmailBundle/EventListener/EmailSubscriber.php:126-174 @7.x] [code: app/bundles/WebhookBundle/WebhookEvents.php:73-82 @7.x] [code: app/bundles/ApiBundle/Model/ClientModel.php:101-129 @7.x] [code: app/bundles/PluginBundle/PluginEvents.php:119 @7.x]

@@ -52,6 +52,11 @@ the Vale, Google and Mautic styles at level suggestion. [docs: https://github.co
 
 ## 4. Terminology
 See terminology.md for the full FeatureList, WordList and accepted vocabulary tables.
+- Since the 2026-10-15 docs snapshot the 7.2 FeatureList also capitalises `note`/`notes` as Note/Notes; no other
+  style file changed. [docs: https://github.com/mautic/user-documentation/blob/7.2/.github/styles/Mautic/FeatureList.yml]
+- The KB crawl of 2026-11-23 added no contributing articles; the testing article still says two testers and Gitpod
+  with admin/mautic.
+  [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html]
 
 ## 5. 8.0 documentation changes relevant to contributors
 - Dev docs 8.0 add the plugin porting guide `plugins/update_m7_to_m8` and switch all event examples to event classes.

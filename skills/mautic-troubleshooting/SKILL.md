@@ -5,8 +5,8 @@ description: "Symptom-first diagnostic guide for Mautic 7.x (with 8.x notes). Fo
 # Mautic troubleshooting
 
 ## Scope
-This skill maps observed symptoms to causes, checks and fixes across all Mautic areas, for Mautic 7.2.1 with 8.x
-notes. It routes to the area skills for the underlying behaviour and does not repeat their full specifications.
+This skill maps observed symptoms to causes, checks and fixes across all Mautic areas, for Mautic 7.x (7.2.2 plus the
+unreleased 7.3 work on the `7.x` branch) with 8.x notes. It routes to the area skills for the underlying behaviour and does not repeat their full specifications.
 Development-environment and test failures are covered only briefly (see mautic-testing, mautic-dev-environment and the
 upstream `.agents/skills/mautic-dev/SKILL.md`). [code: .agents/skills/mautic-dev/SKILL.md @7.x]
 
@@ -50,7 +50,9 @@ Start with the first check; the full cause list for each symptom is in reference
 - With a queue DSN "sent" means "queued"; nothing marks those stats failed later. [code: app/bundles/EmailBundle/Helper/MailHelper.php:409-421 @7.x]
 - Logged-in Mautic Users, `Blocked-Tracking` cookies, bots and console contexts are never tracked; test public
   behaviour in a private window. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-60 @7.x]
-- `DNT: 1` and `Sec-GPC: 1` requests are never tracked. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:276-309 @419a08a9b35]
+- `DNT: 1` and `Sec-GPC: 1` requests are never tracked. [code: app/bundles/CoreBundle/Helper/IpLookupHelper.php:276-286 @7.x]
+  On 7.x (unreleased, 7.3) such visitors, bots and prefetches are also not recognised from old cookies, and their form
+  submissions are not linked to the tracked Contact. [PR #18013] [PR #17868]
 - Anonymous Contacts never fire Campaign decisions. [code: app/bundles/CampaignBundle/Executioner/RealTimeExecutioner.php:168-176 @7.x]
 - A manually removed Contact is never re-added by a Segment rebuild or a Campaign rebuild. [code: app/bundles/LeadBundle/Segment/Query/ContactSegmentQueryBuilder.php:137-156 @7.x] [code: app/bundles/CampaignBundle/Membership/Action/Adder.php:66-82 @7.x]
 - The Mautic log is `var/logs/mautic_<env>.php`, rotated daily, 7 files, `notice` and above unless `debug`. [code: app/bundles/CoreBundle/Monolog/Handler/FileLogHandler.php:12-25 @7.x]
@@ -61,7 +63,7 @@ Start with the first check; the full cause list for each symptom is in reference
 - Admins pass every well-formed permission check, so permission bugs only show for non-admins. [code: app/bundles/CoreBundle/Security/Permissions/CorePermissions.php:220-235 @7.x]
 - Plugin load failures are silent: a wrong directory/namespace pair or a too-high `MINIMUM_MAUTIC_VERSION` drops the
   plugin with no error. [code: app/AppKernel.php:170-181 @7.x]
-- On 8.x a subscriber keyed on a kept constant loads fine and never fires. [code: 8x-changes §3.2 @8.x]
+- On 8.x a subscriber keyed on a kept constant loads fine and never fires. [code: app/bundles/ReportBundle/ReportEvents.php:46 @8.x] [code: app/bundles/ReportBundle/Model/ReportModel.php:206-207 @8.x]
 
 ## Where it lives
 | Concern | Location |
@@ -103,8 +105,17 @@ Start with the first check; the full cause list for each symptom is in reference
 - 6.0 removed the legacy builder; disabling GrapesJS does not bring it back. [code: app/bundles/CoreBundle/Assets/js/4.builder.js:1-3 @7.x]
 - 7.x: the Queue Settings "Send test message" button cannot report success. [code: UPGRADE-7.0.md:15 @7.x]
 - 7.x: `index_dev.php` is gone; dev mode is `APP_ENV=dev`. [code: .ddev/.env.local.dist @7.x]
-- 8.x: core events dispatch by class; listeners on constants go silent. [code: 8x-changes §3.1-3.2 @8.x]
-- 8.x: the `services` array in `config.php` is no longer read. [code: 8x-changes §4 Core "services group ... no longer read" @8.x]
+- 7.2.2 (2026-10-26): Form return URLs must be relative, same-origin or in CORS Valid Domains; `pushleadactivity`
+  pushes again; send failures are no longer ignored; Composer releases ship the GrapesJS assets.
+  [PR #16507] [PR #17815] [PR #17666] [PR #17831]
+- Fixed on the 7.2 branch after 7.2.2 (not yet released): the Gmail/Outlook tracking pixel 500, the 7.1 → 7.2
+  migration failures in `Version20211209022550` and `Version20260616075543`, and several 500s (see symptoms §2, §9, §10).
+  [PR #18061] [PR #17274] [PR #17907]
+- 7.x (unreleased, 7.3): privacy work stops tracking DNT/GPC/bot visitors and kiosk or untrackable form submitters,
+  and skips opens for Contacts who turned tracking off; Segment Emails without a schedule show "Ready to send".
+  [PR #18013] [PR #17868] [PR #17847] [PR #18006] [PR #18011]
+- 8.x: core events dispatch by class; listeners on constants go silent. [code: UPGRADE-8.0.md:860-882 @8.x] [code: app/bundles/LeadBundle/Model/LeadModel.php:2059-2061 @8.x]
+- 8.x: the `services` array in `config.php` is no longer read. [code: UPGRADE-8.0.md:205 @8.x] [code: app/bundles/CoreBundle/DependencyInjection/Builder/Metadata/ConfigMetadata.php:30-52 @8.x]
 - 8.x: `--lock_mode=file_lock` is an error (7.x maps it to `flock`). [code: UPGRADE-8.0.md:358 @8.x]
 
 ## Pitfalls

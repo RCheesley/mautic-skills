@@ -16,19 +16,23 @@ Terms used here: a *Contact* is a person record (code name `Lead`); a *Segment* 
 
 ## Expected behaviour (essentials)
 Branches and releases
-- Target `a.x` (now `7.x`) for features and enhancements, `a.b` (now `7.2`) for bug fixes, `c.x` (now `8.x`) for BC
-  breaks. [code: .github/PULL_REQUEST_TEMPLATE.md:1-11,19-24 @7.x]
+- Target `a.x` (now `7.x`, bound for 7.3) for features and enhancements, `a.b` (now `7.2`, next patch after 7.2.2) for
+  bug fixes, `c.x` (now `8.x`) for BC breaks. The template is unchanged at the 7.x snapshot. [code: .github/PULL_REQUEST_TEMPLATE.md:1-11,19-24 @7.x]
+  Delta PRs follow it: fixes on `7.2` carry milestone 7.2.3, features on `7.x` 7.3.0-rc, BC breaks on `8.x` 8.0.0-alpha.
+  [PR #18010] [PR #18069] [PR #18091]
 - Submit a bug fix against the lowest maintained branch where it applies; lower branches are merged upward.
   [code: .github/PULL_REQUEST_TEMPLATE.md:33-34 @7.x]
 - Only 7.2.x is listed as supported; the authoritative matrix is https://www.mautic.org/mautic-releases.
-  [code: .github/ISSUE_TEMPLATE/BUG-REPORT.yml:24-41 @7.x] [code: SECURITY.md:19 @7.x]
+  [code: .github/ISSUE_TEMPLATE/BUG-REPORT.yml:24-41 @7.x] [code: SECURITY.md:19 @7.x] Security fixes still reach
+  `5.2` and `6.0` as `[5.2]`/`[6.0]` PRs: 5.2.12 and 6.0.10 shipped with 7.2.2 on 2026-10-26. [PR #17880] [PR #17881] [PR #17932] [PR #17933]
 - Breaking DB changes only in majors; additive DB changes may appear in minors.
   [kb: https://kb.mautic.org/article/understanding-migrations-and-schema-update-with-doctrine-in-mautic.html]
-  7.1.0 added 9 migrations, 7.2.0 added 13, the 7.2.1 patch none. [code: app/migrations/ @7.x]
+  7.1.0 added 9 migrations, 7.2.0 added 13, the 7.2.1 and 7.2.2 patches none. [code: app/migrations/ @7.x]
 - Cadence: bug-fix releases monthly, features quarterly, BC breaks about yearly.
   [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html]
-- `7.x` is not an ancestor of `8.x`; fixes reach 8.x only through periodic forward merges (last: 7.2.0 → 8.x).
-  [PR #17253]
+- `7.x` is not an ancestor of `8.x`; fixes reach 8.x only through periodic forward merges: 7.2.0 [PR #17253], 7.2.2
+  (2026-11-03) [PR #18036], and 7.x up to #15680, squash-merged on 2026-11-17 [PR #18236]. A fix needed sooner gets
+  its own `[8.x]` PR. [PR #18135] [PR #18136]
 - Release notes are grouped by PR label: `bc-break`, `refactoring`, `security`, `feature`/`enhancement`,
   `bug`/`regression`; `chore` is excluded. [code: .github/release.yml @7.x]
 
@@ -50,13 +54,14 @@ Checks
 - Run tools through DDEV, not on the host. [code: AGENTS.md:11-14 @7.x]
 - CI runs PHPUnit on PHP 8.2 and 8.5 against MySQL and MariaDB, plus PHPStan, CS Fixer (changed files), Rector dry-run,
   Twig lint, scaffold diff, `composer validate`, Codeception e2e and the api-library suite.
-  [code: .github/workflows/tests.yml:22-316 @419a08a9b35] [code: .github/workflows/api-library-tests.yml:20-125 @7.x]
+  [code: .github/workflows/tests.yml:22-316 @7.x] [code: .github/workflows/api-library-tests.yml:20-125 @7.x]
 - PHPStan is level 6 with type-coverage floors (return 88.3 %, param 75.7 %, property 71.6 %); lowering coverage fails.
-  [code: phpstan.neon:5-20 @419a08a9b35]
+  [code: phpstan.neon:5-19 @7.x] The `declare` floor and `rector/type-perfect` are gone; their rules are now the
+  `type_perfect` options of type-coverage. [code: phpstan.neon:21-25 @7.x] [PR #17846]
 - Custom PHPStan rules forbid `$container->get()`, models fetched by string, repositories fetched by entity class,
   services in `Config/config.php`, nullable constructor services, commands without `#[AsCommand]`, and `Abstract*`
   classes that are not abstract. [code: phpstan.neon:279-299 @7.x]
-- Rector and PHPStan fail on stale skips or unmatched suppressions. [code: rector.php:56-122 @419a08a9b35] [code: phpstan.neon:8 @7.x]
+- Rector and PHPStan fail on stale skips or unmatched suppressions. [code: rector.php:55,129 @7.x] [code: phpstan.neon:8 @7.x]
 
 Schema, translations, security, style
 - Every schema change exists twice: entity `loadMetadata()` (fresh installs and tests build schema from it) AND an
@@ -83,7 +88,7 @@ Full detail with every rule numbered: references/behaviour.md.
 | PR template | `.github/PULL_REQUEST_TEMPLATE.md` |
 | Issue forms | `.github/ISSUE_TEMPLATE/BUG-REPORT.yml`, `config.yml` |
 | Governance | `SECURITY.md`, `MAINTAINERS.md`, `RELEASE_LEADS.md`, `.github/CONTRIBUTING.md`, `.github/CODE_OF_CONDUCT.md`, `.github/CODEOWNERS` |
-| Agent guidance | `AGENTS.md` (`CLAUDE.md`, `GEMINI.md` point to it), `.agents/skills/mautic-dev/SKILL.md`, `.github/prompts/write-test.prompt.md` |
+| Agent guidance | `AGENTS.md` (`CLAUDE.md`, `GEMINI.md` point to it), `.agents/skills/mautic-dev/SKILL.md`, `.github/prompts/write-test.prompt.md`, `DESIGN.md` (7.x) |
 | CI | `.github/workflows/tests.yml` (main), `e2e-tests.yml`, `coverage-check.yml`, `api-library-tests.yml`, `transifex.yml`, `release.yml`, `stale.yml`; `.coderabbit.yaml`, `codecov.yml` |
 | Release labels | `.github/release.yml` |
 | Static analysis | `phpstan.neon`, `phpstan-baseline.neon`, `utils/phpstan/src/Rule/` |
@@ -130,9 +135,13 @@ ddev composer run e2e-test                           # for UI changes
 Full PR-derived norms, with history and exceptions: references/pr-history.md.
 - Two testers must approve after following your test steps. [kb: https://kb.mautic.org/article/how-do-i-test-bug-fixes-and-new-features-in-mautic.html]
 - Applying `ready-to-commit` triggers a full coverage run. [code: .github/workflows/coverage-check.yml:7-88 @7.x]
-- CodeRabbit flags mock-only assertions, order- or time-dependent tests, and reviews migrations specifically.
-  [code: .coderabbit.yaml:3-14 @7.x]
-- SonarCloud fails duplicated new code; extract helpers. [code: .agents/skills/mautic-dev/SKILL.md:30 @419a08a9b35]
+- CodeRabbit flags mock-only assertions, order- or time-dependent tests, fixed delays in Codeception tests, and reviews
+  migrations specifically. [code: .coderabbit.yaml:158-187 @7.x] [PR #18063] [PR #18064]
+- On 7.x (unreleased, 7.3) CodeRabbit labels PRs and warns, through a "PR template" pre-merge check, when the five Q/A
+  rows are not answered ✔️/❌ or Description or test steps are empty; merge-up PRs are exempt.
+  [code: .coderabbit.yaml:35-135,260-284 @7.x] [PR #18198] [PR #18240]
+- SonarCloud is no longer a check on 7.x: [PR #17923] removed its config and the mautic-dev note (unreleased, 7.3).
+  [code: .agents/skills/mautic-dev/SKILL.md:24-30 @7.x]
 - Stale PRs close after 365 + 30 days of inactivity. [code: .github/workflows/stale.yml @7.x]
 - Lower branches are merged upward regularly, so one PR against the lowest applicable branch carries the fix upward.
   [code: .github/PULL_REQUEST_TEMPLATE.md:33-34 @7.x]
@@ -152,7 +161,7 @@ A good contribution test fails before the change and passes after it, through th
 ## Version notes
 - 5.x introduced `Config/services.php` autowiring; 6.0 removed `MauticFactory`; 7.0 requires PHP 8.2, MySQL 8.4,
   MariaDB 10.11 and removed the browser updater. [code: UPGRADE-5.0.md @7.x] [code: UPGRADE-6.0.md @7.x] [code: UPGRADE-7.0.md @7.x]
-- 7.0.0 2026-01-20, 7.1.0 2026-04-14, 7.2.0 2026-09-02, 7.2.1 2026-09-23; no UPGRADE file for minors.
+- 7.0.0 2026-01-20, 7.1.0 2026-04-14, 7.2.0 2026-09-02, 7.2.1 2026-09-23, 7.2.2 2026-10-26; no UPGRADE file for minors.
   [code: git tag @7.x]
 - 8.x: PHP 8.4, Symfony 8.1, Doctrine ORM 3.7 / DBAL 4.4, PHPUnit 13, ECS only (php-cs-fixer removed), tools in
   `vendor/bin/`, event dispatch by class enforced by PHPStan, entity mapping moving to attributes.
@@ -165,6 +174,8 @@ A good contribution test fails before the change and passes after it, through th
 - 5.x chose php-cs-fixer over ECS; ECS rules reappeared in 7.2. [PR #13037] [PR #16344] [PR #16723]
 - 7.2: Promptless docs PRs and `code-review-passed`/`user-testing-passed`/`ready-to-commit` labels; builder `dist`
   no longer committed in PRs. [PR #16337] [PR #16435] [PR #16480]
+- 7.3 (unreleased on 7.x): `DESIGN.md` for UI work and test rules in `AGENTS.md`; SonarCloud removed; CodeRabbit
+  labels PRs and checks the template. [PR #17879] [PR #17955] [PR #17923] [PR #18198] [PR #18240] [code: AGENTS.md:95-102 @7.x]
 Details: references/version-notes.md.
 
 ## Pitfalls
@@ -179,8 +190,8 @@ Details: references/version-notes.md.
 - `preUp()` skips only when every assertion is true; one false assertion runs all of `up()`. [code: app/bundles/CoreBundle/Doctrine/PreUpAssertionMigration.php:26-45 @7.x]
 - Raw-SQL index names without the table prefix diverge from fresh installs. [code: app/migrations/Version20250415142826.php:24 @7.x]
 - PHPStan tolerates uses of Mautic's own deprecated classes; a clean run does not mean no deprecated API.
-  [code: phpstan.neon:42-239 @419a08a9b35]
-- `rector/rector` is `dev-main`: new findings can appear after a rebase. [code: composer.json:28-54 @419a08a9b35]
+  [code: phpstan.neon:180-210 @7.x]
+- `rector/rector` is `dev-main`: new findings can appear after a rebase. [code: composer.json:45 @7.x]
 - Coverage is not measured on PRs; Codecov's patch target is 0 %. [code: .github/workflows/tests.yml:36-44 @7.x] [code: codecov.yml:7-13 @7.x]
 - Testing environment and credentials disagree: the template says GitHub Codespaces; the KB says Gitpod with admin/mautic;
   fixtures use `Maut1cR0cks!`. [code: .github/PULL_REQUEST_TEMPLATE.md:59 @7.x]
@@ -203,6 +214,9 @@ Details: references/version-notes.md.
   through events, interfaces and decoration, not inheritance. [PR #16754] [PR #16898] [PR #13842] [PR #14016]
 - Merge-up covers only `a.b` → `a.x`. A fix for an older major, or a CI or DDEV fix for every maintained line, needs
   its own PR titled with the branch (`[6.0]`). [PR #15560] [PR #15561] [PR #10597] [PR #11969]
+- A `7.2` fix that 7.x CI or users need before the next merge-up gets a `[7.x]` counterpart PR ("Backport of #N"); the
+  same applies to `[8.x]`. Merge-up PRs ("Merge 7.2.2 into 7.x", "Merge 7.x into 8.x") carry only `chore`.
+  [PR #17918] [PR #18064] [PR #18065] [PR #18136] [PR #17953] [code: .coderabbit.yaml:45-46 @7.x]
 
 ## Related skills
 - mautic-testing — writing PHPUnit and Codeception tests, base classes, fixtures, assertions.

@@ -58,6 +58,14 @@
   branch, for example `[6.0]` or `[5.2]`. [PR #15560] [PR #15561] [PR #9929] [PR #11885]
 - CI, scaffolding and DDEV fixes go to every maintained branch as companion PRs. [PR #10597] [PR #11089] [PR #11969]
 - Back-merges were not used in the 4.4/5.x era; see section 13. [PR #11775] [PR #13110]
+- 2026-10/11 (after the 2026-10-15 harvest): merge-up PRs are now titled "Merge 7.2.2 into 7.x", "Merge 7.2.2 into
+  8.x" and "Merge 7.x into 8.x <date>"; the 7.x → 8.x merge was squash-merged and adapted every 7.x change to 8.x
+  structure. [PR #17953] [PR #18036] [PR #18236]
+- A `7.2` fix that 7.x needs before the merge-up (to unblock 7.x CI, or a regression users hit) gets a `[7.x]`
+  counterpart; a 7.x change that 8.x needs before the forward merge gets an `[8.x]` "Backport of #N" PR, adapted to
+  8.x rules. [PR #17913] [PR #17918] [PR #18061] [PR #18065] [PR #18063] [PR #18064] [PR #16848] [PR #18135] [PR #18136]
+- A refactor that could break existing plugin configurations is questioned as a BC break for `8.x`; it stays on 7.x
+  when the author shows stored credentials and settings survive unchanged. [PR #16848]
 
 ### Releases
 - Feature freezes are enforced; late features move to the next minor. [PR #3549] [PR #3819]
@@ -71,6 +79,10 @@
 - Dev tools such as Rector are locked to a production tag before a release. [PR #16859]
 - Updates are CLI-only from 7.0; large schema changes were already steered to the CLI. [PR #14689] [PR #7094]
 - Release-process changes need a documented local test procedure. [PR #12796]
+- A security release's prep PR carries the private fixes, not only `release_metadata.json` (7.2.2: +1,135 lines in 29
+  files), and older lines get matching releases the same day (5.2.12, 6.0.10). [PR #17934] [PR #17932] [PR #17933]
+- Composer releases must ship prebuilt GrapesJS assets; CI builds them into release tags of the plugin's split
+  repository, and development branches stay source-only. [PR #17831] (v7.2.2)
 
 ### End of life and supported versions
 - After a major ships, the previous major gets no further fixes. [PR #9743] [PR #9749]
@@ -211,6 +223,10 @@
 - Commands run from composer hooks must not fail the build for non-essential work. [PR #16226] (v7.2)
 - Builder `dist` files were committed until 7.2.0; since then they must not appear in PRs. [PR #10728] [PR #13610] [PR #16435] [PR #16480]
 - Scaffolded root files change together with their copy in `app/assets/scaffold/files/`. [PR #10857] [PR #13309] [PR #14226]
+- 7.x (unreleased, 7.3): SonarCloud was removed as "simple checks which sometimes force developers to write worse
+  code"; CodeRabbit replaces it. [PR #17923] CodeRabbit now auto-labels PRs (one type label) and warns when the PR
+  template is not filled in; Codeception tests get their own review instructions. [PR #18198] [PR #18240] [PR #18063]
+- Keep an untyped return that plugins override; a Rector skip records why. [PR #18117] [code: rector.php:58-61 @7.x]
 
 ## 7. Schema and migration rules
 - Entity mapping and migration change together; reviewers block one without the other. [PR #2971] [PR #6086] [PR #13413] [PR #15351] [PR #3858] [PR #9204] [PR #1478] [PR #9837]
@@ -228,6 +244,10 @@
 - New entity properties need tested migrations and OpenAPI updates. [PR #15755] [PR #11917]
 - New migrations go to minors; see section 13 for patch-release migrations. [PR #9542]
 - Permission changes need a data migration of the stored bitwise. [PR #6963] [PR #6966]
+- Fixes to existing migrations that break upgrades go to the patch branch: role rows hydrated as `[Role, user_count]`
+  and signed `categories.id` foreign keys (both on `7.2` after 7.2.2). [PR #17274] [PR #17907]
+- A migration that writes with `executeStatement()` instead of `addSql()` must skip its writes under `--dry-run`,
+  because Doctrine still calls `up()`. [PR #18164]
 
 ## 8. Documentation requirements
 - Features need a user-docs PR; developer-facing changes and new config options need a dev-docs or user-docs PR before
@@ -297,6 +317,9 @@
 - The repo root carries `funding.json` for FLOSS Fund applications. [PR #14206] (v5.2)
 - GitHub Codespaces with DDEV is the one-click PR test environment. [PR #15515] (v5.2.9) [PR #15521] [PR #16381] (v7.2)
   [code: .github/PULL_REQUEST_TEMPLATE.md:59 @7.x]
+- 2026-10/11: PRs ending "Generated with Claude Code" are reviewed and merged like any other, including maintainers'
+  own tooling PRs; no written AI policy exists in the repository. [PR #18063] [PR #18064] [PR #16848] [code: .github/CONTRIBUTING.md @7.x]
+- UI work reads `DESIGN.md` first (7.x, unreleased 7.3). [PR #17879] [code: AGENTS.md:100-102 @7.x]
 
 ## 12. PR template and repository-file evolution
 | Version | Change | PR |
@@ -316,6 +339,8 @@
 | ~7.0 | `AGENTS.md` added | [PR #15697] |
 | ~7.2 | Codespaces test link; Promptless docs PRs; review labels | [PR #16381] [PR #16337] |
 | 7.3 (unreleased) | `.agents/skills/mautic-dev` skill | [PR #17459] |
+| 7.3 (unreleased) | `DESIGN.md`; `AGENTS.md` test rules | [PR #17879] [PR #17955] |
+| 7.3 (unreleased) | SonarCloud removed; CodeRabbit labels and "PR template" check | [PR #17923] [PR #18198] [PR #18240] |
 - The template's hidden comment still says features go to "4.x"; the table above it is current. [code: .github/PULL_REQUEST_TEMPLATE.md:30-36 @7.x]
 
 ## 13. Conflicts: norms that changed over time
@@ -342,6 +367,7 @@
 - **Coverage.** The template says every PR must maintain or improve coverage [code: .github/PULL_REQUEST_TEMPLATE.md:25 @7.x],
   and reviewers have blocked drops [PR #8605] [PR #11864]; yet Codecov and Sonar are treated as advisory and drops
   from removed code are overridden [PR #15532] [PR #16137] [PR #9339] [PR #11997].
+  Since [PR #17923] (7.x, unreleased 7.3) SonarCloud is gone; only Codecov remains advisory.
 - **Migrations in patch releases.** [PR #9542] (2021-07) was moved off the 3.2 patch branch "since this contains a
   migration"; [PR #9510] (2021-03) allowed one in a patch as a bug fix. Practice since 5.2: new migrations in minors, fixes to existing
   migrations in patches [PR #14824]. No written rule. [code: .github/PULL_REQUEST_TEMPLATE.md @7.x]

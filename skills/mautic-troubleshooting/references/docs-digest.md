@@ -27,6 +27,7 @@ set has checked the claim. When a source and the code disagree, the code wins.
 | Unsubscribe link in test emails: https://docs.mautic.org/en/7.2/channels/emails.html#unsubscribe-link-doesn-t-work | Unsubscribe links in "Send example" emails do not work; they render as `.../\|URL\|`. [docs: https://docs.mautic.org/en/7.2/channels/emails.html#unsubscribe-link-doesn-t-work] | Valid. |
 | Queue for failures: https://docs.mautic.org/en/7.2/configuration/settings.html#queue-for-failures | Configures the `failed` transport. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#queue-for-failures] | Valid; an empty failure DSN discards exhausted messages. [code: app/bundles/MessengerBundle/DependencyInjection/EnvProcessor/MessengerNullableEnvVarProcessor.php:11-21 @7.x] |
 | HubSpot troubleshooting: https://docs.mautic.org/en/7.2/plugins/hubspot.html#troubleshooting-hubspot-integration | `--fetch-all` limits. [docs: https://docs.mautic.org/en/7.2/plugins/hubspot.html#troubleshooting-hubspot-integration] | Valid; `--fetch-all` still returns only about 30 days on long-lived portals. [code: plugins/MauticCrmBundle/Integration/HubspotIntegration.php:339-431 @7.x] |
+| CORS settings: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings | Since the 2026-10-15 snapshot the Valid Domains text also says Mautic uses the list to decide which websites a Form submission can return the Contact to. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings] | No; matches the 7.2.2 return-URL check. [code: app/bundles/FormBundle/Controller/PublicController.php:106-178 @7.x] [PR #16507] |
 | Update guide: https://docs.mautic.org/en/7.2/getting_started/how_to_update_mautic.html | Back up first; run update commands as the web-server user; Composer flow: bump `mautic/*`, `composer update --with-dependencies`, `cache:clear`, `mautic:update:apply --finish`, `doctrine:migration:migrate --no-interaction`, `cache:clear`. Support goes to the forums with PHP version, from/to versions and errors from `var/logs` and server logs. [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_update_mautic.html#updating-mautic-composer-based-installs] [docs: https://docs.mautic.org/en/7.2/getting_started/how_to_update_mautic.html#running-update-commands-as-the-web-server-user] | Valid. |
 
 Gap: none of the troubleshooting pages above covers queue workers, cron locks or inspecting the Messenger failure
@@ -65,6 +66,14 @@ Verdicts in the "Outdated" column come from the KB digest unless a code citation
 | Getting started with Mautic: https://kb.mautic.org/article/getting-started-with-mautic.html | Without cron jobs "nothing will happen in Mautic". | Partly (mixed 4.x/5.x); the cron point is valid. |
 | Working with Stages: https://kb.mautic.org/article/working-with-stages-in-mautic.html | Contacts cannot move backwards. | **Partly.** API, batch, import and edit paths can move them back. [code: app/bundles/StageBundle/Controller/Api/StageApiController.php:69-74 @7.x] |
 
+New in the 2026-11-23 KB crawl, relevant when Emails land in spam or fail authentication (no Mautic code involved):
+
+| Article | Topic |
+|---|---|
+| How to set up SPF: https://kb.mautic.org/article/how-to-set-up-spf-for-mautic.html | List every sender; `~all` vs `-all`; check SPF PASS in Gmail "Show original". [kb: https://kb.mautic.org/article/how-to-set-up-spf-for-mautic.html] |
+| How to set up DKIM: https://kb.mautic.org/article/how-to-set-up-dkim-for-mautic.html | DKIM passing with the provider's domain does nothing for DMARC; selector typos; sign `list-unsubscribe` and `list-unsubscribe-post`, or one-click unsubscribe fails (seen with Amazon SES). [kb: https://kb.mautic.org/article/how-to-set-up-dkim-for-mautic.html] |
+| How to set up DMARC: https://kb.mautic.org/article/how-to-set-up-dmarc-for-mautic.html | Forwarding makes good Mautic mail fail DMARC; check every From address in Mautic. [kb: https://kb.mautic.org/article/how-to-set-up-dmarc-for-mautic.html] |
+
 ## 4. Upstream agent skill in the 7.x repository
 
 Upstream Mautic ships `.agents/skills/mautic-dev/SKILL.md` in the 7.x repo, covering development pitfalls and
@@ -76,6 +85,6 @@ verification. It complements this skill for development-time failures (test runs
 - Docs and KB say only "Administrators" are ignored when testing tracking; code ignores every logged-in User. [code: app/bundles/PointBundle/Model/PointModel.php:177-179 @7.x] [docs: https://docs.mautic.org/en/7.2/points/points_troubleshooting.html#page-visits-not-recognized]
 - Docs say only Email uses the queue; the `hit` transport also queues email opens and page hits. [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#purpose-of-the-queuing] [code: app/config/config.php:111-125 @7.x]
 - Docs and the CLI page list commands absent from 7.x (`mautic:queue:process`, `mautic:email:send`, `mautic:citrix:sync`, `mautic:integration:pipedrive:*`). [docs: https://docs.mautic.org/en/7.2/configuration/command_line_interface.html#mautic-commands]
-- Docs say the Segment-email cron sends later Contacts unless an unpublish date is set; code does so only with Continue sending on. [code: app/bundles/EmailBundle/Entity/EmailRepository.php:285-288 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/configuration/cron_jobs.html#send-scheduled-broadcasts-segment-emails-cron-job]
+- Docs say the Segment-email cron sends later Contacts unless an unpublish date is set; code does so only with Continue sending on. [code: app/bundles/EmailBundle/Entity/EmailRepository.php:1130-1133 @7.x] [code: app/bundles/EmailBundle/Model/EmailModel.php:1049 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/cron_jobs.html#send-scheduled-broadcasts-segment-emails-cron-job]
 - Docs say CORS "Restrict Domains" defaults to No; code defaults to `true`. [code: app/bundles/CoreBundle/Config/config.php:702 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#cors-settings]
-- `mautic:install` docs list `--mailer_*` options that 7.2.1 does not define. [code: app/bundles/InstallBundle/Command/InstallCommand.php:58-147 @7.x]
+- `mautic:install` docs list `--mailer_*` options that 7.x does not define. [code: app/bundles/InstallBundle/Command/InstallCommand.php:58-147 @7.x]

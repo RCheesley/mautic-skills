@@ -1,6 +1,6 @@
 # Mautic contributing: code map (governance files, CI workflows, config files)
 
-Paths are relative to the root of `mautic/mautic` at 7.2.1 unless marked `@8.x`.
+Paths are relative to the root of `mautic/mautic` at the 7.x snapshot (7.2.2 plus unreleased 7.3 work) unless marked `@8.x`.
 
 ## 1. Governance and policy files
 
@@ -16,7 +16,8 @@ Paths are relative to the root of `mautic/mautic` at 7.2.1 unless marked `@8.x`.
 | `MAINTAINERS.md` | Project Lead, current maintainers (@escopecz, @kuzmany, @npracht, @matbcvo, @cibero42), honor roll, governance link | [code: MAINTAINERS.md @7.x] |
 | `RELEASE_LEADS.md` | Release-lead schedule (stale for 7.x) | [code: RELEASE_LEADS.md @7.x] |
 | `README.md` | Overview; links to supported versions page (some links still point at `6.x`) | [code: README.md:17,77,120,416 @7.x] |
-| `AGENTS.md` (+ `CLAUDE.md`, `GEMINI.md` pointing to it) | Agent guidance: DDEV rule, commands, PR checklist, coding standards | [code: AGENTS.md @7.x] [code: CLAUDE.md:1-5 @7.x] |
+| `AGENTS.md` (+ `CLAUDE.md`, `GEMINI.md` pointing to it) | Agent guidance: DDEV rule, commands, PR checklist, test rules, design-system pointer, coding standards | [code: AGENTS.md @7.x] [code: CLAUDE.md:1-5 @7.x] |
+| `DESIGN.md` (7.x, unreleased 7.3) | UI design system: tokens, typography, layout, components, accessibility; read before UI changes | [code: AGENTS.md:100-102 @7.x] [PR #17879] |
 | `.agents/skills/mautic-dev/SKILL.md` | In-repo agent skill: pitfalls, verification, migrations, BC-policy link | [code: .agents/skills/mautic-dev/SKILL.md @7.x] |
 | `.github/prompts/write-test.prompt.md` | Test-writing rules (final, strict types, attributes, real objects) | [code: .github/prompts/write-test.prompt.md @7.x] |
 | `UPGRADE-3.0.md` … `UPGRADE-7.0.md`, `UPGRADE-PHP-TO-TWIG-TEMPLATES.md` | BC notes per major | [code: UPGRADE-7.0.md @7.x] |
@@ -28,14 +29,14 @@ Paths are relative to the root of `mautic/mautic` at 7.2.1 unless marked `@8.x`.
 
 | Workflow | Trigger | What it checks | Tag |
 |---|---|---|---|
-| `tests.yml` | every PR, pushes to `[0-9].*`, merge queue, daily cron | `phpunit` (PHP 8.2 × MySQL 8.4 / MariaDB 10.11; PHP 8.5 × MySQL 9.2 / MariaDB 11.4), `e2e-tests` (DDEV + Codeception), `misc` (PHPStan, CS Fixer on changed files, Rector dry-run, Twig lint, scaffold diff, composer-project install, `composer validate`) | [code: .github/workflows/tests.yml:3-316 @419a08a9b35] |
+| `tests.yml` | every PR, pushes to `[0-9].*`, merge queue, daily cron | `phpunit` (PHP 8.2 × MySQL 8.4 / MariaDB 10.11; PHP 8.5 × MySQL 9.2 / MariaDB 11.4), `e2e-tests` (DDEV + Codeception), `misc` (PHPStan, CS Fixer on changed files, Rector dry-run, Twig lint, scaffold diff, composer-project install, `composer validate`) | [code: .github/workflows/tests.yml:3-316 @7.x] |
 | `e2e-tests.yml` | push/PR touching `tests/**` | Codeception suite ×10, fail-fast (flakiness) | [code: .github/workflows/e2e-tests.yml:25-28 @7.x] |
 | `coverage-check.yml` (+ `coverage-check-cleanup.yml`) | PR labelled `check-coverage` or `ready-to-commit` | full PHPUnit with pcov, Codecov upload | [code: .github/workflows/coverage-check.yml:7-88 @7.x] |
 | `api-library-tests.yml` | every PR | installs this checkout under Apache (PHP 8.3) and runs the `mautic/api-library` suite | [code: .github/workflows/api-library-tests.yml:20-125 @7.x] |
 | `build-grapesjs-assets.yml` | PR touching `plugins/GrapesJsBuilderBundle/**` | `npm ci && npm run build` | [code: .github/workflows/build-grapesjs-assets.yml @7.x] |
 | `validate-json.yml` | changed JSON | `jq empty` | [code: .github/workflows/validate-json.yml @7.x] |
 | `transifex.yml` | push of `**/Translations/en_US/*.ini` on default branch | `mautic:transifex:push` | [code: .github/workflows/transifex.yml @7.x] |
-| `release.yml` | tag push | tag == `release_metadata.json` version; build ZIPs; draft release; fresh-install and update tests | [code: .github/workflows/release.yml:38-282 @419a08a9b35] |
+| `release.yml` | tag push | tag == `release_metadata.json` version; build ZIPs and check they contain `vendor/symfony/dom-crawler` and the built assets; draft release; fresh-install and update tests | [code: .github/workflows/release.yml:38-283 @7.x] |
 | `generate-release-notes.yml` | manual | changelog per milestone | [code: .github/workflows/generate-release-notes.yml @7.x] |
 | `split-monorepo-in-multi-repo.yml` | push/create/delete of `[0-9].*` branches and tags | splits core-lib, plugins, themes into `mautic/<name>` repos | [code: .github/workflows/split-monorepo-in-multi-repo.yml @7.x] |
 | `dependabot-sync-scaffolding.yml` | Dependabot `package-lock.json` change | copies it into `app/assets/scaffold/files/` | [code: .github/workflows/dependabot-sync-scaffolding.yml:27-40 @7.x] |
@@ -43,9 +44,10 @@ Paths are relative to the root of `mautic/mautic` at 7.2.1 unless marked `@8.x`.
 | `bounties.yml`, `closed-issue-reply.yaml` | issue events | issue automation | [code: .github/workflows/ @7.x] |
 
 Other CI configuration: `.github/release.yml` (release-note label groups), `.github/dependabot.yml` (weekly composer,
-npm, actions), `.coderabbit.yaml` (AI review path instructions), `codecov.yml` (patch target 0 %),
-`.sonarcloud.properties`, `.github/ci-files/` (`local.php`, `.my.cnf`, `composer.json` for the recommended-project test).
-[code: .github/release.yml @7.x] [code: .github/dependabot.yml @7.x] [code: .coderabbit.yaml:3-14 @7.x]
+npm, actions), `.coderabbit.yaml` (AI review: path instructions, PR and issue labelling, "PR template" pre-merge
+check, issue enrichment), `codecov.yml` (patch target 0 %), `.github/ci-files/` (`local.php`, `.my.cnf`, `composer.json`
+for the recommended-project test). `.sonarcloud.properties` was removed on 7.x. [PR #17923]
+[code: .github/release.yml @7.x] [code: .github/dependabot.yml @7.x] [code: .coderabbit.yaml:1-410 @7.x]
 [code: codecov.yml:7-13 @7.x]
 
 ## 3. Tooling configuration files
@@ -55,9 +57,9 @@ npm, actions), `.coderabbit.yaml` (AI review path instructions), `codecov.yml` (
 | `composer.json` | root `mautic/mautic`; dev tools in `require-dev`; scripts `test`, `e2e-test`, `phpstan`, `phpstan-baseline`, `cs`, `fixcs`, `rector`, `githooks`, `generate-assets` | [code: composer.json:164-212 @7.x] |
 | `app/composer.json` | `mautic/core-lib` runtime deps; autoload `Mautic\` → `app/bundles/`, `Mautic\Migrations\` → `app/migrations/`; scaffold file mapping | [code: app/composer.json:7-16,116-137 @7.x] |
 | `app/phpunit.xml.dist` | suites, `KERNEL_CLASS=AppTestKernel`, `MAUTIC_ENV=test`, `failOnWarning` | [code: app/phpunit.xml.dist:42,68-75 @7.x] |
-| `phpstan.neon`, `phpstan-baseline.neon`, `phpstan-bootstrap.php` | level 6, type coverage, custom rules, suppressions | [code: phpstan.neon:1-277 @419a08a9b35] |
+| `phpstan.neon`, `phpstan-baseline.neon`, `phpstan-bootstrap.php` | level 6, type coverage, `type_perfect`, symplify sets off, custom rules, suppressions | [code: phpstan.neon:1-313 @7.x] |
 | `utils/phpstan/src/Rule/`, `utils/phpstan/tests/Rule/` | custom PHPStan rules and their tests | [code: utils/phpstan/src/Rule/ @7.x] |
-| `rector.php`, `utils/rector/src/`, `utils/rector/tests/` | Rector sets, type-guarded classes, custom rectors | [code: rector.php:10-122 @419a08a9b35] |
+| `rector.php`, `utils/rector/src/`, `utils/rector/tests/` | Rector sets, type-guarded classes, custom rectors, skips | [code: rector.php:10-129 @7.x] |
 | `.php-cs-fixer.php`, `ecs.php` | coding standard | [code: .php-cs-fixer.php:5-57 @7.x] [code: ecs.php:7-43 @7.x] |
 | `build/hooks/pre-commit`, `build/hooks/post-checkout` | git hooks installed by `composer githooks` | [code: composer.json:164-212 @7.x] |
 | `codeception.yml`, `tests/` | e2e acceptance tests | [code: codeception.yml @7.x] |

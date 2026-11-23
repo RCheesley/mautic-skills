@@ -29,8 +29,10 @@ A.1 Branch roles. `a` is the current major, `b` the current minor, `c` the futur
 enhancements, `a.b` takes bug fixes, `c.x` takes changes with backward-compatibility (BC) breaks.
 [code: .github/PULL_REQUEST_TEMPLATE.md:1-11 @7.x]
 
-A.2 Current mapping (2026-10): `7.x` is the default branch and takes features; `7.2` is the newest maintenance branch for
-bug fixes (older `7.1`, `7.0`, `6.0`, `5.2` branches also exist); `8.x` is the next major and takes BC breaks.
+A.2 Current mapping (2026-11): `7.x` is the default branch and takes features for 7.3; `7.2` is the newest maintenance
+branch for bug fixes (7.2.2 released 2026-10-26, next patch milestone 7.2.3; older `7.1`, `7.0`, `6.0`, `5.2` branches
+also exist); `8.x` is the next major and takes BC breaks. The PR template did not change between the two snapshots.
+[PR #17934] [PR #18010] [PR #18069]
 [code: .github/PULL_REQUEST_TEMPLATE.md:1-11 @7.x] (branch list from `git branch -a`, recorded in
 analysis migrations-upgrades-releases §9.C.3)
 
@@ -40,13 +42,16 @@ so upper branches receive the fix. [code: .github/PULL_REQUEST_TEMPLATE.md:30-36
 A.4 Only the 7.2.x series is listed as supported in the bug-report form; 7.1.x, 7.0.x, 6.0.x, 5.x, 4.x and 3.3.x are
 labelled "(not supported)". The authoritative support matrix is https://www.mautic.org/mautic-releases.
 [code: .github/ISSUE_TEMPLATE/BUG-REPORT.yml:24-41 @7.x] [code: README.md:77 @7.x] [code: SECURITY.md:17-21 @7.x]
-In practice a non-security bug fix today targets `7.2`.
+In practice a non-security bug fix today targets `7.2`. Security fixes also go to `5.2` and `6.0` as `[5.2]`/`[6.0]`
+PRs, although the bug form marks those series not supported: 5.2.12 and 6.0.10 were released with 7.2.2 on 2026-10-26.
+[PR #17880] [PR #17881] [PR #17932] [PR #17933] [code: SECURITY.md:23-25 @7.x]
 
 A.5 Semantic versioning: breaking database changes only in majors; additive database changes may appear in minors.
 [kb: https://kb.mautic.org/article/understanding-migrations-and-schema-update-with-doctrine-in-mautic.html]
 
-A.6 Observed release content confirms A.5: 7.1.0 added 9 migrations and 7.2.0 added 13, while the 7.2.1 patch release
-added none. Treat a migration in a patch-branch PR as exceptional and justify it in the PR description.
+A.6 Observed release content confirms A.5: 7.1.0 added 9 migrations and 7.2.0 added 13, while the 7.2.1 and 7.2.2 patch
+releases added none. After 7.2.2 the `7.2` branch fixed two existing migrations that broke upgrades (fixes to existing
+migrations in a patch, see pr-history.md section 13). [PR #17274] [PR #17907] Treat a migration in a patch-branch PR as exceptional and justify it in the PR description.
 [code: app/migrations/ @7.x] (per-tag catalogue in analysis migrations-upgrades-releases §9.A.20)
 
 A.7 Release cadence: bug-fix releases monthly, feature releases quarterly, breaking changes about once a year.
@@ -68,7 +73,7 @@ https://contribute.mautic.org/en/latest/contributing/developer.html#backward-com
 [code: .agents/skills/mautic-dev/SKILL.md:50 @7.x]
 
 A.9 Tags are `X.Y.Z` plus pre-releases `X.Y.0-alpha`, `-beta`, `-rc`, `-rc2`. Observed: 7.0.0 on 2026-01-20, 7.1.0 on
-2026-04-14, 7.2.0 on 2026-09-02, 7.2.1 on 2026-09-23. [code: git tag @7.x] (analysis §9.C.4)
+2026-04-14, 7.2.0 on 2026-09-02, 7.2.1 on 2026-09-23, 7.2.2 on 2026-10-26. [code: git tag @7.x] (analysis §9.C.4)
 
 A.10 Releasing: the pushed tag must equal `app/release_metadata.json` `version`, so `version` and `announcement_url` are
 bumped before tagging; the workflow builds a DRAFT GitHub release and tests a fresh install and an update from
@@ -82,13 +87,20 @@ A.12 There are no `UPGRADE-7.1.md` or `UPGRADE-7.2.md` files; BC notes for a maj
 (`UPGRADE-7.0.md` on 7.x, `UPGRADE-8.0.md` on 8.x, appended per PR). [code: UPGRADE-7.0.md @7.x]
 [code: UPGRADE-8.0.md @8.x]
 
-A.13 Branch topology: `7.x` is not an ancestor of `8.x`. The last forward merge was 7.2.0 → 8.x ([PR #17253], which
-resolved 138 conflicting files); 736 commits of 7.x work (the 7.2.1 release plus unreleased PRs merged after it) were not yet on 8.x on 2026-10-15. A 7.x fix is not on 8.x
-until the next forward merge. (analysis 8x-changes header and §8) [PR #17253]
+A.13 Branch topology: `7.x` is not an ancestor of `8.x`. Forward merges so far: 7.2.0 → 8.x ([PR #17253], 138
+conflicting files), 7.2.2 → 8.x on 2026-11-03 [PR #18036], and 7.x up to #15680 → 8.x on 2026-11-17 [PR #18236]. The last
+was squash-merged, so git ancestry still does not show which 7.x commits are on 8.x; compare content. Each merge adapts
+the 7.x change to 8.x structure (route attributes, `#[AsEventListener]`, class dispatch). A 7.x fix is not on 8.x until
+the next forward merge, so maintainers open `[8.x]` "Backport of #N" PRs for fixes 8.x needs sooner. [PR #18135] [PR #18136]
+[code: git log --first-parent @8.x]
 
 A.14 Keep a fork in sync by rebasing on `upstream/7.x` (or the branch you target) and force-pushing your branch;
 resolve conflicts with `git add` and `git rebase --continue`.
 [kb: https://kb.mautic.org/article/how-to-rebase-branch-and-sync-forked-repository-with-upstream-using-git.html]
+
+A.15 As with `[8.x]` backports (A.13), a `7.2` fix that 7.x needs before the next 7.2 → 7.x merge (for example to unblock 7.x CI) gets a `[7.x]`
+counterpart PR. Merge-up PRs are titled "Merge 7.2.2 into 7.x" or "Merge 7.x into 8.x <date>" and labelled `chore`
+only. [PR #17918] [PR #18064] [PR #18065] [PR #17953] [code: .coderabbit.yaml:45-46 @7.x]
 
 ## B. Pull request content (the template)
 
@@ -142,7 +154,7 @@ C.1 Run commands through DDEV (`ddev exec php bin/phpunit -c app/phpunit.xml.dis
 C.2 The documented PR checklist is `ddev composer test`, `ddev composer phpstan`, `ddev composer cs`, plus
 `ddev composer run e2e-test` for UI changes. [code: AGENTS.md:119-128 @7.x]
 
-C.3 CI runs more than C.2, so also run these before pushing: [code: .github/workflows/tests.yml:181-316 @419a08a9b35]
+C.3 CI runs more than C.2, so also run these before pushing: [code: .github/workflows/tests.yml:181-316 @7.x]
 
 | Check | Local command | CI job |
 |---|---|---|
@@ -181,15 +193,25 @@ C.10 `composer phpstan` first boots the test kernel so `var/cache/test/AppKernel
 PHPStan fails. After adding a plugin entity, clear `var/cache/prod` and `var/phpstan-cache`.
 [code: composer.json:164-212 @7.x] [code: phpstan.neon:271-276 @7.x] [code: .agents/skills/mautic-dev/SKILL.md @7.x]
 
-C.11 CodeRabbit reviews every PR, with path instructions for PHP, `**/Tests/**` (prefer `MauticMysqlTestCase` for DB
-behaviour, flag mock-only assertions, order- or time-dependent tests) and `app/migrations/*.php`.
-[code: .coderabbit.yaml:3-14 @7.x]
+C.11 CodeRabbit reviews every PR on every base branch, with path instructions for PHP (BC, DI, queries, permissions),
+`**/Tests/**` (prefer `MauticMysqlTestCase` for DB behaviour, flag mock-only assertions, order- or time-dependent tests),
+Codeception tests (no fixed delays, `AcceptanceTester::TIMEOUT`, no shared data, no JS clicks), migrations,
+translations, Twig, JS, workflows and `UPGRADE-*.md`. [code: .coderabbit.yaml:3-16,136-235 @7.x] The Codeception
+instruction is on `7.2` and `7.x`. [PR #18063] [PR #18064]
 
-C.12 SonarCloud fails on duplicated new code; extract a helper rather than copying near-identical test methods.
-[code: .agents/skills/mautic-dev/SKILL.md:30 @419a08a9b35]
+C.12 SonarCloud is not a project check on 7.x any more: [PR #17923] (7.x, unreleased 7.3) removed `.sonarcloud.properties`
+and the mautic-dev note, citing CodeRabbit as the replacement. Duplicated code is no longer gated automatically.
+[code: .agents/skills/mautic-dev/SKILL.md:24-30 @7.x]
 
 C.13 `rector/rector` is pinned to `dev-main`, so new Rector findings can appear after a rebase without any Mautic change.
-[code: composer.json:28-54 @419a08a9b35]
+[code: composer.json:45 @7.x]
+
+C.14 On 7.x (unreleased, 7.3) CodeRabbit also applies labels from the existing set, with one type label (`bug`,
+`enhancement`, `feature`, `refactoring`, `chore`) per PR [PR #18198], and runs a "PR template" pre-merge check in
+warning mode: the five Q/A rows answered with exactly one of ✔️ or ❌, a Description with text, and at least one test
+step beyond the Codespaces step. Merge-up PRs always pass. Title, description and issue checks are off.
+[code: .coderabbit.yaml:35-135,247-284 @7.x] [PR #18240] For issues it posts duplicates, related work, labels
+(type, one of T1/T2/T3, triage state, area) and an implementation plan. [code: .coderabbit.yaml:289-330 @7.x]
 
 ## D. Coding standards
 
@@ -205,7 +227,7 @@ D.3 ECS adds the `comments`, `docblocks`, `namespaces`, `cleanup`, `controlStruc
 concat spacing and method-chaining fixers are skipped. [code: ecs.php:7-43 @7.x]
 
 D.4 Fix types rather than suppressing: inline `@phpstan-ignore` and new `ignoreErrors` entries are a last resort
-(see E.3). [code: phpstan.neon:42-239 @419a08a9b35]
+(see E.3). [code: phpstan.neon:66-261 @7.x]
 
 D.5 Test classes are `final`, declare strict types, end in `Test`, and abstract shared bases are named
 `Abstract…TestCase`. [code: .github/prompts/write-test.prompt.md:19 @7.x]
@@ -213,18 +235,21 @@ D.5 Test classes are `final`, declare strict types, end in `Test`, and abstract 
 ## E. PHPStan: configuration and custom rules
 
 E.1 Level 6; paths `app/bundles`, `app/migrations`, `plugins`, `utils`; `treatPhpDocTypesAsCertain: false`.
-[code: phpstan.neon:5-35 @419a08a9b35]
+[code: phpstan.neon:5-59 @7.x]
 
-E.2 Type-coverage floors: return 88.3 %, param 75.7 %, property 71.6 %, constant 3, declare 73. Lowering overall type
-coverage fails the run. [code: phpstan.neon:14-20 @419a08a9b35]
+E.2 Type-coverage floors: return 88.3 %, param 75.7 %, property 71.6 %, constant 3. Lowering overall type coverage fails
+the run. The `declare 73` floor was dropped when the dev dependencies were bumped; `rector/type-perfect` was removed and
+its rules are now enabled as `type_perfect` options of type-coverage (`no_param_type_removal`, `no_isset_on_object`,
+`no_empty_on_object`). symplify/phpstan-rules 14.19 rule sets are switched off; Mautic registers the rules it uses.
+[code: phpstan.neon:14-44 @7.x] [code: composer.json:28-53 @7.x] [PR #17846]
 
 E.3 `phpstan-baseline.neon` (about 2040 entries) is generated; regenerate with `composer phpstan-baseline`. Hand-written
 suppressions go in `phpstan.neon` `ignoreErrors` with `identifier` and `path`, or inline. An obsolete suppression fails
 the run (`reportUnmatchedIgnoredErrors` default true). Never commit a broader exclusion.
-[code: phpstan.neon:1-2,8,42-239 @419a08a9b35] [code: composer.json:182 @7.x]
+[code: phpstan.neon:1-2,8,66-261 @7.x] [code: composer.json:182 @7.x]
 
 E.4 Uses of Mautic's own deprecated classes are tolerated by `ignoreErrors` (`*.deprecated*` whose message matches
-`class\s+Mautic`). Do not read a clean PHPStan run as "no deprecated API used". [code: phpstan.neon:42-239 @419a08a9b35]
+`class\s+Mautic`). Do not read a clean PHPStan run as "no deprecated API used". [code: phpstan.neon:180-210 @7.x]
 
 E.5 Custom rules (in `utils/phpstan/src/Rule/`, tests in `utils/phpstan/tests/Rule/`), with the message each emits:
 [code: phpstan.neon:279-299 @7.x] [code: utils/phpstan/src/Rule/ @7.x]
@@ -256,13 +281,16 @@ E.6 Present but not registered: `NoObjectPropertyAssignToVariableInTestsRule`, `
 
 F.1 Paths `app/bundles`, `plugins`; sets `deadCode`, `typeDeclarations`, `phpunitCodeQuality`, `phpunitMockToStub`,
 `phpunitNarrowAsserts`, `privatization`, `codeQuality`, PHP sets from composer (8.2). Custom rectors
-`UnserializeToSerializerDecodeRector` and `ModelGetRepositoryToRepositoryServiceRector`. [code: rector.php:10-55 @419a08a9b35]
+`UnserializeToSerializerDecodeRector` and `ModelGetRepositoryToRepositoryServiceRector`. Runs in parallel with a 300 s
+timeout. [code: rector.php:10-56 @7.x]
 
 F.2 `withTypeGuardedClasses` protects the signatures of the common controllers, `CommonRepository`, `AbstractPermissions`,
 `AbstractIntegration` and `CrmAbstractIntegration`, because plugins extend them. [code: rector.php:27-41 @7.x]
 
 F.3 `reportUnusedSkips()` is on: a skip entry that no longer matches fails. Add skips sparingly.
-[code: rector.php:56-122 @419a08a9b35]
+[code: rector.php:55-129 @7.x] Skips also protect BC where `withTypeGuardedClasses` does not reach: `UserProvider` is
+skipped for `ReturnTypeFromStrictTypedCallRector` so `saveUser()` stays compatible with authentication plugins that
+override its untyped return. [code: rector.php:58-61 @7.x] [PR #18117]
 
 F.4 Run `ddev composer rector` (rewrites files) and commit the result; CI runs `bin/rector --dry-run`.
 [code: .github/workflows/tests.yml:250-253 @7.x]
@@ -287,7 +315,7 @@ G.4 Every console command has `#[AsCommand(name: ..., description: ...)]`; every
 G.5 New 7.x code should already avoid what 8.x removes: `*Events::CONST` as subscriber keys or as the second
 `dispatch()` argument, `CacheStorageHelper`, `Core\Controller\FormController`, `services`/`menus`/`models` arrays in
 `config.php`, string service ids, `Request::get()`, `$this->_em` in repositories, constraint option arrays.
-[code: UPGRADE-8.0.md @8.x] (list from analysis 8x-changes §7)
+[code: UPGRADE-8.0.md:205,243,295,386 @8.x] [code: UPGRADE-8.0.md:596-1000 @8.x]
 
 ## H. Schema changes (entity metadata AND migration)
 
@@ -451,6 +479,14 @@ https://contribute.mautic.org/contributing-to-mautic. [code: .github/CONTRIBUTIN
 M.6 Agent skills for the core repo live in `.agents/skills/` (symlinked from `.claude/skills/`); because `.gitignore`
 ignores dot-directories, new skills are added with `git add -f`. [code: AGENTS.md:137-143 @7.x]
 
+M.7 Before building or changing any UI, read `DESIGN.md` in the repository root (design tokens, typography, layout,
+components, accessibility), added on 7.x for 7.3. [code: AGENTS.md:100-102 @7.x] [PR #17879]
+
+M.8 PRs written with coding agents are merged through normal review; several delta PRs end with "Generated with Claude
+Code" and were reviewed and merged by maintainers. The repository has no written AI-contribution policy in the PR
+template, `.github/CONTRIBUTING.md` or `AGENTS.md`. CodeRabbit's "prompt for AI agents" block is turned off in reviews.
+[PR #18063] [PR #18064] [code: .coderabbit.yaml:24 @7.x] [code: .github/PULL_REQUEST_TEMPLATE.md @7.x]
+
 ## N. Terminology and writing style
 
 The full tables are in terminology.md. Rules:
@@ -460,7 +496,7 @@ N.1 In prose, UI strings and docs say "Contact", never "Lead"; code identifiers 
 
 N.2 Capitalise Mautic feature names as proper nouns: Contact, Company, Segment, Campaign, Email, Form, Landing Page,
 Asset, Focus Item, Dynamic Content, Marketing Message, Stage, Points, Point Group, Category, Channel, Report, Role, User,
-Theme, Webhook, Plugin, Integration, Custom Field. [docs: https://github.com/mautic/user-documentation/blob/7.2/.github/styles/Mautic/FeatureList.yml]
+Theme, Webhook, Plugin, Integration, Custom Field, Note (added to the list after the 2026-10-15 docs snapshot). [docs: https://github.com/mautic/user-documentation/blob/7.2/.github/styles/Mautic/FeatureList.yml]
 
 N.3 "page" → "Landing Page"; "dwc" → "Dynamic Content"; publish → "Activate"/"Turn On"; unpublish → "Deactivate"/"Turn
 Off"; published → "Active"/"Available"; unpublished → "Unavailable"/"Deactivated".
@@ -485,6 +521,10 @@ O.2 Always pass `-c app/phpunit.xml.dist` (or use `composer test`); it sets `KER
 
 O.3 Prefer the real route or command over calling a service, and never mock objects without service dependencies
 (events, entities). [code: .github/prompts/write-test.prompt.md:17-18 @7.x]
+
+O.3a `AGENTS.md` test rules (7.x, unreleased 7.3): never read source files by path to reach internals, never assert a
+stubbed helper's exact call arguments, order or hard-coded style values, and never add globals or exports only for a
+test; assert the observable result through the public entry point. [code: AGENTS.md:95-98 @7.x] [PR #17955]
 
 O.4 Data providers use the `#[DataProvider]` attribute with a `public static` provider; `@dataProvider` is not used and
 PHPUnit 11 runs with `failOnWarning="true"`. [code: .github/prompts/write-test.prompt.md:23 @7.x]

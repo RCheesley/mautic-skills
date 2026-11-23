@@ -12,11 +12,14 @@
   [code: UPGRADE-7.0.md @7.x]
 
 ## 2. 7.x minors
-- 7.0.0 (2026-01-20), 7.1.0 (2026-04-14), 7.2.0 (2026-09-02), 7.2.1 (2026-09-23). [code: git tag @7.x]
-- Minors carry additive schema changes: 7.1.0 added 9 migrations, 7.2.0 added 13; 7.2.1 added none. [code: app/migrations/ @7.x]
+- 7.0.0 (2026-01-20), 7.1.0 (2026-04-14), 7.2.0 (2026-09-02), 7.2.1 (2026-09-23), 7.2.2 (2026-10-26, security release,
+  merged into 7.x and 8.x). [code: git tag @7.x] [PR #17934] [PR #17953] [PR #18036]
+- Minors carry additive schema changes: 7.1.0 added 9 migrations, 7.2.0 added 13; 7.2.1 and 7.2.2 added none.
+  [code: app/migrations/ @7.x] The `7.2` branch after 7.2.2 fixes two existing migrations. [PR #17274] [PR #17907]
 - No `UPGRADE-7.1.md` or `UPGRADE-7.2.md` exists; minor-release notes are on GitHub releases, grouped by PR label.
   [code: .github/release.yml @7.x]
-- Only 7.2.x is listed as supported in the bug form. [code: .github/ISSUE_TEMPLATE/BUG-REPORT.yml:24-41 @7.x]
+- Only 7.2.x is listed as supported in the bug form. [code: .github/ISSUE_TEMPLATE/BUG-REPORT.yml:24-41 @7.x] 5.2 and
+  6.0 still received security releases 5.2.12 and 6.0.10 on 2026-10-26. [PR #17932] [PR #17933]
 
 ## 3. The 8.x delta for contributors
 | Area | 7.x | 8.x | Tag |
@@ -77,3 +80,9 @@ Full history and conflicts: pr-history.md sections 12 and 13.
 - 7.2.0: hundreds of classes made `final` in a minor without an UPGRADE note (recorded exception). [PR #16754] [PR #16898]
 - 7.2.0: `UserModel` public signatures changed without deprecation. [PR #16980]
 - 7.3 (unreleased): `.agents/skills/mautic-dev` added to core. [PR #17459]
+- 7.2.2: Composer releases include prebuilt GrapesJS assets. [PR #17831]
+- After 7.2.2: `[7.x]` and `[8.x]` counterpart PRs for fixes needed before the next merge-up; merge-up PRs titled
+  "Merge 7.2.2 into 7.x" and "Merge 7.x into 8.x <date>". [PR #17918] [PR #18064] [PR #18136] [PR #17953] [PR #18236]
+- 7.3 (unreleased): `DESIGN.md` and `AGENTS.md` test rules; SonarCloud removed; CodeRabbit auto-labels PRs and issues
+  and warns on an unfilled PR template; `declare` type-coverage floor and `rector/type-perfect` dropped.
+  [PR #17879] [PR #17955] [PR #17923] [PR #18198] [PR #18240] [PR #17846]

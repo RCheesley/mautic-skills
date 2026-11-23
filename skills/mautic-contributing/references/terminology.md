@@ -24,7 +24,7 @@ rules are byte-identical in `mautic/user-documentation` and `mautic/developer-do
   `lead_lists` table, `Page` (Landing Page), `DynamicContent`. Do not rename identifiers to match prose terms; that is a
   BC break (see behaviour.md A.8). [code: app/bundles/LeadBundle/ @7.x]
 - Vale runs only in the documentation repositories. The core repository's CI has no Vale job, so en_US INI strings are
-  not linted automatically; apply the rules by hand. [code: .github/workflows/tests.yml:181-316 @419a08a9b35]
+  not linted automatically; apply the rules by hand. [code: .github/workflows/tests.yml:181-316 @7.x]
 - The dev-docs 8.0 accept list adds `LeadBundle` (the only 8.0 vocabulary change).
   [docs: https://github.com/mautic/developer-documentation-new/blob/8.0/.github/styles/config/vocabularies/Mautic/accept.txt]
 
@@ -38,6 +38,8 @@ rules are byte-identical in `mautic/user-documentation` and `mautic/developer-do
 
 ## 3. Mautic feature names and rejected terms (FeatureList, 62 swaps; case-insensitive match; level suggestion)
 [docs: https://github.com/mautic/user-documentation/blob/7.2/.github/styles/Mautic/FeatureList.yml]
+Added on the 7.2 docs branch after the 2026-10-15 snapshot (not numbered below): `note` → Note and `notes` → Notes,
+so the Contact Notes feature is capitalised too. [docs: https://github.com/mautic/user-documentation/blob/7.2/.github/styles/Mautic/FeatureList.yml]
 
 | # | Lower-case / non-preferred form (case-insensitive match) | Use instead | Rule |
 |---|---|---|---|
