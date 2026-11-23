@@ -14,6 +14,7 @@ User whose Role has Full System Access (`is_admin = 1`).
 7. Permission evaluation framework (B69–B90)
 8. API authentication and the Users/Roles API (B91–B104)
 9. Plugin, SSO and SAML authentication (B105–B115)
+9a. OpenID Connect, unreleased on 7.x (B128–B142)
 10. Audit log of user actions (B116–B123)
 11. Defaults, fixtures and CLI acting-as-user (B124–B127)
 
@@ -47,9 +48,9 @@ B12. For Users, `last_active` is written only at login, so it always equals `las
 
 B13. After login the User is redirected to the saved `_security.main.target_path` or the dashboard; a request with `format=json` gets `{"success":true}` instead. Failure stores the exception in session and redirects to `login`. [code: app/bundles/UserBundle/Security/Authentication/AuthenticationHandler.php:22-58 @7.x]
 
-B14. Opening the login page while already authenticated (fully or via remember-me) redirects to the dashboard. [code: app/bundles/UserBundle/Controller/SecurityController.php:36-53 @419a08a9b35]
+B14. Opening the login page while already authenticated (fully or via remember-me) redirects to the dashboard. The OIDC actions (`oidcLoginAction`, `oidcCheckAction`, `oidcRequiredAction`) are exempt from this redirect on 7.x (7.3.0-rc). [code: app/bundles/UserBundle/Controller/SecurityController.php:41-65 @7.x] [PR #17527]
 
-B15. Remember-me uses the `_remember_me` checkbox, secret `rememberme_key` (default `%mautic.secret_key%`), lifetime `rememberme_lifetime` (default 7776000 s = 90 days), path `rememberme_path`, domain `rememberme_domain`, SameSite=Lax. [code: app/config/security.php:107-113 @7.x] [code: app/bundles/CoreBundle/Config/config.php:281-284 @7.x] [code: app/bundles/UserBundle/Resources/views/Security/login.html.twig:37 @419a08a9b35]
+B15. Remember-me uses the `_remember_me` checkbox, secret `rememberme_key` (default `%mautic.secret_key%`), lifetime `rememberme_lifetime` (default 7776000 s = 90 days), path `rememberme_path`, domain `rememberme_domain`, SameSite=Lax. [code: app/config/security.php:107-113 @7.x] [code: app/bundles/CoreBundle/Config/config.php:281-284 @7.x] [code: app/bundles/UserBundle/Resources/views/Security/login.html.twig:46-50 @7.x]
 
 B16. `/s/*` requires `IS_AUTHENTICATED` (remember-me suffices); `/api/*` requires `IS_AUTHENTICATED_FULLY`. [code: app/config/security.php:171-172 @7.x]
 
@@ -89,7 +90,7 @@ B31. Required fields: username, first name, last name, email (valid format) and 
 
 B32. A new User needs a password; an existing User needs one only when changing it (validation groups `CheckPasswordNotBlank` / `CheckPassword`). [code: app/bundles/UserBundle/Entity/User.php:269-285 @7.x] [code: app/bundles/UserBundle/Tests/Functional/Controller/UserControllerFunctionalTest.php:221-320 @7.x]
 
-B33. Only published Roles are offered in the Role dropdown of the User form and invite form. The dropdown has no placeholder and is ordered by name. [code: app/bundles/UserBundle/Form/Type/UserType.php:209-224 @419a08a9b35] [code: app/bundles/UserBundle/Form/Type/UserInviteType.php:52-54 @7.x]
+B33. Only published Roles are offered in the Role dropdown of the User form and invite form. The dropdown has no placeholder and is ordered by name. [code: app/bundles/UserBundle/Form/Type/UserType.php:222-240 @7.x] [code: app/bundles/UserBundle/Form/Type/UserInviteType.php:52-54 @7.x]
 
 B34. The User edit form locks the record (checkout) while open; a locked User cannot be edited or deleted by someone else until cancel/save. [code: app/bundles/UserBundle/Controller/UserController.php:358-361,429-439,497-499 @7.x]
 
@@ -125,13 +126,13 @@ B48. Deleting a Role deletes its pending invites (`user_invites.role_id` ON DELE
 
 ## 5. Profile, preferences, timezone and locale
 
-B49. On the profile page (`/s/account`) name, username, position and email are editable only with `user:profile:editname|editusername|editposition|editemail` (or `full`); other fields are rendered disabled and the stored values override what is submitted. Role and active status are never editable there. [code: app/bundles/UserBundle/Controller/ProfileController.php:40-152,165-168 @419a08a9b35] [code: app/bundles/UserBundle/Form/Type/UserType.php:209-241 @419a08a9b35]
+B49. On the profile page (`/s/account`) name, username, position and email are editable only with `user:profile:editname|editusername|editposition|editemail` (or `full`); other fields are rendered disabled and the stored values override what is submitted. Role and active status are never editable there. [code: app/bundles/UserBundle/Controller/ProfileController.php:40-152,165-168 @7.x] [code: app/bundles/UserBundle/Form/Type/UserType.php:222-242,302-311 @7.x]
 
 B50. The profile's API-credentials tab needs `api_enabled` and `api:access:full`. [code: app/bundles/UserBundle/Controller/ProfileController.php:42-43 @7.x]
 
 B51. The profile POST is guarded by a session flag `formProcessed` against double submission. [code: app/bundles/UserBundle/Controller/ProfileController.php:155-157,233 @7.x]
 
-B52. Timezone precedence per request is User → system: the request listener calls `date_default_timezone_set()` with session `_timezone` or `default_timezone` (default `UTC`). [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:30-40 @419a08a9b35] [code: app/bundles/CoreBundle/Config/config.php:286 @7.x]
+B52. Timezone precedence per request is User → system: the request listener calls `date_default_timezone_set()` with session `_timezone` or `default_timezone` (default `UTC`), and since 7.2.2 also `DateTimeHelper::setLocalTimezone()` with the same value, so dates rendered "local" follow the session timezone after it changes. [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:31-42 @7.x] [PR #17627] [code: app/bundles/CoreBundle/Config/config.php:286 @7.x]
 
 B53. Locale precedence is User → system `locale` (default `en_US`); the Twig language helper also prefers the User locale. [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:47-63 @7.x] [code: app/bundles/CoreBundle/Twig/Extension/LanguageExtension.php:52-53 @7.x]
 
@@ -141,7 +142,7 @@ B55. Choosing a locale whose language pack is missing triggers a download on sav
 
 B56. UI preferences (`theme`, `reduce_transparency`, `reduce_motion`, `contrast_borders`, `enable_underlines`) are stored per User in the serialized `preferences` column; dismissed onboarding elements are not — they live in browser `localStorage['dismissedElements']`. [code: app/bundles/UserBundle/Form/Type/UserPreferencesType.php @7.x] [code: app/bundles/UserBundle/Model/UserModel.php:376-401 @7.x] [code: app/bundles/CoreBundle/Assets/js/1.core.js:132-149 @7.x]
 
-B57. The User `signature` defaults to the translated default signature with `|FROM_NAME|`; when an email is sent as the Contact owner ("Mailer is owner"), `{signature}` is the owner's signature with `|FROM_NAME|` → "First Last" and `|USER_<COLUMN>|` → that User column. Signature HTML is purified on input. [code: app/bundles/UserBundle/Form/Type/UserType.php:42,187-207 @419a08a9b35] [code: app/bundles/EmailBundle/Helper/FromEmailHelper.php:115-137 @7.x] [code: app/bundles/EmailBundle/EventListener/BuilderSubscriber.php:213-222 @7.x]
+B57. The User `signature` defaults to the translated default signature with `|FROM_NAME|`; when an email is sent as the Contact owner ("Mailer is owner"), `{signature}` is the owner's signature with `|FROM_NAME|` → "First Last" and `|USER_<COLUMN>|` → that User column. Signature HTML is purified on input. [code: app/bundles/UserBundle/Form/Type/UserType.php:55,200-220 @7.x] [code: app/bundles/EmailBundle/Helper/FromEmailHelper.php:115-137 @7.x] [code: app/bundles/EmailBundle/EventListener/BuilderSubscriber.php:213-222 @7.x]
 
 ## 6. Roles
 
@@ -159,7 +160,7 @@ B63. A Role that still has Users cannot be deleted (single or batch); flash "%na
 
 B64. Cloning a Role opens the form pre-filled with "Clone of %name%", the description, the admin flag and the raw permissions; nothing is stored until saved. Cloning needs `user:roles:create` and `user:roles:view`. [code: app/bundles/UserBundle/Model/RoleModel.php:134-145 @7.x] [code: app/bundles/UserBundle/Controller/RoleController.php:20-26,213-341 @7.x] [docs: https://docs.mautic.org/en/7.2/users_roles/managing_roles.html#cloning-a-role]
 
-B65. In the Role form, ticking `full` unticks the other levels of that permission and ticking any other level unticks `full`; each tab shows `granted / total`, where `full` counts as all other levels. With Full System Access = Yes the matrix is hidden. [code: app/bundles/UserBundle/Assets/js/user.js:79-147 @7.x] [code: app/bundles/CoreBundle/Security/Permissions/AbstractPermissions.php:262-294 @7.x] [code: app/bundles/UserBundle/Resources/views/Role/form.html.twig:47-99 @419a08a9b35]
+B65. In the Role form, ticking `full` unticks the other levels of that permission and ticking any other level unticks `full`; each tab shows `granted / total`, where `full` counts as all other levels. With Full System Access = Yes the matrix is hidden. [code: app/bundles/UserBundle/Assets/js/user.js:79-147 @7.x] [code: app/bundles/CoreBundle/Security/Permissions/AbstractPermissions.php:262-294 @7.x] [code: app/bundles/UserBundle/Resources/views/Role/form.html.twig:47-99 @7.x]
 
 B66. The Role list shows a per-Role User count, sortable as `user_count`. [code: app/bundles/UserBundle/Entity/RoleRepository.php:20-35 @7.x] [docs: https://docs.mautic.org/en/7.2/users_roles/managing_roles.html#sorting-roles-by-the-number-of-users]
 
@@ -215,7 +216,7 @@ B90. The audit-log stats table (`/api/stats/audit_log`) and the audit-log report
 
 ## 8. API authentication and the Users/Roles API
 
-B91. On the `api` firewall OAuth2 bearer, HTTP Basic and plugin authenticators all resolve to the same `User` entity, and the token's User gets `activePermissions` attached. API permissions are therefore the User's Role permissions. [code: app/config/security.php:51-67 @419a08a9b35] [code: app/bundles/UserBundle/Security/Authentication/Token/Permissions/TokenPermissions.php:30-63 @7.x]
+B91. On the `api` firewall OAuth2 bearer, HTTP Basic and plugin authenticators all resolve to the same `User` entity, and the token's User gets `activePermissions` attached. API permissions are therefore the User's Role permissions. Both API firewalls name `user_provider` explicitly on 7.x (7.3.0-rc), and `ApiUserSubscriber` runs on `CheckPassportEvent` at priority 2560 so its user loader is set before Symfony's per-firewall `UserProviderListener` (2048); a bearer token with no User leaves the token User unchanged. [code: app/config/security.php:62-79 @7.x] [code: app/bundles/UserBundle/EventListener/ApiUserSubscriber.php:93-112 @7.x] [PR #17527] [code: app/bundles/UserBundle/Security/Authentication/Token/Permissions/TokenPermissions.php:30-63 @7.x]
 
 B92. OAuth2 client-credentials tokens (no User) get a pseudo-User whose Role is the API client's Role, named `"<client name> [<client id>]"`; `MAUTIC_AUDITLOG_USER` is defined with that name so audit rows and `created_by_user` show the client. [code: app/bundles/UserBundle/Security/Authentication/Token/Permissions/TokenPermissions.php:68-95 @7.x] [code: app/bundles/UserBundle/EventListener/ApiUserSubscriber.php:50-71 @7.x]
 
@@ -245,19 +246,19 @@ B104. The API Platform voter maps any `…own`/`…other` attribute with an obje
 
 ## 9. Plugin, SSO and SAML authentication
 
-B105. A login POST that includes an `integration` field is handled by `SsoAuthenticator` (runs before form login) which dispatches `mautic.user_form_authentication`; listeners may call `setIsAuthenticated()` (optionally creating the User) or `setIsFailedAuthentication()` with a message to block local password login. [code: app/bundles/UserBundle/Security/Authenticator/SsoAuthenticator.php:71-164 @7.x] [code: app/bundles/UserBundle/Event/AuthenticationEvent.php:96-181 @419a08a9b35]
+B105. A login POST that includes an `integration` field is handled by `SsoAuthenticator` (runs before form login) which dispatches `mautic.user_form_authentication`; listeners may call `setIsAuthenticated()` (optionally creating the User) or `setIsFailedAuthentication()` with a message to block local password login. [code: app/bundles/UserBundle/Security/Authenticator/SsoAuthenticator.php:71-164 @7.x] [code: app/bundles/UserBundle/Event/AuthenticationEvent.php:150-230 @7.x]
 
-B106. Requests on the `sso_login`, `api` and `v2api` firewalls run `PluginAuthenticator`, which dispatches `mautic.user_pre_authentication` unless a bearer token is present. With no listener result on the API firewalls it returns `null` so the next authenticator runs. [code: app/bundles/UserBundle/Security/Authenticator/PluginAuthenticator.php:48-52,66-79,112-120,189-200 @7.x] [code: app/config/security.php:22-27,51-67 @419a08a9b35]
+B106. Requests on the `sso_login`, `api` and `v2api` firewalls run `PluginAuthenticator`, which dispatches `mautic.user_pre_authentication` unless a bearer token is present. With no listener result on the API firewalls it returns `null` so the next authenticator runs. [code: app/bundles/UserBundle/Security/Authenticator/PluginAuthenticator.php:48-52,66-79,112-120,189-200 @7.x] [code: app/config/security.php:32-38,62-79 @7.x]
 
 B107. `/s/sso_login/{integration}` is public; the login check sets `isLoginCheck()` on the event, and an empty JSON response is returned if nothing authenticated. The login page lists `sso_service` integrations as links. [code: app/bundles/UserBundle/Security/Authenticator/PluginAuthenticator.php:69-78,106-109 @7.x] [code: app/bundles/UserBundle/Controller/SecurityController.php:96-97,116-128 @7.x]
 
-B108. Users created by SSO plugins (`UserProvider::saveUser`) must have role, username, email, first and last name; a missing password gets a random one; `USER_PRE_SAVE`/`USER_POST_SAVE` fire. [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:90-145 @419a08a9b35]
+B108. Users created by SSO plugins (`UserProvider::saveUser`) are first resolved against existing Users by username or email; they must have role, username, email, first and last name; a missing password gets a random one; `USER_PRE_SAVE`/`USER_POST_SAVE` always fire. On 7.x (7.3.0-rc) `UserProvider::createUser()` applies the same checks without the username/email lookup and inserts through `UserRepository::saveNewUser()`, which locks matching rows in a transaction and throws `identity_taken` on any username/email collision (used by OIDC registration). [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:90-159 @7.x] [code: app/bundles/UserBundle/Entity/UserRepository.php:23-51 @7.x] [PR #18117]
 
 B109. SAML is "enabled" when `saml_idp_metadata` (base64 IdP XML) is non-empty. [code: app/bundles/UserBundle/Security/SAML/Helper.php:18-27 @7.x] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#turning-on-saml]
 
 B110. A SAML assertion is mapped to a User (email as username unless a username attribute is configured). A matching User (by username or email) is logged in; otherwise a User is created with `saml_idp_default_role`, or login fails "User does not exist." when no default Role is set. [code: app/bundles/UserBundle/Security/SAML/User/UserMapper.php:38-59 @7.x] [code: app/bundles/UserBundle/Security/SAML/User/UserCreator.php:34-67 @7.x] [docs: https://docs.mautic.org/en/7.2/configuration/settings.html#saml-sso-settings]
 
-B111. The SP endpoints are `/saml/metadata.xml`, `/saml/discovery`, `/s/saml/login` and ACS `/s/saml/login_check`. [code: app/bundles/UserBundle/Config/config.php:28-131 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#configuring-the-idp]
+B111. The SP endpoints are `/saml/metadata.xml`, `/saml/discovery`, `/s/saml/login` and ACS `/s/saml/login_check`. [code: app/bundles/UserBundle/Config/config.php:28-143 @7.x] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#configuring-the-idp]
 
 B112. SAML request state lives in the cache for 2 minutes; `/saml/login_retry` invalidates the session and offers a retry link when SAML is enabled, else redirects to login. [code: app/bundles/UserBundle/Security/SAML/Store/Request/RequestStateStore.php:23-34 @7.x] [code: app/bundles/UserBundle/Controller/SecurityController.php:131-151 @7.x] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#recovering-from-a-login-error]
 
@@ -266,6 +267,40 @@ B113. With an own certificate configured, AuthnRequests and assertions are signe
 B114. Uploaded IdP metadata is validated as XML and the cert/key pair validated on config save; a blank key password keeps the stored one. [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:110,122-148 @7.x]
 
 B115. When env `MAUTIC_SAML_ENABLED` is not true, `SAMLSubscriber` is removed from the container; when present it redirects any `/saml/*` or `lightsaml*` route to `login`. `/s/login` stays reachable directly. [code: app/bundles/UserBundle/EventListener/SAMLSubscriber.php:31-48 @7.x] [code: app/bundles/UserBundle/DependencyInjection/MauticUserExtension.php:23-26 @7.x] [docs: https://docs.mautic.org/en/7.2/authentication/authentication.html#logging-in]
+
+## 9a. OpenID Connect (unreleased on 7.x, 7.3.0-rc)
+
+Added by [PR #17527] (milestone 7.3.0-rc) with follow-up fixes [PR #18117], [PR #18148] and [PR #18162]. None of it is in 7.2.2.
+
+B128. Settings (Configuration → User/Authentication Settings, above SAML): `open_id_is_enabled` (0), `open_id_is_required` (0), `open_id_is_user_registration_allowed` (0), `open_id_registered_user_role` (2), `open_id_client_id`, `open_id_client_secret`, `open_id_client_url` (all `''`) and `open_id_mapping_field` (`sub`). The other fields are disabled while Enable is No; Client URL, Client ID, Identifier field and Is required are required when enabled, and Role for new users when registration is allowed. [code: app/bundles/UserBundle/Config/config.php:156-164 @7.x] [code: app/bundles/UserBundle/Form/Type/ConfigType.php:195-345 @7.x]
+
+B129. The client secret is never shown again: the field renders a `*` placeholder and an empty submission keeps the stored secret. [code: app/bundles/UserBundle/Form/Type/ConfigType.php:331-356 @7.x]
+
+B130. Saving with OIDC enabled fetches the provider's `authorization_endpoint` from its discovery document; if that fails the save is refused with "OpenID Connect test connection failed. Please check your settings." Client ID, secret and redirect URL are not verified by this check. [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:84-105 @7.x] [code: app/bundles/UserBundle/Security/OIDC/Client/OpenIDConnectBridge.php:89-104 @7.x] [docs: github.com/mautic/user-documentation/blob/7.3/docs/authentication/authentication.rst]
+
+B131. Routes: `/s/open_id/login` (starts the flow, clearing previous OIDC state/nonce/code-verifier session keys), `/s/open_id/login_check` (callback; a direct GET without `code` and `state` is a 404) and `/s/open_id/required`. They sit on their own `open_id` firewall (shared `mautic` context) and are `PUBLIC_ACCESS`. With OIDC disabled every `/s/open_id/*` request redirects to `/s/login`. [code: app/bundles/UserBundle/Config/config.php:130-142 @7.x] [code: app/config/security.php:22-31,168-169 @7.x] [code: app/bundles/UserBundle/Controller/SecurityController.php:153-215 @7.x] [code: app/bundles/UserBundle/EventListener/OidcRequestSubscriber.php:56-65 @7.x]
+
+B132. `OidcAuthenticator` handles the callback only when OIDC is enabled, the route is `mautic_oidc_check` or `mautic_oidc_login`, and both `code` and `state` are present. Success redirects to the dashboard; failure flashes the error and redirects to `/s/login`. It is an interactive authenticator, so an OIDC login writes `last_login`, session timezone/locale and the `user/security/login` audit row like a password login (B11, B116). [code: app/bundles/UserBundle/Security/OIDC/OidcAuthenticator.php:36-104 @7.x]
+
+B133. Scopes requested are `openid`, `email`, `profile` (listeners of `RegisterScopesEvent` can add more). Claims read: `email`, `preferred_username`, `given_name`, `family_name` and the identifier claim; ID-token values win over userinfo values except where the token value is null. A missing identifier claim fails the login with "invalid mapping field". [code: app/bundles/UserBundle/EventListener/OidcScopesSubscriber.php:19-22 @7.x] [code: app/bundles/UserBundle/Security/OIDC/Factory/UserCredentialsFactory.php:24-61 @7.x]
+
+B134. Resolution order on callback: (1) a User already linked to the subject logs in; if someone else is logged in and the subject belongs to another User, login fails "open_id_taken"; (2) otherwise, if a User is logged in (for example on the required page), the subject is linked to that User; (3) otherwise a new User is created and linked. [code: app/bundles/UserBundle/Security/OIDC/UserProvider.php:40-61 @7.x] [code: app/bundles/UserBundle/Security/OIDC/User/Linker.php:20-49 @7.x]
+
+B135. Registration (step 3) fails with distinct messages when registration is off, the configured Role does not exist, the provider sends no email, or the email equals any existing User's email or username ("identity already taken"). The username is `preferred_username` unless it is empty or equals an existing username or email, then the email; first/last name fall back to the username. New Users are published, get a random password, and are inserted with `createUser()` (no "username OR email" lookup, row-locked against concurrent registrations). Before [PR #18117] a crafted `preferred_username` or email could make registration return and link an existing victim account. [code: app/bundles/UserBundle/Security/OIDC/User/UserFactory.php:24-70 @7.x] [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:104-159 @7.x] [code: app/bundles/UserBundle/Entity/UserRepository.php:23-51 @7.x] [PR #18117]
+
+B136. Links live in `open_id_identifiers` (`user_id` primary key with ON DELETE CASCADE, `subject_id` unique, collation `utf8mb4_bin`): one subject per User and one User per subject. Subject IDs compare case-sensitively; a database match that is not byte-identical is rejected. [code: app/bundles/UserBundle/Entity/OidcSubjectId.php:12-37 @7.x] [code: app/migrations/Version20261022064630.php:25-33 @7.x] [code: app/bundles/UserBundle/Security/OIDC/User/Linker.php:20-33 @7.x] [PR #18148]
+
+B137. With OIDC enabled the User edit form shows an "OpenID Connect identifier" field: entering a value links the User (an identifier linked elsewhere is a field error and the User is not saved); clearing it unlinks. Unlinking does not end an active session. [code: app/bundles/UserBundle/Form/Type/UserType.php:244-299 @7.x] [code: app/bundles/UserBundle/Security/OIDC/User/Linker.php:51-77 @7.x] [docs: github.com/mautic/user-documentation/blob/7.3/docs/authentication/authentication.rst]
+
+B138. Login page: with OIDC enabled a "Sign In with OpenID Connect" block follows the username/password form; with OIDC also required a notice precedes it. The password form stays usable. [code: app/bundles/UserBundle/Resources/views/Security/login.html.twig:24-26,79-81 @7.x] [code: app/bundles/UserBundle/EventListener/OidcTemplateSubscriber.php:26-34 @7.x]
+
+B139. With `open_id_is_required`, any `main`-firewall request by a User whose token did not come from the `open_id` firewall redirects to `/s/open_id/required`, which offers Link Account / re-authenticate and Log out. An OIDC-authenticated User visiting `/s/login` or `/s/open_id/*` is redirected to the dashboard. A `PluginToken` flagged `isSupportUser` bypasses all these redirects; core never sets the flag (`AuthenticationEvent::setIsSupportUser()` exists for plugins). [code: app/bundles/UserBundle/EventListener/OidcRequestSubscriber.php:36-146 @7.x] [code: app/bundles/UserBundle/Security/Authentication/Token/PluginToken.php:24,53-56 @7.x] [code: app/bundles/UserBundle/Event/AuthenticationEvent.php:176-187 @7.x]
+
+B140. Saving the settings with a changed Identifier field, or a Client URL that differs after trimming whitespace and trailing slashes and lower-casing scheme and host, deletes every row of `open_id_identifiers`. An unchanged save, or switching OIDC off and on, keeps them: empty Role/Client URL/Client ID/Identifier values (disabled fields are not submitted) are dropped so stored values survive. Edits to `config/local.php` never delete links. [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:21-26,68-81,157-187 @7.x] [PR #18162]
+
+B141. Before [PR #18162] (also unreleased) every save read the old identifier field from the wrong key and deleted all links, and switching OIDC off blanked the provider settings. [PR #18162]
+
+B142. User avatars (User list, profile menu, account page, global User search) are generated locally from the `dicebear/styles` "Line Face" style, seeded with `site_url` + User id, and returned as a data URI; nothing is requested from Gravatar for Users. If the style cannot load the default avatar is used. The Contact Gravatar setting does not apply to Users. Unreleased on 7.x (7.3.0-rc). [code: app/bundles/UserBundle/Twig/Extension/AvatarExtension.php:35-77 @7.x] [PR #17862]
 
 ## 10. Audit log of user actions
 

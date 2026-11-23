@@ -41,8 +41,17 @@ Full PR-derived history: pr-history.md.
 | 7.2.0 | Login and security pages skip CKEditor (`includeEditor`). | [PR #16987] |
 | 7.2.0 | `mautic:maintenance:cleanup --dry-run` reports the real expired-token count. | [PR #16772] |
 | 7.2 | Service aliases `mautic.security.logout_handler` and `mautic.security.user_token_setter` deprecated. | [code: app/bundles/UserBundle/Config/services.php:135-138 @7.x] |
-| 7.x head (after 7.2.1 tag) | Delete-User confirmation lists the consequences (translation strings only). | [PR #17444] |
-| 7.x head (after 7.2.1 tag) | `is:never_logged_in` search command and "Never logged in" quick filter. | [code: app/bundles/UserBundle/Entity/UserRepository.php:286-287,348 @7.x] [docs: https://docs.mautic.org/en/8.0/users_roles/managing_users.html#filtering-users-who-have-never-logged-in] |
+| 7.2.2 | User edit page skips recent-activity entries that no longer resolve to a User or Role. | [PR #17609] |
+| 7.2.2 | The per-request timezone is also applied to local-date rendering (`DateTimeHelper::setLocalTimezone()`). | [PR #17627] [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:38-41 @7.x] |
+| 7.2 branch, after 7.2.2 (milestone 7.2.3) | User edit no longer returns 500 when recent activity has Role create/update entries (`RoleRepository::getEntitiesForRecentActivity()`). Not in the 7.x snapshot. | [PR #17855] |
+| Unreleased on 7.x (7.3.0-rc) | Delete-User confirmation lists the consequences (translation strings only). | [PR #17444] |
+| Unreleased on 7.x (7.3.0-rc) | `is:never_logged_in` search command and "Never logged in" quick filter. | [code: app/bundles/UserBundle/Entity/UserRepository.php:286-287,348 @7.x] [docs: https://docs.mautic.org/en/8.0/users_roles/managing_users.html#filtering-users-who-have-never-logged-in] |
+| Unreleased on 7.x (7.3.0-rc) | OpenID Connect login: `open_id` firewall, `/s/open_id/*` routes, `open_id_*` settings, `open_id_identifiers` table (migration `Version20261022064630`), OIDC identifier field on the User form, "required" mode. OIDC logins are interactive (audit row, `last_login`). `ApiUserSubscriber` priority 2048 → 2560 and explicit `provider` on firewalls. | [PR #17527] [code: app/bundles/UserBundle/Security/OIDC/OidcAuthenticator.php:24-105 @7.x] |
+| Unreleased on 7.x (7.3.0-rc) | OIDC registration account-takeover fix: no username/email matching of existing Users; `UserProvider::createUser()` and locked `UserRepository::saveNewUser()`; generic `identity_taken` error. | [PR #18117] |
+| Unreleased on 7.x (7.3.0-rc) | OIDC subject IDs case-sensitive (`utf8mb4_bin`; the unreleased migration was amended in place). | [PR #18148] |
+| Unreleased on 7.x (7.3.0-rc) | Changing the OIDC Client URL or Identifier field in the UI deletes all links; unchanged saves and off/on toggles keep links and settings. | [PR #18162] |
+| Unreleased on 7.x (7.3.0-rc) | User avatars generated locally (DiceBear "Line Face"); no Gravatar requests for Users. | [PR #17862] |
+| Unreleased on 7.x (7.3.0-rc) | Login, reset and register pages get a card layout with a heading and help line (markup only). | [PR #13766] |
 
 ## 3. 8.x delta
 
@@ -68,4 +77,4 @@ Branch topology: 7.2.1 is not merged into 8.x yet; `is:never_logged_in` is prese
 - Add native return types to every `AbstractPermissions` override now; PHP allows a child to add a return type the parent lacks. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
 - Never reference `UserEvents::*` unguarded; use `defined()` checks. [devdocs: https://devdocs.mautic.org/en/8.0/plugins/update_m7_to_m8.html]
 
-Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
+Unreleased 7.x changes (bound for 7.3, in no release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).

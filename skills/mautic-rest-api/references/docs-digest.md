@@ -2,7 +2,7 @@
 
 Digest of the cross-cutting REST API pages in the developer docs (devdocs.mautic.org, 7.2 and 8.0 branches) and the API
 Settings section of the user docs. Per-resource pages are digested in the owning area skills. Where the docs disagree with
-7.2.1 code, the code behaviour is in `behaviour.md` section 13.
+7.x code, the code behaviour is in `behaviour.md` section 13.
 
 ## Contents
 1. Pages and their status
@@ -164,3 +164,24 @@ browser while logged in shows interactive docs that can run calls. It paginates 
 - No list of v2 resources, filters or page size. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/api_v2.html]
 - No description of the client-credentials pseudo user's permissions (the creating admin's role).
   [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/authentication.html#client-credentials-flow]
+
+## 10. Changes since the digest
+
+- 7.2 docs branch: the Forms page now warns that `formType` is deprecated since 7.1 and removed in 8 (property table and
+  POST parameters). [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/forms.html]
+- No other cross-cutting REST API page changed on the 7.2 docs branch. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/getting_started.html]
+- KB: "What is Mautic's API?" (crawled 2026-11-23) is outdated: it says OAuth 1a or 2 and links developer.mautic.org. Use
+  OAuth2 or Basic Auth and the devdocs (behaviour.md D14). [kb: https://kb.mautic.org/article/what-is-mautic-039%3bs-api.html]
+
+## 11. Upcoming in 7.3 (docs branch, unreleased)
+
+- New Projects page: v1 `GET /projects`, `GET /projects/ID`, `POST /projects/new`, `PUT|PATCH /projects/ID/edit`,
+  `DELETE /projects/ID/delete`, `DELETE /projects/batch/delete?ids=`, linking entities through a `projects` array, and the
+  `/api/v2/projects` resource. The permission table names `project:projects:*`; code uses `project:project:*` (behaviour.md D13).
+  [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/rest_api/projects.rst]
+- Companies page: "Batch add Contacts to Companies" (`POST /companies/batch/addcontacts`, `assignments` array, limit
+  `api_batch_max_limit` default 200, per-pair `results`, 400/403 rules), the same text as the 8.0 docs.
+  [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/rest_api/companies.rst]
+- Contacts page: `GET /contacts/activity` documents `filters[leadIds][]`, which also returns `lead.create`,
+  `lead.identified`, `lead.ipadded` and `lead.apiadded` events that unfiltered requests omit.
+  [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/rest_api/contacts.rst]

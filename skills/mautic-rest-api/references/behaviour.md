@@ -42,12 +42,16 @@ false gets 403 `{"errors":[{"message":"Basic Auth disabled. ...","code":403,"typ
 to bool when the configuration is saved. [code: app/bundles/ApiBundle/EventListener/ApiSubscriber.php:70-89 @7.x]
 [code: app/bundles/ApiBundle/EventListener/ConfigSubscriber.php:32-40 @7.x]
 
-R6. `/api/*` requires `IS_AUTHENTICATED_FULLY`. [code: app/config/security.php:171 @7.x]
+R6. `/api/*` requires `IS_AUTHENTICATED_FULLY`. The 7.2.2 and 7.x rule is the unanchored regex `^/api`, so it also
+catches public paths that merely start with `api` (for example `/api-keys`), which are served by the `public` firewall
+and return 401 to anonymous callers instead of 404. On the 7.2 branch after 7.2.2 the rule is `^/api(?:/|$)`.
+[code: app/config/security.php:171 @7.x] [PR #18058]
 
 ## 2. Authentication: Basic and OAuth2
 
 R7. The v1 `api` firewall (`^/api/`) is stateless and accepts, in order, an OAuth2 bearer token (`fos_oauth`), plugin
-authentication (`mautic_plugin_auth`), and HTTP Basic. [code: app/config/security.php:60-67 @419a08a9b35]
+authentication (`mautic_plugin_auth`), and HTTP Basic, all loading Users from `user_provider` (named explicitly on the
+firewall since [PR #17527], unreleased on 7.x). [code: app/config/security.php:71-79 @7.x]
 
 R8. The v2 `v2api` firewall (`^/api/v2`) has the same authenticators but is not stateless and shares the `mautic` session
 context, so a logged-in UI session cookie authenticates v2 calls. [code: app/config/security.php:62-70 @7.x]
@@ -106,7 +110,9 @@ authorizations. [code: app/bundles/ApiBundle/Entity/oAuth2/AccessToken.php:27-29
 [code: app/bundles/ApiBundle/Entity/oAuth2/Client.php:77-82 @7.x]
 
 R22. Saving a client writes an audit-log entry (bundle `api`, object `client`) only when `name` or `redirectUris`
-changed; deleting always logs. The generated client id and secret are shown once in a flash message after creation.
+changed; deleting always logs, with the deleted client's id from `deletedId`. On 7.2.2 and 7.x `Client` does not
+declare `deletedId`, so deleting a client logs a PHP 8.2 "dynamic property" deprecation; the 7.2 branch after 7.2.2
+declares it [PR #18085]. The generated client id and secret are shown once in a flash message after creation.
 [code: app/bundles/ApiBundle/EventListener/ClientSubscriber.php:32-65 @7.x]
 [code: app/bundles/ApiBundle/Controller/ClientController.php:212-225 @7.x]
 
@@ -376,7 +382,7 @@ under a `user` key. [code: app/bundles/UserBundle/Controller/Api/UserApiControll
 ## 10. Locking
 
 R83. A model opts in to API locking by implementing `ApiLockAwareInterface` (with `ApiEntityLockTrait`, which delegates
-to `FormModel::isLocked()`). Only `EmailModel` implements it in 7.2.1.
+to `FormModel::isLocked()`). Only `EmailModel` implements it on 7.x.
 [code: app/bundles/ApiBundle/Model/ApiLockAwareInterface.php @7.x] [code: app/bundles/EmailBundle/Model/EmailModel.php @7.x]
 
 R84. When such an entity is checked out by another User and the lock is younger than `max_entity_lock_time`, PUT and PATCH
@@ -393,7 +399,7 @@ R86. Contacts (and every other non-opted-in entity) stay editable through the AP
 
 ## 11. Rate limiting, versions and headers
 
-R87. No rate limiter exists in 7.2.1: no `RateLimiter` or `rate_limit` code in `app/` or `plugins/`. The only throttling
+R87. No rate limiter exists on 7.x: no `RateLimiter` or `rate_limit` code in `app/` or `plugins/`. The only throttling
 is `login_throttling` on the UI firewall, which does not apply to `/api`.
 [code: app/config/security.php:118-121 @7.x]
 [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/getting_started.html#api-rate-limiter-cache]
@@ -482,10 +488,11 @@ D3. Error envelope: devdocs show `{"error":{...}}` (R74).
 D4. `where`/`order`/`select` are documented only for Contacts; the base controller accepts them on every list endpoint
 (R39). [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/contacts.html#advanced-filtering]
 
-D5. `api_batch_max_limit` is documented only for the 8.0 batch add-contacts endpoint; it caps every batch endpoint in
-7.2.1 (R56). [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/companies.html#batch-add-contacts-to-companies]
+D5. `api_batch_max_limit` is documented only for the 8.0 batch add-contacts endpoint; it caps every batch endpoint on
+7.x (R56). [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/companies.html#batch-add-contacts-to-companies]
 
-D6. `POST /api/companies/batch/addcontacts` is on the 7.x branch after 7.2.1 (unreleased; [PR #16512]) but only in the 8.0 docs.
+D6. `POST /api/companies/batch/addcontacts` is unreleased on 7.x (7.3.0-rc; [PR #16512]); it is documented in the 8.0 docs and
+on the unreleased 7.3 docs branch, not in the 7.2 docs.
 [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:122-124 @7.x]
 
 D7. The authentication docs say only the refresh-token lifetime is configurable; the access-token lifetime is also
@@ -509,3 +516,11 @@ D11. The plugin-extension docs say the permission-context event fires from `Maut
 D12. Several devdocs REST pages (data, dynamic_content, files, focus, messages, pages, point_actions, point_triggers,
 roles) are stubs, and others carry a "legacy, potentially inaccurate" banner; use code and this inventory for those.
 [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/data.html] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/pages.html]
+
+D13. The 7.3 docs branch Projects page lists the permissions as `project:projects:view|create|edit|delete`; the code
+permission base is `project:project` (standard set). [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/rest_api/projects.rst]
+[code: app/bundles/ProjectBundle/Model/ProjectModel.php:82-85 @7.x]
+
+D14. The KB article "What is Mautic's API?" says the API needs OAuth 1a or 2 and links the retired developer.mautic.org
+site. OAuth1a was removed in 4.0; 7.x accepts OAuth2 bearer tokens and HTTP Basic only (R7).
+[kb: https://kb.mautic.org/article/what-is-mautic-039%3bs-api.html] [code: app/config/security.php:71-79 @7.x]

@@ -31,7 +31,10 @@ Enabling and authentication
 - Access tokens last `api_oauth2_access_token_lifetime` minutes (60) and refresh tokens `api_oauth2_refresh_token_lifetime`
   days (14). [code: app/bundles/CoreBundle/Loader/EnvVars/ApiEnvVars.php:13-17 @7.x]
 - The v1 firewall is stateless. The v2 firewall shares the UI session, so a logged-in browser can call `/api/v2`.
-  [code: app/config/security.php:51-67 @419a08a9b35]
+  [code: app/config/security.php:62-79 @7.x]
+- On 7.2.2 and the 7.x snapshot the access rule `^/api` also matches non-API paths such as `/api-keys`, so an anonymous
+  request there gets 401 "Full authentication is required" instead of normal routing (404). Fixed on the 7.2 branch after
+  7.2.2 (`^/api(?:/|$)`). [code: app/config/security.php:171 @7.x] [PR #18058]
 - No rate limiting exists in 7.x; `api_rate_limiter_cache` is gone. [code: app/config/security.php:118-121 @7.x]
   [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/getting_started.html#api-rate-limiter-cache]
 
@@ -60,7 +63,7 @@ v1 conventions
   [code: app/bundles/ApiBundle/Controller/FetchCommonApiController.php:611-640 @7.x] [code: app/bundles/ApiBundle/EventListener/ApiSubscriber.php:92-176 @7.x]
 - Validation failures return 400, or 422 when a constraint cause carries 422. `details` maps field to messages.
   [code: app/bundles/ApiBundle/Controller/CommonApiController.php:605-617 @7.x]
-- 409 "checked out" applies only to models implementing `ApiLockAwareInterface`. In 7.2.1 only Emails do. Contacts stay
+- 409 "checked out" applies only to models implementing `ApiLockAwareInterface`. On 7.x only Emails do. Contacts stay
   editable while open in the UI. [code: app/bundles/ApiBundle/Controller/CommonApiController.php:491-520 @7.x]
   [code: app/bundles/ApiBundle/Tests/Functional/Controller/CommonApiControllerTest.php:20-116 @7.x]
 - Every v1 response carries `Mautic-Version`. Dates are ISO-8601 UTC. Nulls are serialised unless `select` was used.
@@ -158,8 +161,9 @@ For 8.x compatibility, subscribe by event class where 8.x provides one (see Vers
 - 6.0: `where[...][val]` is no longer HTML-entity encoded, so values with `'` match [PR #14550].
 - 7.0 removed the rate limiter and moved OAuth to `klapaudius/oauth-server-bundle` [PR #14876] [PR #15436]. 7.1 added 409
   locking [PR #15299]. 7.1.2 added v2 ownership scoping and 7.1.3 user-bound bearer tokens on v2 [PR #16175] [PR #16245].
-- 7.x: API Platform v2 at `/api/v2`. 7.2 deprecates the `mautic.api.oauth.event_listener` alias. The 7.x branch after 7.2.1 adds
-  `POST /api/companies/batch/addcontacts` and legacy `/api/projects` (unreleased; [PR #16512] [PR #15569]). [code: app/bundles/ApiBundle/Config/services.php:29-31 @7.x]
+- 7.x: API Platform v2 at `/api/v2`. 7.2 deprecates the `mautic.api.oauth.event_listener` alias. Unreleased on 7.x (7.3.0-rc), not in 7.2.2:
+  `POST /api/companies/batch/addcontacts` and legacy `/api/projects` ([PR #16512] [PR #15569]). No endpoint was added or removed on 7.x between the
+  previous and current snapshots. [code: app/bundles/ApiBundle/Config/services.php:29-31 @7.x]
   [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:122-124 @7.x]
 - 8.x:
   - The `ApiEvents` class is removed. Subscribe to `PreSaveApiEntityEvent`, `PostSaveApiEntityEvent`,

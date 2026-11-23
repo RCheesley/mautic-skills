@@ -98,7 +98,7 @@ The docs' own samples compare with `===`, and the PHP sample calls `json_decode`
 - Treat event-type strings and payload keys as public API. Renaming a key breaks every receiver and every stored `webhook_events` row. Add keys; do not rename or remove them. [code: app/bundles/WebhookBundle/Entity/Event.php:39-65 @7.x]
 - When changing an entity that appears in payloads (Contact, Company, Email, Submission, Hit), check its JMS `*Details` groups: they decide the webhook payload. Update the sample JSON in `Assets/WebhookPayload/` and the devdocs event page together. [code: app/bundles/WebhookBundle/Controller/AjaxController.php:103-162 @7.x]
 - A schema change to the four tables needs a migration in `app/migrations/` (see references/version-notes.md for the precedent migrations). [code: app/migrations/Version20241004132307.php:26-32 @7.x]
-- New config parameters go in `WB/Config/config.php`. Only add them to `ConfigType` if admins need them in the UI; limits are currently local.php-only. [code: app/bundles/WebhookBundle/Form/Type/ConfigType.php:19-81 @419a08a9b35]
+- New config parameters go in `WB/Config/config.php`. Only add them to `ConfigType` if admins need them in the UI; limits are currently local.php-only. [code: app/bundles/WebhookBundle/Form/Type/ConfigType.php:19-81 @7.x]
 
 ## How to test it
 - Use `MauticMysqlTestCase` with `ClientMockTrait`, and append Guzzle mock responses to `getClientMockHandler()`. Force `queue_mode = command_process` through `setUpSymfony($this->configParams + [...])`. Run `testSymfonyCommand(ProcessWebhookQueuesCommand::COMMAND_NAME, ['--webhook-id' => $id])`. [code: app/bundles/WebhookBundle/Tests/Functional/WebhookFunctionalTest.php:24-82 @7.x] [code: app/bundles/CoreBundle/Test/Guzzle/ClientMockTrait.php:9-17 @7.x]

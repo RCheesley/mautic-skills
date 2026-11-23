@@ -104,9 +104,9 @@ and `RESPONSE`, `ConfigEvents::CONFIG_ON_GENERATE`/`CONFIG_PRE_SAVE`, `CoreEvent
 | `oauth2_token` firewall (`security: false`) | `app/config/security.php:38-41` [code: app/config/security.php:49-52 @7.x] |
 | `oauth2_area` form login | `app/config/security.php:42-50` [code: app/config/security.php:53-61 @7.x] |
 | `v2api` firewall (stateful, shared `mautic` context) | `app/config/security.php:51-59` [code: app/config/security.php:62-70 @7.x] |
-| `api` firewall (stateless) | `app/config/security.php:60-67` [code: app/config/security.php:60-67 @419a08a9b35] |
+| `api` firewall (stateless) | `app/config/security.php:71-79` [code: app/config/security.php:71-79 @7.x] |
 | `main` UI firewall also enables `fos_oauth` | `app/config/security.php:103` [code: app/config/security.php:116 @7.x] |
-| access control `^/api` → `IS_AUTHENTICATED_FULLY` | `app/config/security.php:153` [code: app/config/security.php:171 @7.x] |
+| access control `^/api` → `IS_AUTHENTICATED_FULLY` (`^/api(?:/|$)` on the 7.2 branch after 7.2.2, [PR #18058]) | `app/config/security.php:171` [code: app/config/security.php:171 @7.x] |
 | Views | `app/bundles/ApiBundle/Resources/views/Client/{list,form,authorized}.html.twig`, `Authorize/oAuth2/authorize.html.twig`, `Security/login.html.twig` [code: app/bundles/ApiBundle/Controller/oAuth2/AuthorizeController.php:36-44 @7.x] |
 
 ## 7. Configuration parameters

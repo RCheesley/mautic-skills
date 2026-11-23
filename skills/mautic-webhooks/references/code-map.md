@@ -94,7 +94,7 @@ Sample payloads: `app/bundles/{LeadBundle,FormBundle,EmailBundle,PageBundle}/Ass
 | `webhook_send_notification_to_author` (NotificationBundle) | `true` | — | Email the users vs a fixed list |
 | `webhook_notification_email_addresses` (NotificationBundle) | `null` | — | CSV list when the above is false |
 
-[code: app/bundles/WebhookBundle/Config/config.php:45-61 @7.x] [code: app/bundles/WebhookBundle/Form/Type/ConfigType.php:19-81 @419a08a9b35] [code: app/bundles/NotificationBundle/Config/config.php:123-124 @7.x]
+[code: app/bundles/WebhookBundle/Config/config.php:45-61 @7.x] [code: app/bundles/WebhookBundle/Form/Type/ConfigType.php:19-81 @7.x] [code: app/bundles/NotificationBundle/Config/config.php:123-124 @7.x]
 
 ## Permissions
 

@@ -37,7 +37,9 @@ Repositories: `UserRepository` (search commands, `checkUniqueUsernameEmail`, `se
 | `UserTokenService` | `app/bundles/UserBundle/Model/UserToken/` | unique secret generation/verification | [code: app/bundles/UserBundle/Model/UserToken/UserTokenService.php:20-36 @7.x] |
 | `CorePermissions` / `mautic.security` | `app/bundles/CoreBundle/Security/Permissions/CorePermissions.php` | `isGranted`, `hasEntityAccess`, `hasPublishAccessForEntity`, `generatePermissions`, `checkPermissionExists` | [code: app/bundles/CoreBundle/Config/services.php:167-170 @7.x] |
 | `AbstractPermissions` | `app/bundles/CoreBundle/Security/Permissions/AbstractPermissions.php` | base class for every permission class | [code: app/bundles/CoreBundle/Security/Permissions/AbstractPermissions.php:24-519 @7.x] |
-| `UserProvider` / `mautic.user.provider` | `app/bundles/UserBundle/Security/Provider/UserProvider.php` | load by username or email, published only, 5-min cache; `saveUser()` for SSO | [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:39-145 @419a08a9b35] |
+| `UserProvider` / `mautic.user.provider` | `app/bundles/UserBundle/Security/Provider/UserProvider.php` | load by username or email, published only, 5-min cache; `saveUser()` for SSO; `createUser()` (7.3.0-rc) for OIDC registration without the username/email lookup | [code: app/bundles/UserBundle/Security/Provider/UserProvider.php:39-159 @7.x] |
+| OIDC (7.3.0-rc) | `app/bundles/UserBundle/Security/OIDC/` | `OidcAuthenticator`, `UserProvider` (`open_id_provider`), `Settings`, `ClientCredentials`, `Client/OpenIDConnectBridge` (jumbojett/openid-connect-php), `User/Linker`, `User/UserFactory`, `Factory/UserCredentialsFactory`, `SubjectToUserTransformer`, `RegisterScopesEvent` | [code: app/bundles/UserBundle/Security/OIDC/OidcAuthenticator.php:24-105 @7.x] [PR #17527] |
+| `OidcSubjectId` / `OidcSubjectIdRepository` (7.3.0-rc) | `app/bundles/UserBundle/Entity/` | table `open_id_identifiers` | [code: app/bundles/UserBundle/Entity/OidcSubjectId.php:12-37 @7.x] |
 | `TokenPermissions` / `security.token.permissions` | `app/bundles/UserBundle/Security/Authentication/Token/Permissions/TokenPermissions.php` | attaches Role permissions; client-credentials pseudo-User | [code: app/bundles/UserBundle/Security/Authentication/Token/Permissions/TokenPermissions.php:30-104 @7.x] |
 | `UserTokenSetter` | `app/bundles/UserBundle/Security/UserTokenSetter.php` | act as a User from CLI | [code: app/bundles/UserBundle/Security/UserTokenSetter.php:18-25 @7.x] |
 | `AuthenticationHandler` / `mautic.security.authentication_handler` | `app/bundles/UserBundle/Security/Authentication/AuthenticationHandler.php` | success/failure redirects or JSON | [code: app/bundles/UserBundle/Security/Authentication/AuthenticationHandler.php:22-58 @7.x] |
@@ -52,16 +54,17 @@ Deprecated since 7.2: service aliases `mautic.security.logout_handler` and `maut
 
 | Piece | Where | Source |
 |---|---|---|
-| Firewalls `sso_login`, `api`, `v2api`, `main`; form login, logout, remember-me, login throttling, access control | `app/config/security.php` | [code: app/config/security.php:22-154 @419a08a9b35] |
+| Firewalls `login`, `open_id` (7.3.0-rc), `sso_login`, `api`, `v2api`, `main`; providers `user_provider` and `open_id_provider`; form login, logout, remember-me, login throttling, access control | `app/config/security.php` | [code: app/config/security.php:17-177 @7.x] |
 | OAuth2 token lifetimes (env `MAUTIC_API_OAUTH2_ACCESS_TOKEN_LIFETIME`, `_REFRESH_TOKEN_LIFETIME`) | `app/config/security_api.php` | [code: app/config/security_api.php:13-14 @7.x] |
 | Test env: md5 hasher, HTTP Basic on `main` | `app/config/security_test.php` | [code: app/config/security_test.php:8-25 @7.x] |
 | `TimingSafeFormLoginAuthenticator` (decorates `security.authenticator.form_login.main`) | `app/bundles/UserBundle/Security/TimingSafeFormLoginAuthenticator.php` | [code: app/bundles/UserBundle/Security/TimingSafeFormLoginAuthenticator.php:69-84 @7.x] |
 | `SsoAuthenticator` (`mautic_sso` factory) / `PluginAuthenticator` (`mautic_plugin_auth` factory) | `app/bundles/UserBundle/Security/Authenticator/` | [code: app/bundles/UserBundle/DependencyInjection/Firewall/Factory/MauticSsoFactory.php:21-57 @7.x] |
 | Factory + compiler-pass registration | `app/bundles/UserBundle/MauticUserBundle.php`, `DependencyInjection/Compiler/*` | [code: app/bundles/UserBundle/MauticUserBundle.php:17-30 @7.x] |
 | `MainEntryPoint` | `app/bundles/UserBundle/Security/EntryPoint/MainEntryPoint.php` | [code: app/bundles/UserBundle/Security/EntryPoint/MainEntryPoint.php:21-34 @7.x] |
-| `PasswordStrengthSubscriber` (CheckPassport prio 100), `PasswordSubscriber` (prio −100), `ApiUserSubscriber` (prio 2048) | `app/bundles/UserBundle/EventListener/` | [code: app/bundles/UserBundle/EventListener/PasswordSubscriber.php:21-47 @7.x] [code: app/bundles/UserBundle/EventListener/ApiUserSubscriber.php:30-97 @419a08a9b35] |
+| `PasswordStrengthSubscriber` (CheckPassport prio 100), `PasswordSubscriber` (prio −100), `ApiUserSubscriber` (prio 2560 on 7.x, was 2048 before [PR #17527]) | `app/bundles/UserBundle/EventListener/` | [code: app/bundles/UserBundle/EventListener/PasswordSubscriber.php:21-47 @7.x] [code: app/bundles/UserBundle/EventListener/ApiUserSubscriber.php:30-112 @7.x] |
+| `OidcRequestSubscriber` (kernel.request −1), `OidcScopesSubscriber`, `OidcTemplateSubscriber`; OIDC parts of `ConfigSubscriber` (7.3.0-rc) | `app/bundles/UserBundle/EventListener/` | [code: app/bundles/UserBundle/EventListener/OidcRequestSubscriber.php:29-34 @7.x] [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:68-187 @7.x] |
 | Login side effects (last_login, session timezone/locale, `USER_LOGIN`) | `app/bundles/CoreBundle/EventListener/CoreSubscriber.php` | [code: app/bundles/CoreBundle/EventListener/CoreSubscriber.php:53-95 @7.x] |
-| Per-request timezone/locale | `app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php` | [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:30-61 @419a08a9b35] |
+| Per-request timezone/locale | `app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php` | [code: app/bundles/CoreBundle/EventListener/EnvironmentSubscriber.php:31-63 @7.x] |
 | Restricted config fields list | `app/config/security.php` (`mautic.security.restrictedConfigFields`) | [code: app/config/security.php:199-218 @7.x] |
 
 ## 4. Events (`app/bundles/UserBundle/UserEvents.php`; whole class removed on 8.x)
@@ -86,11 +89,12 @@ Deprecated since 7.2: service aliases `mautic.security.logout_handler` and `maut
 
 | Route | Path | Controller | Source |
 |---|---|---|---|
-| `login` | `/s/login` | `SecurityController::loginAction` | [code: app/bundles/UserBundle/Config/config.php:28-131 @419a08a9b35] |
+| `login` | `/s/login` | `SecurityController::loginAction` | [code: app/bundles/UserBundle/Config/config.php:28-143 @7.x] |
 | `mautic_user_logincheck` | `/s/login_check` | intercepted by firewall | [code: app/config/security.php:96-102 @7.x] |
 | `mautic_user_logout` | `/s/logout` | firewall logout → `/s/login` | [code: app/config/security.php:103-106 @7.x] |
 | `mautic_sso_login`, `mautic_sso_login_check` | `/s/sso_login/{integration}`, `/s/sso_login_check/{integration}` | redirect to login unless a plugin intercepts | [code: app/bundles/UserBundle/Controller/SecurityController.php:116-128 @7.x] |
-| `lightsaml_sp.login`, `lightsaml_sp.login_check` | `/s/saml/login`, `/s/saml/login_check` | LightSAML | [code: app/bundles/UserBundle/Config/config.php:28-131 @419a08a9b35] |
+| `lightsaml_sp.login`, `lightsaml_sp.login_check` | `/s/saml/login`, `/s/saml/login_check` | LightSAML | [code: app/bundles/UserBundle/Config/config.php:28-143 @7.x] |
+| `mautic_oidc_login`, `mautic_oidc_check`, `mautic_oidc_required` (7.3.0-rc) | `/s/open_id/login`, `/s/open_id/login_check`, `/s/open_id/required` | `SecurityController::oidc*Action`; the callback is handled by `OidcAuthenticator` | [code: app/bundles/UserBundle/Config/config.php:130-142 @7.x] |
 | `lightsaml_sp.metadata`, `lightsaml_sp.discovery`, `mautic_saml_login_retry` | `/saml/metadata.xml`, `/saml/discovery`, `/saml/login_retry` | LightSAML / `SecurityController::samlLoginRetryAction` | same |
 | `mautic_user_index`, `mautic_user_action` | `/s/users/{page}`, `/s/users/{objectAction}/{objectId}` (`new`, `edit`, `delete`, `batchDelete`, `contact`, `invite`) | `UserController` | same |
 | `mautic_role_index`, `mautic_role_action` | `/s/roles/{page}`, `/s/roles/{objectAction}/{objectId}` (`new`, `edit`, `clone`, `delete`, `batchDelete`) | `RoleController` | same |
@@ -100,7 +104,7 @@ Deprecated since 7.2: service aliases `mautic.security.logout_handler` and `maut
 | API (legacy) | `/api/users[...]`, `/api/users/self`, `/api/users/{id}/permissioncheck`, `/api/users/list/roles`, `/api/roles[...]` | `Controller/Api/UserApiController`, `RoleApiController` | [code: app/bundles/UserBundle/Config/config.php:78-104 @7.x] |
 | API Platform | `/api/v2/users`, `/api/v2/roles`, `/api/v2/permissions` | entity attributes | [code: app/bundles/UserBundle/Entity/User.php:28-46 @7.x] |
 
-Views: `app/bundles/UserBundle/Resources/views/` (`Security/*`, `User/*`, `Role/*`, `Profile/index.html.twig`, `Email/invite.html.twig`). Role matrix JS: `app/bundles/UserBundle/Assets/js/user.js:79-147`. [code: app/bundles/UserBundle/Resources/views/Role/form.html.twig:47-99 @419a08a9b35]
+Views: `app/bundles/UserBundle/Resources/views/` (`Security/*`, `User/*`, `Role/*`, `Profile/index.html.twig`, `Email/invite.html.twig`). Role matrix JS: `app/bundles/UserBundle/Assets/js/user.js:79-147`. [code: app/bundles/UserBundle/Resources/views/Role/form.html.twig:47-99 @7.x]
 
 There are no `mautic:user:*` console commands; expired tokens are purged by `mautic:maintenance:cleanup`. [code: app/bundles/CoreBundle/EventListener/MaintenanceSubscriber.php:34-35 @7.x]
 
@@ -108,10 +112,11 @@ There are no `mautic:user:*` console commands; expired tokens are purged by `mau
 
 | Parameter | Default | Effect | Source |
 |---|---|---|---|
-| `saml_idp_metadata` | `''` | non-empty = SAML enabled | [code: app/bundles/UserBundle/Config/config.php:132-143 @419a08a9b35] |
-| `saml_idp_entity_id` | `''` | SP entity id (site URL or subdomain URL); env `MAUTIC_SAML_ENTITY_ID` | [code: app/bundles/UserBundle/Form/Type/ConfigType.php:30-45 @419a08a9b35] [code: app/config/security.php:179 @7.x] |
+| `saml_idp_metadata` | `''` | non-empty = SAML enabled | [code: app/bundles/UserBundle/Config/config.php:144-154 @7.x] |
+| `saml_idp_entity_id` | `''` | SP entity id (site URL or subdomain URL); env `MAUTIC_SAML_ENTITY_ID` | [code: app/bundles/UserBundle/Form/Type/ConfigType.php:44-59 @7.x] [code: app/config/security.php:179 @7.x] |
 | `saml_idp_own_certificate`, `saml_idp_own_private_key`, `saml_idp_own_password` | `''` | signing/encryption cert, key, key password | [code: app/bundles/UserBundle/EventListener/ConfigSubscriber.php:110,127-148 @7.x] |
-| `saml_idp_email_attribute`, `saml_idp_username_attribute`, `saml_idp_firstname_attribute`, `saml_idp_lastname_attribute` | form defaults `EmailAddress`, —, `FirstName`, `LastName` | IdP attribute mapping | [code: app/bundles/UserBundle/Form/Type/ConfigType.php:112-162 @419a08a9b35] |
+| `saml_idp_email_attribute`, `saml_idp_username_attribute`, `saml_idp_firstname_attribute`, `saml_idp_lastname_attribute` | form defaults `EmailAddress`, —, `FirstName`, `LastName` | IdP attribute mapping | [code: app/bundles/UserBundle/Form/Type/ConfigType.php:127-177 @7.x] |
+| `open_id_is_enabled`, `open_id_is_required`, `open_id_is_user_registration_allowed`, `open_id_registered_user_role`, `open_id_client_id`, `open_id_client_secret`, `open_id_client_url`, `open_id_mapping_field` (7.3.0-rc) | `0`, `0`, `0`, `2`, `''`, `''`, `''`, `sub` | OpenID Connect login (behaviour.md §9a) | [code: app/bundles/UserBundle/Config/config.php:156-164 @7.x] |
 | `saml_idp_default_role` | `''` | Role id for auto-created SAML Users; empty = no creation | [code: app/bundles/UserBundle/Security/SAML/User/UserCreator.php:34-38 @7.x] |
 | `rememberme_key`, `rememberme_lifetime`, `rememberme_path`, `rememberme_domain` | `%mautic.secret_key%`, `7776000`, `/`, `''` | remember-me cookie | [code: app/bundles/CoreBundle/Config/config.php:281-284 @7.x] |
 | `locale`, `default_timezone` | `en_US`, `UTC` | system fallbacks for Users | [code: app/bundles/CoreBundle/Config/config.php:274,286 @7.x] |
@@ -211,7 +216,7 @@ Constant strings used by callers but not defined as levels: `marketplace:package
 | Invite a User | `user:users:create` | [code: app/bundles/UserBundle/Controller/UserController.php:148 @7.x] |
 | Roles list / new / edit / delete | `user:roles:view` / `create` / `edit` / `delete` | [code: app/bundles/UserBundle/Controller/RoleController.php:20-26 @7.x] |
 | Clone Role | `user:roles:create` and `user:roles:view` | [code: app/bundles/UserBundle/Controller/RoleController.php:215 @7.x] |
-| Profile fields | `user:profile:editname|editusername|editposition|editemail` | [code: app/bundles/UserBundle/Controller/ProfileController.php:40-152 @419a08a9b35] |
+| Profile fields | `user:profile:editname|editusername|editposition|editemail` | [code: app/bundles/UserBundle/Controller/ProfileController.php:40-152 @7.x] |
 | Profile API-credentials tab | `api:access:full` + `api_enabled` | [code: app/bundles/UserBundle/Controller/ProfileController.php:42-43 @7.x] |
 | Global search Users / Roles | `user:users:view` / `user:roles:view` | [code: app/bundles/UserBundle/EventListener/SearchSubscriber.php:65-71 @7.x] |
 | `GET /api/users/list/roles` | `user:users:create` or `edit` | [code: app/bundles/UserBundle/Controller/Api/UserApiController.php:198-217 @7.x] |

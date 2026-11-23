@@ -114,6 +114,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | Apply on new API Credentials wiped the secret | Secret kept | [PR #708] | ~1.2.0 |
 | API Credentials pagination and batch broken | Pagination and sorting work; check-all removed | [PR #14167] | 5.2 |
 | Call to removed OAuth1 `deleteAccessTokens()` | Call removed | [PR #16516] | 7.2.0 |
+| Anonymous `/api-keys` (any path starting `/api` without a slash) got 401 instead of 404 | Access rule `^/api(?:/|$)`; `/api/...` still 401 | [PR #18058] | 7.2 branch, after 7.2.2 |
+| Deleting an API credential logged a dynamic-property deprecation for `Client::$deletedId` | Property declared; audit row keeps the id | [PR #18085] | 7.2 branch, after 7.2.2 |
 
 ## Feature timeline
 
@@ -132,6 +134,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | 7.1.0 | API locking (409) | #15299 |
 | 7.1.2-7.1.3 | v2 ownership scoping (security release); user-bound bearer tokens on v2 | #16175, #16245 |
 | 7.2.0 | v2 permission-context event; OAuth listener subscribes itself; voter `$vote` argument | #16837, #16879, #16566 |
+| 7.2 branch, after 7.2.2 | API access rule anchored to the `/api` path boundary; `Client::$deletedId` declared | #18058, #18085 |
 | 8.0 (unreleased) | Ownership parent marked by `#[OwnershipParent]` entity attribute under Doctrine ORM 3 | #17361 |
 
 ## Removed, deprecated, replaced
@@ -163,6 +166,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - The PHPStan baseline hides real bugs; fix them instead of baselining [PR #16516].
 - Event wiring belongs in `getSubscribedEvents()`, and services move to autowired `Config/services.php` [PR #16879] [PR #16791].
 - Prefer "return early" over deep nesting [PR #16837].
+- Security-config fixes carry a functional test for both sides of the boundary (the path that must stay protected and the one that must not) [PR #18058].
+- Entities that receive `deletedId` from `FormModel::deleteEntity()` declare it as `public ?int $deletedId = null` instead of relying on dynamic properties; removing the matching PHPStan baseline entry is welcome [PR #18085].
 - Refactor PRs that only touched ApiBundle files set general code style: no file-level docblocks, constructor promotion, readonly properties, `declare(strict_types=1)`, native return types, Rector and PHPStan clean [PR #10970] [PR #12940] [PR #13001] [PR #13062] [PR #16408] [PR #16982]. Project-wide norms are owned by mautic-contributing.
 
 ## Open questions
@@ -179,3 +184,5 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 The API and webhooks area has 158 merged PRs in two chunks (#125 to #17361, 2015-03 to 2026-09). This file uses the [API] items; webhook items are in mautic-webhooks.
 Chunk 1 has 92 PRs (74 substantive); chunk 2 has 66 (40 substantive, 22 refactor-only that contribute norms, 4 noise).
 [PR #7606] is a Campaigns change filed in this area and is left out. A further 869 noise PRs across all areas were excluded upstream before chunking.
+Delta 2026-10-15 to 2026-11-23: 2 PRs in the api-webhooks bucket, both used ([PR #18058] [PR #18085]); [PR #17527] from the
+users bucket touches the API firewalls.

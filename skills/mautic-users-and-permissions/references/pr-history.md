@@ -11,8 +11,8 @@
 8. Coverage
 
 ## 1. How to read this file
-Source: merged pull requests on mautic/mautic for the users, roles and authentication area, harvested 2026-10-15.
-Versions are inferred from the base branch, milestone and merge date; where a release tag was checked in the 7.x tree, the first tag that contains the merge is used. "7.x after 7.2.1" means merged to `7.x` but in no release yet (milestone 7.3.0-rc).
+Source: merged pull requests on mautic/mautic for the users, roles and authentication area, harvested 2026-10-15, plus the delta merged 2026-10-15 to 2026-11-23.
+Versions are inferred from the base branch, milestone and merge date; where a release tag was checked in the 7.x tree, the first tag that contains the merge is used. "Unreleased on 7.x (7.3.0-rc)" (older rows: "7.x after 7.2.1") means merged to `7.x` but in no release yet. "7.2 branch, after 7.2.2" means merged to `7.2` after the 7.2.2 tag (milestone 7.2.3) and not yet in the 7.x snapshot.
 Current behaviour is in behaviour.md. This file explains why and when. Where the two disagree, behaviour.md wins.
 
 ## 2. Decisions that shaped current behaviour
@@ -36,7 +36,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - The User list shows "Last Login" and active/inactive columns, and the User view shows "Recent activity" built from the audit log. The publish switch is hidden for the logged-in User so admins cannot lock themselves out. Role changes were left out of the sidebar in favour of the user-activity report [PR #13074] (v5.1).
 - The "last login" column sorts by `u.lastLogin`. Why: the template sorted by role name by mistake [PR #14982] (v5.2.6). The 7.x template uses `u.lastLogin` [code: app/bundles/UserBundle/Resources/views/User/list.html.twig:161 @7.x].
 - The User edit page renders even when a recent-activity entry points to a User whose details changed [PR #14884] (v5.2.5). The fix was widened so that entries that no longer resolve to a current User or Role are skipped [PR #17609] (7.2 branch, merged 2026-10-12; not found in the 7.x snapshot).
-- The User list has a "Never logged in" quick filter, search command `is:never_logged_in`. Why: find unused or invited accounts [PR #17452] (7.x after 7.2.1).
+- The User list has a "Never logged in" quick filter, search command `is:never_logged_in`. Why: find unused or invited accounts [PR #17452] (unreleased on 7.x, 7.3.0-rc).
 - `name:` in User search matches first or last name [PR #11599] (v5.0).
 - The Account page (`/s/account`) loads for Users whose Role cannot edit Users [PR #8571] (v3.0).
 - Editing one's own profile does not ask for the current password. Why: long passwords sometimes failed the check [PR #776] (v1.2). A grep of the 7.x profile controller and form types finds no current-password field. [unverified]
@@ -53,7 +53,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 
 ### Deleting Users and Roles
 - Users and Roles can be batch-deleted. A User cannot delete themselves, and a Role with Users cannot be deleted; the other selected items are still deleted, with a notice per refused item [PR #233] (v1.0).
-- The delete confirmation (single and batch) states that the User's Contacts and Companies become unassigned and that their API access tokens and scheduled Contact exports are removed. Why: deleting a User had non-obvious side effects. Only translation strings changed [PR #17444] (7.x after 7.2.1). See section 7.
+- The delete confirmation (single and batch) states that the User's Contacts and Companies become unassigned and that their API access tokens and scheduled Contact exports are removed. Why: deleting a User had non-obvious side effects. Only translation strings changed [PR #17444] (unreleased on 7.x, 7.3.0-rc). See section 7.
 
 ### Roles and permissions
 - The Roles list shows a User count. The Role name opens the Role, and the count opens the User list filtered by `role:"Name"` [PR #1534] (v1.4) [PR #2085] (v2.1) [PR #6565] (v2.14.2). The count column is sortable [PR #15414] (v7.1.0).
@@ -107,6 +107,16 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - `PATCH /api/users/{id}/edit` with `{"role": <id>}` changes a User's Role [PR #10668] (v4.1.2). It merged to the 4.1 bug-fix branch and was flagged for a possible revert; no revert followed, and 7.x still accepts it. PATCH strips `username` and `plainPassword`, but not `role`; PUT keeps the stored username and Role [code: app/bundles/UserBundle/Controller/Api/UserApiController.php:122-138 @7.x]. Functional tests cover the role PATCH [code: app/bundles/UserBundle/Tests/Controller/Api/UserApiControllerFunctionalTest.php:20-45 @7.x].
 - Batch User edit through the API works [PR #4336] (v2.9).
 
+### OpenID Connect (unreleased on 7.x, 7.3.0-rc)
+- OpenID Connect login is upstreamed from a downstream fork ("unforking"), modelled on the SAML option: its own `open_id` firewall and settings above SAML, optional "required" mode, optional self-registration with a fixed Role, and an admin-editable identifier on the User form [PR #17527].
+- OIDC logins must behave like password logins. Review found that a non-interactive authenticator skipped the audit row, `last_login` and session timezone/locale; `OidcAuthenticator` was made interactive before merge [PR #17527].
+- Registration never resolves an existing User by username or email. Why: `saveUser()`'s `username = :x OR email = :x` lookup let an attacker's `preferred_username` or email take over a victim account; registration now inserts through `createUser()` under a row lock and reports a generic `identity_taken` to avoid enumeration [PR #18117].
+- Subject IDs are case-sensitive, as the OIDC spec says; the column uses a binary collation and the linker rejects non-identical matches [PR #18148].
+- A subject ID is only unique within one provider, so changing the provider URL or identifier claim through the UI deletes all links. URL comparison ignores whitespace, a trailing slash and scheme/host case. Disabled provider fields are preserved on save so an off/on toggle is not a provider change [PR #18162].
+
+### User avatars
+- User avatars are generated locally instead of from Gravatar. Why: privacy, opening the User list sent every User's email hash to gravatar.com [PR #17862] (unreleased on 7.x, 7.3.0-rc).
+
 ## 3. Regression catalogue
 
 | Symptom | Expected behaviour | PR | Version |
@@ -121,7 +131,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | Solarized themes not applied | Correct theme ids | [PR #14733] | v6.0 |
 | User list "last login" sorted by role name | Sorts by `u.lastLogin` | [PR #14982] | v5.2.6 |
 | User edit gave a 500 from an activity entry for a changed User | Page renders | [PR #14884] | v5.2.5 |
-| User edit gave a Twig error from activity entries that no longer resolve | Entries skipped, page renders | [PR #17609] | 7.2 branch |
+| User edit gave a Twig error from activity entries that no longer resolve | Entries skipped, page renders | [PR #17609] | 7.2.2 |
+| User edit gave a 500 when recent activity had a Role create/update entry (`user_count` scalar in the Role rows) | Plain Role entities, page renders | [PR #17855] | 7.2 branch, after 7.2.2 |
 | Batch delete did nothing | Batch delete works except self and Roles with Users | [PR #233] | v1.0 |
 | Role name link opened a random User | Opens the Role | [PR #2085] | v2.1 |
 | Role count link showed no Users | `role:` filter works | [PR #6565] | v2.14.2 |
@@ -158,6 +169,10 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | Intermittent SAML "Unknown Response" after session expiry | Retry page clears the session | [PR #15508] | v7.0.0 |
 | API batch User edit: "Entities must be managed" | Batch edit works | [PR #4336] | v2.9 |
 | User-bound OAuth2 token returned 401 on `/api/v2` | Same token valid on v1 and v2 | [PR #16245] | v7.1.3 |
+| Local dates rendered in the old timezone after a session timezone change | Request timezone also set on `DateTimeHelper` | [PR #17627] | 7.2.2 |
+| OIDC registration could link the attacker to an existing User via username/email collision | New User created or registration refused | [PR #18117] | unreleased on 7.x (7.3.0-rc) |
+| OIDC login as `user-ab12` matched the User linked to `User-AB12` | Exact, case-sensitive match | [PR #18148] | unreleased on 7.x (7.3.0-rc) |
+| Every settings save deleted all OIDC links; disabling OIDC blanked its settings | Links deleted only on a real provider change; settings kept | [PR #18162] | unreleased on 7.x (7.3.0-rc) |
 
 ## 4. Feature timeline
 
@@ -192,8 +207,15 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | 7.2.0 | Cleanup dry run reports the real token count | [PR #16772] |
 | 7.2.0 | Hasher injected into `UserModel` | [PR #16980] |
 | 7.2.0 | `includeEditor` switch; security pages skip CKEditor | [PR #16987] |
-| 7.x after 7.2.1 | Delete confirmation lists consequences | [PR #17444] |
-| 7.x after 7.2.1 | "Never logged in" filter, `is:never_logged_in` | [PR #17452] |
+| 7.2.2 | Unresolvable activity entries skipped on User edit | [PR #17609] |
+| 7.2.2 | Session timezone applied to local-date rendering | [PR #17627] |
+| 7.2 branch, after 7.2.2 | User edit 500 from Role audit activity fixed | [PR #17855] |
+| Unreleased on 7.x (7.3.0-rc) | Delete confirmation lists consequences | [PR #17444] |
+| Unreleased on 7.x (7.3.0-rc) | "Never logged in" filter, `is:never_logged_in` | [PR #17452] |
+| Unreleased on 7.x (7.3.0-rc) | OpenID Connect login, registration, linking and required mode | [PR #17527] |
+| Unreleased on 7.x (7.3.0-rc) | OIDC takeover fix, case-sensitive subjects, unlink on provider change | [PR #18117] |
+| Unreleased on 7.x (7.3.0-rc) | Locally generated User avatars | [PR #17862] |
+| Unreleased on 7.x (7.3.0-rc) | Login page card layout | [PR #13766] |
 
 ## 5. Removed, deprecated, replaced
 
@@ -223,6 +245,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | Five UserBundle services in `config.php` (including SAML `IdStore`) | Autowired in `services.php` | [PR #16784] | v7.2.0 |
 | Unused `MauticSsoFactory` members | Deleted | [PR #16702] | v7.2.0 |
 | Unconditional CKEditor load | `includeEditor` (default true) | [PR #16987] | v7.2.0 |
+| Gravatar images for Users | Locally generated DiceBear avatars | [PR #17862] | unreleased on 7.x (7.3.0-rc) |
 
 ## 6. Maintainer norms for this area
 - Bug fixes target the patch branch and features the next minor. A feature merged to a bug-fix branch was flagged for revert [PR #10668] [PR #8922] [PR #14982] [PR #16245].
@@ -238,13 +261,18 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - API changes are checked against the mautic/api-library test suite [PR #14219] [PR #4336].
 - Inject stateless services in the constructor, use typed injection instead of `getModel()`, and autowire in `services.php` [PR #16980] [PR #16589] [PR #16784].
 - Do not load heavy assets on unauthenticated pages [PR #16987].
-- Features ship with user or developer documentation PRs [PR #15401] [PR #15402] [PR #17452].
+- Features ship with user or developer documentation PRs [PR #15401] [PR #15402] [PR #17452]. OIDC docs were drafted alongside the code and corrected as review changed behaviour [PR #17527] [PR #18162].
+- Security fixes come with functional tests that replay the attack and assert the victim account is untouched [PR #18117].
+- A migration that is not yet in a release may be edited in place instead of adding a new one [PR #18148].
+- No `@deprecated` tag is needed on a class whose parent is already deprecated [PR #18118].
 
 ## 7. Open questions
 - [PR #16980] changed the public signatures of `UserModel::checkNewPassword()` and `resetPassword()` between 7.1.0 and 7.2.0 with no deprecation step. This conflicts with the minor-release BC policy unless `UserModel` is treated as internal. The 7.1.0 signatures take a hasher argument and the 7.2.0 ones do not [code: app/bundles/UserBundle/Model/UserModel.php:110,236 @7.x].
 - [PR #10668] was flagged for revert as a feature on a bug-fix branch, but it shipped in 4.1.2 and 7.x keeps it. Whether Role change by PATCH is an intended API contract was never stated.
 - [PR #17444] says deleting a User removes their API access tokens and scheduled Contact exports. Only translation strings changed. behaviour.md B36 records the `user_tokens` cascade and unowned Contacts, not OAuth tokens or exports. Check the delete cascade before relying on the message.
-- [PR #17609] (merged 2026-10-12 to the 7.2 branch) is not in the 7.x snapshot by commit-message grep. Until it is merged up, unresolved activity entries may still break the User edit page on 7.x.
+- Resolved: [PR #17609] shipped in 7.2.2 and is in the 7.x snapshot. [PR #17855], the related Role-activity 500, is on the 7.2 branch after 7.2.2 and not yet merged into 7.x.
+- [PR #17527] review noted that a jumbojett client pre-sets `issuer`, so a save-time check reading `issuer` never contacted the provider; the merged code reads `authorization_endpoint` instead [code: app/bundles/UserBundle/Security/OIDC/Client/OpenIDConnectBridge.php:89-104 @7.x]. Whether that fully validates a misconfigured provider is untested here [unverified].
+- `AuthenticationEvent::setIsSupportUser()` is added by [PR #17527] but no core code reads it; only a `PluginToken` built with `isSupportUser = true` bypasses OIDC "required" redirects. How a plugin is meant to use it is undocumented.
 - [PR #15401] does not say whether invites can be resent, or whether a pending invite creates a User row.
 - [PR #3802] Unpublished Users get the generic invalid-login message; behaviour.md B3 confirms "Invalid login" in 7.x. A dedicated message was never added.
 - [PR #11057] `anonymous: lazy` did not stop session cookies on public routes; the state under the 6.x authenticator system is not recorded.
@@ -256,5 +284,6 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - 127 PRs read in 2 chunks: 102 in chunk 1 (2015-02 to 2025-03, [PR #42] to [PR #14751]) and 25 in chunk 2 (2025-04 to 2026-10, [PR #14851] to [PR #17609]).
 - About 111 are substantive. About 16 are refactors or noise with no behaviour change, for example [PR #13129] and [PR #16702].
 - One merge was reverted: [PR #8631] by [PR #8690].
+- Delta 2026-10-15 to 2026-11-23: 9 PRs read; used [PR #13766] [PR #17527] [PR #17855] [PR #17862] [PR #18117] [PR #18148] [PR #18162]; [PR #18118] and [PR #18290] are 8.x-only (noted for the 8.x pass).
 
 869 noise PRs across all areas were excluded upstream before these chunks were written.

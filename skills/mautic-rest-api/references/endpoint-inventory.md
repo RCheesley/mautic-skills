@@ -1,6 +1,7 @@
 # REST API endpoint inventory (Mautic 7.x)
 
-Every HTTP endpoint the 7.x tree (`419a08a9b35`; endpoints added after 7.2.1 are marked) exposes under `/api` (v1), `/api/v2` (API Platform) and `/oauth/v2`, one line each.
+Every HTTP endpoint the 7.x tree (the 7.x snapshot pinned in SOURCES.md; endpoints that are not in 7.2.2 and are
+unreleased on 7.x, bound for 7.3.0-rc, are marked) exposes under `/api` (v1), `/api/v2` (API Platform) and `/oauth/v2`, one line each.
 Behaviour of each resource (payload fields, side effects, special codes) lives in the owning skill; this file only says
 that the endpoint exists, which permission gates it, and where it is declared.
 
@@ -94,7 +95,7 @@ that the endpoint exists, which permission gates it, and where it is declared.
 | POST | `/api/segments/{id}/contact/{leadId}/add` | Segment access plus Contact edit access | mautic-segments | [code: app/bundles/LeadBundle/Controller/Api/ListApiController.php:151 @7.x] |
 | POST | `/api/segments/{id}/contacts/add` (body `ids`) | Segment access plus Contact edit access per Contact | mautic-segments | [code: app/bundles/LeadBundle/Controller/Api/ListApiController.php:184 @7.x] |
 | POST | `/api/segments/{id}/contact/{leadId}/remove` | Segment access plus Contact edit access | mautic-segments | [code: app/bundles/LeadBundle/Controller/Api/ListApiController.php:227 @7.x] |
-| POST | `/api/companies/batch/addcontacts` (7.x after 7.2.1, unreleased; [PR #16512]) | `lead:leads:editown` or `editother` | mautic-contacts | [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:122-124 @7.x] |
+| POST | `/api/companies/batch/addcontacts` (unreleased on 7.x, 7.3.0-rc; [PR #16512]) | `lead:leads:editown` or `editother` | mautic-contacts | [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:122-124 @7.x] |
 | POST | `/api/companies/{companyId}/contact/{contactId}/add` | Contact edit access | mautic-contacts | [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:95 @7.x] |
 | POST | `/api/companies/{companyId}/contact/{contactId}/remove` | `lead:leads:editown`/`editother` on the Contact | mautic-contacts | [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:215-230 @7.x] |
 | GET | `/api/points/actions/types` | `point:points:view` or `viewown` | mautic-points-and-stages | [code: app/bundles/PointBundle/Controller/Api/PointApiController.php:65-67 @7.x] |
@@ -428,7 +429,7 @@ returns report data rows, not the report definition (see mautic-reports-and-dash
 | DELETE | `/api/points/insights/batch/delete?ids=` | `point:insights:deleteown`/`deleteother` | mautic-points-and-stages | [code: app/bundles/PointBundle/Config/config.php:45 @7.x] |
 | DELETE | `/api/points/insights/{id}/delete` | `point:insights:deleteown`/`deleteother` | mautic-points-and-stages | [code: app/bundles/PointBundle/Config/config.php:45 @7.x] |
 
-#### Projects — `/api/projects` (keys `project/projects`; 7.x after 7.2.1, unreleased; [PR #15569])
+#### Projects — `/api/projects` (keys `project/projects`; unreleased on 7.x, 7.3.0-rc; [PR #15569])
 
 | Method | Path | Permission | Owning skill | Citation |
 |---|---|---|---|---|
@@ -610,15 +611,20 @@ Rows marked "derived" have no `uriTemplate`; API Platform derives the path from 
 
 ## 6. Documentation discrepancies found while building this table
 
+- Snapshot check: no v1 route, API controller or API Platform resource was added or removed on 7.x between the previous
+  7.x snapshot (`419a08a9b35`) and the one pinned in SOURCES.md; the only new routes are the non-API `/s/open_id/*` login routes.
+  [code: app/bundles/UserBundle/Config/config.php:130-142 @7.x]
+
 - Users delete is the standard `DELETE /api/users/{id}/delete`; the docs show `DELETE /users/ID` with no suffix, which
   matches no route. [code: app/bundles/UserBundle/Config/config.php:79-84 @7.x]
   [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/users.html#delete-user]
 - Campaign export is `GET`; the plugin-extension docs say `POST /api/campaigns/export/{id}`.
   [code: app/bundles/CampaignBundle/Config/config.php:132-134 @7.x]
   [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/campaigns.html#exporting-via-api]
-- `POST /api/companies/batch/addcontacts` is on the 7.x branch, not yet released (after 7.2.1; [PR #16512]), but is documented only in the 8.0 docs; the 8.x branch
-  does not have it yet (it arrives with the next forward merge).
-  [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:122 @7.x]
+- `POST /api/companies/batch/addcontacts` is unreleased on 7.x (7.3.0-rc; [PR #16512]) and is documented in the 8.0 docs and on the
+  unreleased 7.3 docs branch, not in the 7.2 docs. The 8.x branch now has it as well.
+  [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:122 @7.x] [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:128 @8.x]
+  [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/rest_api/companies.rst]
   [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/companies.html#batch-add-contacts-to-companies]
 - The Point Group docs write the paths with a leading `/api/`; the routes are the normal `/api/contacts/{contactId}/points/groups...`.
   [code: app/bundles/PointBundle/Config/config.php:91 @7.x]

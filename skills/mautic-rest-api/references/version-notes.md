@@ -12,7 +12,7 @@ Authoritative behaviour is 7.x (the 7.x snapshot pinned in SOURCES.md). 8.x is u
 - Older releases stored token lifetimes in seconds (3600 and 1209600); the 7.x configuration form rewrites those legacy
   values to 60 minutes and 14 days for display. [code: app/bundles/ConfigBundle/Form/Type/ConfigType.php:27-37 @7.x]
 - Before Mautic 7 an API rate limiter existed, configured with `api_rate_limiter_cache` (`file_system` default, memcached
-  alternative). It is not available in 7 or later and 7.2.1 has no rate limiting code.
+  alternative). It is not available in 7 or later and 7.x has no rate limiting code.
   [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/getting_started.html#api-rate-limiter-cache]
   [code: app/config/security.php:118-121 @7.x]
 
@@ -47,7 +47,12 @@ Authoritative behaviour is 7.x (the 7.x snapshot pinned in SOURCES.md). 8.x is u
   [code: app/bundles/ApiBundle/Config/services.php:29-31 @7.x]
 - 7.2: the 7.2 plugin docs document `ApiEvents::API_PLATFORM_PERMISSION_CONTEXT` for placeholder permissions.
   [devdocs: https://devdocs.mautic.org/en/7.2/plugin_extensions/api.html#api-permission-context-event]
-- 7.x after 7.2.1 (unreleased): `POST /api/companies/batch/addcontacts` exists (documented only in the 8.0 docs) [PR #16512]; legacy `/api/projects` CRUD is added [PR #15569] (`/api/v2/projects` already ships in 7.2.1).
+- 7.2 branch, after 7.2.2 (milestone 7.2.3, not in the 7.x snapshot): the `^/api` access rule is anchored to a path boundary so
+  `/api-keys` and similar public paths no longer get 401 [PR #18058]; `oAuth2\Client` declares `deletedId`, removing a
+  PHP 8.2 deprecation when a client is deleted [PR #18085].
+- Unreleased on 7.x (7.3.0-rc): `POST /api/companies/batch/addcontacts` exists (documented in the 8.0 docs and the 7.3 docs
+  branch) [PR #16512]; legacy `/api/projects` CRUD is added [PR #15569] (`/api/v2/projects` already ships in 7.2.x).
+  The API firewalls name `user_provider` explicitly and `ApiUserSubscriber` moves to priority 2560 as part of OpenID Connect [PR #17527].
   [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:122-124 @7.x]
 - Component versions on 7.2.1: API Platform core `^4.1.0`, FOSRestBundle `^3.8`, OAuth server bundle 5.1.3, Symfony
   `~7.4.0`, PHP 8.2. [PR #17355] [PR #17350] [PR #17342]
@@ -74,4 +79,4 @@ document them as removed. [PR #17253]
 No 8.x change to the v1 URL scheme, response envelopes, `api_*` parameters, the token endpoints or the 409 lock contract
 is recorded in the inputs. [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/getting_started.html]
 
-Unreleased 7.x changes (merged after 7.2.1, not in any release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
+Unreleased 7.x changes (bound for 7.3, in no release yet): see [post-7.2.1-prs.md](../../mautic-upgrades-and-versions/references/post-7.2.1-prs.md).
