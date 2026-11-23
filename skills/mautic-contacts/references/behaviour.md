@@ -42,7 +42,7 @@ B2.1 A contact is anonymous unless firstname, lastname, company, email or any so
 
 B2.2 `date_identified` is set to now in a pre-persist/pre-update callback the first time a contact with a null `date_identified` becomes non-anonymous. The callback never clears it. [code: app/bundles/LeadBundle/Entity/Lead.php:305-306 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:1200-1203 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:1444-1450 @7.x]
 
-B2.3 When `dateIdentified` changes on save, `LEAD_IDENTIFIED` (`mautic.lead_identified`) is dispatched and an audit-log entry with action `identified` is written. [code: app/bundles/LeadBundle/EventListener/LeadSubscriber.php:138-161 @419a08a9b35] [code: app/bundles/LeadBundle/Helper/LeadChangeEventDispatcher.php:33-40 @7.x]
+B2.3 When `dateIdentified` changes on save, `LEAD_IDENTIFIED` (`mautic.lead_identified`) is dispatched and an audit-log entry with action `identified` is written. [code: app/bundles/LeadBundle/EventListener/LeadSubscriber.php:148-160 @7.x] [code: app/bundles/LeadBundle/Helper/LeadChangeEventDispatcher.php:33-40 @7.x]
 
 B2.4 The `mautic.lead_post_save_new` webhook fires when a contact has just been identified; otherwise `mautic.lead_post_save_update` fires. Saves of anonymous contacts trigger neither webhook. [code: app/bundles/LeadBundle/EventListener/WebhookSubscriber.php:131-158 @7.x]
 
@@ -50,17 +50,19 @@ B2.5 A `lead_event_log` row `created_contact` or `identified_contact` is written
 
 B2.6 The Contacts list hides anonymous contacts (`!is:anonymous`) unless the search contains `is:anonymous`. `is:anonymous` means `date_identified IS NULL`. [code: app/bundles/LeadBundle/Controller/LeadController.php:192-206 @7.x] [code: app/bundles/LeadBundle/Entity/LeadRepository.php:780-783 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/contacts_overview.html#visitors-formerly-anonymous-leads]
 
+B2.6a The display name (`getPrimaryIdentifier()`) uses the first non-empty of name, company, email, first social identity and first IP, else "anonymous". On 7.x (unreleased, 7.3.0-rc) a plugin can change that order per loaded entity with `Lead::setPrimaryIdentifierOrder()`, including custom-field aliases; unknown aliases and non-scalar values are skipped. [code: app/bundles/LeadBundle/Entity/Lead.php:283 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:749-787 @7.x] [PR #17687]
+
 B2.7 Maintenance cleanup deletes contacts with `last_active` on or before the cutoff and a null `date_identified`. In GDPR mode it also deletes those with `date_added` on or before the cutoff and a null `last_active`. It uses raw DBAL deletes in loops of 10000 ids, so no `LEAD_*_DELETE` events or audit entries are produced. [code: app/bundles/LeadBundle/EventListener/MaintenanceSubscriber.php:26-83 @7.x]
 
 ## 3. Web tracking identity
 
 B3.1 No contact is tracked when the request has a `Blocked-Tracking` cookie, when a Mautic user is logged in, or in a console or no-request context. In those cases the "system contact" is used. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-60 @7.x] [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:173-189 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#website-monitoring]
 
-B3.2 The current contact is resolved in this order: a `LeadGetCurrentEvent` listener; the tracked device (`mautic_device_id` cookie or request parameter); the legacy cookie (`{trackingId}` or `mtc_id`); the newest contact with the same IP if `track_contact_by_ip` is on; otherwise a new contact. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:191-267 @419a08a9b35] [code: app/bundles/LeadBundle/Tracker/Service/ContactTrackingService/ContactTrackingService.php:29-70 @7.x]
+B3.2 The current contact is resolved in this order: a `LeadGetCurrentEvent` listener; the tracked device (`mautic_device_id` cookie or request parameter); the legacy cookie (`{trackingId}` or `mtc_id`); the newest contact with the same IP if `track_contact_by_ip` is on; otherwise a new contact. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:191-270 @7.x] [code: app/bundles/LeadBundle/Tracker/Service/ContactTrackingService/ContactTrackingService.php:29-70 @7.x]
 
 B3.3 The legacy-cookie lookup follows merge records. It returns null if the contact already has a tracked device. [code: app/bundles/LeadBundle/Tracker/Service/ContactTrackingService/ContactTrackingService.php:53-69 @7.x]
 
-B3.4 Non-trackable requests (bots, privacy signals, prefetch, non-trackable IP) get a new Lead that is never persisted. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:246-253 @419a08a9b35] [docs: https://docs.mautic.org/en/7.2/contacts/contacts_overview.html#visitors-formerly-anonymous-leads]
+B3.4 Non-trackable requests (bots, privacy signals, prefetch, non-trackable IP) get a new Lead that is never persisted, and the device and cookie lookups are skipped. Since [PR #17868] (unreleased on 7.x, 7.3.0-rc) the same applies to a visitor a form submission marked untracked, and no IP is looked up for either, because the lookup saves new addresses. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:214-275 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/contacts_overview.html#visitors-formerly-anonymous-leads]
 
 B3.5 A new tracked contact is saved directly through the repository. `LEAD_PRE_SAVE` and `LEAD_POST_SAVE` are dispatched manually and default field values are applied. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:277-301 @7.x]
 
@@ -77,6 +79,10 @@ B3.10 On a clickthrough identification, an anonymous tracked contact is merged w
 B3.11 A `tags` query parameter on a tracking request is applied with `modifyTags`, so a `-` prefix removes a tag. [code: app/bundles/LeadBundle/Helper/ContactRequestHelper.php:193-195 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#tags]
 
 B3.12 "Identify visitors by tracking URL" (`track_by_tracking_url`) was removed in 7.0.0 and does not exist in 7.x; Contacts are identified from email clickthroughs instead [PR #14974]. Up to 6.x it required email to be a unique identifier and publicly editable, and the docs did not recommend it because it can be spoofed. Discrepancy: the 7.2 docs still describe the setting [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#identify-visitors-by-tracking-url].
+
+B3.12a Untracked form submitters (unreleased on 7.x, 7.3.0-rc). A submission to a kiosk-mode form, or from a non-trackable request (Do Not Track, Global Privacy Control, bot, prefetch), stores no IP on the submission and marks the request untracked. The submission then starts from a new contact instead of the tracked one, does not merge with it, and the contact audit log, company, campaign and point-trigger logs written during it get no IP. Mapped fields still update the matched contact and form point actions still award points. [code: app/bundles/FormBundle/Model/SubmissionModel.php:138-145 @7.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:426-429 @7.x] [code: app/bundles/FormBundle/Model/SubmissionModel.php:963-977 @7.x] [code: app/bundles/LeadBundle/EventListener/LeadSubscriber.php:763-769 @7.x] [PR #17847] [PR #17868]
+
+B3.12b Tracking preference (unreleased on 7.x, 7.3.0-rc). Table `lead_tracking_preferences` holds one row per contact and purpose (`activity`) with `allowed`, a source and `date_modified`. A contact with no row counts as allowing tracking. For a contact who turned activity tracking off, the email open pixel still loads but no open, IP, device, timeline entry or "Opens email" campaign decision is recorded, and no async hit message is queued. On merge the winner keeps an opt-out from either contact (source `contact_merge`). No UI or API writes the table yet. [code: app/bundles/LeadBundle/Entity/TrackingPreference.php:16-62 @7.x] [code: app/bundles/LeadBundle/Helper/ContactTrackingPreferenceHelper.php:26-31 @7.x] [code: app/bundles/EmailBundle/Model/EmailModel.php:690 @7.x] [code: app/bundles/LeadBundle/EventListener/TrackingPreferenceSubscriber.php:31-40 @7.x] [PR #18006]
 
 B3.13 Traffic from private IP ranges is not tracked unless `track_private_ip_ranges` is true. [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#website-monitoring]
 
@@ -109,6 +115,8 @@ B4.12 The Doctrine-mapped (fixed) contact columns are title, firstname, lastname
 B4.13 IP geolocation fills city, state, country and zipcode on save only if all four are empty and the contact is not being imported. With `ip_lookup_create_organization`, the IP organisation may fill an empty `company`. [code: app/bundles/LeadBundle/Model/LeadModel.php:460-489 @7.x]
 
 B4.14 `attribution_date` is set to today when `attribution` has a value and no date, and cleared when `attribution` is empty. [code: app/bundles/LeadBundle/Entity/Lead.php:1429-1440 @7.x]
+
+B4.14a `date_modified`: on create it is set from now (unless already set, for example by import). On update, a save with changes sets `modified_by` but writes `date_modified` only when it is empty, so editing an existing contact (which always has one after the 6.0 back-fill) leaves `date_modified` unchanged; a save whose only changes are DNC or manipulator skips both. Import can set it explicitly from a `dateModified` column. One code path does move it: when contact-company changes leave no primary company and the latest linked company is promoted, `LeadModel` sets `date_modified` to now [code: app/bundles/LeadBundle/Model/LeadModel.php:2334-2339 @7.x]. Inferred from code; no test asserts an edit bumps it. [code: app/bundles/CoreBundle/Model/FormModel.php:243-293 @7.x] [code: app/bundles/LeadBundle/Entity/Lead.php:1948-1960 @7.x] [code: app/bundles/LeadBundle/Model/LeadModel.php:1373-1377 @7.x] [PR #14433] [PR #13994]
 
 B4.15 Since Mautic 5 the UI does not allow editing the default value of identifying fields (email, company, first name, last name, social profiles, unique identifiers, company name, company email, company website, state, country, city). [docs: https://docs.mautic.org/en/7.2/contacts/custom_fields.html#custom-fields]
 
@@ -148,12 +156,12 @@ B6.9 Segment membership (`lead_lists_leads`) and campaign membership (`campaign_
 
 B6.10 History moved to the winner: lead event log, points change log, notes, devices, campaign event log, point and trigger logs, email and dynamic-content stats, stage log, form submissions, page and video hits, asset downloads. An audit-log `merge` entry is written for the loser id. [code: app/bundles/LeadBundle/EventListener/LeadSubscriber.php:283-322 @7.x]
 
-B6.11 Not merged: the loser's DNC entries, frequency rules, UTM tags, stage and categories. They are removed with the loser by FK cascade (inferred: no code moves them). SMS and push-notification stats are not moved either: their repositories have `updateLead()` but no `LEAD_POST_MERGE` subscriber. [code: app/bundles/LeadBundle/Entity/Lead.php:341-348 @7.x] [code: app/bundles/SmsBundle/Entity/StatRepository.php:169 @7.x] [code: app/bundles/NotificationBundle/Entity/StatRepository.php:191 @7.x]
+B6.11 Not merged at the 7.x snapshot: the loser's DNC entries, frequency rules, UTM tags, stage and categories. On the 7.2 branch after 7.2.2 (milestone 7.2.3, not yet merged into 7.x) a winner with no stage inherits the loser's stage through `LeadModel::addToStage()`, so a stage-change log entry is written; a winner's own stage is kept [PR #17573]. They are removed with the loser by FK cascade (inferred: no code moves them). SMS and push-notification stats are not moved either: their repositories have `updateLead()` but no `LEAD_POST_MERGE` subscriber. [code: app/bundles/LeadBundle/Entity/Lead.php:341-348 @7.x] [code: app/bundles/SmsBundle/Entity/StatRepository.php:169 @7.x] [code: app/bundles/NotificationBundle/Entity/StatRepository.php:191 @7.x]
 
 B6.12 Who wins depends on the caller:
 - UI merge: the contact being viewed wins; the selected duplicate is deleted. [code: app/bundles/LeadBundle/Controller/LeadController.php:1064 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#merge-two-contacts]
 - API edit with a unique-identifier match: the contact in the URL wins. [code: app/bundles/LeadBundle/Controller/Api/LeadApiController.php:614-628 @7.x]
-- Form submission: the existing identified contact wins over the tracked anonymous one unless there is a unique-identifier conflict or kiosk mode. [code: app/bundles/FormBundle/Model/SubmissionModel.php:1041-1060 @419a08a9b35]
+- Form submission: the existing identified contact wins over the tracked anonymous one unless there is a unique-identifier conflict or the submitter is untracked (kiosk mode, or since [PR #17868] a non-trackable request; B3.12a). [code: app/bundles/FormBundle/Model/SubmissionModel.php:1064-1083 @7.x]
 - Clickthrough identification: the tracked contact wins (B3.10). [code: app/bundles/LeadBundle/Helper/ContactRequestHelper.php:205-216 @7.x]
 - `mautic:contacts:deduplicate`: older contacts are merged successively into the newest; `--newer-into-older` reverses this. [code: app/bundles/LeadBundle/Deduplicate/ContactDeduper.php:93-131 @7.x]
 
@@ -183,7 +191,7 @@ B7.11 Company merge: empty fields of the remaining company are filled from the o
 
 B7.12 `POST /api/companies/new` returns the existing company when unique fields match; batch create returns 200 for such duplicates. [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:66-74 @7.x] [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/companies.html#create-batch-companies]
 
-B7.13 `POST /api/companies/batch/addcontacts` (7.x after 7.2.1, unreleased; [PR #16512]) takes `assignments: [{contactId, companyId}]` of positive integers, rejects batches larger than `api_batch_max_limit`, checks edit access per contact, and returns a per-pair status of 200, 403, 404 or 500 inside an overall 200. [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:121-153 @7.x] [code: app/bundles/LeadBundle/Model/BatchCompanyContactAssignmentModel.php:52-160 @7.x] [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/companies.html#batch-add-contacts-to-companies]
+B7.13 `POST /api/companies/batch/addcontacts` (unreleased on 7.x, 7.3.0-rc; [PR #16512]) takes `assignments: [{contactId, companyId}]` of positive integers, rejects batches larger than `api_batch_max_limit`, checks edit access per contact, and returns a per-pair status of 200, 403, 404 or 500 inside an overall 200. [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:121-153 @7.x] [code: app/bundles/LeadBundle/Model/BatchCompanyContactAssignmentModel.php:52-160 @7.x] [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/companies.html#batch-add-contacts-to-companies]
 
 B7.14 Companies reuse the `lead:leads` permissions; the Companies menu needs `lead:leads:viewother`. [code: app/bundles/LeadBundle/Model/CompanyModel.php:135-139 @7.x]
 
@@ -335,6 +343,8 @@ B13.11 Imported contacts are flagged `imported`, so IP geolocation and points-ch
 
 B13.12 Per-row permission: creating needs `lead:leads:create`; updating needs edit own/other. Creating an import without `lead:imports:publish` creates it unpublished. [code: app/bundles/LeadBundle/Model/LeadModel.php:1352-1366 @7.x] [code: app/bundles/LeadBundle/Controller/ImportController.php:419-422 @7.x]
 
+B13.12a Company imports: on 7.2.2 and the 7.x snapshot the import queue ("Finish in background") and cancel actions read the contact session key `mautic.lead.import.id` even for company imports, which can create an empty Import and fail on `imports.dir`. Fixed on the 7.2 branch after 7.2.2 by using the object-specific key and queueing only a persisted import [PR #18189].
+
 B13.13 Boolean values `true`, `1`, `on` and `yes` are TRUE; CSV must be UTF-8; ISO 8601 dates are recommended. [docs: https://docs.mautic.org/en/7.2/contacts/import_contacts.html#import-file-requirements]
 
 ## 14. Frequency rules, preferences, notes, timeline, audit log, export, deletion
@@ -347,9 +357,11 @@ B14.3 An email with "Send to unsubscribed contacts" = Yes does not count toward 
 
 B14.4 Notes have types general, email, call and meeting, and an optional date. Their permission set `lead:notes` is separate from contact permissions; list and count with `viewown` show only own notes. [code: app/bundles/LeadBundle/Form/Type/NoteType.php:50-53 @7.x] [code: app/bundles/LeadBundle/Model/NoteModel.php:116-131 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#note-permissions]
 
-B14.5 The contact audit log stores every non-trivial change set with action `create` or `update` (ignoring dateLastActive, dateModified, ipAddressList and manipulator), plus `identified` and `ipadded` entries. [code: app/bundles/LeadBundle/EventListener/LeadSubscriber.php:94-162 @419a08a9b35]
+B14.5 The contact audit log stores every non-trivial change set with action `create` or `update` (ignoring dateLastActive, dateModified, ipAddressList and manipulator), plus `identified` and `ipadded` entries. The entry's IP is empty for an untracked form submitter (unreleased on 7.x, [PR #17868]). [code: app/bundles/LeadBundle/EventListener/LeadSubscriber.php:104-173 @7.x]
 
 B14.6 The timeline is built by dispatching `TIMELINE_ON_GENERATE` to all bundles; the payload has events, types, total, page and maxPages. [code: app/bundles/LeadBundle/Model/LeadModel.php:2185-2204 @7.x]
+
+B14.6a Timeline `leadIds` filter (unreleased on 7.x, 7.3.0-rc): without a single contact, `filters[leadIds][]` restricts the timeline to those contacts (an empty list matches none), events whose `contactId` is not in the list are dropped, and `lead.create`, `lead.identified`, `lead.ipadded` and `lead.apiadded` are then also returned by `GET /api/contacts/activity`. Subscribers using `TimelineTrait` get the filter automatically. [code: app/bundles/LeadBundle/Event/LeadTimelineEvent.php:101-123 @7.x] [code: app/bundles/LeadBundle/EventListener/LeadSubscriber.php:335-341 @7.x] [PR #18182]
 
 B14.7 Contact export is refused (400) when the count exceeds `contact_export_limit` (0 = no limit). CSV exports are scheduled in the background by default (`contact_export_in_background` true) and processed by `mautic:contacts:scheduled_export`, which emails a download link. [code: app/bundles/LeadBundle/Controller/LeadController.php:2273-2289 @7.x] [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#exporting-contact-lists]
 
@@ -358,6 +370,10 @@ B14.8 Export needs admin or `lead:export:enable`. [code: app/bundles/LeadBundle/
 B14.9 Deleting a contact removes its avatar file, decrements cached segment counts (unless `update_segment_contact_count_in_background`), and writes a `delete` audit entry. [code: app/bundles/LeadBundle/Model/LeadModel.php:529-541 @7.x] [code: app/bundles/LeadBundle/EventListener/LeadSubscriber.php:177-215 @7.x]
 
 B14.10 Contact edit, delete, merge, DNC and company assignment require `lead:leads:editown` or `editother` against `getPermissionUser()`. [code: app/bundles/LeadBundle/Model/LeadModel.php:792-795 @7.x] [code: app/bundles/LeadBundle/Controller/LeadController.php:1050-1053 @7.x]
+
+B14.11 Contact AJAX actions `lead:toggleLeadList`, `lead:toggleCompanyLead`, `lead:setAsPrimaryCompany`, `lead:removeTagFromLead`, `lead:togglePreferredLeadChannel` and `lead:removeBounceStatus` check no contact permission at 7.2.2 and the 7.x snapshot. On the 7.2 branch after 7.2.2 they require `lead:leads:editown`/`editother` on the contact and return 403 otherwise; `lead:addLeadTags` and `lead:addLeadUtmTags` stay unchecked [PR #18090].
+
+B14.12 Contact list search commands added on 7.x (unreleased, 7.3.0-rc): `is:unsegmented` (no `lead_lists_leads` row with `manually_removed = 0`) [PR #18076]; `segment_source:manually_added` / `segment_source:filter_added`, which match only together with a non-negated `segment:{alias}` and otherwise return nothing [PR #16350]. Custom Fields list: `is:systemdefault` / `is:usercreated`, matched by alias against the core contact and company field lists [PR #18072]. [code: app/bundles/LeadBundle/Entity/LeadRepository.php:796-808 @7.x] [code: app/bundles/LeadBundle/Entity/LeadRepository.php:859-900 @7.x] [code: app/bundles/LeadBundle/Entity/LeadFieldRepository.php:560-613 @7.x]
 
 ## 15. Points (contact-side storage only)
 
@@ -379,14 +395,16 @@ C3. New primary after deleting or removing a company. Code takes the first row o
 
 C4. Company identification. Code matches on the configured company unique identifiers. [code: app/bundles/LeadBundle/Helper/IdentifyCompanyHelper.php:11-60 @7.x] Docs say companies are matched "strictly" by name, city and country or state. [docs: https://docs.mautic.org/en/7.2/companies/companies_overview.html#identifying-companies]
 
-C5. `POST /api/companies/batch/addcontacts` is documented only in the 8.0 devdocs but exists on the 7.x branch (after 7.2.1, not yet released; [PR #16512]) and not yet in 8.x code. [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:121-153 @7.x] [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/companies.html#batch-add-contacts-to-companies]
+C5. `POST /api/companies/batch/addcontacts` is documented in the 8.0 and 7.3 devdocs but not the 7.2 devdocs. It is unreleased on 7.x (7.3.0-rc; [PR #16512]) and also on the 8.x branch. [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:121-153 @7.x] [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:133 @8.x] [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/companies.html#batch-add-contacts-to-companies]
+
+C5a. Merge and stage. The 7.2 user docs (after 7.2.2) say the main contact inherits the merged contact's stage when it has none [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#merge-two-contacts]. That is [PR #17573], on the 7.2 branch only; 7.2.2 and the 7.x snapshot do not do it (B6.11).
 
 C6. UTM recording. One docs page says UTM tags are recorded only by the "Record UTM Tags" form action; the UTM pages say landing-page and tracking-script visits record them too. [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#utm-code] [docs: https://docs.mautic.org/en/7.2/utm_tags/utm_tags_landing_pages.html] Not resolved from the contacts code analysis.
 
 C7. Suspected bugs (inferred from code, unverified by tests):
 - `LeadPermissions::analyzePermissions()` adds `viewown` when `array_intersect(...) == $viewPerms`; `!=` looks intended. [code: app/bundles/LeadBundle/Security/Permissions/LeadPermissions.php @7.x]
 - `addDncForContact()` with an existing UNSUBSCRIBED entry and override off returns the last iterated DNC object, not false, and still saves. [code: app/bundles/LeadBundle/Model/DoNotContact.php:105-130 @7.x]
-- `removeBounceStatusAction` has no contact permission check and dereferences `$dnc->getLead()` without a null check. [code: app/bundles/LeadBundle/Controller/AjaxController.php:427-454 @7.x]
+- `removeBounceStatusAction` has no contact permission check and dereferences `$dnc->getLead()` without a null check. The permission check is fixed on the 7.2 branch after 7.2.2 (B14.11) [PR #18090]. [code: app/bundles/LeadBundle/Controller/AjaxController.php:427-454 @7.x]
 - `ContactRequestHelper::getContactFromUrl()` merge branches depend on `$this->trackedContact`, assigned only after it returns; on the first call these merges likely never run. [code: app/bundles/LeadBundle/Helper/ContactRequestHelper.php:154-216 @7.x]
 - `setFrequencyRules(..., persist: false)` leaves `$entities` empty, so all existing rules are deleted. [code: app/bundles/LeadBundle/Model/LeadModel.php:1180-1183 @7.x]
 - Campaign "update contact" calls `fail()` then `pass()` on the same log on `ImportFailedException`, and calls `setFieldValues` twice. [code: app/bundles/LeadBundle/EventListener/CampaignSubscriber.php:359-392 @7.x]

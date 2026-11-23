@@ -28,7 +28,7 @@
 ## 7.x
 - 7.0: `SegmentReferenceFilterQueryBuilder` was removed. The `leadlist` filter now uses `ForeignValueFilterQueryBuilder` against `lead_lists_leads` with `manually_removed = 0` [code: UPGRADE-7.0.md:62 @7.x] [code: app/bundles/LeadBundle/Services/ContactSegmentFilterDictionary.php:142-147 @7.x].
 - Added in 7.x:
-  - "Any associated company" filters (`company_all`), alongside primary-company `company` filters; 7.x after 7.2.1, unreleased [PR #15800] [code: app/bundles/LeadBundle/EventListener/FilterOperatorSubscriber.php:122-126 @7.x];
+  - "Any associated company" filters (`company_all`), alongside primary-company `company` filters; unreleased on 7.x (7.3.0-rc), not in 7.2.2 [PR #15800] [code: app/bundles/LeadBundle/EventListener/FilterOperatorSubscriber.php:122-126 @7.x];
   - (already in 7.2.0) `--max-contacts` partial-rebuild completion tracking, where an incomplete run keeps the Segment "Building" [code: app/bundles/LeadBundle/Model/ListModel.php:591-633 @7.x].
 - From PR history:
   - 7.0.0: "including any of", "including all of", "excluding any of" and "excluding all of" replace "including"/"excluding". Stored `in`/`!in` now mean "any of" [PR #15344] [PR #15473].
@@ -40,7 +40,8 @@
   - 7.1.1: "all of" operators only on multiselect fields [PR #16012].
   - 7.1.3: "Read any email (date)" uses the latest read date [PR #16224].
   - 7.2.0: `inLast`/`inNext`, hour-level relative dates on datetime fields, and preference-centre order by public name [PR #16574] [PR #16135] [PR #15850].
-  - 7.x after 7.2.1: a Campaign add sets `manually_added = 1` even after an automatic add [PR #16474].
+  - 7.3.0-rc (unreleased on 7.x): a Campaign add sets `manually_added = 1` even after an automatic add [PR #16474].
+  - 7.3.0-rc (unreleased on 7.x), merged 2026-11: detail stat cards loaded by `segmentStats` (Total, Active, Manually added, Filter added) [PR #16350]; Active excludes only email DNC [PR #18059]; Contacts tab and `mautic_segment_contacts` route removed [PR #18216]; `is:dynamic`, `is:static`, `is:preference` Segment-list search [PR #18073] [PR #18071] [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:580-597 @7.x].
 - The 7.2 user docs still describe primary company only. The 8.0 docs describe both groups [docs: https://docs.mautic.org/en/8.0/segments/manage_segments.html#configuring-segment-filters].
 - Deprecated in 7.x [code: app/bundles/LeadBundle/Segment/OperatorOptions.php:33-41 @7.x] [code: app/bundles/LeadBundle/Entity/OperatorListTrait.php:128-140 @7.x] [code: app/bundles/CoreBundle/Command/ModeratedCommand.php:24-27 @7.x]:
   - `OperatorOptions::IN`/`NOT_IN`;

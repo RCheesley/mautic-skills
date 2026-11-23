@@ -332,9 +332,13 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 
 11.6 The detail page lists dependants: emails, campaigns, segments, reports, forms and point triggers [code: app/bundles/LeadBundle/Segment/Stat/SegmentDependencies.php:24-50 @7.x].
 
+11.7 On 7.x (unreleased, 7.3.0-rc) the detail page has no Contacts tab; the member list is the Total contacts card's Contact search. The Segment Dependencies tab is first and loads at once when the Segment has a `leadlist` filter; otherwise Campaign share is first [code: app/bundles/LeadBundle/Resources/views/List/details.html.twig:99 @7.x] [code: app/bundles/LeadBundle/Resources/views/List/details.html.twig:178-197 @7.x] [PR #18216].
+
 ## 12. Counts and caches
 
-12.1 Member count = rows with `manually_removed = 0` [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:286-338 @419a08a9b35].
+12.1 Member count = rows with `manually_removed = 0` [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:286-328 @7.x].
+
+12.1a On 7.x (unreleased, 7.3.0-rc) the detail page gets total, manually added and (only for a Segment with filters) filter added counts from one aggregate query over rows with `manually_removed = 0`, loaded asynchronously by the `segmentStats` action, which needs `lead:leads:viewown` and Segment view access [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:333-361 @7.x] [code: app/bundles/LeadBundle/Controller/ListController.php:801-831 @7.x] [PR #16350]. Cards link to Contact searches: `segment:<alias>`, `segment:<alias> !dnc:email`, and `segment:<alias> segment_source:manually_added|filter_added` [code: app/bundles/LeadBundle/Resources/views/List/_segment_stats.html.twig:1-32 @7.x].
 
 12.2 The cached count lives in `segment.<id>.lead` with TTL `segment_api_count_cache_ttl` (43200). The list page returns 0 on a cache miss [code: app/bundles/LeadBundle/Model/ListModel.php:1430-1468 @7.x].
 
@@ -342,7 +346,7 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 
 12.4 The decrement floors at 0. Every removal decrements, even when the row is kept [code: app/bundles/LeadBundle/Helper/SegmentCountCacheHelper.php:95-106 @7.x] [code: app/bundles/LeadBundle/Model/ListModel.php:879-883 @7.x].
 
-12.5 "Active contacts" = members minus DNC, floored at 0 [code: app/bundles/LeadBundle/Model/ListModel.php:1470-1476 @419a08a9b35].
+12.5 "Active contacts" = members minus email-channel DNC rows of members with `manually_removed = 0`, floored at 0 [code: app/bundles/LeadBundle/Model/ListModel.php:1470-1476 @7.x] [code: app/bundles/LeadBundle/Entity/DoNotContactRepository.php:62-81 @7.x]. Until 7.2.2 any channel's DNC counted and DNC rows of manually removed members were subtracted too, so for example an SMS DNC made a Contact "inactive" although it still received email [PR #18059] [PR #16350] (unreleased on 7.x, 7.3.0-rc).
 
 ## 13. Lifecycle
 
@@ -358,7 +362,7 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 
 13.5 Non-global Segments are visible only to their creator or to users with `viewother`. Preference-centre listing requires both published and `is_preference_center` [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:92-126 @7.x] [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:263-277 @7.x].
 
-13.6 Search commands on the Segment list: `is:global`, `is:published`, `is:unpublished`, `is:mine`, `name:`, `category:`, `filters_field:<alias>` and project [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:429-499 @419a08a9b35]. The docs list only `ids:`, `is:global`, `name:` and `category:` [docs: https://docs.mautic.org/en/7.2/search/search_operators.html#companies-search-filters].
+13.6 Search commands on the Segment list: `is:global`, `is:published`, `is:unpublished`, `is:mine`, `name:`, `category:`, `filters_field:<alias>` and project, plus on 7.x (unreleased, 7.3.0-rc) `is:dynamic` and `is:static` (filters empty, serialised `[]` or serialised `null` = static) [PR #18073] and `is:preference` (`is_preference_center`) [PR #18071] [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:462-597 @7.x]. The docs list only `ids:`, `is:global`, `name:` and `category:` [docs: https://docs.mautic.org/en/7.2/search/search_operators.html#companies-search-filters].
 
 13.7 Permissions are `lead:lists:{viewown,viewother,editown,editother,create,deleteown,deleteother,full}` [code: app/bundles/LeadBundle/Security/Permissions/LeadPermissions.php:11-45 @7.x].
 
@@ -405,7 +409,7 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 
 16.3 The filter factory runs several times per rebuild, and each run dispatches `LIST_FILTERS_MERGE` [code: app/bundles/LeadBundle/Segment/ContactSegmentService.php:30 @7.x].
 
-16.4 The count query for a single id uses `USE INDEX (manually_removed)` [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:286-338 @419a08a9b35].
+16.4 The count query for a single id uses `USE INDEX (manually_removed)` [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:286-328 @7.x]. The detail-page statistics query does not force an index [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:333-361 @7.x].
 
 16.5 SQL is logged at debug level, and query exceptions at error level [code: app/bundles/LeadBundle/Segment/ContactSegmentService.php:320-375 @7.x].
 
@@ -421,7 +425,7 @@ Source: `OperatorListTrait` type map, `TypeOperatorSubscriber`, `FilterOperatorS
 
 17.5 The REST docs say `isGlobal` defaults to restricted. The entity default is `true` [code: app/bundles/LeadBundle/Entity/LeadList.php:105 @7.x]. Unresolved.
 
-17.6 The 7.2 docs describe primary-company filters only, but the 7.x branch has `company_all` (after 7.2.1, unreleased; [PR #15800]) [docs: https://docs.mautic.org/en/7.2/segments/manage_segments.html#configuring-segment-filters].
+17.6 The 7.2 docs describe primary-company filters only, but the 7.x branch has `company_all` (unreleased, 7.3.0-rc; [PR #15800]) [docs: https://docs.mautic.org/en/7.2/segments/manage_segments.html#configuring-segment-filters].
 
 17.7 Named ranges on `datetime` fields in non-UTC installs, and the week ranges' use of local midnight, are untested [code: app/bundles/LeadBundle/Segment/Decorator/Date/Week/DateWeekThis.php:13 @7.x].
 

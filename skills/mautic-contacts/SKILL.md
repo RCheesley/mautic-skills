@@ -19,8 +19,8 @@ Identification and tracking
 - A contact is anonymous unless firstname, lastname, company, email or a social field has a value; phone and other fields do not identify. [code: app/bundles/LeadBundle/Entity/Lead.php:1189-1198 @7.x]
 - `date_identified` is set once, the first time a contact stops being anonymous, and then `LEAD_IDENTIFIED` fires and the `lead_post_save_new` webhook fires; anonymous saves never fire contact webhooks. [code: app/bundles/LeadBundle/Entity/Lead.php:1444-1450 @7.x] [code: app/bundles/LeadBundle/EventListener/WebhookSubscriber.php:131-158 @7.x]
 - The Contacts list hides anonymous contacts unless the search contains `is:anonymous` (= `date_identified IS NULL`). [code: app/bundles/LeadBundle/Controller/LeadController.php:192-206 @7.x]
-- Logged-in Mautic users, `Blocked-Tracking` cookies, bots and console contexts are never tracked; bots get an unsaved Lead. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-60 @7.x] [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:246-253 @419a08a9b35]
-- Current-contact order: `LeadGetCurrentEvent` listener, `mautic_device_id` device, legacy `mtc_id` cookie, same IP (only if `track_contact_by_ip`), new contact. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:191-267 @419a08a9b35]
+- Logged-in Mautic users, `Blocked-Tracking` cookies, bots and console contexts are never tracked; bots get an unsaved Lead and no IP lookup. On 7.x (unreleased, 7.3.0-rc) a form submitter Mautic does not track (kiosk form or non-trackable request) is treated the same way. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-60 @7.x] [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:247-275 @7.x] [PR #17868]
+- Current-contact order: `LeadGetCurrentEvent` listener, `mautic_device_id` device, legacy `mtc_id` cookie, same IP (only if `track_contact_by_ip`), new contact. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:191-270 @7.x]
 - Tracking query parameters update only published fields marked publicly updatable, and find existing contacts only through unique identifiers. [code: app/bundles/LeadBundle/Helper/ContactRequestHelper.php:97-150 @7.x]
 
 Duplicates and merge
@@ -28,7 +28,7 @@ Duplicates and merge
 - Unique identifiers are not DB unique constraints; duplicates exist until `mautic:contacts:deduplicate` merges them. [code: app/bundles/LeadBundle/Command/DeduplicateCommand.php:30-115 @7.x]
 - In a merge the loser is deleted and its id resolves to the winner forever (merge records), including through the API. [code: app/bundles/LeadBundle/Deduplicate/ContactMerger.php:46-78 @7.x] [code: app/bundles/LeadBundle/Model/LeadModel.php:303-355 @7.x]
 - Merged field values come from the most recently modified contact, not from the winner; points sum, tags union, owner and primary company kept unless empty. [code: app/bundles/LeadBundle/Deduplicate/ContactMerger.php:119-271 @7.x]
-- The loser's DNC rows, frequency rules, UTM tags, stage and categories are not merged; SMS and push stats are not moved. [code: app/bundles/LeadBundle/Entity/Lead.php:341-348 @7.x] [code: app/bundles/SmsBundle/Entity/StatRepository.php:169 @7.x]
+- The loser's DNC rows, frequency rules, UTM tags, stage and categories are not merged; SMS and push stats are not moved. On the 7.2 branch after 7.2.2 (not in the 7.x snapshot) a winner without a stage inherits the loser's stage. [code: app/bundles/LeadBundle/Entity/Lead.php:341-348 @7.x] [code: app/bundles/SmsBundle/Entity/StatRepository.php:169 @7.x] [PR #17573]
 - The winner depends on the caller: UI = viewed contact, API edit = URL contact, clickthrough = tracked contact, form = identified contact, dedupe command = newest. [code: app/bundles/LeadBundle/Controller/LeadController.php:1064 @7.x] [code: app/bundles/LeadBundle/Deduplicate/ContactDeduper.php:93-131 @7.x]
 
 Field values
@@ -75,11 +75,11 @@ Custom fields and import
 | Import / `imports` | `app/bundles/LeadBundle/Model/ImportModel.php`, `Controller/ImportController.php`, `Command/ImportCommand.php` |
 | Events | `app/bundles/LeadBundle/LeadEvents.php`, `Helper/LeadChangeEventDispatcher.php` |
 | API | `app/bundles/LeadBundle/Controller/Api/` (`LeadApiController`, `CompanyApiController`, `FieldApiController`, `CustomFieldsApiControllerTrait`) |
-| Routes and parameters | `app/bundles/LeadBundle/Config/config.php` (routes 7-293, parameters 336-374) |
+| Routes and parameters | `app/bundles/LeadBundle/Config/config.php` (routes 7-289, parameters 332-370) |
 | Permissions | `app/bundles/LeadBundle/Security/Permissions/LeadPermissions.php` (`lead:leads`, `lead:notes`, `lead:fields`, `lead:imports`, `lead:export`) |
 | Tests | `app/bundles/LeadBundle/Tests/` |
 
-[code: app/bundles/LeadBundle/Config/config.php:7-374 @419a08a9b35] Full detail: references/code-map.md.
+[code: app/bundles/LeadBundle/Config/config.php:7-370 @7.x] Full detail: references/code-map.md.
 
 ## How to change or extend it
 - React to contact changes with a `LEAD_POST_SAVE` listener and `$event->getChanges()`; do not add logic to `LeadModel::saveEntity`. [code: app/bundles/LeadBundle/EventListener/LeadSubscriber.php:87 @7.x]
@@ -101,7 +101,9 @@ Custom fields and import
 ## Version notes
 - 5.0 locked default values of identifying fields; 5.1 added `mautic:fields:analyse` and custom country/region lists. [docs: https://docs.mautic.org/en/7.2/contacts/custom_fields.html#custom-fields]
 - 7.2 deprecated `AjaxController::addLeadUtmTagsAction`. [code: app/bundles/LeadBundle/Controller/AjaxController.php:638 @7.x]
-- The 7.x branch added, after 7.2.1 and not yet released, `POST /api/companies/batch/addcontacts` [PR #16512], "Any associated company" filters [PR #15800] and Quick Add "Save & New" [PR #16849]; they are documented in the 8.0 docs and not yet on the 8.x branch. [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:121-153 @7.x]
+- Unreleased on 7.x (7.3.0-rc), not in 7.2.2: `POST /api/companies/batch/addcontacts` [PR #16512], "Any associated company" filters [PR #15800] and Quick Add "Save & New" [PR #16849]; they are documented in the 8.0 docs and are also on the 8.x branch. [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:121-153 @7.x] [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:133 @8.x]
+- Also unreleased on 7.x (7.3.0-rc): email opens are not recorded for contacts who turned tracking off, untracked form submitters store no IP or device, `is:unsegmented` and `segment_source:` contact searches, custom-field Origin quick filters, a `leadIds` timeline filter, plugin-defined primary-identifier order and company view hooks. [PR #18006] [PR #17847] [PR #17868] [PR #18076] [PR #16350] [PR #18072] [PR #18182] [PR #17687] [PR #18106]
+- Fixed on the 7.2 branch after 7.2.2 (milestone 7.2.3, not in the 7.x snapshot): stage kept on merge, edit-permission checks on six contact AJAX actions, company import queue/cancel. [PR #17573] [PR #18090] [PR #18189]
 - 8.x dispatches events by class (56 LeadBundle constants removed; subscribe to `LeadPostSaveEvent`, `LeadPostMergeEvent`, `CompanySoftDeleteEvent` ...). [PR #17218] [PR #17545]
 - 8.x removes `LeadModel::isContactable()`, `FieldModel::getFieldList()`, `CompanyModel::getCompanyLeadRepository()`, `LeadModel::getTagRepository()`, and makes `IdentifyCompanyHelper` an instance service. [PR #17247] [PR #17248] [PR #17260]
 - 8.x unique-identifier columns get length 255 (7.x: 191) and require PHP 8.4, Symfony 8.1, Doctrine ORM 3 / DBAL 4. [PR #17361]
@@ -124,9 +126,10 @@ Full detail: references/version-notes.md.
 - Campaign "change owner" bypasses `LeadModel::saveEntity` extras. [code: app/bundles/LeadBundle/Model/LeadModel.php:2375-2381 @7.x]
 - `LEAD_IDENTIFIED`, `LEAD_UTMTAGS_ADD`, batch-save and column events have no core listener; a missing side effect there is expected. [code: app/bundles/LeadBundle/LeadEvents.php:50-140 @7.x]
 - Marking a field unique silently changes its column to varchar and adds an index. [code: app/bundles/LeadBundle/Field/SchemaDefinition.php:17-23 @7.x]
-- Suspected bugs to verify before relying on them: `analyzePermissions()` uses `==` where `!=` looks intended; `addDncForContact()` return value with an unsubscribe and no override; `removeBounceStatusAction` lacks a permission check; `setFrequencyRules(persist: false)` deletes all rules. [code: app/bundles/LeadBundle/Model/DoNotContact.php:105-130 @7.x] [code: app/bundles/LeadBundle/Controller/AjaxController.php:427-454 @7.x] [code: app/bundles/LeadBundle/Model/LeadModel.php:1180-1183 @7.x]
+- Suspected bugs to verify before relying on them: `analyzePermissions()` uses `==` where `!=` looks intended; `addDncForContact()` return value with an unsubscribe and no override; `removeBounceStatusAction` lacks a permission check (fixed on the 7.2 branch after 7.2.2 [PR #18090]); `setFrequencyRules(persist: false)` deletes all rules. [code: app/bundles/LeadBundle/Model/DoNotContact.php:105-130 @7.x] [code: app/bundles/LeadBundle/Controller/AjaxController.php:427-454 @7.x] [code: app/bundles/LeadBundle/Model/LeadModel.php:1180-1183 @7.x]
 - An unsubscribe (reason 1) is protected only against being overwritten by another reason; every remove path deletes it: profile toggle, API `dnc/{channel}/remove`, API reason 0, import `doNotEmail` false, campaign and form Remove DNC, and the resubscribe URL. [code: app/bundles/LeadBundle/Model/DoNotContact.php:32-62 @7.x] [PR #7567] [PR #3905]
 - DNC-only changes do not update `date_modified` or `modified_by` on purpose (deadlock avoidance), so `date_modified` cannot detect DNC changes. [code: app/bundles/LeadBundle/Entity/Lead.php:1948-1960 @7.x] [PR #13994]
+- Editing an existing contact does not move `date_modified` forward: `setModifiedData()` writes it only when it is empty, and every contact has one since 6.0; `modified_by` is still updated. Do not use `date_modified` as a "changed since" marker. [code: app/bundles/CoreBundle/Model/FormModel.php:269-293 @7.x] [PR #14433]
 - `{leadfield=…}` no longer renders; only `{contactfield=…}` and `{companyfield=…}` match. [code: app/bundles/LeadBundle/Helper/TokenHelper.php:11 @7.x] [PR #1893]
 - "Identify visitor by tracking URL" was removed in 7.0; clickthrough identification runs through `ON_CLICKTHROUGH_IDENTIFICATION` subscribers, although the 7.2 docs still describe the setting. [PR #14974]
 - Time fields are stored and shown as entered with no timezone conversion, so the server must run in UTC. [PR #11040]

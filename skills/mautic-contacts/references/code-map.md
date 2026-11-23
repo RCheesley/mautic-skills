@@ -33,6 +33,7 @@ All paths from the repository root; `LB` is never used as an abbreviation in cit
 | `MergeRecord` | `contact_merge_records` | contact_id (winner), merged_id (loser id), name | [code: app/bundles/LeadBundle/Entity/MergeRecord.php:41-44 @7.x] |
 | `LeadEventLog` | `lead_event_log` | bundle/object/action/object_id/properties | [code: app/bundles/LeadBundle/Entity/LeadEventLog.php:80-87 @7.x] |
 | `PointsChangeLog`, `CompanyChangeLog`, `StagesChangeLog` | `lead_points_change_log`, `lead_companies_change_log`, `lead_stages_change_log` | | [code: app/bundles/LeadBundle/Entity/PointsChangeLog.php:14 @7.x] |
+| `TrackingPreference` | `lead_tracking_preferences` | one row per contact and purpose (`activity`); `allowed`, `source`, `date_modified` (unreleased on 7.x, 7.3.0-rc; [PR #18006]) | [code: app/bundles/LeadBundle/Entity/TrackingPreference.php:16-62 @7.x] |
 | `LeadCategory` | `lead_categories` | category subscription | [code: app/bundles/LeadBundle/Entity/LeadCategory.php:79 @7.x] |
 | `ContactExportScheduler` | `contact_export_scheduler` | queued CSV exports | [code: app/bundles/LeadBundle/Entity/ContactExportScheduler.php:40 @7.x] |
 | IP addresses | `lead_ips_xref` | ManyToMany, keyed by IP | [code: app/bundles/LeadBundle/Entity/Lead.php:350-358 @7.x] |
@@ -52,7 +53,8 @@ Column types per field type: [code: app/bundles/LeadBundle/Field/SchemaDefinitio
 | `NoteModel`, `TagModel`, `DeviceModel`, `BatchCompanyContactAssignmentModel`, `ContactExportSchedulerModel` | `app/bundles/LeadBundle/Model/` | notes, tags (`tagMerge()`), devices, API batch company assignment, scheduled exports [code: app/bundles/LeadBundle/Model/TagModel.php:153-180 @7.x] |
 | `ContactMerger` | `app/bundles/LeadBundle/Deduplicate/ContactMerger.php` | `merge(winner, loser)` [code: app/bundles/LeadBundle/Deduplicate/ContactMerger.php:46-78 @7.x] |
 | `ContactDeduper`, `CompanyDeduper`, `MergeValueHelper` | `app/bundles/LeadBundle/Deduplicate/` | duplicate detection and merge value rule [code: app/bundles/LeadBundle/Deduplicate/ContactDeduper.php:93-131 @7.x] |
-| `ContactTracker` | `app/bundles/LeadBundle/Tracker/ContactTracker.php` | current web contact, system contact [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-333 @419a08a9b35] |
+| `ContactTracker` | `app/bundles/LeadBundle/Tracker/ContactTracker.php` | current web contact, system contact [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:49-340 @7.x] |
+| `ContactTrackingPreferenceHelper` | `app/bundles/LeadBundle/Helper/ContactTrackingPreferenceHelper.php` | per-contact activity-tracking opt-out (unreleased on 7.x, 7.3.0-rc) [code: app/bundles/LeadBundle/Helper/ContactTrackingPreferenceHelper.php:26-31 @7.x] [PR #18006] |
 | `DeviceTracker`, `DeviceTrackingService`, `ContactTrackingService` | `app/bundles/LeadBundle/Tracker/` | cookies and devices [code: app/bundles/LeadBundle/Tracker/Service/DeviceTrackingService/DeviceTrackingService.php:119-136 @7.x] |
 | `ContactRequestHelper` | `app/bundles/LeadBundle/Helper/ContactRequestHelper.php` | identify contact on tracking requests [code: app/bundles/LeadBundle/Helper/ContactRequestHelper.php:97-216 @7.x] |
 | `IdentifyCompanyHelper` | `app/bundles/LeadBundle/Helper/IdentifyCompanyHelper.php` | find or create company from contact data (static in 7.x) [code: app/bundles/LeadBundle/Helper/IdentifyCompanyHelper.php:11-117 @7.x] |
@@ -89,9 +91,9 @@ In 8.x all of these are dispatched by event class; see version-notes.md.
 
 ## 4. Controllers, routes and API endpoints
 
-UI routes in `app/bundles/LeadBundle/Config/config.php:7-153`: `mautic_contact_index` `/contacts/{page}`,
+UI routes in `app/bundles/LeadBundle/Config/config.php:7-149`: `mautic_contact_index` `/contacts/{page}`,
 `mautic_contact_action` `/contacts/{objectAction}/{objectId}`, `mautic_contactfield_*` `/contacts/fields/...`,
-`mautic_contactnote_*`, `mautic_import_*` `/{object}/import/...`, `mautic_company_*`, timeline/audit-log/export routes. [code: app/bundles/LeadBundle/Config/config.php:7-153 @419a08a9b35]
+`mautic_contactnote_*`, `mautic_import_*` `/{object}/import/...`, `mautic_company_*`, timeline/audit-log/export routes. [code: app/bundles/LeadBundle/Config/config.php:7-149 @7.x]
 
 Controllers: `LeadController` (index `:146`, view `:372`, edit `:739`, merge `:940`, batchDnc `:1744`, batchExport `:2206`),
 `CompanyController` (merge `:1133`), `FieldController`, `ImportController`, `NoteController`, `AjaxController`
@@ -108,7 +110,7 @@ API routes (`app/bundles/LeadBundle/Config/config.php:154-293`): [code: app/bund
 | `/api/contacts/{id}/utm/add`, `/{id}/utm/{utmid}/remove` | POST | UTM |
 | `/api/contacts/list/owners`, `list/fields`, `list/segments` | GET | lookups |
 | `/api/companies` (standard), `/companies/{companyId}/contact/{contactId}/add`, `/remove` | standard, POST | `CompanyApiController` |
-| `/api/companies/batch/addcontacts` (7.x after 7.2.1, unreleased; [PR #16512]) | POST | `batchAddContactsAction` |
+| `/api/companies/batch/addcontacts` (unreleased on 7.x, 7.3.0-rc; [PR #16512]) | POST | `batchAddContactsAction` |
 | `/api/fields/{object}` (`contact` or `company`) | standard | `FieldApiController` |
 | `/api/notes`, `/api/devices`, `/api/tags` | standard | |
 
@@ -135,7 +137,7 @@ Twig views: `app/bundles/LeadBundle/Resources/views/`. [code: app/bundles/LeadBu
 
 The company docs name the option `--company-id`; the code analysis records `--id|-i`. [docs: https://docs.mautic.org/en/7.2/companies/companies_overview.html#processing-company-updates-in-the-background] [code: app/bundles/LeadBundle/Command/DeleteCompanyLeads.php:21 @7.x]
 
-## 6. Configuration parameters (`app/bundles/LeadBundle/Config/config.php:336-374`)
+## 6. Configuration parameters (`app/bundles/LeadBundle/Config/config.php:332-370`)
 
 | Parameter | Default | Effect |
 |---|---|---|
@@ -177,6 +179,9 @@ Consumed from other bundles: `track_contact_by_ip` (false) [code: app/bundles/Pa
 - `TIMELINE_ON_GENERATE` to add timeline event types. [code: app/bundles/LeadBundle/Model/LeadModel.php:2189 @7.x]
 - `ON_CLICKTHROUGH_IDENTIFICATION` to identify contacts from a channel's `ct` payload. [code: app/bundles/LeadBundle/Helper/ContactRequestHelper.php:157 @7.x]
 - `LeadGetCurrentEvent` to supply the current contact. [code: app/bundles/LeadBundle/Tracker/ContactTracker.php:191-197 @7.x]
+- `Lead::setPrimaryIdentifierOrder()` (for example from a Doctrine `postLoad` entity listener) to change the display-name order or show a custom field (unreleased on 7.x, 7.3.0-rc). [code: app/bundles/LeadBundle/Entity/Lead.php:772-775 @7.x] [PR #17687]
+- `customContent()` hooks on Company views (unreleased on 7.x, 7.3.0-rc): `company.engagement.before`/`.after`, `company.tabs`, `company.tabs.content`, `company.contacts.after`, `company.sidebar.top`/`.bottom`, `company.form.sidebar`, and `import.defaults` on the import mapping form. [code: app/bundles/LeadBundle/Resources/views/Company/company.html.twig:150-256 @7.x] [code: app/bundles/LeadBundle/Resources/views/Company/form_standalone.html.twig:41 @7.x] [code: app/bundles/LeadBundle/Resources/views/Import/_mapping_form.html.twig:28 @7.x] [PR #18106]
+- Timeline subscribers: with the `leadIds` filter `getLead()` is null; use `getLeadId()`/`getLeadIds()`, set `contactId` on each event, and pass `$leadIdColumn` to `TimelineTrait` when the contact column is not `<table>.lead_id` (unreleased on 7.x, 7.3.0-rc). [code: app/bundles/LeadBundle/Event/LeadTimelineEvent.php:101-123 @7.x] [PR #18182]
 - `IMPORT_ON_INITIALIZE`, `ON_FIELD_MAPPING`, `ON_VALIDATE`, `ON_PROCESS` to add import objects (see `ImportContactSubscriber`, `ImportCompanySubscriber`). [code: app/bundles/LeadBundle/LeadEvents.php:381-409 @7.x]
 - `LEAD_FIELD_PRE_*_COLUMN` to intercept schema changes. [code: app/bundles/LeadBundle/Field/Dispatcher/FieldColumnDispatcher.php:29-69 @7.x]
 - `LEAD_BUILD_SEARCH_COMMANDS` to add search commands. [code: app/bundles/LeadBundle/Entity/LeadRepository.php:1090 @7.x]

@@ -43,7 +43,8 @@ Out of scope: contact fields and the contact search box (mautic-contacts); how C
 - If a filter references a deleted field or table, the rebuild silently returns 0 and does not change membership [code: app/bundles/LeadBundle/Model/ListModel.php:401-412 @7.x].
 - Member counts come from a cache (`segment.<id>.lead`, TTL `segment_api_count_cache_ttl` = 43200 s). Single adds and removes update the cache incrementally [code: app/bundles/LeadBundle/Helper/SegmentCountCacheHelper.php:22-116 @7.x].
 - Deleting a Segment is a soft delete followed by an immediate hard delete. With `delete_segment_in_background = true` the hard delete waits for `mautic:segment:delete` [code: app/bundles/LeadBundle/Model/ListModel.php:194-215 @7.x].
-- The 7.x branch (after 7.2.1, unreleased; [PR #15800]) offers two company filter groups; 7.2.1 has only `company`. `company` matches the primary company only, and its negative operators also match Contacts with no primary company. `company_all` matches any associated company and never matches Contacts without a company [code: app/bundles/LeadBundle/Segment/Query/Filter/AbstractCompanyRelationValueFilterQueryBuilder.php:15-86 @7.x].
+- The 7.x branch (unreleased, 7.3.0-rc; [PR #15800]) offers two company filter groups; 7.2.2 has only `company`. `company` matches the primary company only, and its negative operators also match Contacts with no primary company. `company_all` matches any associated company and never matches Contacts without a company [code: app/bundles/LeadBundle/Segment/Query/Filter/AbstractCompanyRelationValueFilterQueryBuilder.php:15-86 @7.x].
+- Segment detail page on 7.x (unreleased, 7.3.0-rc): stat cards Total, Active (members minus Contacts with an email DNC), Manually added and, only when the Segment has filters, Filter added load asynchronously from `segmentStats` and need `lead:leads:viewown`; each links to a Contact search. The Contacts tab and its route are gone [PR #16350] [PR #18059] [PR #18216] [code: app/bundles/LeadBundle/Controller/ListController.php:801-831 @7.x] [code: app/bundles/LeadBundle/Entity/LeadListRepository.php:333-361 @7.x].
 
 ## Where it lives
 | Concern | Path(s) |
@@ -55,13 +56,13 @@ Out of scope: contact fields and the contact search box (mautic-contacts); how C
 | Filter choices / operators | `EventListener/FilterOperatorSubscriber.php`, `TypeOperatorSubscriber.php`, `SegmentOperatorQuerySubscriber.php`, `Entity/OperatorListTrait.php` |
 | Events | `app/bundles/LeadBundle/LeadEvents.php` (`LIST_*`, `LEAD_LIST_*`, `SEGMENT_*`) |
 | Commands | `Command/UpdateLeadListsCommand.php`, `SegmentCountCacheCommand.php`, `DeleteLeadListsCommand.php`, `SegmentStatCommand.php` |
-| UI / routes | `Controller/ListController.php`, `BatchSegmentController.php`, `AjaxController.php`; routes in `Config/config.php:23-38`, `:141-144` |
+| UI / routes | `Controller/ListController.php`, `BatchSegmentController.php`, `AjaxController.php`; routes in `Config/config.php:23-38` |
 | API | `Controller/Api/ListApiController.php` (`/api/segments`); API Platform resource on `LeadList.php:29-48` |
-| Config params | `Config/config.php:336-371` (`delete_segment_in_background`, `segment_api_count_cache_ttl`, `segment_rebuild_time_warning`, `segment_build_time_warning`, `update_segment_contact_count_in_background`) |
+| Config params | `Config/config.php:332-367` (`delete_segment_in_background`, `segment_api_count_cache_ttl`, `segment_rebuild_time_warning`, `segment_build_time_warning`, `update_segment_contact_count_in_background`) |
 | Permissions | `Security/Permissions/LeadPermissions.php` (`lead:lists:*`) |
 | Tests | `app/bundles/LeadBundle/Tests/{Segment,Command,Model,Entity,Controller}` |
 
-Full detail: references/code-map.md [code: app/bundles/LeadBundle/Config/config.php:23-371 @419a08a9b35].
+Full detail: references/code-map.md [code: app/bundles/LeadBundle/Config/config.php:23-367 @7.x].
 
 ## How to change or extend it
 - Add a filter in two steps. First register the choice on `LIST_FILTERS_CHOICES_ON_GENERATE` (`addChoice($object, $alias, [...])`). Then map it to SQL on `SEGMENT_DICTIONARY_ON_GENERATE` (`addTranslation($alias, ['type' => <builder service id>, 'foreign_table', 'field', ...])`). Copy the Point Group pattern [code: app/bundles/PointBundle/EventListener/SegmentFilterSubscriber.php:38-80 @7.x].
@@ -88,7 +89,7 @@ Full detail: references/test-patterns.md.
 
 ## Version notes
 - 7.0 removed `SegmentReferenceFilterQueryBuilder`. The `leadlist` filter uses `ForeignValueFilterQueryBuilder` [code: UPGRADE-7.0.md:62 @7.x].
-- The 7.x branch has "Any associated company" (`company_all`) filters, after 7.2.1 and not yet released [PR #15800]. The 7.2 user docs still describe primary-company only, and the 8.0 docs describe both [code: app/bundles/LeadBundle/EventListener/FilterOperatorSubscriber.php:122-126 @7.x] [docs: https://docs.mautic.org/en/8.0/segments/manage_segments.html#configuring-segment-filters].
+- The 7.x branch has "Any associated company" (`company_all`) filters, unreleased (7.3.0-rc) and not in 7.2.2 [PR #15800]. The 7.2 user docs still describe primary-company only, and the 8.0 docs describe both [code: app/bundles/LeadBundle/EventListener/FilterOperatorSubscriber.php:122-126 @7.x] [docs: https://docs.mautic.org/en/8.0/segments/manage_segments.html#configuring-segment-filters].
 - 8.x (snapshot) dispatches Segment events by class: `ListPreSaveEvent`, `ListPostSaveEvent`, `ListPreDeleteEvent`, `ListDeleteEvent`, `ListPostDeleteEvent`, `ListPreUnpublishEvent`, `ListBatchChangeEvent`, `LeadListFiltersChoicesEvent`, `LeadListFilteringEvent`, `SegmentDictionaryGenerationEvent` and others. Listeners keyed only on the old string names never fire [PR #17218] [PR #17545] [PR #17625].
 - 8.x removes `OperatorOptions::IN`/`NOT_IN` and `OperatorListTrait::getFilterExpressionFunctions()`. `LeadListEvent` is `abstract`. `Segment\Query\QueryBuilder::setParameter()` rejects `:`-prefixed keys [code: UPGRADE-8.0.md @8.x].
 - 8.x removes the `file_lock` lock mode. `--lock_mode=file_lock` now errors [code: UPGRADE-8.0.md @8.x].
@@ -99,6 +100,7 @@ Full detail: references/test-patterns.md.
 - 6.0: the "Building" states and `needsRebuild()`, `mautic:segments:stat`, and day-boundary rules for `today`/`tomorrow` with `>`/`<=` [PR #14431] [PR #14706] [PR #14575] [PR #14552].
 - 7.0: any/all operators replace "including"/"excluding", membership filters read stored rows of rebuilt-first dependencies, and counts move to the cache provider [PR #15344] [PR #15031] [PR #15554].
 - 7.1: background Segment deletion (7.1.0), "all of" only on multiselect (7.1.1), and "Read any email (date)" uses the latest read (7.1.3) [PR #15755] [PR #16012] [PR #16224].
+- Unreleased on 7.x (7.3.0-rc): detail stat cards with `segment_source:` contact search, Active excludes only email DNC, no Contacts tab, and `is:dynamic`, `is:static`, `is:preference` Segment-list quick filters [PR #16350] [PR #18059] [PR #18216] [PR #18073] [PR #18071].
 
 Full detail: references/version-notes.md.
 

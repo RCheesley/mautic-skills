@@ -12,7 +12,7 @@ LB = `app/bundles/LeadBundle/` in the tables below. Citations use full paths.
 ## Services
 | Class | Path | Role |
 |---|---|---|
-| `ListModel` | LB/Model/ListModel.php | `rebuildListLeads`, `addLead`, `removeLead`, counts, `getChoiceFields`, dependency checks [code: app/bundles/LeadBundle/Model/ListModel.php:109-1476 @419a08a9b35] |
+| `ListModel` | LB/Model/ListModel.php | `rebuildListLeads`, `addLead`, `removeLead`, counts, `getChoiceFields`, dependency checks [code: app/bundles/LeadBundle/Model/ListModel.php:109-1476 @7.x] |
 | `SegmentActionModel` | LB/Model/SegmentActionModel.php | Batch add/remove from the contact list [code: app/bundles/LeadBundle/Model/SegmentActionModel.php:12-40 @7.x] |
 | `ContactSegmentService` | LB/Segment/ContactSegmentService.php | New-member, total and orphan queries, with batch limiters |
 | `ContactSegmentQueryBuilder` | LB/Segment/Query/ContactSegmentQueryBuilder.php | Base query, plugin filtering event, dependency plan, new-contact restriction |
@@ -50,15 +50,16 @@ LB = `app/bundles/LeadBundle/` in the tables below. Citations use full paths.
 | Name | Path | Controller |
 |---|---|---|
 | `mautic_segment_index` | `/s/segments/{page}` | `ListController::indexAction` |
-| `mautic_segment_action` | `/s/segments/{objectAction}/{objectId}` | new/edit/clone/view/delete/batchDelete/removeLead/addLead |
-| `mautic_segment_contacts` | `/s/segment/view/{objectId}/contact/{page}` | `contactsAction` |
+| `mautic_segment_action` | `/s/segments/{objectAction}/{objectId}` | new/edit/clone/view/delete/batchDelete/removeLead/addLead; `segmentStats` on 7.x (unreleased, 7.3.0-rc) [PR #16350] |
 | `mautic_segment_batch_contact_set` / `_view` | `/s/segments/batch/contact/set` / `view` | `BatchSegmentController` |
 | `mautic_api_segmentsstandard` | `/api/segments` | `Api\ListApiController` |
 | `mautic_api_segmentaddcontact` / `…addcontacts` / `…removecontact` | `/api/segments/{id}/contact/{leadId}/add`, `/contacts/add`, `/contact/{leadId}/remove` | `ListApiController` |
 | `mautic_api_getcontactsegments` | `/api/contacts/list/segments` | `ListApiController::getListsAction` |
 | `mautic_api_getcontactssegments` | `/api/contacts/{id}/segments` | `LeadApiController::getListsAction` |
 
-[code: app/bundles/LeadBundle/Config/config.php:23-244 @419a08a9b35]
+[code: app/bundles/LeadBundle/Config/config.php:23-240 @7.x]
+
+The `mautic_segment_contacts` route (`/s/segment/view/{objectId}/contact/{page}`, `ListController::contactsAction`) exists at 7.2.2 but was removed on 7.x (unreleased, 7.3.0-rc) with the Contacts tab [PR #18216].
 
 AJAX actions [code: app/bundles/LeadBundle/Controller/AjaxController.php:175-850 @7.x]:
 - `loadSegmentFilterForm`
@@ -102,7 +103,7 @@ AJAX actions [code: app/bundles/LeadBundle/Controller/AjaxController.php:175-850
 - Validators: `SegmentInUse`, `SegmentUsedInCampaigns`, `UniqueUserAlias`, `SegmentDate`.
 
 ## Views
-`LB/Resources/views/List/{list,_list,_list_row,details,form,filterpropform}.html.twig` [code: app/bundles/LeadBundle/Resources/views/List/_list_row.html.twig:5-76 @419a08a9b35].
+`LB/Resources/views/List/{list,_list,_list_row,details,form,filterpropform}.html.twig` [code: app/bundles/LeadBundle/Resources/views/List/_list_row.html.twig:5-76 @7.x], plus `_segment_stats.html.twig` for the detail stat cards on 7.x (unreleased, 7.3.0-rc) [code: app/bundles/LeadBundle/Resources/views/List/_segment_stats.html.twig:1-32 @7.x] [PR #16350].
 
 ## Consumers in other bundles
 - `CampaignRepository` joins `lead_lists_leads` with `manually_removed = 0` [code: app/bundles/CampaignBundle/Entity/CampaignRepository.php:601-621 @7.x].

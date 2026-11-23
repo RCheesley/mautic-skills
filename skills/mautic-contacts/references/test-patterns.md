@@ -105,7 +105,7 @@ final class MergeKeepsOwnerFunctionalTest extends MauticMysqlTestCase
 
 ## Regression tests worth adding
 
-Rows from the regression catalogue in pr-history.md with no matching test found by one grep in `app/bundles/LeadBundle/Tests` @7.x.
+Rows from the regression catalogue in pr-history.md with no matching test found by one grep in `app/bundles/LeadBundle/Tests` @7.x. Kiosk and tracking-preference coverage already exists in `FormBundle/Tests/Controller/KioskModeSubmissionFunctionalTest.php` and `EmailBundle/Tests/Functional/EmailOpenTrackingPreferenceFunctionalTest.php` [code: app/bundles/FormBundle/Tests/Controller/KioskModeSubmissionFunctionalTest.php @7.x] [code: app/bundles/EmailBundle/Tests/Functional/EmailOpenTrackingPreferenceFunctionalTest.php @7.x].
 
 | Behaviour to assert | PR |
 |---|---|
@@ -114,4 +114,6 @@ Rows from the regression catalogue in pr-history.md with no matching test found 
 | `PUT /api/contacts/batch/edit` with a merged-away id updates the winner and creates no new contact | [PR #15447] |
 | Import with "Create new Contacts?" = No updates matches and skips unmatched rows | [PR #17176] |
 | A company named `R&D` shows once-decoded in the company list, detail and contact views | [PR #17266] |
-| Editing a field of an existing contact moves `date_modified` forward; a DNC-only change does not | [PR #14433] [PR #13994] |
+| Editing a field of an existing contact updates `modified_by` but, per the 7.x code, leaves `date_modified` unchanged (behaviour.md B4.14a); a DNC-only change updates neither. A test pins whichever is intended | [PR #14433] [PR #13994] |
+| Merging a staged contact into an unstaged one gives the winner the stage and one stage-change log entry (7.2 branch after 7.2.2) | [PR #17573] |
+| A user without contact edit permission gets 403 from `lead:toggleLeadList` and the five other contact AJAX actions, and the contact is unchanged (7.2 branch after 7.2.2) | [PR #18090] |

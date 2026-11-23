@@ -24,7 +24,7 @@
 - 6.0: import rows are checked against the permissions of the user who last modified the import; `mautic.pre_batch_save`/`post_batch_save` events; `where[]` values are no longer entity-encoded. [PR #14554] [PR #14503] [PR #14550]
 - 6.0: `LeadEvent` is final with `getLead(): Lead`; `FieldModel::getUniqueIdentiferFields` removed (UPGRADE-6.0). [PR #13842] [PR #14144]
 
-## 7.0 to 7.2.1
+## 7.0 to 7.2.2
 
 - 7.0: the API rate limiter cache (`api_rate_limiter_cache`) is no longer available. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/getting_started.html#api-rate-limiter-cache]
 - 7.0: field `charLengthLimit` is editable after creation and shortening below stored data is rejected; background field delete with `mautic:custom-field:delete-column`; `dnc:` search; `contact_export_limit`; "Identify visitor by tracking URL" removed (BC break); `LeadGetCurrentEvent`. [PR #14762] [PR #14679] [PR #14952] [PR #14691] [PR #14974] [PR #15556]
@@ -32,8 +32,24 @@
 - 7.1: the unique-identifier flag is re-enabled for company fields; deleting a field used by a segment returns 409 through the API; `campaign:` search. [PR #15784] [PR #15882] [PR #15727]
 - 7.2.0: companies are soft-deleted with cron cleanup; merge moves company links; `lead:notes` permission; `viewown` API fallback to unowned contacts the user created; import "Create new Contacts?"; tag merge events; API keeps number fractions. [PR #16176] [PR #16247] [PR #16067] [PR #16022] [PR #17176] [PR #15331] [PR #16591]
 - 7.2.1: company names with `&` decoded once; "Import Another" follows the object type. [PR #17266] [PR #17221]
+- 7.2.2 (2026-10-26): no contact behaviour change in the reviewed delta; a test that wrongly asserted FAILED for a closed EntityManager was removed (the caller sets DELAYED). [PR #17615]
 - 7.2: `AjaxController::addLeadUtmTagsAction` deprecated. [code: app/bundles/LeadBundle/Controller/AjaxController.php:638 @7.x]
-- 7.x after 7.2.1, not yet released (documented in the 8.0 docs branch, not yet on the 8.x code branch): `POST /api/companies/batch/addcontacts` [PR #16512], "Any associated company" segment filters [PR #15800], Quick Add "Save & New" and "No owner" in batch Change Owner [PR #16849], custom-field quick filters [PR #16872], email confirmation before the Preference Center [PR #16870]. [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:121-153 @7.x] [docs: https://docs.mautic.org/en/8.0/contacts/manage_contacts.html#quick-add] [docs: https://docs.mautic.org/en/8.0/companies/companies_overview.html#company-segments]
+- Unreleased on 7.x (7.3.0-rc), not in 7.2.2 (documented in the 8.0 and 7.3 docs branches; also on the 8.x code branch): `POST /api/companies/batch/addcontacts` [PR #16512], "Any associated company" segment filters [PR #15800], Quick Add "Save & New" and "No owner" in batch Change Owner [PR #16849], custom-field quick filters [PR #16872], email confirmation before the Preference Center [PR #16870]. [code: app/bundles/LeadBundle/Controller/Api/CompanyApiController.php:121-153 @7.x] [docs: https://docs.mautic.org/en/8.0/contacts/manage_contacts.html#quick-add] [docs: https://docs.mautic.org/en/8.0/companies/companies_overview.html#company-segments]
+
+## 7.2 branch, after 7.2.2 (milestone 7.2.3, unreleased, not yet in the 7.x snapshot)
+
+- Merge: a winner without a stage inherits the loser's stage, with a stage-change log entry. [PR #17573]
+- Contact AJAX actions that change a contact require `lead:leads:editown`/`editother` and return 403 otherwise. [PR #18090]
+- Company import "Finish in background" and cancel use the company session key and queue only a persisted import. [PR #18189]
+
+## Unreleased on 7.x (7.3.0-rc), merged 2026-10-15 to 2026-11-23
+
+- Kiosk-mode and non-trackable form submitters store no IP, device id or cookie, start from a new contact, and leave no IP in audit, company, campaign or point-trigger logs. [PR #17847] [PR #17868] [code: app/bundles/FormBundle/Model/SubmissionModel.php:426-429 @7.x]
+- `lead_tracking_preferences` table (migration `Version20261029120000`); email opens are not recorded for contacts who turned activity tracking off; an opt-out survives a merge. [PR #18006] [code: app/bundles/LeadBundle/Entity/TrackingPreference.php:16-62 @7.x]
+- Search: `is:unsegmented`, `segment_source:manually_added|filter_added` (with `segment:`), Custom Fields `is:systemdefault`/`is:usercreated`. [PR #18076] [PR #16350] [PR #18072]
+- `filters[leadIds][]` for the timeline and `GET /api/contacts/activity`; `TimelineTrait` gains `$leadIdColumn`. [PR #18182]
+- `Lead::setPrimaryIdentifierOrder()`; `customContent()` hooks on Company views and the import mapping form. [PR #17687] [PR #18106]
+- `htmlEntityDecode()` accepts null (Companies list with a NULL name); contact photo removed from the page title. [PR #18062] [PR #18082]
 
 ## 8.x delta (unreleased, branch at 11599729491)
 

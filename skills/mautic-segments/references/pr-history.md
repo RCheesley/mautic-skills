@@ -11,7 +11,7 @@
 8. Coverage
 
 ## 1. How to read this file
-Source: merged pull requests on mautic/mautic for the Segments area, harvested 2026-10-15.
+Source: merged pull requests on mautic/mautic for the Segments area, harvested 2026-10-15, plus a delta of PRs merged 2026-10-15 to 2026-11-23. "7.3.0-rc" means merged to `7.x` and in no release yet (not in 7.2.2).
 Versions are inferred from the base branch, milestone and merge date. Where a release tag was checked in the 7.x tree, the first tag that contains the merge is used.
 Current behaviour is in behaviour.md. This file explains why and when. Where the two disagree, behaviour.md wins.
 
@@ -21,7 +21,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Membership is a row per Contact in `lead_lists_leads` with `manually_added` and `manually_removed` flags. Manually added Contacts stay even when they no longer match the filters. Why: before this, the rebuild silently removed manual additions; the model copies Campaign membership [PR #123] (v1.0).
 - A Segment with no filters gets no Contacts automatically. Only manual additions populate it [PR #123] (v1.0).
 - A manually removed Contact is never re-added by the rebuild [PR #1193] (v1.2.3) [PR #4544] (v2.9.2).
-- Adding a Contact through a Campaign action sets `manually_added = 1`, even when the rebuild had already added the Contact. Why: the row kept `manually_added = 0`, so a later rebuild could remove a Contact that a Campaign had added on purpose (issue #16473) [PR #16474] (7.x after 7.2.1, unreleased).
+- Adding a Contact through a Campaign action sets `manually_added = 1`, even when the rebuild had already added the Contact. Why: the row kept `manually_added = 0`, so a later rebuild could remove a Contact that a Campaign had added on purpose (issue #16473) [PR #16474] (7.3.0-rc, unreleased on 7.x).
 - The Campaign condition "Is a member of segment" treats manually removed Contacts as non-members [PR #11782] (v5.0).
 - The Campaign "add to / remove from segment" action uses an entity reference for a detached Segment. Why: Doctrine "new entity found through relationship" errors on large instances [PR #13244] (v5.0.3); the same error was first fixed for batch edits in [PR #999] (v1.2.1).
 - The segment-change event is dispatched only after the membership rows are persisted. Why: Campaign listeners read stale membership [PR #1017] (v1.2.1).
@@ -116,13 +116,15 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - "Subscribed Categories" lists all categories, not the first 10 [PR #9176] (v3.1.1). The asset filter lists all assets [PR #7911] (v2.15).
 
 ### Company filters
-- Company filters gained two groups: "Contact's primary company" and "Any associated company". "Any associated company" matches when at least one company matches [PR #15800] (7.x after 7.2.1, unreleased).
+- Company filters gained two groups: "Contact's primary company" and "Any associated company". "Any associated company" matches when at least one company matches [PR #15800] (7.3.0-rc, unreleased on 7.x).
 - A company and a contact field with the same alias are resolved by object [PR #6510] (v2.14.2).
 
 ### Counts, charts and caching
 - List counts load by AJAX from a count cache [PR #11071] (v4.3). With `update_segment_contact_count_in_background = true` (default false), `lead:list:count-cache-update` recounts [PR #14911] (v7.0.0). The cache moved from the database to the configured cache provider. Why: many small cache queries drove MySQL to 100 % CPU [PR #15554] (v7.0.0).
 - The detail chart counts additions from `lead_event_log` only, without a same-day-removal subquery and without double counting [PR #9263] (v3.3) [PR #10432] (v5.1.0). The first-event lookup forces index `IDX_SEARCH` [PR #11766] (v5.0).
 - The detail page shows total and active Contacts; active excludes any DNC [PR #15290] (v7.0.0).
+- Active now excludes only email-channel DNC. Why: ESPs that write a non-email channel such as "soft bounce" made Contacts look inactive while they still received email, so the card disagreed with send stats; the card's link adds `!dnc:email` to match [PR #18059] (7.3.0-rc).
+- Detail stat cards for Manually added and (only with filters) Filter added Contacts, with `segment_source:` contact searches; DNC and member counts skip manually removed rows. Why the async `segmentStats` endpoint and single aggregate query: review objected to two full membership scans on every page load [PR #16350] (7.3.0-rc).
 - `mautic:segments:stat` lists where published Segments are used [PR #14575] (v6.0.0).
 - Contact search `segment:{alias}` uses an `EXISTS` subquery that excludes manually removed rows [PR #9944] (v5.1).
 
@@ -132,6 +134,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Cloning creates a unique alias [PR #14828] (v7.0.0).
 - A user with "view own" sees their own non-global Segments and global ones [PR #8957] (v3.0.2).
 - Segments can have a category; the API returns it and supports `category:{alias}` search [PR #9544] (v3.3) [PR #9869] (v4.0).
+- The detail page drops its Contacts tab, because the Total contacts card opens the same list; Segment Dependencies is the first tab for Segments with membership filters [PR #18216] (7.3.0-rc).
+- Segment-list quick filters `is:dynamic`/`is:static` ("Segment type") and `is:preference`, pinned in `SegmentSearchScopeProvider` next to `is:global` [PR #18073] [PR #18071] (7.3.0-rc).
 - Saving without changes writes no audit-log entry [PR #9801] (v3.3.3). Add, edit and delete are audit-logged [PR #6719] (v2.15).
 - Names may contain `<`, `>`, `&` and `'` and are stored verbatim [PR #12025] (v5.0) [PR #14062] (v5.1.1).
 - The segment activity report returns the last 30 days when the API call gives no dates [PR #15140] (v7.0).
@@ -149,7 +153,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 |---|---|---|---|
 | **Membership** | | | |
 | Manually added Contacts removed on rebuild | Manual adds persist regardless of filters | [PR #123] | 1.0 |
-| Campaign add kept `manually_added = 0` after an automatic add | Campaign add sets `manually_added = 1` | [PR #16474] | 7.x (unreleased) |
+| Campaign add kept `manually_added = 0` after an automatic add | Campaign add sets `manually_added = 1` | [PR #16474] | 7.3.0-rc (unreleased) |
 | "Is a member of segment" false branch never taken | Manually removed Contacts are non-members | [PR #11782] | 5.0 |
 | Doctrine cascade-persist error in Campaign segment action | Entity reference used; no error | [PR #13244] | 5.0.3 |
 | Campaign listener saw stale membership | Event fired after persist | [PR #1017] | 1.2.1 |
@@ -229,6 +233,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | Segment log report API 500 without dates | Defaults to last 30 days | [PR #15140] | 7.0 |
 | Chart added Contacts one day early; timeouts | Correct day; no removal subquery | [PR #9263] | 3.3 |
 | Chart double-counted additions | Event log only | [PR #10432] | 5.1.0 |
+| Contacts with a non-email DNC (for example "soft bounce") counted as inactive | Active excludes only email DNC | [PR #18059] | 7.3.0-rc |
+| Detail-page counts included DNC rows of manually removed members | Counts use `manually_removed = 0` | [PR #16350] | 7.3.0-rc |
 
 ## 4. Feature timeline
 
@@ -257,7 +263,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | 7.1.1 | "All of" only on multiselect | [PR #16012] |
 | 7.1.3 | Email read date uses MAX | [PR #16224] |
 | 7.2.0 | `inLast`/`inNext`; hour-level relative dates; preference-centre order; `--max-contacts` completion; `final` classes | [PR #16574], [PR #16135], [PR #15850], [PR #17027], [PR #16896] |
-| 7.x after 7.2.1 | "Any associated company" filters; Campaign add sets `manually_added` | [PR #15800], [PR #16474] |
+| 7.3.0-rc (unreleased; merged after 7.2.1, not in 7.2.2) | "Any associated company" filters; Campaign add sets `manually_added` | [PR #15800], [PR #16474] |
+| 7.3.0-rc (Nov 2026) | Detail stat cards (Total, Active, Manually added, Filter added) loaded async; Active counts only email DNC; Contacts tab removed; `is:dynamic`/`is:static`/`is:preference` list filters | [PR #16350], [PR #18059], [PR #18216], [PR #18073], [PR #18071] |
 
 ## 5. Removed, deprecated, replaced
 
@@ -279,6 +286,7 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 | Database count cache (`CacheStorageHelper`) | `CacheProvider` | [PR #15554] | 7.0.0 |
 | "All of" on single-select fields | "Any of" only | [PR #16012] | 7.1.1 |
 | Extending Segment query and decorator classes | `final` classes | [PR #16896] | 7.2.0 |
+| Detail-page Contacts tab, `mautic_segment_contacts` route, `ListController::contactsAction()` | Total contacts card linking to `segment:<alias>` Contact search | [PR #18216] | 7.3.0-rc |
 
 ## 6. Maintainer norms for this area
 - Stored filter keys are BC. Change the label, not the key, unless a migration and BC code come with it [PR #2118].
@@ -297,11 +305,13 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - Fixes for Custom Objects that cannot be tested in the UI may merge on code review plus PHPUnit tests [PR #13391] [PR #13484] [PR #15253].
 - Do not copy Doctrine code; extend it [PR #12243].
 - Tests must not define `MAUTIC_TABLE_PREFIX` [PR #11622].
+- Counts on large Segments must not run on every page load: load them asynchronously in one aggregate query, and cache only if membership changes can invalidate the cache [PR #16350].
+- New list search commands are pinned in the area's `*SearchScopeProvider`, and functional tests must prove exclusion, not only inclusion [PR #18071] [PR #18073].
 
 ## 7. Open questions
 - [PR #15031]: the chunk notes say `ContactSegmentFilterDictionary` was removed. It was not. UPGRADE-7.0.md:62 lists only `SegmentReferenceFilterQueryBuilder`, and the dictionary exists at tags 7.0.0 and 7.2.1 and on the 7.x head [code: UPGRADE-7.0.md:62 @7.x] [code: app/bundles/LeadBundle/Services/ContactSegmentFilterDictionary.php @7.x]. Resolved.
 - [PR #14911]: the count-cache command is `lead:list:count-cache-update` (`SegmentCountCacheCommand::COMMAND_NAME`) [code: app/bundles/LeadBundle/Command/SegmentCountCacheCommand.php:22 @7.x]. Resolved.
-- [PR #15473], [PR #16474], [PR #15800]: dated by merge date, not the chunk header. #15473 merged 2025-09-05 and first ships in 7.0.0. #16474 merged 2026-09-23 and #15800 merged 2026-10-05; neither is in 7.2.1, so both are unreleased on 7.x [PR #15473] [PR #16474] [PR #15800]. Resolved.
+- [PR #15473], [PR #16474], [PR #15800]: dated by merge date, not the chunk header. #15473 merged 2025-09-05 and first ships in 7.0.0. #16474 merged 2026-09-23 and #15800 merged 2026-10-05; neither is in 7.2.1, so both are unreleased on 7.x [PR #15473] [PR #16474] [PR #15800]. Resolved. Re-checked 2026-11-23: neither is in 7.2.2 either (both target `7.x`).
 - Conflict with behaviour.md: [PR #15344] says tags and Segment membership get all four any/all operators; behaviour.md §4 offers only `in`/`!in` for them. behaviour.md wins [PR #15344].
 - Conflict with behaviour.md: [PR #4274] wraps `like` values unless they start with `%`; behaviour.md §5 says unless `%` is present anywhere. behaviour.md wins [PR #4274].
 - Conflict with behaviour.md: [PR #15702] describes OR-merging into `IN` only for 3 or more filters. The current factory groups any stack of two or more after AND handling, and SKILL.md states no threshold. Not verified by a test [PR #15702] [code: app/bundles/LeadBundle/Segment/ContactSegmentFilterFactory.php:161-172 @7.x].
@@ -317,6 +327,8 @@ Current behaviour is in behaviour.md. This file explains why and when. Where the
 - [PR #11419]: a reviewer saw a first Segment's time exceed the total; unresolved [PR #11419].
 - [PR #3216]: date modified "equals today" only matched with `>=`; deferred [PR #3216].
 - [PR #12566]: the option name for the new-Contact restriction is not given [PR #12566].
+- [PR #18059]: Active subtracts a count of email DNC rows, not of distinct Contacts; a Contact with two email DNC rows (different `channel_id`) would be subtracted twice [code: app/bundles/LeadBundle/Entity/DoNotContactRepository.php:39-40 @7.x] [PR #18059]. Unverified whether such rows occur.
+- [PR #16350]: the PR description names the search `source:`; the code and the 7.3 docs use `segment_source:` [code: app/bundles/LeadBundle/Translations/en_US/messages.ini:639 @7.x]. Code wins.
 
 ## 8. Coverage
 The inputs cover 204 PRs in 3 chunks: 104 (2015-03 to 2020-04, plus the late merges #8125 and #8238), 80 (2020-05 to 2025-08) and 20 (2025-09 to 2026-10).

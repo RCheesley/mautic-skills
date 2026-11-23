@@ -16,6 +16,7 @@ and the contact-related REST API. Where code disagrees, behaviour.md section 16 
 10. REST API (contacts, companies, fields, notes)
 11. Procedures
 12. 8.0 docs changes
+13. Upcoming docs, unreleased
 
 ## 1. Terminology
 
@@ -77,6 +78,7 @@ and the contact-related REST API. Where code disagrees, behaviour.md section 16 
 - Find and Replace is case sensitive and matches the stored value exactly. [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#batch-changes]
 - Manually adding or removing a contact to a segment stops filters applying to that contact in that segment. [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#batch-changes]
 - Merge: open the contact to keep > Merge > pick the duplicate, which is deleted. Docs rules: values fill only empty fields (code differs), owner inherited if empty, points combine, tags combine, primary company kept or inherited. [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#merge-two-contacts]
+- Added to the 7.2 docs after 2026-10-15: a main contact without a stage inherits the merged contact's stage; if both have one, the main contact keeps its own. This documents [PR #17573], which is on the 7.2 branch after 7.2.2 only; 7.2.2 and the 7.x snapshot do not inherit the stage (behaviour.md C5a). [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#merge-two-contacts]
 - Timeline event types include Contact Created/Identified (By Source), Do Not Contact, Imported, Message Queue, UTM Tags Recorded and others; plugins add more. [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#history]
 - Notes: types General, Email, Call, Meeting; permissions based on note creator. [docs: https://docs.mautic.org/en/7.2/contacts/manage_contacts.html#note-permissions]
 
@@ -117,7 +119,7 @@ Cross-cutting: API off by default (`api_enabled`); `limit` default 30; `orderBy`
 
 Contacts: get, list (`where`, `order`, `select`), new, batch new, edit, batch edit, delete, batch delete, DNC add/remove (reason 1/2/3, default 3, channel default `email`), UTM add/remove, points plus/minus, point groups, list owners/fields, notes, segments, campaigns, activity, companies, devices. `overwriteWithBlank` defaults false. `events` is deprecated in favour of `activity`. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/contacts.html]
 
-Companies: get, list (`total` is a string), new (`companyname` required), batch new (200 for duplicates), edit, delete, add/remove contact. The 8.0 docs add `POST /companies/batch/addcontacts` (present on the 7.x branch after 7.2.1, unreleased; [PR #16512]). [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/companies.html] [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/companies.html#batch-add-contacts-to-companies]
+Companies: get, list (`total` is a string), new (`companyname` required), batch new (200 for duplicates), edit, delete, add/remove contact. The 8.0 docs add `POST /companies/batch/addcontacts` (unreleased on 7.x, 7.3.0-rc; [PR #16512]). [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/companies.html] [devdocs: https://devdocs.mautic.org/en/8.0/rest_api/companies.html#batch-add-contacts-to-companies]
 
 Fields: `/fields/contact` and `/fields/company`; `isPubliclyUpdatable`, `isUniqueIdentifier`; delete returns 409 if a segment uses the field. [devdocs: https://devdocs.mautic.org/en/7.2/rest_api/fields.html]
 
@@ -136,3 +138,13 @@ Docs gaps: no statement of duplicate/merge behaviour on create, `company` field 
 ## 12. 8.0 docs changes
 
 The 8.0 docs branch mostly documents unreleased 7.x features merged after 7.2.1 (see `mautic-upgrades-and-versions/references/post-7.2.1-prs.md`): custom-field quick filters `is:indexed`/`is:unique`, Quick Add "Save & New", "No owner" in Change Owner, email confirmation before the Preference Center, "Contact's primary company" versus "Any associated company" segment filter groups, `POST /companies/batch/addcontacts`, and default email UTM values. [docs: https://docs.mautic.org/en/8.0/contacts/custom_fields.html#filtering-custom-fields-with-quick-filters] [docs: https://docs.mautic.org/en/8.0/contacts/manage_contacts.html#quick-add] [docs: https://docs.mautic.org/en/8.0/companies/companies_overview.html#company-segments]
+
+## 13. Upcoming in 7.3 (docs branch, unreleased)
+
+Changes on the `7.3` branches of both docs repositories, compared with `7.2`, checked 2026-11-23. They describe unreleased 7.x (7.3.0-rc) behaviour.
+- Custom Fields Quick filters (`is:indexed`, `is:unique`), Quick Add "Save & New", "No owner" in bulk Change Owner, and Gravatar images only when "Load profile images from Gravatar" is on in the Privacy Centre settings. [docs: github.com/mautic/user-documentation/blob/7.3/docs/contacts/custom_fields.rst] [docs: github.com/mautic/user-documentation/blob/7.3/docs/contacts/manage_contacts.rst]
+- The Preference Center link first asks the contact to confirm the email address. [docs: github.com/mautic/user-documentation/blob/7.3/docs/contacts/preference_center.rst]
+- Companies: remove up to 1,000 contacts from a company (needs company view and contact edit permission; a removed primary is replaced as on company delete), the `is:unowned` Quick filter, and "primary" versus "any associated company" Segment filters. [docs: github.com/mautic/user-documentation/blob/7.3/docs/companies/companies_overview.rst]
+- Search operators: `segment_source:manually_added|filter_added` (only with `segment:`), Custom Fields `is:indexed`/`is:unique`, company `is:unowned`. [docs: github.com/mautic/user-documentation/blob/7.3/docs/search/search_operators.rst]
+- Developer docs: customizing the primary identifier with `Lead::setPrimaryIdentifierOrder()` from a `postLoad` listener; timeline listeners for the `leadIds` filter (`getLeadId()` may be null, `getLeadIds()`, `contactId`, `$leadIdColumn`); `filters[leadIds][]` on `GET /contacts/activity`; the `POST /companies/batch/addcontacts` reference; Company and import `customContent()` contexts (`company.tabs`, `company.tabs.content` and others) [PR #18106]. [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/plugin_extensions/contacts.rst] [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/plugin_extensions/ui.rst] [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/rest_api/contacts.rst] [docs: github.com/mautic/developer-documentation-new/blob/7.3/docs/rest_api/companies.rst]
+- Not yet on the 7.3 docs branch at the check: the Origin quick filters (`is:systemdefault`/`is:usercreated`), `is:unsegmented`, and the tracking-preference opt-out (their docs PRs were open). [PR #18072] [PR #18076] [PR #18006]

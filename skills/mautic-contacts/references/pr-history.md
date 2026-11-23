@@ -33,7 +33,7 @@
 
 ## How to read this file
 Source: merged pull requests on github.com/mautic/mautic for LeadBundle outside segments, harvested 2026-10-15.
-Versions are inferred from each PR's base branch and merge date; `~` marks an inference; "7.3.0-rc" means merged to `7.x` after 7.2.1 and not yet released.
+Versions are inferred from each PR's base branch and merge date; `~` marks an inference; "7.3.0-rc" means merged to `7.x` and in no release yet (not in 7.2.2). "7.2 branch, after 7.2.2" means merged to `7.2` after the 7.2.2 release (milestone 7.2.3) and not yet merged into the 7.x snapshot. A delta of PRs merged 2026-10-15 to 2026-11-23 was added on 2026-11-23.
 Current behaviour lives in behaviour.md (code-verified); this file explains why and when it came to be.
 
 ## Decisions that shaped current behaviour
@@ -114,6 +114,9 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - `date_modified`: DNC-only changes no longer bump `date_modified`/`modified_by`, to avoid `leads` deadlocks [PR #13994] (v5.2.0); batch "Set DNC" broke and was fixed [PR #14085] (v5.2.0). `date_modified` is set on create and back-filled from `date_added` by migration, enabling one "changed since" API sync [PR #14433] (v6.0.0). See resolved questions for the 7.x reading.
 - The contact "updated" webhook fires only on real data changes [PR #12535] (~v5.0). "Contact created" fires on identification, not anonymous creation [PR #4590] (~v2.10.0).
 - Contact changes record a manipulator from campaigns and integrations [PR #11669] (~v5.0); the audit log stores `manipulated_by`/`manipulator_key` [PR #13432] (~v5.1).
+- Privacy Project, untracked form submitters: kiosk-mode submissions store no IP or device id [PR #17847] (7.3.0-rc), then the same rule covers non-trackable requests (Do Not Track, GPC, bot, prefetch): no tracked-contact lookup, no IP in the submission, contact audit log, company, campaign or point-trigger logs, and no anonymous contact for a submission without contact fields [PR #17868] (7.3.0-rc). Why: the docs promised kiosk mode does not track the submitter, but IP and device were still saved. Contact actions (tags, segments, update contact, points) on a kiosk form without a mapped contact field are skipped instead of hitting the device-cookie contact [PR #17847].
+- Activity-tracking opt-out: a `lead_tracking_preferences` table (one row per purpose, with source and date) and an email-open check; a contact who turned tracking off gets no recorded open, IP, device, timeline entry or "Opens email" decision, and the pixel checks before queueing an async hit. On merge an opt-out from either contact wins. No UI or API writes it yet; anonymous open counting is a follow-up [PR #18006] (7.3.0-rc).
+- Display name: `Lead::getPrimaryIdentifier()` walks a configurable order (default name, company, email, social, ip), which a plugin can change with `setPrimaryIdentifierOrder()`, including custom-field aliases [PR #17687] (7.3.0-rc).
 
 ### Merging and deduplication
 - Manual merge: the picked contact merges into the viewed one and is deleted [PR #803] (~v1.2). Merging must not re-add segments or campaigns and must not fail without an owner [PR #144] (~v1.0) [PR #1068] (~v1.2.2). The field-value rule is now "newest non-empty wins" (behaviour.md B6.3); [PR #803]'s "keep existing values, fill blanks" is historical.
@@ -124,6 +127,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - Batch API endpoints resolve merged-away ids to the winner without creating duplicates [PR #15447] (v7.0.0). The merger no longer clears repositories mid-merge [PR #12195] (~v5.0).
 - Code chain: `LeadModel::mergeLeads` deprecated for `ContactMerger` [PR #5344]; all callers moved [PR #8335] (~v3.0); `LegacyLeadModel` removed [PR #11543] (~v5.0).
 - Duplicates can still be created manually in the UI [PR #202] (~v1.0).
+- Stage on merge: a winner without a stage inherits the loser's stage, via `LeadModel::addToStage()` so a stage-change log entry exists and a later PATCH does not log a spurious change; the winner's own stage wins, as for owner [PR #17573] (7.2 branch, after 7.2.2; picked over #17574, #17612 and #17902). The loser's stage history is still not moved (reported in review).
 
 ### Companies
 - Companies are a separate entity; a contact can have several [PR #2558] (~v2.2). Single-company mode `contact_allow_multiple_companies` (default true) overwrites rather than adds, and `mautic:contact:delete:secondary-companies` cleans up [PR #12219] (v5.1.0).
@@ -137,7 +141,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - Company changes on contact edit are logged as contact changes, old and new [PR #9317] (~v3.2) [PR #11110] (~v4.3). Owner changes are logged with the user id [PR #12766] (~v5.0) [PR #13346] (~v5.1).
 - The company API uses `lead:leads` permission [PR #7442] (~v2.15.2). Company webhooks [PR #8133] and the Contact Company Subscription Change webhook [PR #8218] exist from ~v3.1.
 - Bulk Change Owner on companies [PR #16853] (v7.2.0); `is:unowned` company search [PR #17451] (7.3.0-rc); bulk remove contacts from a company, max 1,000 ids [PR #16852] (7.3.0-rc); `POST /api/companies/batch/addcontacts` [PR #16512] (7.3.0-rc).
-- Company names with `&` are decoded once in all views [PR #17266] (v7.2.1). The company detail page loads chart and contacts by AJAX [PR #16015] (~v7.1) and lists only linked contacts [PR #12464] (~v5.0).
+- Company names with `&` are decoded once in all views [PR #17266] (v7.2.1). A company with a NULL `companyname` no longer breaks the Companies list with a TypeError: `htmlEntityDecode()` accepts null [PR #18062] (7.3.0-rc). Company detail, company form and import mapping templates gain `customContent()` hooks for plugins [PR #18106] (7.3.0-rc). The company detail page loads chart and contacts by AJAX [PR #16015] (~v7.1) and lists only linked contacts [PR #12464] (~v5.0).
 
 ### Do Not Contact
 - The universal `lead_donotcontact` table (channel, channel id, reason 0-3) replaced `email_donotemail` [PR #1513] (~v1.4). One row per contact and channel, written through the model so events fire [PR #1823] (~v2.0).
@@ -151,13 +155,14 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 
 ### Import
 - Matching uses every unique-identifier field [PR #4765] (~v2.10.1); re-import updates rather than duplicates [PR #5282] (~v2.12.0); an `ID` column takes priority [PR #9780] (~v4.0); the AND/OR operator applies [PR #9452].
-- Background import with an Import entity, `mautic:import`, `parallel_import_limit` and `background_import_if_more_rows_than` [PR #4067] (~v2.9.0). Only one import runs at a time [PR #9782] (~v3.3.3). It survives SIGTERM/SIGINT with PCNTL [PR #12845] (~v5.1); unpublishing stops it [PR #13952] (v7.0.0). A closed EntityManager makes the import DELAYED, not FAILED [PR #10744] (~v4.2) [PR #17615] (7.2 branch, unreleased).
+- Background import with an Import entity, `mautic:import`, `parallel_import_limit` and `background_import_if_more_rows_than` [PR #4067] (~v2.9.0). Only one import runs at a time [PR #9782] (~v3.3.3). It survives SIGTERM/SIGINT with PCNTL [PR #12845] (~v5.1); unpublishing stops it [PR #13952] (v7.0.0). A closed EntityManager makes the import DELAYED, not FAILED [PR #10744] (~v4.2) [PR #17615] (v7.2.2, test-only correction).
 - "Skip if value exists" [PR #7460] (~v4.0.0) was relabelled "Keep value if already exists" [PR #12551] (~v5.0), made to work [PR #13008] (~v5.0), and extended to booleans [PR #15468] (v7.0.0). It is offered only for core contact and company imports [PR #16008] (v7.2.0).
 - Tags: existing tags are kept and import-form tags added [PR #2538] (~v2.2) [PR #11220] (~v4.4.0); a CSV tags column is `|`-separated [PR #12547] (~v5.0).
 - DNC: the property is mappable [PR #4930] (~v2.10.1); 0/No/False removes manual DNC or bounce [PR #7464]; it applies to new contacts [PR #9732] (~v4.0); TRUE/yes/1 marks DNC [PR #15133] (v7.0.0).
 - Permissions: each row is checked against the user who last modified the import, so create-only users cannot update [PR #14554] (v6.0.0). Imports by users without publish permission are saved unpublished [PR #15137] (v7.0.0).
 - "Create new Contacts?" (`create_new`, default Yes): No means update only [PR #17176] (v7.2.0).
 - Robustness: failed rows are logged while the rest imports [PR #14642] (v6.0.0) [PR #15008] (v7.0.0); invalid dates skip the row [PR #15549] (v7.0.0); email `0` is rejected [PR #15779] (~v7.1); an unknown `ownerusername` fails that row only [PR #15877] (~v7.1); raw SQL is hidden [PR #6569] (~v2.15.1) [PR #13367] (~v5.1).
+- Company import "Finish in background" and cancel read the contact session key, so a company import could create an empty Import and fail on `imports.dir`; they now use the object-specific key and queue only a persisted import [PR #18189] (7.2 branch, after 7.2.2).
 - Import is generic, with contact and company logic in listeners [PR #7308] (~v4.0.0). Mapping is validated before creation via `ImportValidateEvent` [PR #10884] (~v4.3).
 
 ### Export
@@ -190,12 +195,16 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - Segment and campaign add and remove events are logged [PR #6605] (~v2.15.0). Activity API campaign events carry `campaign_id`/`campaign_name` [PR #9507] (~v3.3).
 - Detail views show only fields with a value, and 0 counts as a value [PR #11016] (~v4.3). A missing contact or company redirects with a flash, not a 500 [PR #13173] (~v5.0.0). Tabs always show, with empty states [PR #13929] (v5.2.0).
 - The audit log CSV column is `userSourceName` [PR #15994] (~v7.1).
+- `filters[leadIds][]` on the timeline and `GET /api/contacts/activity` loads several contacts' events in one call; it finished half-built `TimelineTrait` support from 2016 and adds a `$leadIdColumn` option. Review required the multi-contact API path to return `lead.create`, `lead.identified` and `lead.ipadded` too [PR #18182] (7.3.0-rc).
+- The contact photo next to the page title is removed; the details-panel photo stays [PR #18082] (7.3.0-rc).
 
 ### Search, list, notes and permissions
 - Permissions are owner-based: "edit/delete other" is checked against the owner, not the creator [PR #2392] (~v2.2). `GET /api/contacts` for `viewown`-only users returns owned contacts plus unowned contacts they created [PR #16022] (v7.2.0).
 - `lead:notes` is its own permission group, checked in the UI, the Notes API and `/api/contacts/{id}/notes`; a migration back-fills it from `lead:leads` [PR #16067] (v7.2.0). The Notes API returns `publishDetails` [PR #17177] (v7.2.0). API notes keep HTML [PR #11793] (~v5.0).
 - Fields marked searchable match plain search without `alias:`; the toggle is labelled "Add to Search Index" [PR #14393] (v6.0.0). Search commands added over time include `ids:` [PR #3101], `stage:` [PR #4405], `company_id:` [PR #10702], `campaign:<id>` [PR #15727] (~v7.1) and `form:<alias>` [PR #16355] (v7.2.0).
 - Anonymous contacts are hidden from the list by default [PR #796] (~v1.2). Configurable list columns `contact_columns` [PR #7511] (~v3.2.0).
+- Contact search `is:unsegmented` [PR #18076] (7.3.0-rc) and `segment_source:manually_added|filter_added`, valid only with a non-negated `segment:` [PR #16350] (7.3.0-rc). Custom Fields "Origin" quick filters `is:systemdefault`/`is:usercreated` [PR #18072] (7.3.0-rc); a change that reserved deleted core aliases was dropped from that PR in review.
+- Contact AJAX actions that change a contact (segment and company toggles, primary company, tag removal, channel DNC toggle, bounce removal) require contact edit permission and return 403 otherwise, following [PR #15761] for `toggleLeadCampaign` [PR #18090] (7.2 branch, after 7.2.2).
 - Bulk Change Owner on contacts offers "No owner" [PR #16849] (7.3.0-rc). Bulk find-and-replace on contacts and companies [PR #16207] (v7.2.0).
 
 ### Preference centre and frequency rules
@@ -216,10 +225,12 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - DNC reason 0 through the API: the single `dnc/{channel}/add` endpoint rejects 0 with 400 [code: app/bundles/LeadBundle/Controller/Api/LeadApiController.php:467-477 @7.x]; create, edit and batch payloads treat reason 0 as "remove DNC" for existing contacts [code: app/bundles/LeadBundle/Controller/Api/LeadApiController.php:680-697 @7.x]. [PR #7437]'s mapping of 0 to 3 is historical.
 - `date_modified` on DNC changes: a save whose only changes are `dnc_channel_status` or `manipulator` skips `date_modified` and `modified_by` [code: app/bundles/LeadBundle/Entity/Lead.php:1948-1960 @7.x] [code: app/bundles/CoreBundle/Model/FormModel.php:269-271 @7.x] [PR #13994]. On create, `setModifiedData()` sets `date_modified` [code: app/bundles/CoreBundle/Model/FormModel.php:251-266 @7.x] [PR #14433]. behaviour.md has no `date_modified` rule to reconcile. See Open questions for the update path.
 - Company unique identifier: enabled in 7.x. The `isUniqueIdentifer` toggle is added for every field object with no company exception [code: app/bundles/LeadBundle/Form/Type/FieldType.php:606-618 @7.x]; [PR #15784] (v7.1.0 tag) reverted [PR #14236].
-- Field length after creation: editable in 7.x. `charLengthLimit` is a normal form field with a 1..max range [code: app/bundles/LeadBundle/Form/Type/FieldType.php:715-737 @419a08a9b35], and `LeadFieldMinimumLength` rejects a value shorter than stored data [code: app/bundles/LeadBundle/Translations/en_US/validators.ini:14 @7.x] [PR #14762].
+- Field length after creation: editable in 7.x. `charLengthLimit` is a normal form field with a 1..max range [code: app/bundles/LeadBundle/Form/Type/FieldType.php:719-736 @7.x], and `LeadFieldMinimumLength` rejects a value shorter than stored data [code: app/bundles/LeadBundle/Translations/en_US/validators.ini:14 @7.x] [PR #14762].
 - Segment operator labels in 7.x: `in` = "includes any of", `!in` = "excludes any of", `in_all` = "includes all of", `!in_all` = "excludes all of" [code: app/bundles/LeadBundle/Translations/en_US/messages.ini:783-784 @7.x] [code: app/bundles/LeadBundle/Translations/en_US/messages.ini:792-793 @7.x] [code: app/bundles/LeadBundle/Segment/OperatorOptions.php:143-162 @7.x]. `like` is "contains" [code: app/bundles/LeadBundle/Translations/en_US/messages.ini:781 @7.x] and `contains` is "in list" [code: app/bundles/CoreBundle/Translations/en_US/messages.ini:496 @7.x]. The code follows [PR #15344]; the [PR #15027] wording where `notin` meant "excludes all of" is superseded.
-- Empty contacts list: `GET /api/contacts` with no results returns `"contacts": {}`, because the contact repository returns an array, not a Paginator, and `EntityResultHelper` turns an empty id-keyed result into an `ArrayObject` [code: app/bundles/ApiBundle/Helper/EntityResultHelper.php:29-32 @7.x] [code: app/bundles/LeadBundle/Entity/LeadRepository.php:478-489 @419a08a9b35]. This agrees with mautic-rest-api behaviour R31 [PR #10724].
+- Empty contacts list: `GET /api/contacts` with no results returns `"contacts": {}`, because the contact repository returns an array, not a Paginator, and `EntityResultHelper` turns an empty id-keyed result into an `ArrayObject` [code: app/bundles/ApiBundle/Helper/EntityResultHelper.php:29-32 @7.x] [code: app/bundles/LeadBundle/Entity/LeadRepository.php:485-501 @7.x]. This agrees with mautic-rest-api behaviour R31 [PR #10724].
 - Segment warnings: `segment_rebuild_time_warning` (default 30) shows a red exclamation when a segment has not been rebuilt for X hours; `segment_build_time_warning` (default 30) shows a red clock when a build took longer than X seconds [code: app/bundles/LeadBundle/Config/config.php:358-359 @7.x] [code: app/bundles/LeadBundle/Translations/en_US/messages.ini:755-759 @7.x] [PR #11917].
+
+- `date_modified` on update (resolved 2026-11-23 from code, not run): an edit of an existing contact does not move `date_modified`. `setTimestamps()` calls `setModifiedData()` for a non-new entity with changes, and `setModifiedData()` writes `date_modified` only if `getDateModified()` is empty, while `modified_by` is always written [code: app/bundles/CoreBundle/Model/FormModel.php:269-293 @7.x]. The empty check came with [PR #14433] (commit 91558a832d7, "If it is set, it shouldn't be reset"), the same PR that back-fills `date_modified` for every contact, so no existing contact passes it. The code is the same at 7.2.2 and on 8.x. The only paths that set it on an existing contact are import with a `dateModified` column [code: app/bundles/LeadBundle/Model/LeadModel.php:1373-1377 @7.x] and the API Platform write subscriber [code: app/bundles/ApiBundle/ApiPlatform/EventListener/MauticWriteSubscriber.php:56 @7.x]. behaviour.md B4.14a.
 
 ## Regression catalogue
 | Symptom | Expected behaviour | PR | Version |
@@ -296,7 +307,7 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | Import auto-published without publish permission | Saved unpublished | [PR #15137] | 7.0.0 |
 | Invalid dates broke the edit page | Row skipped with a reason | [PR #15549] | 7.0.0 |
 | Raw SQL error shown on import | Generic message | [PR #6569] [PR #13367] | ~2.15.1, ~5.1 |
-| Closed EntityManager marked import FAILED | Import becomes DELAYED | [PR #17615] | 7.2 branch |
+| Closed EntityManager marked import FAILED | Import becomes DELAYED | [PR #17615] | 7.2.2 (test fix; behaviour from [PR #10744]) |
 | Batched export had duplicates or gaps | Unique tiebreaker sort | [PR #10849] | ~4.2.1 |
 | Contact list over 30 s with many IPs | List does not join IPs | [PR #11620] | ~5.0 |
 | Concurrent submits lost points | Atomic increment | [PR #4752] | ~2.10.0 |
@@ -315,6 +326,11 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | Users without permission saw notes through the API | `lead:notes` enforced | [PR #16067] | 7.2.0 |
 | "R&D" not found by global search | No cleaning in global search | [PR #14818] | 6.0.1 |
 | API note HTML stripped | HTML kept | [PR #11793] | ~5.0 |
+| Merging a staged contact into an unstaged one dropped the stage | Winner inherits the stage, with a log entry | [PR #17573] | 7.2 branch, after 7.2.2 |
+| Any logged-in user could change segments, companies, tags or DNC of a contact through AJAX | 403 without contact edit permission | [PR #18090] | 7.2 branch, after 7.2.2 |
+| Company import "Finish in background" created an empty import (NOT NULL `imports.dir`) | Object-specific session key; only persisted imports queued | [PR #18189] | 7.2 branch, after 7.2.2 |
+| Companies list 500 when `companyname` is NULL | Empty cell | [PR #18062] | 7.3.0-rc |
+| Kiosk form IP saved through points or the "Add to contact points" action; kiosk contact actions hit the cookie contact or 500 | No IP stored; actions skipped without a contact | [PR #17847] | 7.3.0-rc |
 
 ## Feature timeline
 | Version | Change | PR |
@@ -334,6 +350,8 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 | 7.2.0 | Company soft delete, merge moves company links, `lead:notes`, viewown fallback, `create_new`, tag merge, fractions kept | [PR #16176] [PR #16247] [PR #16067] [PR #16022] [PR #17176] [PR #15331] [PR #16591] |
 | 7.2.1 | Company `&` decoding, "Import Another" object type | [PR #17266] [PR #17221] |
 | 7.3.0-rc | Company batch addcontacts, bulk remove from company, "No owner", Indexed/Unique quick filters, company `is:unowned` | [PR #16512] [PR #16852] [PR #16849] [PR #16872] [PR #17451] |
+| 7.3.0-rc (Nov 2026) | Untracked form submitters, activity-tracking opt-out for email opens, `is:unsegmented`, `segment_source:`, Origin quick filters, `leadIds` timeline filter, primary-identifier order, company view hooks | [PR #17847] [PR #17868] [PR #18006] [PR #18076] [PR #16350] [PR #18072] [PR #18182] [PR #17687] [PR #18106] |
+| 7.2 branch, after 7.2.2 | Stage kept on merge, AJAX edit permissions, company import queue | [PR #17573] [PR #18090] [PR #18189] |
 
 ## Removed, deprecated, replaced
 | What | Replaced by | PR | Version |
@@ -386,9 +404,13 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - Constructor changes on services go to the next minor, not a patch [PR #16247]. Once a minor ships, fixes target the patch branch [PR #17266] [PR #17615].
 - Privacy-impacting tracking features need a config switch [PR #3279].
 - UI renames cost docs and developers; use marketer-friendly labels without developer jargon [PR #13368] [PR #14393] [PR #12551].
+- Expensive counts on detail pages load asynchronously in one aggregate query, not on the initial page load [PR #16350].
+- Keep unrelated behaviour changes out of small feature PRs, and pin new search commands in the area's `*SearchScopeProvider` next to their siblings [PR #18072] [PR #18076].
+- Privacy fixes must close every path that stores the IP (submission, points, audit, campaign logs), and reviewers reproduce the leak before approving [PR #17847] [PR #17868].
+- When several PRs fix the same bug, maintainers merge the most complete one and close the rest [PR #17573].
 
 ## Open questions
-- `date_modified` on update: in 7.x `setModifiedData()` writes `date_modified` only when it is empty [code: app/bundles/CoreBundle/Model/FormModel.php:278-284 @7.x]. Because [PR #14433] fills it on create and back-fills old rows, an edit of an existing contact may no longer move `date_modified` forward through `setTimestamps()`. No 7.x test asserts that an edit bumps it. This would break the "changed since" sync that [PR #14433] aimed at. Unverified at runtime.
+- Resolved 2026-11-23 (see Questions resolved): `date_modified` on update: in 7.x `setModifiedData()` writes `date_modified` only when it is empty [code: app/bundles/CoreBundle/Model/FormModel.php:278-284 @7.x]. Because [PR #14433] fills it on create and back-fills old rows, an edit of an existing contact may no longer move `date_modified` forward through `setTimestamps()`. No 7.x test asserts that an edit bumps it. This would break the "changed since" sync that [PR #14433] aimed at. Unverified at runtime.
 - [PR #13994] says an email-link unsubscribe still bumps `date_modified`; in 7.x that path saves a DNC-only change, which the skip rule should exclude [code: app/bundles/LeadBundle/Entity/Lead.php:1948-1960 @7.x]. Which DNC paths bump it is unresolved.
 - Company soft delete: [PR #16176] says the most recently attached remaining company becomes primary; behaviour.md C3 found an unordered query. behaviour.md wins; the PR claim is unverified. What happens to the primary on bulk remove-from-company [PR #16852] is not stated.
 - [PR #16512]: whether the single `POST /api/companies/{id}/contact/{cid}/add` writes `lead_companies_change_log` is contradictory in the PR.
@@ -407,6 +429,9 @@ Current behaviour lives in behaviour.md (code-verified); this file explains why 
 - [PR #11040] requires the server in UTC, but no official server-configuration doc says so.
 - `common:` search [PR #2599] is not in 7.x; multi-`segment:` searches return wrong results [PR #7784].
 - Field-type labels: LeadBundle shows the new names but FormBundle still says "Checkbox group" [PR #13368].
+- `is:systemdefault` matches by alias against the core field list, so a user field that reuses a deleted core alias counts as system default [PR #18072]; intended?
+- `segment_source:` with `!segment:X` was addressed in review, but `segment_source:` combined with several `segment:` terms is untested [PR #16350].
+- After [PR #17573] the loser's stage-change history is still deleted with the loser; does the survivor's timeline need it?
 
 ## Coverage
 The contacts area has about 1,260 merged PRs in 15 chunks (2015-03 to 2026-10), summarised in two digests. About 1,030 are substantive; the rest are refactors, test-only changes, merge-ups or cosmetic fixes that contribute only norms. Segment, campaign, email, form, report and integration items found in these chunks are routed to their skills and left out here. A further 869 noise PRs across all areas were excluded upstream before chunking.
